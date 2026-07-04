@@ -1,0 +1,433 @@
+// ============================================================================
+// API ROUTES — every business endpoint is tenant-scoped via the auth token;
+// every write is permission-checked and audited; suspended tenants pass
+// through the lifecycle gate (read-only + billing + export).
+// ============================================================================
+import { Router, Response } from "express";
+import { z } from "zod";
+import { and, eq, desc, sql } from "drizzle-orm";
+import { db, schema, badRequest, notFound, audit, nextDocNumber } from "./lib.js";
+import {
+  AuthedRequest, authenticate, lifecycleGate, requirePermission,
+  requirePlatformAdmin, tenantId, signupTenant, login,
+} from "./auth.js";
+import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
+import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
+import { postJournal } from "./accounting.js";
+import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
+import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary } from "./billing.js";
+
+export const api = Router();
+const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
+  (req: any, res: any, next: any) => fn(req, res).then((r) => r !== undefined && res.json(r)).catch(next);
+
+// ---------------------------------------------------------------------------
+// Public: signup + login
+// ---------------------------------------------------------------------------
+const signupSchema = z.object({
+  companyName: z.string().min(2), subdomain: z.string(),
+  baseCurrency: z.enum(["USD", "ZWG"]),
+  ownerEmail: z.string().email(), ownerPassword: z.string(), ownerName: z.string().min(2),
+  planName: z.string().optional(),
+});
+api.post("/auth/signup", wrap(async (req) => {
+  const body = signupSchema.parse(req.body);
+  const { tenant, owner } = await signupTenant(body);
+  const session = await login(body.ownerEmail, body.ownerPassword, tenant.subdomain);
+  return { tenant: { id: tenant.id, subdomain: tenant.subdomain, companyName: tenant.companyName, trialEndsAt: tenant.trialEndsAt }, ...session };
+}));
+
+api.post("/auth/login", wrap(async (req) => {
+  const { email, password, subdomain } = z.object({
+    email: z.string().email(), password: z.string(), subdomain: z.string().optional(),
+  }).parse(req.body);
+  return login(email, password, subdomain);
+}));
+
+// everything below requires auth + lifecycle gate
+api.use(authenticate as any, lifecycleGate as any);
+
+api.get("/me", wrap(async (req) => {
+  const t = (req as any).tenant;
+  return {
+    ...req.auth,
+    tenant: t ? {
+      id: t.id, companyName: t.companyName, subdomain: t.subdomain, status: t.status,
+      baseCurrency: t.baseCurrency, trialEndsAt: t.trialEndsAt,
+      brandPrimaryColor: t.brandPrimaryColor, brandSecondaryColor: t.brandSecondaryColor,
+      logoUrl: t.logoUrl,
+    } : null,
+  };
+}));
+
+// ---------------------------------------------------------------------------
+// Tenant settings & branding (white-label)
+// ---------------------------------------------------------------------------
+api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async (req) => {
+  const body = z.object({
+    logoUrl: z.string().url().optional(),
+    brandPrimaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    brandSecondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+    taxNumber: z.string().optional(), vatNumber: z.string().optional(),
+    registrationNumber: z.string().optional(), physicalAddress: z.string().optional(),
+  }).parse(req.body);
+  const tid = tenantId(req);
+  const [updated] = await db.update(schema.tenants).set(body).where(eq(schema.tenants.id, tid)).returning();
+  await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, body);
+  return updated;
+}));
+
+// ---------------------------------------------------------------------------
+// CRM
+// ---------------------------------------------------------------------------
+const contactSchema = z.object({
+  type: z.enum(["INDIVIDUAL", "COMPANY"]).default("COMPANY"),
+  name: z.string().min(1), email: z.string().email().optional().nullable(),
+  phone: z.string().optional().nullable(), address: z.string().optional().nullable(),
+  taxNumber: z.string().optional().nullable(), tags: z.array(z.string()).default([]),
+  isCustomer: z.boolean().default(true), isVendor: z.boolean().default(false),
+});
+api.get("/contacts", requirePermission("crm.read"), wrap(async (req) =>
+  db.select().from(schema.contacts).where(eq(schema.contacts.tenantId, tenantId(req))).orderBy(schema.contacts.name)));
+api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
+  const body = contactSchema.parse(req.body);
+  const [c] = await db.insert(schema.contacts).values({ ...body, tenantId: tenantId(req) }).returning();
+  await audit(db, tenantId(req), req.auth!.userId, "contact.created", "contact", c.id);
+  return c;
+}));
+api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
+  const body = contactSchema.partial().parse(req.body);
+  const [c] = await db.update(schema.contacts).set(body)
+    .where(and(eq(schema.contacts.id, req.params.id), eq(schema.contacts.tenantId, tenantId(req)))).returning();
+  if (!c) throw notFound("Contact not found");
+  return c;
+}));
+api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
+  const tid = tenantId(req);
+  const [contact] = await db.select().from(schema.contacts)
+    .where(and(eq(schema.contacts.id, req.params.id), eq(schema.contacts.tenantId, tid)));
+  if (!contact) throw notFound("Contact not found");
+  const dealRows = await db.select().from(schema.deals)
+    .where(and(eq(schema.deals.contactId, contact.id), eq(schema.deals.tenantId, tid)));
+  const activityRows = await db.select().from(schema.activities)
+    .where(and(eq(schema.activities.contactId, contact.id), eq(schema.activities.tenantId, tid)))
+    .orderBy(desc(schema.activities.createdAt)).limit(50);
+  const invoiceRows = await db.select().from(schema.invoices)
+    .where(and(eq(schema.invoices.contactId, contact.id), eq(schema.invoices.tenantId, tid)))
+    .orderBy(desc(schema.invoices.createdAt)).limit(50);
+  return { contact, deals: dealRows, activities: activityRows, invoices: invoiceRows };
+}));
+
+const dealSchema = z.object({
+  contactId: z.string().uuid(), title: z.string().min(1),
+  valueAmount: z.string().default("0"), valueCurrency: z.enum(["USD", "ZWG"]).default("USD"),
+  expectedCloseDate: z.coerce.date().optional().nullable(),
+});
+api.get("/deals", requirePermission("crm.read"), wrap(async (req) =>
+  db.select().from(schema.deals).where(eq(schema.deals.tenantId, tenantId(req))).orderBy(desc(schema.deals.createdAt))));
+api.post("/deals", requirePermission("crm.write"), wrap(async (req) => {
+  const body = dealSchema.parse(req.body);
+  const [d] = await db.insert(schema.deals).values({ ...body, tenantId: tenantId(req), ownerUserId: req.auth!.userId }).returning();
+  return d;
+}));
+api.patch("/deals/:id/stage", requirePermission("crm.write"), wrap(async (req) => {
+  const { stage } = z.object({ stage: z.enum(["NEW", "QUALIFIED", "PROPOSAL", "WON", "LOST"]) }).parse(req.body);
+  const [d] = await db.update(schema.deals).set({ stage })
+    .where(and(eq(schema.deals.id, req.params.id), eq(schema.deals.tenantId, tenantId(req)))).returning();
+  if (!d) throw notFound("Deal not found");
+  await audit(db, tenantId(req), req.auth!.userId, "deal.stage_changed", "deal", d.id, { stage });
+  return d;
+}));
+api.post("/activities", requirePermission("crm.write"), wrap(async (req) => {
+  const body = z.object({
+    contactId: z.string().uuid(), dealId: z.string().uuid().optional().nullable(),
+    type: z.enum(["call", "email", "meeting", "note", "task"]), body: z.string().min(1),
+    dueAt: z.coerce.date().optional().nullable(),
+  }).parse(req.body);
+  const [a] = await db.insert(schema.activities).values({ ...body, tenantId: tenantId(req), ownerUserId: req.auth!.userId }).returning();
+  return a;
+}));
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+const productSchema = z.object({
+  sku: z.string().min(1), name: z.string().min(1), description: z.string().optional().nullable(),
+  unitOfMeasure: z.string().default("unit"),
+  costPrice: z.string().default("0"), salePrice: z.string().default("0"),
+  currency: z.enum(["USD", "ZWG"]).default("USD"), taxRate: z.string().default("15"),
+  reorderLevel: z.number().int().min(0).default(0), trackStock: z.boolean().default(true),
+});
+api.get("/products", requirePermission("inventory.read"), wrap(async (req) => {
+  const rows = await db.execute(sql`
+    SELECT p.*, COALESCE(SUM(sl.quantity_on_hand), 0) AS on_hand
+    FROM products p LEFT JOIN stock_levels sl ON sl.product_id = p.id
+    WHERE p.tenant_id = ${tenantId(req)} GROUP BY p.id ORDER BY p.name`);
+  return (rows as any).rows;
+}));
+api.post("/products", requirePermission("inventory.write"), wrap(async (req) => {
+  const body = productSchema.parse(req.body);
+  const [p] = await db.insert(schema.products).values({ ...body, tenantId: tenantId(req) }).returning();
+  await audit(db, tenantId(req), req.auth!.userId, "product.created", "product", p.id);
+  return p;
+}));
+api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
+  db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));
+api.post("/warehouses", requirePermission("inventory.write"), wrap(async (req) => {
+  const body = z.object({ name: z.string().min(1), address: z.string().optional().nullable() }).parse(req.body);
+  const [w] = await db.insert(schema.warehouses).values({ ...body, tenantId: tenantId(req) }).returning();
+  return w;
+}));
+api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req) => {
+  const body = z.object({
+    productId: z.string().uuid(), warehouseId: z.string().uuid(),
+    quantityDelta: z.string(), note: z.string().min(3),
+  }).parse(req.body);
+  return db.transaction((tx) => adjustStock(tx, { ...body, tenantId: tenantId(req), createdBy: req.auth!.userId }));
+}));
+api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req) => {
+  // Opening balances: stock in + Dr Inventory / Cr Opening Balance Equity
+  const body = z.object({
+    productId: z.string().uuid(), warehouseId: z.string().uuid(),
+    quantity: z.string(), unitCost: z.string(),
+  }).parse(req.body);
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const r = await recordStockMovement(tx, {
+      tenantId: tid, productId: body.productId, warehouseId: body.warehouseId,
+      quantityDelta: body.quantity, unitCost: body.unitCost, reason: "OPENING",
+      sourceType: "manual", createdBy: req.auth!.userId,
+    });
+    const { toCents, fromCents, mulRate } = await import("./lib.js");
+    const { systemAccount, postJournal } = await import("./accounting.js");
+    const value = fromCents(mulRate(toCents(body.unitCost), Number(body.quantity).toFixed(6)));
+    const inventory = await systemAccount(tx, tid, "INVENTORY");
+    const opening = await systemAccount(tx, tid, "OPENING_EQUITY");
+    await postJournal(tx, {
+      tenantId: tid, date: new Date(), memo: "Opening stock balance",
+      sourceType: "stock_adjustment", sourceId: r.movementId, createdBy: req.auth!.userId,
+      lines: [{ accountId: inventory.id, debit: value }, { accountId: opening.id, credit: value }],
+    });
+    return r;
+  });
+}));
+api.get("/stock/movements", requirePermission("inventory.read"), wrap(async (req) =>
+  db.select().from(schema.stockMovements).where(eq(schema.stockMovements.tenantId, tenantId(req)))
+    .orderBy(desc(schema.stockMovements.createdAt)).limit(200)));
+
+const poSchema = z.object({
+  vendorContactId: z.string().uuid(), currency: z.enum(["USD", "ZWG"]).default("USD"),
+  rateToBase: z.string().default("1"), expectedDate: z.coerce.date().optional().nullable(),
+  lines: z.array(z.object({
+    productId: z.string().uuid(), warehouseId: z.string().uuid(),
+    quantity: z.string(), unitCost: z.string(),
+  })).min(1),
+});
+api.post("/purchase-orders", requirePermission("inventory.write"), wrap(async (req) => {
+  const body = poSchema.parse(req.body);
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const { toCents, fromCents, mulRate } = await import("./lib.js");
+    let total = 0n;
+    const lines = body.lines.map((l) => {
+      const lineTotal = mulRate(toCents(l.unitCost), Number(l.quantity).toFixed(6));
+      total += lineTotal;
+      return { ...l, lineTotal: fromCents(lineTotal) };
+    });
+    const number = await nextDocNumber(tx, tid, "purchase_order", "PO");
+    const [po] = await tx.insert(schema.purchaseOrders).values({
+      tenantId: tid, vendorContactId: body.vendorContactId, number, status: "ORDERED",
+      currency: body.currency, rateToBase: body.rateToBase,
+      expectedDate: body.expectedDate ?? null, total: fromCents(total), createdBy: req.auth!.userId,
+    }).returning();
+    await tx.insert(schema.purchaseOrderLineItems).values(lines.map((l) => ({ ...l, purchaseOrderId: po.id })));
+    await audit(tx, tid, req.auth!.userId, "po.created", "purchase_order", po.id, { number, total: fromCents(total) });
+    return po;
+  });
+}));
+api.get("/purchase-orders", requirePermission("inventory.read"), wrap(async (req) =>
+  db.select().from(schema.purchaseOrders).where(eq(schema.purchaseOrders.tenantId, tenantId(req)))
+    .orderBy(desc(schema.purchaseOrders.createdAt))));
+api.post("/purchase-orders/:id/receive", requirePermission("inventory.write", "accounting.post"), wrap(async (req) =>
+  db.transaction((tx) => receivePurchaseOrder(tx, {
+    tenantId: tenantId(req), purchaseOrderId: req.params.id, createdBy: req.auth!.userId,
+  }))));
+
+// ---------------------------------------------------------------------------
+// Accounting
+// ---------------------------------------------------------------------------
+api.get("/accounts", requirePermission("accounting.read"), wrap(async (req) =>
+  db.select().from(schema.accounts).where(eq(schema.accounts.tenantId, tenantId(req))).orderBy(schema.accounts.code)));
+
+api.get("/exchange-rates", requirePermission("accounting.read"), wrap(async (req) =>
+  db.select().from(schema.exchangeRates).where(eq(schema.exchangeRates.tenantId, tenantId(req)))
+    .orderBy(desc(schema.exchangeRates.effectiveDate)).limit(30)));
+api.post("/exchange-rates", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = z.object({
+    fromCurrency: z.enum(["USD", "ZWG"]), toCurrency: z.enum(["USD", "ZWG"]),
+    rate: z.string(), effectiveDate: z.coerce.date(),
+  }).parse(req.body);
+  if (body.fromCurrency === body.toCurrency) throw badRequest("Currencies must differ");
+  const [r] = await db.insert(schema.exchangeRates).values({ ...body, tenantId: tenantId(req) }).returning();
+  await audit(db, tenantId(req), req.auth!.userId, "exchange_rate.set", "exchange_rate", r.id, body);
+  return r;
+}));
+
+const invoiceSchema = z.object({
+  contactId: z.string().uuid(), currency: z.enum(["USD", "ZWG"]),
+  rateToBase: z.string().default("1"), dueDate: z.coerce.date().optional().nullable(),
+  notes: z.string().optional().nullable(), dealId: z.string().uuid().optional(),
+  lines: z.array(z.object({
+    productId: z.string().uuid().optional(), warehouseId: z.string().uuid().optional(),
+    description: z.string().min(1), quantity: z.string(), unitPrice: z.string(), taxRate: z.string().default("15"),
+  })).min(1),
+});
+api.get("/invoices", requirePermission("accounting.read"), wrap(async (req) => {
+  const rows = await db.execute(sql`
+    SELECT i.*, c.name AS contact_name FROM invoices i
+    JOIN contacts c ON c.id = i.contact_id
+    WHERE i.tenant_id = ${tenantId(req)} ORDER BY i.created_at DESC LIMIT 200`);
+  return (rows as any).rows;
+}));
+api.get("/invoices/:id", requirePermission("accounting.read"), wrap(async (req) => {
+  const tid = tenantId(req);
+  const [inv] = await db.select().from(schema.invoices)
+    .where(and(eq(schema.invoices.id, req.params.id), eq(schema.invoices.tenantId, tid)));
+  if (!inv) throw notFound("Invoice not found");
+  const lines = await db.select().from(schema.invoiceLineItems).where(eq(schema.invoiceLineItems.invoiceId, inv.id));
+  const pays = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, inv.id));
+  return { ...inv, lines, payments: pays };
+}));
+api.post("/invoices", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = invoiceSchema.parse(req.body);
+  return createDraftInvoice({ ...body, tenantId: tenantId(req), createdBy: req.auth!.userId,
+    dueDate: body.dueDate ?? undefined, notes: body.notes ?? undefined });
+}));
+api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) =>
+  issueInvoice({ tenantId: tenantId(req), invoiceId: req.params.id, createdBy: req.auth!.userId })));
+api.post("/invoices/:id/payments", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = z.object({
+    amount: z.string(), bankAccountId: z.string().uuid().optional(),
+    date: z.coerce.date().optional(), reference: z.string().optional(),
+  }).parse(req.body);
+  return recordPayment({ ...body, tenantId: tenantId(req), invoiceId: req.params.id, createdBy: req.auth!.userId });
+}));
+api.post("/invoices/:id/void", requirePermission("accounting.post"), wrap(async (req) => {
+  const { reason } = z.object({ reason: z.string().min(3) }).parse(req.body);
+  return voidInvoice({ tenantId: tenantId(req), invoiceId: req.params.id, reason, createdBy: req.auth!.userId });
+}));
+
+api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = z.object({
+    categoryAccountId: z.string().uuid(), vendorContactId: z.string().uuid().optional().nullable(),
+    amount: z.string(), currency: z.enum(["USD", "ZWG"]), rateToBase: z.string().default("1"),
+    date: z.coerce.date(), description: z.string().min(1),
+  }).parse(req.body);
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [exp] = await tx.insert(schema.expenses).values({ ...body, tenantId: tid, createdBy: req.auth!.userId }).returning();
+    const { toCents, fromCents, mulRate } = await import("./lib.js");
+    const { systemAccount, postJournal } = await import("./accounting.js");
+    const bank = await systemAccount(tx, tid, "BANK");
+    const base = fromCents(mulRate(toCents(body.amount), body.rateToBase));
+    await postJournal(tx, {
+      tenantId: tid, date: body.date, memo: `Expense — ${body.description}`,
+      sourceType: "expense", sourceId: exp.id, createdBy: req.auth!.userId,
+      lines: [
+        { accountId: body.categoryAccountId, debit: base, originalAmount: body.amount, originalCurrency: body.currency, exchangeRate: body.rateToBase },
+        { accountId: bank.id, credit: base },
+      ],
+    });
+    await audit(tx, tid, req.auth!.userId, "expense.recorded", "expense", exp.id, { amount: body.amount, currency: body.currency });
+    return exp;
+  });
+}));
+api.get("/expenses", requirePermission("accounting.read"), wrap(async (req) =>
+  db.select().from(schema.expenses).where(eq(schema.expenses.tenantId, tenantId(req)))
+    .orderBy(desc(schema.expenses.date)).limit(200)));
+
+api.get("/journal", requirePermission("accounting.read"), wrap(async (req) => {
+  const rows = await db.execute(sql`
+    SELECT je.id, je.date, je.memo, je.source_type, je.source_id,
+           json_agg(json_build_object('accountCode', a.code, 'accountName', a.name,
+             'debit', jl.debit, 'credit', jl.credit) ORDER BY jl.debit DESC) AS lines
+    FROM journal_entries je
+    JOIN journal_lines jl ON jl.journal_entry_id = je.id
+    JOIN accounts a ON a.id = jl.account_id
+    WHERE je.tenant_id = ${tenantId(req)}
+    GROUP BY je.id ORDER BY je.date DESC, je.created_at DESC LIMIT 100`);
+  return (rows as any).rows;
+}));
+
+// ---------------------------------------------------------------------------
+// Reports & dashboard (cross-module)
+// ---------------------------------------------------------------------------
+api.get("/reports/dashboard", requirePermission("reports.read"), wrap(async (req) => dashboard(tenantId(req))));
+api.get("/reports/trial-balance", requirePermission("reports.read"), wrap(async (req) =>
+  trialBalance(tenantId(req), req.query.asAt ? new Date(String(req.query.asAt)) : new Date())));
+api.get("/reports/profit-loss", requirePermission("reports.read"), wrap(async (req) => {
+  const from = req.query.from ? new Date(String(req.query.from)) : new Date(new Date().getFullYear(), 0, 1);
+  const to = req.query.to ? new Date(String(req.query.to)) : new Date();
+  return profitAndLoss(tenantId(req), from, to);
+}));
+api.get("/reports/balance-sheet", requirePermission("reports.read"), wrap(async (req) =>
+  balanceSheet(tenantId(req), req.query.asAt ? new Date(String(req.query.asAt)) : new Date())));
+api.get("/reports/aged-receivables", requirePermission("reports.read"), wrap(async (req) =>
+  agedReceivables(tenantId(req))));
+
+// ---------------------------------------------------------------------------
+// Data export — always available, even suspended/closed (their data is theirs)
+// ---------------------------------------------------------------------------
+api.get("/export/:entity", wrap(async (req) => {
+  const tid = tenantId(req);
+  const entity = req.params.entity;
+  const tableMap: Record<string, any> = {
+    contacts: schema.contacts, invoices: schema.invoices, products: schema.products,
+    expenses: schema.expenses, deals: schema.deals,
+  };
+  const table = tableMap[entity];
+  if (!table) throw badRequest(`Unknown export entity. Available: ${Object.keys(tableMap).join(", ")}`);
+  const rows = await db.select().from(table).where(eq(table.tenantId, tid));
+  await audit(db, tid, req.auth!.userId, "data.exported", entity);
+  return rows;
+}));
+
+// ---------------------------------------------------------------------------
+// Billing (tenant-facing)
+// ---------------------------------------------------------------------------
+api.get("/billing/subscription", wrap(async (req) => {
+  const tid = tenantId(req);
+  const [sub] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.tenantId, tid));
+  if (!sub) throw notFound("No subscription");
+  const [plan] = await db.select().from(schema.plans).where(eq(schema.plans.id, sub.planId));
+  const usage = await collectUsageSummary(db, tid);
+  return { ...sub, plan, currentUsage: usage };
+}));
+api.get("/billing/invoices", wrap(async (req) =>
+  db.select().from(schema.subscriptionInvoices).where(eq(schema.subscriptionInvoices.tenantId, tenantId(req)))
+    .orderBy(desc(schema.subscriptionInvoices.issuedAt))));
+api.get("/billing/plans", wrap(async () => db.select().from(schema.plans)));
+
+// ---------------------------------------------------------------------------
+// Platform admin (Jonomi staff only)
+// ---------------------------------------------------------------------------
+api.get("/platform/tenants", requirePlatformAdmin as any, wrap(async () => {
+  const rows = await db.execute(sql`
+    SELECT t.id, t.company_name, t.subdomain, t.status, t.trial_ends_at, t.created_at,
+           p.name AS plan, s.status AS sub_status,
+           (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id) AS user_count
+    FROM tenants t
+    LEFT JOIN subscriptions s ON s.tenant_id = t.id
+    LEFT JOIN plans p ON p.id = s.plan_id
+    ORDER BY t.created_at DESC`);
+  return (rows as any).rows;
+}));
+api.post("/platform/billing/run", requirePlatformAdmin as any, wrap(async (req) => {
+  const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
+  return runBillingCycle(asOf);
+}));
+api.post("/platform/tenants/:id/mark-invoice-paid/:invoiceId", requirePlatformAdmin as any, wrap(async (req) =>
+  markSubscriptionInvoicePaid({ tenantId: req.params.id, invoiceId: req.params.invoiceId, actorUserId: req.auth!.userId })));
+api.get("/platform/audit/:tenantId", requirePlatformAdmin as any, wrap(async (req) =>
+  db.select().from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, req.params.tenantId))
+    .orderBy(desc(schema.auditLogs.createdAt)).limit(200)));

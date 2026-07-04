@@ -1,0 +1,91 @@
+/* Jonomi Business Platform — white-label theme.
+   --brand and --accent are set at runtime from the tenant's stored branding. */
+:root {
+  --brand: #14171F;
+  --accent: #C9A227;
+  --bg: #F6F6F3;
+  --card: #FFFFFF;
+  --text: #23262E;
+  --muted: #6B7280;
+  --line: #E5E5E0;
+  --danger: #B4232A;
+  --ok: #1F7A3D;
+}
+* { box-sizing: border-box; margin: 0; }
+body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+#root { min-height: 100vh; }
+
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.side { background: var(--brand); color: #fff; padding: 20px 0; display: flex; flex-direction: column; }
+.side .logo { padding: 0 20px 18px; font-weight: 700; font-size: 16px; letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.side .logo small { display: block; color: var(--accent); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px; }
+.side nav { display: flex; flex-direction: column; padding-top: 10px; flex: 1; }
+.side button { background: none; border: none; color: rgba(255,255,255,.82); text-align: left; padding: 11px 20px; font-size: 13.5px; cursor: pointer; border-left: 3px solid transparent; }
+.side button:hover { background: rgba(255,255,255,.06); color: #fff; }
+.side button.active { border-left-color: var(--accent); background: rgba(255,255,255,.08); color: #fff; font-weight: 600; }
+.side .foot { padding: 14px 20px; font-size: 11px; color: rgba(255,255,255,.45); border-top: 1px solid rgba(255,255,255,.12); }
+
+.main { padding: 26px 32px; max-width: 1200px; }
+.main h1 { font-size: 21px; margin-bottom: 4px; }
+.main .sub { color: var(--muted); margin-bottom: 20px; font-size: 13px; }
+
+.banner { padding: 10px 16px; border-radius: 8px; margin-bottom: 18px; font-size: 13px; }
+.banner.warn { background: #FFF6E0; border: 1px solid #E7CE8A; color: #7A5C00; }
+.banner.err { background: #FCEBEC; border: 1px solid #E7A6AA; color: var(--danger); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.card .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+.card .v { font-size: 22px; font-weight: 700; margin-top: 6px; }
+.card .v.ok { color: var(--ok); } .card .v.bad { color: var(--danger); }
+
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
+.panel h2 { font-size: 15px; margin-bottom: 12px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+tr:hover td { background: #FAFAF7; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.btn { background: var(--brand); color: #fff; border: none; border-radius: 7px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn:hover { opacity: .92; }
+.btn.accent { background: var(--accent); color: #1c1503; }
+.btn.ghost { background: transparent; color: var(--brand); border: 1px solid var(--line); }
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.row.end { justify-content: flex-end; }
+input, select, textarea { border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px; font-size: 13.5px; font-family: inherit; background: #fff; width: 100%; }
+input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.field { margin-bottom: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+.pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+.pill.DRAFT { background: #EEE; color: #555; }
+.pill.ISSUED, .pill.ORDERED, .pill.TRIAL, .pill.TRIALING { background: #E4EEFA; color: #1D4E89; }
+.pill.PARTIAL, .pill.PAST_DUE, .pill.pending, .pill.overdue { background: #FFF3D6; color: #8A6400; }
+.pill.PAID, .pill.RECEIVED, .pill.ACTIVE, .pill.WON, .pill.paid { background: #E2F3E7; color: var(--ok); }
+.pill.VOID, .pill.SUSPENDED, .pill.LOST, .pill.CANCELLED { background: #FBE4E5; color: var(--danger); }
+
+/* auth screens */
+.auth { min-height: 100vh; display: grid; place-items: center; background: var(--brand); }
+.auth .box { background: #fff; border-radius: 14px; padding: 34px 36px; width: 420px; max-width: 92vw; }
+.auth .brandline { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; }
+.auth h1 { font-size: 22px; margin: 6px 0 18px; }
+.auth .alt { margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+.auth .alt a { color: var(--brand); font-weight: 600; cursor: pointer; }
+.err-text { color: var(--danger); font-size: 12.5px; margin-top: 8px; }
+
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.kanban .col { background: #EFEFEA; border-radius: 10px; padding: 10px; min-height: 120px; }
+.kanban .col h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; padding: 0 4px; }
+.kanban .dealcard { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.kanban .dealcard b { display: block; font-size: 13px; }
+.kanban .dealcard span { font-size: 12px; color: var(--muted); }
+.modalbg { position: fixed; inset: 0; background: rgba(10,12,16,.5); display: grid; place-items: center; z-index: 40; }
+.modal { background: #fff; border-radius: 12px; padding: 24px 26px; width: 620px; max-width: 94vw; max-height: 88vh; overflow: auto; }
+.modal h2 { font-size: 17px; margin-bottom: 16px; }

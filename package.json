@@ -1,0 +1,9 @@
+{
+  "name": "vaka-platform",
+  "private": true,
+  "type": "module",
+  "workspaces": ["server", "web"],
+  "scripts": {
+    "build": "npm run build --workspace web"
+  }
+}
