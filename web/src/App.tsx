@@ -36,16 +36,144 @@ export default function App() {
     document.title = me?.tenant ? `${me.tenant.companyName} — VAKA OS` : "VAKA OS";
   }, [me]);
 
+  const logout = () => { setToken(null); setMe(null); setGate("landing"); };
+  const [gate, setGate] = useState<"landing" | "login" | "signup">("landing");
+
   if (!booted) return null;
-  if (!me) return <Auth onDone={refresh} />;
-  return <Shell me={me} onLogout={() => { setToken(null); setMe(null); }} />;
+  if (!me) {
+    if (gate === "landing") return <Landing onLogin={() => setGate("login")} onSignup={() => setGate("signup")} />;
+    return <Auth initialMode={gate} onBack={() => setGate("landing")} onDone={refresh} />;
+  }
+  if (!me.tenant) return <PlatformAdmin onLogout={logout} />;
+  return <Shell me={me} onLogout={logout} />;
+}
+
+// ---------------------------------------------------------------------------
+// Landing — the public home page clients see at vakaos.com
+// ---------------------------------------------------------------------------
+const LANDING_MODULES = [
+  ["CRM & Sales", "Contacts, deal pipeline and activities. Won deals convert straight into invoices — no retyping."],
+  ["Accounting", "Double-entry ledger, USD & ZWG multi-currency, VAT-ready invoices, payments, expenses and live P&L, Balance Sheet and Aged Receivables."],
+  ["Inventory", "Products, warehouses, purchase orders and a tamper-proof stock ledger that refuses to oversell."],
+  ["Your brand", "White-label: your colours, your logo, your workspace. Your staff see your business — powered quietly by VAKA OS."],
+] as const;
+
+const LANDING_PLANS = [
+  ["Starter", "$12", "1 user · 1 location"],
+  ["Growth", "$30", "3 users · 2 locations"],
+  ["Business", "$75", "10 users · 5 locations · approvals"],
+  ["Enterprise", "$150", "Unlimited users · white-label · SLA"],
+] as const;
+
+function Landing({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
+  return (
+    <div className="landing">
+      <header className="l-nav">
+        <div className="l-logo">VAKA<span> OS</span></div>
+        <div className="row">
+          <button className="btn ghost inv" onClick={onLogin}>Sign in</button>
+          <button className="btn accent" onClick={onSignup}>Start free</button>
+        </div>
+      </header>
+      <section className="l-hero">
+        <div className="l-kicker">VAKA — “build” in Shona</div>
+        <h1>The operating system for<br />Zimbabwean business.</h1>
+        <p>CRM, accounting and inventory in one place — built for USD &amp; ZWG reality,
+          VAT-ready invoicing and audit-proof records. Sign up and run your whole business today.</p>
+        <div className="row" style={{ justifyContent: "center" }}>
+          <button className="btn accent lg" onClick={onSignup}>Create your company — 3 months free</button>
+          <button className="btn ghost inv lg" onClick={onLogin}>Sign in</button>
+        </div>
+        <div className="l-trust">No card needed · Your data stays yours — export any time · Full audit trail</div>
+      </section>
+      <section className="l-grid">
+        {LANDING_MODULES.map(([t, d]) => (
+          <div className="l-card" key={t}><h3>{t}</h3><p>{d}</p></div>
+        ))}
+      </section>
+      <section className="l-pricing">
+        <h2>Simple monthly pricing</h2>
+        <p className="l-sub">Every plan starts with 3 months free. Upgrade or cancel any time.</p>
+        <div className="l-plans">
+          {LANDING_PLANS.map(([name, price, desc]) => (
+            <div className="l-plan" key={name}>
+              <div className="l-plan-name">{name}</div>
+              <div className="l-plan-price">{price}<span>/month</span></div>
+              <div className="l-plan-desc">{desc}</div>
+              <button className="btn accent" onClick={onSignup}>Start free</button>
+            </div>
+          ))}
+        </div>
+      </section>
+      <footer className="l-foot">
+        VAKA OS — flagship platform of Jonomi Digital Studio · <a href="https://jonomi.digital">jonomi.digital</a>
+      </footer>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Platform admin (Jonomi staff — users with no tenant)
+// ---------------------------------------------------------------------------
+function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () => api("/platform/tenants").then(setTenants).catch((e: any) => setMsg(e.message));
+  useEffect(() => { load(); }, []);
+  const runBilling = async () => {
+    setBusy(true); setMsg("");
+    try {
+      const r = await api("/platform/billing/run", { method: "POST", body: {} });
+      setMsg(`Billing run complete: ${JSON.stringify(r)}`.slice(0, 400));
+      load();
+    } catch (e: any) { setMsg(e.message); }
+    setBusy(false);
+  };
+  return (
+    <div className="shell">
+      <aside className="side">
+        <div className="logo">VAKA OS<small>Platform Admin</small></div>
+        <nav><button className="active">Tenants</button></nav>
+        <div className="foot">
+          Jonomi Digital Studio<br />
+          <a style={{ color: "rgba(255,255,255,.7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
+        </div>
+      </aside>
+      <main className="main">
+        <h1>Platform administration</h1>
+        <div className="sub">All client tenants running on VAKA OS.</div>
+        <div className="row" style={{ marginBottom: 14 }}>
+          <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? "Running…" : "Run monthly billing now"}</button>
+        </div>
+        {msg && <div className="banner warn">{msg}</div>}
+        <div className="panel">
+          <h2>Tenants ({tenants.length})</h2>
+          <table>
+            <thead><tr><th>Company</th><th>Subdomain</th><th>Status</th><th>Plan</th><th className="num">Users</th><th>Trial ends</th><th>Created</th></tr></thead>
+            <tbody>
+              {tenants.map((t: any) => (
+                <tr key={t.id}>
+                  <td>{t.company_name}</td><td>{t.subdomain}</td><td>{t.status}</td><td>{t.plan ?? "—"}</td>
+                  <td className="num">{t.user_count}</td>
+                  <td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td>
+                  <td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td>
+                </tr>
+              ))}
+              {!tenants.length && <tr><td colSpan={7} style={{ color: "var(--muted)" }}>No tenants yet — clients appear here when they sign up.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
-function Auth({ onDone }: { onDone: () => void }) {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; initialMode?: "login" | "signup"; onBack?: () => void }) {
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [f, setF] = useState<any>({ baseCurrency: "USD", planName: "Starter" });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
@@ -89,6 +217,7 @@ function Auth({ onDone }: { onDone: () => void }) {
         {mode === "login"
           ? <>New here? <a onClick={() => setMode("signup")}>Create your company</a></>
           : <>Already registered? <a onClick={() => setMode("login")}>Sign in</a></>}
+        {onBack && <> · <a onClick={onBack}>Back to home</a></>}
       </div>
     </div></div>
   );

@@ -89,3 +89,35 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .modalbg { position: fixed; inset: 0; background: rgba(10,12,16,.5); display: grid; place-items: center; z-index: 40; }
 .modal { background: #fff; border-radius: 12px; padding: 24px 26px; width: 620px; max-width: 94vw; max-height: 88vh; overflow: auto; }
 .modal h2 { font-size: 17px; margin-bottom: 16px; }
+
+/* ---------------------------------------------------------------------------
+   Landing page (public home at vakaos.com)
+--------------------------------------------------------------------------- */
+.landing { min-height: 100vh; background: var(--brand); color: #fff; display: flex; flex-direction: column; }
+.l-nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 40px; }
+.l-logo { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
+.l-logo span { color: var(--accent); }
+.btn.ghost.inv { color: #fff; border-color: rgba(255,255,255,.3); }
+.btn.ghost.inv:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+.btn.lg { padding: 13px 24px; font-size: 15px; }
+.l-hero { text-align: center; padding: 72px 24px 46px; max-width: 860px; margin: 0 auto; }
+.l-kicker { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.l-hero h1 { font-size: 44px; line-height: 1.12; margin-bottom: 18px; font-weight: 800; }
+.l-hero p { color: rgba(255,255,255,.75); font-size: 16.5px; line-height: 1.6; max-width: 640px; margin: 0 auto 26px; }
+.l-trust { margin-top: 18px; font-size: 12.5px; color: rgba(255,255,255,.5); }
+.l-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; padding: 30px 40px; max-width: 1180px; margin: 0 auto; width: 100%; }
+.l-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 22px; }
+.l-card h3 { color: var(--accent); font-size: 15px; margin-bottom: 8px; }
+.l-card p { color: rgba(255,255,255,.72); font-size: 13.5px; line-height: 1.55; }
+.l-pricing { text-align: center; padding: 46px 40px 30px; max-width: 1180px; margin: 0 auto; width: 100%; }
+.l-pricing h2 { font-size: 26px; margin-bottom: 6px; }
+.l-sub { color: rgba(255,255,255,.6); margin-bottom: 24px; font-size: 14px; }
+.l-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.l-plan { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 22px 18px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.l-plan-name { font-weight: 700; font-size: 15px; }
+.l-plan-price { font-size: 30px; font-weight: 800; color: var(--accent); }
+.l-plan-price span { font-size: 13px; color: rgba(255,255,255,.55); font-weight: 500; }
+.l-plan-desc { color: rgba(255,255,255,.65); font-size: 12.5px; min-height: 34px; }
+.l-foot { text-align: center; padding: 26px; font-size: 12.5px; color: rgba(255,255,255,.45); margin-top: auto; }
+.l-foot a { color: var(--accent); text-decoration: none; }
+@media (max-width: 640px) { .l-hero h1 { font-size: 31px; } .l-nav { padding: 14px 18px; } .l-grid, .l-pricing { padding-left: 18px; padding-right: 18px; } }
