@@ -1,7 +1,7 @@
 # Advanced Capability Access Model
 
-**Status:** Product permission direction; implementation pending  
-**Owner:** Product, Security, Finance, and Engineering  
+**Status:** Product permission direction; implementation pending
+**Owner:** Product, Security, Finance, and Engineering
 **Last reviewed:** 2026-07-05
 
 ## 1. Principle

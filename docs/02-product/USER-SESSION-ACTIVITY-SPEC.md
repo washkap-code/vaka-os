@@ -1,7 +1,7 @@
 # VAKA User Sessions and Activity Specification
 
-**Status:** Approved product direction; implementation pending  
-**Owner:** Product, Security, Engineering, and Data Protection  
+**Status:** Approved product direction; implementation pending
+**Owner:** Product, Security, Engineering, and Data Protection
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome
@@ -287,4 +287,3 @@ evidence.
 - Every owner view/export/revocation is itself auditable.
 - Existing tenant, permission, lifecycle, financial, stock, and export controls
   continue to pass.
-

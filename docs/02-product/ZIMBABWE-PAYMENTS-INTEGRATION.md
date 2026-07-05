@@ -1,7 +1,7 @@
 # Zimbabwe Payments Integration Strategy
 
-**Status:** Discovery and architecture direction; no provider declared live  
-**Owner:** Product, Finance, Engineering, Security, and Compliance  
+**Status:** Discovery and architecture direction; no provider declared live
+**Owner:** Product, Finance, Engineering, Security, and Compliance
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome
@@ -165,4 +165,3 @@ Before enabling a provider:
 - InnBucks merchants: https://innbucks.co.zw/index.php/home/merchants
 - RBZ NPSD Circular 03/2026:
   https://www.rbz.co.zw/documents/Regulations_Acts/2026/NPS_CIRCULAR_MARCH_2026.pdf
-

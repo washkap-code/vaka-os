@@ -1,7 +1,7 @@
 # VAKA Invoice Delivery and Receivables Specification
 
-**Status:** Approved product direction; implementation pending  
-**Owner:** Product, Finance, and Engineering  
+**Status:** Approved product direction; implementation pending
+**Owner:** Product, Finance, and Engineering
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome

@@ -2,7 +2,7 @@
 
 **Status:** Recommended commercial model; leadership validation and entitlement implementation pending
 
-**Owner:** Product, Commercial, Finance, and Engineering  
+**Owner:** Product, Commercial, Finance, and Engineering
 **Last reviewed:** 2026-07-05
 
 ## 1. Packaging principle
@@ -73,10 +73,10 @@ Therefore:
 
 ### Starter — Run the essentials
 
-**Audience:** founders, sole traders, and very small businesses  
+**Audience:** founders, sole traders, and very small businesses
 **Recommended list price:** USD 19/month, or USD 190/year
 
-**Included users:** 1  
+**Included users:** 1
 **Locations:** 1
 
 **Outcome:** Replace disconnected spreadsheets with one dependable operating
@@ -109,10 +109,10 @@ in higher tiers.
 
 ### Growth — Coordinate a growing team
 
-**Audience:** growing businesses with sales, finance, and stock responsibilities  
+**Audience:** growing businesses with sales, finance, and stock responsibilities
 **Recommended list price:** USD 69/month, or USD 690/year
 
-**Included users:** 5  
+**Included users:** 5
 **Locations:** 2
 
 **Outcome:** Coordinate people, customers, stock, and collections without losing
@@ -143,10 +143,10 @@ control.
 ### Business — Control connected operations
 
 **Audience:** established SMEs with departments, locations, approvals, and
-stronger reporting needs  
+stronger reporting needs
 **Recommended list price:** USD 249/month, or USD 2,490/year
 
-**Included users:** 15  
+**Included users:** 15
 **Locations:** 5
 
 **Outcome:** Enforce financial and operational controls across a larger team.
@@ -185,11 +185,11 @@ workflows, training, integrations, or onsite work require a quote.
 ### Enterprise — Govern a complex organisation
 
 **Audience:** larger, multi-entity, regulated, franchise, or white-label
-organisations  
+organisations
 **Recommended commercial floor:** from USD 599/month on annual agreement;
 final price by scope
 
-**Included users:** contracted  
+**Included users:** contracted
 **Locations/entities:** contracted
 
 **Outcome:** Govern complex operations with stronger identity, integration,

@@ -1,7 +1,7 @@
 # VAKA Zimbabwe Bank Connectivity Specification
 
-**Status:** Approved product direction; bank/provider onboarding pending  
-**Owner:** Product, Finance, Engineering, Security, and Compliance  
+**Status:** Approved product direction; bank/provider onboarding pending
+**Owner:** Product, Finance, Engineering, Security, and Compliance
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome
@@ -271,4 +271,3 @@ future outbound payments. Auditors remain read-only.
   https://obdx.cbz.co.zw/webhelp/Content/obdx/fileupload/servicing/fileupload.htm
 - ZB Smile&Pay developer documentation:
   https://smileandpay.zb.co.zw/documentation
-

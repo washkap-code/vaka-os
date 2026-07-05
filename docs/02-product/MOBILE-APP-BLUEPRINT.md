@@ -1,8 +1,8 @@
 # VAKA Mobile Application Blueprint
 
-**Status:** Approved product direction; implementation pending  
-**Platforms:** Apple iOS and Google Android  
-**Owner:** Product, Engineering, Security, and Operations  
+**Status:** Approved product direction; implementation pending
+**Platforms:** Apple iOS and Google Android
+**Owner:** Product, Engineering, Security, and Operations
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome

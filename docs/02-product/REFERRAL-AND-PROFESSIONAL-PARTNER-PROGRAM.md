@@ -2,7 +2,7 @@
 
 **Status:** Proposed commercial and product model; legal, tax, payout, and entitlement approval pending
 
-**Owner:** Partnerships, Product, Finance, Legal, Security, and Engineering  
+**Owner:** Partnerships, Product, Finance, Legal, Security, and Engineering
 **Last reviewed:** 2026-07-05
 
 **Implementation note (2026-07-05):** The first controlled foundation now

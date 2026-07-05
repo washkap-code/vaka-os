@@ -1,7 +1,7 @@
 # VAKA WhatsApp Integration Specification
 
-**Status:** Approved product direction; provider onboarding pending  
-**Owner:** Product, Engineering, Security, Support, and Compliance  
+**Status:** Approved product direction; provider onboarding pending
+**Owner:** Product, Engineering, Security, Support, and Compliance
 **Last reviewed:** 2026-07-05
 
 ## 1. Outcome
@@ -121,4 +121,3 @@ Drafts must retain the professional VAKA voice in every enabled language.
 
 Official WhatsApp Business Platform documentation:
 https://developers.facebook.com/docs/whatsapp/cloud-api/
-
