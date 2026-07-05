@@ -39,6 +39,8 @@ Tenant data leakage is a critical incident.
 - Prefer secure, HttpOnly, SameSite cookies where architecture supports them.
 - MFA for platform administration and sensitive roles.
 - Email verification, password reset, invitations, and session management.
+- Explicit tenant ownership and owner-only company-wide session/activity
+  visibility; ordinary administrators do not inherit it automatically.
 - Rate limiting and credential-stuffing controls.
 - Audit login, failure, reset, MFA, and privileged session events.
 
@@ -109,6 +111,10 @@ Audit:
 - integration credentials/configuration.
 
 Protect logs from alteration and unnecessary sensitive content.
+
+Company-wide activity views show material actions and security evidence rather
+than keystrokes, message bodies, or indiscriminate page-view tracking. Owner
+access, exports, and session revocations are themselves audited.
 
 ## 10. AI security
 

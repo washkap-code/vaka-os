@@ -12,6 +12,8 @@
   integration, and advanced-capability role/permission model.
 - **Internal:** Defined secure Zimbabwean bank statement import, contracted
   read-only feed, transaction matching, and reconciliation requirements.
+- **Internal:** Defined explicit tenant ownership, server-side session
+  visibility, revocation, and owner-only privacy-minimised activity history.
 
 ### Changed
 

@@ -131,14 +131,16 @@
 
 - Remove production secret fallbacks.
 - Design secure session/token lifecycle and revocation.
+- Establish explicit tenant ownership, server-side session/device records,
+  owner-only user presence, and privacy-minimised activity history.
 - Add rate limits, abuse controls, email verification, password reset, invitations, and MFA for privileged users.
 - Resolve tenant/subdomain login ambiguity.
 - Build guided company, currency, country, and owner setup.
 - Add recovery, error, and unavailable-service states.
 
-**Acceptance criteria:** Secure end-to-end onboarding; disabled/revoked users lose access; tenant is created atomically; no account enumeration; onboarding is usable on mobile.
+**Acceptance criteria:** Secure end-to-end onboarding; disabled/revoked users lose access; tenant is created atomically; no account enumeration; onboarding is usable on mobile; only the explicit Owner can access company-wide session/activity controls by default; signed-in-user and active-session counts use documented presence semantics.
 
-**Tests required:** Auth integration/E2E; abuse/rate limit; session expiry/revocation; tenant isolation; atomic rollback; accessibility; responsive; locale fallback.
+**Tests required:** Auth integration/E2E; abuse/rate limit; session expiry/rotation/revocation; owner-versus-admin access; signed-in-user/session counts; activity append-only/redaction; tenant isolation; atomic rollback; accessibility; responsive; locale fallback.
 
 **Security considerations:** Highest priority—sessions, credentials, MFA, enumeration, CORS/CSRF, audit, secrets, email tokens.
 

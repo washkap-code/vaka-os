@@ -437,6 +437,8 @@ offline/idempotency controls. See `MOBILE-APP-BLUEPRINT.md`,
 `WHATSAPP-INTEGRATION.md`, `ZIMBABWE-PAYMENTS-INTEGRATION.md`, and
 `ADVANCED-CAPABILITY-ACCESS.md`. Zimbabwean bank statement ingestion and
 reconciliation follow `BANK-CONNECTIVITY-SPEC.md`.
+Owner-only user presence, session revocation, and material activity history
+follow `USER-SESSION-ACTIVITY-SPEC.md`.
 
 ## 19. Country expansion model
 

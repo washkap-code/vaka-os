@@ -62,6 +62,8 @@ Priorities:
 - versioned database migrations;
 - backup and restore testing;
 - secure session and authentication lifecycle;
+- explicit tenant ownership, owner-only session/user presence, and material
+  activity history;
 - user invitations, role management, and MFA for sensitive administration;
 - automated build, type, test, and deployment checks;
 - frontend modularisation without a rewrite;

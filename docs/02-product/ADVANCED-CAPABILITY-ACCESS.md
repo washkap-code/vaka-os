@@ -100,10 +100,17 @@ Evolve broad existing permissions toward capabilities such as:
 - `inventory.scan`, `inventory.count`, `inventory.adjust`,
   `inventory.adjust.approve`;
 - `mobile.devices.manage`; and
+- owner-bound `tenant_activity.owner_read`,
+  `tenant_sessions.owner_manage`, and `tenant_activity.owner_export`; and
 - `integrations.manage`.
 
 Permission migration must preserve current roles and use versioned,
 reviewable changes.
+
+Company-wide user presence and activity access belongs only to the explicit
+tenant Owner by default. It is not implied by the Administrator role,
+`users.manage`, or `settings.manage`. Users may manage their own sessions
+without seeing other users’ activity.
 
 ## 5. Mandatory approval boundaries
 
