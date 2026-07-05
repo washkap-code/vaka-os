@@ -194,7 +194,7 @@
 
 **Dependencies:** Stages 1, 4–6; accountant review; migration discipline.
 
-**Tasks:** Exact-money review; receivables/payables; credit notes; statements; bank import/reconciliation; period controls; approvals; VAT configuration/reporting; document generation; expanded audit and idempotency.
+**Tasks:** Exact-money review; currency-safe dashboard ageing; receivables/payables; credit notes; statements; bank import/reconciliation; period controls; approvals; VAT configuration/reporting; tenant-branded invoice document snapshots; secure PDF generation/download; expanded audit and idempotency. Reliable invoice delivery and customer links follow the Stage 9 event/outbox and external-access controls.
 
 **Acceptance criteria:** Ledgers balance; historical records remain immutable; reports reconcile; multi-currency snapshots are preserved; reviewed VAT behavior is documented.
 

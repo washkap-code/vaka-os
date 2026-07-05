@@ -70,6 +70,8 @@ Get paid faster and understand the financial position of the business.
 - chart of accounts;
 - double-entry journal;
 - invoices, credit notes, and payments;
+- branded invoice documents, secure PDF downloads, delivery status, and
+  currency-safe receivables ageing;
 - expenses and supplier obligations;
 - accounts receivable and payable;
 - cash and bank accounts;
@@ -288,6 +290,7 @@ Give customers secure self-service access to shared business records.
 - quotations and approvals;
 - orders;
 - invoices, statements, and payment status;
+- secure invoice viewing and PDF download;
 - payments;
 - support requests;
 - shared files;

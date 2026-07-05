@@ -87,6 +87,8 @@ Priorities:
 - complete CRM workflows;
 - quotations and sales-order path;
 - stronger receivables, statements, and credit-note workflows;
+- branded invoice preview, secure PDF download, email delivery history, and
+  currency-safe dashboard ageing analysis;
 - bank import and reconciliation;
 - inventory transfers, counts, replenishment, and costing improvements;
 - procurement approvals and supplier management;
@@ -142,6 +144,7 @@ Priorities:
 - customer portal;
 - supplier portal;
 - online statements, invoices, orders, and payment status;
+- secure customer invoice links and downloadable branded PDFs;
 - supplier quotations and procurement collaboration;
 - notifications and preferences;
 - email, SMS, and WhatsApp delivery adapters;
