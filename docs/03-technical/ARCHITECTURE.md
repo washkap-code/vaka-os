@@ -166,6 +166,12 @@ The web frontend must:
 
 Future mobile apps should reuse the same API contracts and domain rules. Mobile requirements must not force business logic into device clients.
 
+The target mobile clients are downloadable iOS and Android applications with
+secure device sessions, camera/document capture, barcode/QR support, push
+notifications, encrypted minimal offline data, and idempotent queued drafts.
+OCR output remains an unposted draft until an authorised server-side workflow
+validates and approves it.
+
 ## 11. Localisation and country packs
 
 English, ChiShona, and isiNdebele are launch languages.
@@ -244,6 +250,13 @@ Use adapters for:
 - analytics;
 - AI providers; and
 - country-specific services.
+
+For Zimbabwe, the payment-adapter catalogue should evaluate Paynow as an
+initial aggregator, direct EcoCash through its official developer programme,
+InnBucks through its merchant programme, and additional licensed providers only
+after official technical and commercial verification. Provider callbacks pass
+through signature verification, an idempotent inbox, a normalised payment state
+model, and deterministic allocation/posting services.
 
 Provider code must not leak throughout domain modules. Adapters require timeouts, retries, idempotency, monitoring, and safe degradation.
 

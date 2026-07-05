@@ -430,6 +430,13 @@ Every module depends on:
 - backup and recovery; and
 - support operations.
 
+Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
+providers are shared platform capabilities. They must use named permissions,
+tenant-scoped adapters, deterministic server workflows, audit logs, and safe
+offline/idempotency controls. See `MOBILE-APP-BLUEPRINT.md`,
+`WHATSAPP-INTEGRATION.md`, `ZIMBABWE-PAYMENTS-INTEGRATION.md`, and
+`ADVANCED-CAPABILITY-ACCESS.md`.
+
 ## 19. Country expansion model
 
 Core module logic should remain country-neutral where practical.

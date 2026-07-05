@@ -96,6 +96,10 @@ Priorities:
 - Zimbabwe VAT configuration and reports;
 - ZIMRA-ready document data and numbering;
 - mobile-responsive core workflows;
+- iOS and Android application foundation for invoicing, document capture,
+  approvals, stock scanning, and constrained offline use;
+- provider-neutral payment attempts, confirmations, and reconciliation,
+  beginning with approved Zimbabwean gateway coverage;
 - WhatsApp-friendly onboarding and support entry points;
 - reliable import of existing customers, products, and opening balances; and
 - English product content managed through localisation catalogues.
@@ -148,6 +152,8 @@ Priorities:
 - supplier quotations and procurement collaboration;
 - notifications and preferences;
 - email, SMS, and WhatsApp delivery adapters;
+- tenant WhatsApp Business channel connection, shared inbox, CRM linking, and
+  governed templates;
 - payment-gateway integrations;
 - documents and secure file exchange;
 - webhooks and integration platform; and
