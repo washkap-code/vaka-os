@@ -17,6 +17,7 @@ import { postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
+import { createReferralCode, recordReferralReview } from "./referrals.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -35,6 +36,7 @@ const signupSchema = z.object({
   baseCurrency: z.enum(["USD", "ZWG"]),
   ownerEmail: z.string().email(), ownerPassword: z.string(), ownerName: z.string().min(2),
   planName: z.string().optional(),
+  referralCode: z.string().max(32).optional(),
 });
 api.post("/auth/signup", wrap(async (req) => {
   const body = signupSchema.parse(req.body);
@@ -439,6 +441,62 @@ api.get("/billing/plans", wrap(async () => db.select().from(schema.plans)));
 // ---------------------------------------------------------------------------
 // Platform admin (Jonomi staff only)
 // ---------------------------------------------------------------------------
+api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (req) => {
+  const body = z.object({
+    code: z.string().min(5).max(32),
+    program: z.enum(["GENERAL", "PROFESSIONAL"]),
+    ruleVersion: z.string().min(1).max(50),
+    referrerTenantId: z.string().uuid().optional(),
+    referrerUserId: z.string().uuid().optional(),
+    campaign: z.string().max(100).optional(),
+    expiresAt: z.coerce.date().optional(),
+  }).parse(req.body);
+  return createReferralCode({ ...body, createdBy: req.auth!.userId });
+}));
+api.get("/platform/referral-codes", requirePlatformAdmin as any, wrap(async () =>
+  db.select({
+    id: schema.referralCodes.id,
+    code: schema.referralCodes.code,
+    program: schema.referralCodes.program,
+    ruleVersion: schema.referralCodes.ruleVersion,
+    referrerTenantId: schema.referralCodes.referrerTenantId,
+    referrerUserId: schema.referralCodes.referrerUserId,
+    campaign: schema.referralCodes.campaign,
+    status: schema.referralCodes.status,
+    expiresAt: schema.referralCodes.expiresAt,
+    createdAt: schema.referralCodes.createdAt,
+  }).from(schema.referralCodes).orderBy(desc(schema.referralCodes.createdAt))));
+api.get("/platform/referral-attributions", requirePlatformAdmin as any, wrap(async () => {
+  const rows = await db.execute(sql`
+    SELECT ra.id, ra.referred_tenant_id, t.company_name, ra.program,
+           ra.rule_version, ra.captured_at, rc.code, rc.referrer_tenant_id,
+           rc.referrer_user_id, latest.decision, latest.reason_code,
+           latest.created_at AS reviewed_at
+    FROM referral_attributions ra
+    JOIN tenants t ON t.id = ra.referred_tenant_id
+    JOIN referral_codes rc ON rc.id = ra.referral_code_id
+    LEFT JOIN LATERAL (
+      SELECT decision, reason_code, created_at
+      FROM referral_review_events
+      WHERE referral_attribution_id = ra.id
+      ORDER BY created_at DESC, id DESC
+      LIMIT 1
+    ) latest ON true
+    ORDER BY ra.captured_at DESC`);
+  return (rows as any).rows;
+}));
+api.post("/platform/referral-attributions/:id/reviews", requirePlatformAdmin as any, wrap(async (req) => {
+  const body = z.object({
+    decision: z.enum(["QUALIFIED", "REJECTED", "HELD"]),
+    reasonCode: z.string().min(3).max(50),
+    notes: z.string().max(500).optional(),
+  }).parse(req.body);
+  return recordReferralReview({
+    referralAttributionId: routeParam(req, "id"),
+    ...body,
+    actorUserId: req.auth!.userId,
+  });
+}));
 api.get("/platform/tenants", requirePlatformAdmin as any, wrap(async () => {
   const rows = await db.execute(sql`
     SELECT t.id, t.company_name, t.subdomain, t.status, t.trial_ends_at, t.created_at,

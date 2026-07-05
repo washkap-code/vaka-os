@@ -6,6 +6,52 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db, schema } from "./lib.js";
 
+type ReceivableCurrency = "USD" | "ZWG";
+type AgeingBucket = "current" | "d30" | "d60" | "d90" | "d90plus";
+
+export type AgedReceivableItem = {
+  invoiceId: string;
+  number: string | null;
+  contact: string;
+  currency: ReceivableCurrency;
+  outstanding: string;
+  daysOverdue: number;
+  bucket: AgeingBucket;
+};
+
+export type CurrencyAgeing = {
+  currency: ReceivableCurrency;
+  outstanding: string;
+  overdue: string;
+  buckets: Record<AgeingBucket, string>;
+};
+
+const MONEY_PATTERN = /^-?\d+\.\d{2}$/;
+
+function toMinorUnits(value: string): bigint {
+  if (!MONEY_PATTERN.test(value)) {
+    throw new Error(`Expected exact two-decimal money value, received: ${value}`);
+  }
+  const negative = value.startsWith("-");
+  const [whole, fraction] = value.replace("-", "").split(".");
+  const minor = BigInt(whole) * 100n + BigInt(fraction);
+  return negative ? -minor : minor;
+}
+
+function fromMinorUnits(value: bigint): string {
+  const negative = value < 0n;
+  const absolute = negative ? -value : value;
+  return `${negative ? "-" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}`;
+}
+
+function ageingBucket(daysOverdue: number): AgeingBucket {
+  if (daysOverdue <= 0) return "current";
+  if (daysOverdue <= 30) return "d30";
+  if (daysOverdue <= 60) return "d60";
+  if (daysOverdue <= 90) return "d90";
+  return "d90plus";
+}
+
 /** Trial balance as at a date: per-account net debit/credit from journal lines. */
 export async function trialBalance(tenantId: string, asAt: Date) {
   const rows = await db.execute(sql`
@@ -74,23 +120,77 @@ export async function balanceSheet(tenantId: string, asAt: Date) {
 
 /** Aged receivables: outstanding issued/partial invoices bucketed by age. */
 export async function agedReceivables(tenantId: string, asAt = new Date()) {
-  const rows = await db.execute(sql`
-    SELECT i.id, i.number, i.total, i.amount_paid, i.currency, i.due_date, i.issue_date,
-           c.name AS contact_name
-    FROM invoices i JOIN contacts c ON c.id = i.contact_id
+  const result = await db.execute(sql`
+    SELECT
+      i.id,
+      i.number,
+      i.currency,
+      (i.total - i.amount_paid)::numeric(14,2)::text AS outstanding,
+      c.name AS contact_name,
+      GREATEST(
+        0,
+        FLOOR(EXTRACT(EPOCH FROM (
+          ${asAt} - COALESCE(i.due_date, i.issue_date, i.created_at)
+        )) / 86400)
+      )::int AS days_overdue
+    FROM invoices i
+    JOIN contacts c ON c.id = i.contact_id AND c.tenant_id = i.tenant_id
     WHERE i.tenant_id = ${tenantId} AND i.status IN ('ISSUED', 'PARTIAL')
-    ORDER BY i.due_date NULLS LAST
+    ORDER BY days_overdue DESC, outstanding DESC, i.id
   `);
-  const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90plus: 0 };
-  const items = (rows as any).rows.map((r: any) => {
-    const outstanding = Number(r.total) - Number(r.amount_paid);
-    const due = r.due_date ? new Date(r.due_date) : new Date(r.issue_date);
-    const age = Math.floor((asAt.getTime() - due.getTime()) / 86_400_000);
-    const bucket = age <= 0 ? "current" : age <= 30 ? "d30" : age <= 60 ? "d60" : age <= 90 ? "d90" : "d90plus";
-    (buckets as any)[bucket] += outstanding;
-    return { invoiceId: r.id, number: r.number, contact: r.contact_name, currency: r.currency, outstanding, daysOverdue: Math.max(0, age), bucket };
+  const rows = result.rows as Array<{
+    id: string;
+    number: string | null;
+    currency: ReceivableCurrency;
+    outstanding: string;
+    contact_name: string;
+    days_overdue: number;
+  }>;
+  const totals = new Map<ReceivableCurrency, {
+    outstanding: bigint;
+    overdue: bigint;
+    buckets: Record<AgeingBucket, bigint>;
+  }>();
+
+  const items: AgedReceivableItem[] = rows.map((row) => {
+    const outstanding = toMinorUnits(row.outstanding);
+    const bucket = ageingBucket(row.days_overdue);
+    const currency = totals.get(row.currency) ?? {
+      outstanding: 0n,
+      overdue: 0n,
+      buckets: { current: 0n, d30: 0n, d60: 0n, d90: 0n, d90plus: 0n },
+    };
+    currency.outstanding += outstanding;
+    if (row.days_overdue > 0) currency.overdue += outstanding;
+    currency.buckets[bucket] += outstanding;
+    totals.set(row.currency, currency);
+    return {
+      invoiceId: row.id,
+      number: row.number,
+      contact: row.contact_name,
+      currency: row.currency,
+      outstanding: row.outstanding,
+      daysOverdue: row.days_overdue,
+      bucket,
+    };
   });
-  return { items, buckets };
+
+  const currencies: CurrencyAgeing[] = [...totals.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([currency, values]) => ({
+      currency,
+      outstanding: fromMinorUnits(values.outstanding),
+      overdue: fromMinorUnits(values.overdue),
+      buckets: {
+        current: fromMinorUnits(values.buckets.current),
+        d30: fromMinorUnits(values.buckets.d30),
+        d60: fromMinorUnits(values.buckets.d60),
+        d90: fromMinorUnits(values.buckets.d90),
+        d90plus: fromMinorUnits(values.buckets.d90plus),
+      },
+    }));
+
+  return { asAt: asAt.toISOString(), currencies, items };
 }
 
 /** Cross-module dashboard: one call, live numbers from all three modules. */
@@ -111,10 +211,13 @@ export async function dashboard(tenantId: string) {
     FROM deals WHERE tenant_id = ${tenantId} AND stage NOT IN ('WON','LOST')
     GROUP BY stage
   `);
-  const overdueTotal = ar.buckets.d30 + ar.buckets.d60 + ar.buckets.d90 + ar.buckets.d90plus;
   return {
     monthToDate: { income: pl.totalIncome, expenses: pl.totalExpenses, netProfit: pl.netProfit },
-    receivables: { outstanding: ar.items.reduce((s: number, i: any) => s + i.outstanding, 0), overdue: overdueTotal },
+    receivables: {
+      asAt: ar.asAt,
+      currencies: ar.currencies,
+      attentionItems: ar.items.filter((item) => item.daysOverdue > 0).slice(0, 5),
+    },
     lowStock: (lowStock as any).rows,
     pipeline: (pipeline as any).rows,
   };

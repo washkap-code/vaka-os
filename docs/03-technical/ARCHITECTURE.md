@@ -145,6 +145,7 @@ All product clients use stable APIs:
 - future iOS/Android applications;
 - customer and supplier portals;
 - approved integrations;
+- professional partner workspaces using explicit client grants;
 - background jobs; and
 - VAKA AI tools.
 
@@ -165,6 +166,12 @@ The web frontend must:
 - keep payloads suitable for variable networks and modest devices.
 
 Future mobile apps should reuse the same API contracts and domain rules. Mobile requirements must not force business logic into device clients.
+
+The target mobile clients are downloadable iOS and Android applications with
+secure device sessions, camera/document capture, barcode/QR support, push
+notifications, encrypted minimal offline data, and idempotent queued drafts.
+OCR output remains an unposted draft until an authorised server-side workflow
+validates and approves it.
 
 ## 11. Localisation and country packs
 
@@ -245,7 +252,27 @@ Use adapters for:
 - AI providers; and
 - country-specific services.
 
+For Zimbabwe, the payment-adapter catalogue should evaluate Paynow as an
+initial aggregator, direct EcoCash through its official developer programme,
+InnBucks through its merchant programme, and additional licensed providers only
+after official technical and commercial verification. Provider callbacks pass
+through signature verification, an idempotent inbox, a normalised payment state
+model, and deterministic allocation/posting services.
+
 Provider code must not leak throughout domain modules. Adapters require timeouts, retries, idempotency, monitoring, and safe degradation.
+
+Professional partner portfolios are not ordinary tenant queries. Cross-tenant
+client access requires an explicit, revocable client grant checked on every
+request and background task. Referral attribution never grants data access.
+Commission and payout records use versioned rules, append-only ledgers,
+idempotent subscription events, approval, and reconciliation.
+
+Bank connectivity begins with versioned statement-file parsers and a
+provider-neutral transaction/reconciliation contract. Contracted APIs,
+host-to-host feeds, SFTP, or regulated aggregators plug into that contract when
+available. Browser scraping, stored internet-banking credentials, and SMS
+interception are prohibited. Read-only ingestion must be proven before any
+outbound bank-payment capability is considered.
 
 ## 15. Reliability, backups, and recovery
 

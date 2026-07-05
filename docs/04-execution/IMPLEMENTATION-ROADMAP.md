@@ -67,6 +67,11 @@
 
 **Rollback requirements:** CI/config changes are independently revertible; preserve previous local commands; no production schema/data changes.
 
+**Commercial foundation:** Before plan-restricted modules ship, establish the
+typed, versioned entitlement catalogue in `PRICING-AND-PACKAGING.md`. Public
+pricing, signup, billing, enforcement, and upgrade/downgrade behavior must use
+the same governed definitions.
+
 ## 4. Stage 2 — Brand tokens and design system foundation
 
 **Objective:** Create accessible shared tokens and primitives without redesigning product behavior.
@@ -131,14 +136,16 @@
 
 - Remove production secret fallbacks.
 - Design secure session/token lifecycle and revocation.
+- Establish explicit tenant ownership, server-side session/device records,
+  owner-only user presence, and privacy-minimised activity history.
 - Add rate limits, abuse controls, email verification, password reset, invitations, and MFA for privileged users.
 - Resolve tenant/subdomain login ambiguity.
 - Build guided company, currency, country, and owner setup.
 - Add recovery, error, and unavailable-service states.
 
-**Acceptance criteria:** Secure end-to-end onboarding; disabled/revoked users lose access; tenant is created atomically; no account enumeration; onboarding is usable on mobile.
+**Acceptance criteria:** Secure end-to-end onboarding; disabled/revoked users lose access; tenant is created atomically; no account enumeration; onboarding is usable on mobile; only the explicit Owner can access company-wide session/activity controls by default; signed-in-user and active-session counts use documented presence semantics.
 
-**Tests required:** Auth integration/E2E; abuse/rate limit; session expiry/revocation; tenant isolation; atomic rollback; accessibility; responsive; locale fallback.
+**Tests required:** Auth integration/E2E; abuse/rate limit; session expiry/rotation/revocation; owner-versus-admin access; signed-in-user/session counts; activity append-only/redaction; tenant isolation; atomic rollback; accessibility; responsive; locale fallback.
 
 **Security considerations:** Highest priority—sessions, credentials, MFA, enumeration, CORS/CSRF, audit, secrets, email tokens.
 
@@ -194,7 +201,7 @@
 
 **Dependencies:** Stages 1, 4–6; accountant review; migration discipline.
 
-**Tasks:** Exact-money review; receivables/payables; credit notes; statements; bank import/reconciliation; period controls; approvals; VAT configuration/reporting; document generation; expanded audit and idempotency.
+**Tasks:** Exact-money review; currency-safe dashboard ageing; receivables/payables; credit notes; statements; bank import/reconciliation; period controls; approvals; VAT configuration/reporting; tenant-branded invoice document snapshots; secure PDF generation/download; expanded audit and idempotency. Reliable invoice delivery and customer links follow the Stage 9 event/outbox and external-access controls.
 
 **Acceptance criteria:** Ledgers balance; historical records remain immutable; reports reconcile; multi-currency snapshots are preserved; reviewed VAT behavior is documented.
 

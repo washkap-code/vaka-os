@@ -6,7 +6,7 @@
 // =============================================================================
 import {
   pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb,
-  pgEnum, uniqueIndex, index,
+  pgEnum, uniqueIndex, index, check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -20,6 +20,7 @@ export const invoiceStatus = pgEnum("invoice_status", ["DRAFT", "ISSUED", "PARTI
 export const stockReason = pgEnum("stock_reason", ["SALE", "PURCHASE", "ADJUSTMENT", "TRANSFER_IN", "TRANSFER_OUT", "OPENING"]);
 export const poStatus = pgEnum("po_status", ["DRAFT", "ORDERED", "RECEIVED", "CANCELLED"]);
 export const subStatus = pgEnum("sub_status", ["TRIALING", "ACTIVE", "PAST_DUE", "SUSPENDED", "CLOSED"]);
+export const referralProgram = pgEnum("referral_program", ["GENERAL", "PROFESSIONAL"]);
 
 const id = () => uuid("id").primaryKey().defaultRandom();
 const createdAt = () => timestamp("created_at", { withTimezone: true }).defaultNow().notNull();
@@ -80,6 +81,58 @@ export const auditLogs = pgTable("audit_logs", {
   metadata: jsonb("metadata"),
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
+
+// Platform-level acquisition records. Referral attribution never grants access
+// to the referred tenant and is intentionally separate from client permissions.
+export const referralCodes = pgTable("referral_codes", {
+  id: id(),
+  code: text("code").notNull().unique(),
+  program: referralProgram("program").notNull(),
+  ruleVersion: text("rule_version").notNull(),
+  referrerTenantId: uuid("referrer_tenant_id").references(() => tenants.id),
+  referrerUserId: uuid("referrer_user_id").references(() => users.id),
+  campaign: text("campaign"),
+  status: text("status").default("active").notNull(), // active | disabled
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  check("referral_codes_referrer_required",
+    sql`${t.referrerTenantId} IS NOT NULL OR ${t.referrerUserId} IS NOT NULL`),
+  index("referral_codes_referrer").on(t.referrerTenantId, t.referrerUserId),
+  index("referral_codes_status").on(t.status, t.expiresAt),
+]);
+
+// One immutable first-touch attribution per referred company. Future disputes
+// use append-only review events rather than rewriting this captured source.
+export const referralAttributions = pgTable("referral_attributions", {
+  id: id(),
+  referredTenantId: uuid("referred_tenant_id").notNull().unique().references(() => tenants.id),
+  referralCodeId: uuid("referral_code_id").notNull().references(() => referralCodes.id),
+  program: referralProgram("program").notNull(),
+  ruleVersion: text("rule_version").notNull(),
+  status: text("status").default("CAPTURED").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [index("referral_attribution_code").on(t.referralCodeId, t.capturedAt)]);
+
+// Append-only internal review history. Current qualification state is derived
+// from the latest event; prior decisions remain available for disputes/audit.
+export const referralReviewEvents = pgTable("referral_review_events", {
+  id: id(),
+  referralAttributionId: uuid("referral_attribution_id").notNull()
+    .references(() => referralAttributions.id),
+  decision: text("decision").notNull(), // PENDING | QUALIFIED | REJECTED | HELD
+  reasonCode: text("reason_code").notNull(),
+  notes: text("notes"),
+  actorUserId: uuid("actor_user_id").references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  check("referral_review_decision_valid",
+    sql`${t.decision} IN ('PENDING', 'QUALIFIED', 'REJECTED', 'HELD')`),
+  check("referral_review_reason_valid",
+    sql`${t.reasonCode} ~ '^[A-Z][A-Z0-9_]{2,49}$'`),
+  index("referral_review_history").on(t.referralAttributionId, t.createdAt),
+]);
 
 // Per-tenant sequential document numbering (invoices, POs, payments)
 export const numberSequences = pgTable("number_sequences", {

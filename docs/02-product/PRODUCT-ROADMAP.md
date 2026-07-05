@@ -62,6 +62,8 @@ Priorities:
 - versioned database migrations;
 - backup and restore testing;
 - secure session and authentication lifecycle;
+- explicit tenant ownership, owner-only session/user presence, and material
+  activity history;
 - user invitations, role management, and MFA for sensitive administration;
 - automated build, type, test, and deployment checks;
 - frontend modularisation without a rewrite;
@@ -87,13 +89,21 @@ Priorities:
 - complete CRM workflows;
 - quotations and sales-order path;
 - stronger receivables, statements, and credit-note workflows;
+- branded invoice preview, secure PDF download, email delivery history, and
+  currency-safe dashboard ageing analysis;
 - bank import and reconciliation;
+- secure Zimbabwean bank statement imports, contracted read-only feeds where
+  available, payment matching, and reconciliation evidence;
 - inventory transfers, counts, replenishment, and costing improvements;
 - procurement approvals and supplier management;
 - useful management reporting and exports;
 - Zimbabwe VAT configuration and reports;
 - ZIMRA-ready document data and numbering;
 - mobile-responsive core workflows;
+- iOS and Android application foundation for invoicing, document capture,
+  approvals, stock scanning, and constrained offline use;
+- provider-neutral payment attempts, confirmations, and reconciliation,
+  beginning with approved Zimbabwean gateway coverage;
 - WhatsApp-friendly onboarding and support entry points;
 - reliable import of existing customers, products, and opening balances; and
 - English product content managed through localisation catalogues.
@@ -141,10 +151,15 @@ Priorities:
 
 - customer portal;
 - supplier portal;
+- professional partner accounts, consent-based client portfolios, referral
+  attribution, and commission statements;
 - online statements, invoices, orders, and payment status;
+- secure customer invoice links and downloadable branded PDFs;
 - supplier quotations and procurement collaboration;
 - notifications and preferences;
 - email, SMS, and WhatsApp delivery adapters;
+- tenant WhatsApp Business channel connection, shared inbox, CRM linking, and
+  governed templates;
 - payment-gateway integrations;
 - documents and secure file exchange;
 - webhooks and integration platform; and
@@ -248,6 +263,11 @@ The following are not optional side projects:
 - import/export;
 - performance and scalability; and
 - professional legal, tax, accounting, payroll, and regulatory review.
+- governed pricing, plan versioning, and server-side entitlements.
+
+Package eligibility does not equal feature availability. Starter, Growth,
+Business, and Enterprise definitions follow `PRICING-AND-PACKAGING.md`; a
+capability remains planned until its implementation and release gates pass.
 
 ## 7. Prioritisation framework
 

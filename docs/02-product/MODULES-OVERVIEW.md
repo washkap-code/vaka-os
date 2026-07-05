@@ -70,6 +70,8 @@ Get paid faster and understand the financial position of the business.
 - chart of accounts;
 - double-entry journal;
 - invoices, credit notes, and payments;
+- branded invoice documents, secure PDF downloads, delivery status, and
+  currency-safe receivables ageing;
 - expenses and supplier obligations;
 - accounts receivable and payable;
 - cash and bank accounts;
@@ -288,6 +290,7 @@ Give customers secure self-service access to shared business records.
 - quotations and approvals;
 - orders;
 - invoices, statements, and payment status;
+- secure invoice viewing and PDF download;
 - payments;
 - support requests;
 - shared files;
@@ -426,6 +429,21 @@ Every module depends on:
 - observability;
 - backup and recovery; and
 - support operations.
+
+Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
+providers are shared platform capabilities. They must use named permissions,
+tenant-scoped adapters, deterministic server workflows, audit logs, and safe
+offline/idempotency controls. See `MOBILE-APP-BLUEPRINT.md`,
+`WHATSAPP-INTEGRATION.md`, `ZIMBABWE-PAYMENTS-INTEGRATION.md`, and
+`ADVANCED-CAPABILITY-ACCESS.md`. Zimbabwean bank statement ingestion and
+reconciliation follow `BANK-CONNECTIVITY-SPEC.md`.
+Owner-only user presence, session revocation, and material activity history
+follow `USER-SESSION-ACTIVITY-SPEC.md`.
+Commercial availability and plan entitlements follow
+`PRICING-AND-PACKAGING.md`; documentation alone does not enable a feature.
+Referral attribution, professional practice accounts, client portfolios, and
+commission/payout controls follow
+`REFERRAL-AND-PROFESSIONAL-PARTNER-PROGRAM.md`.
 
 ## 19. Country expansion model
 

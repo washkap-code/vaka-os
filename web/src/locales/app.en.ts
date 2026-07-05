@@ -1,0 +1,33 @@
+export const appEnglish = {
+  auth: {
+    referralCode: "Referral code (optional)",
+    referralPlaceholder: "VAKA-XXXXX",
+    referralHelp: "A referral records who introduced your company. It does not grant them access to your workspace.",
+  },
+  dashboard: {
+    loading: "Loading…",
+    title: "Dashboard",
+    subtitle: "Live across CRM, Accounting and Inventory — month to date",
+    income: "Income (MTD)",
+    expenses: "Expenses (MTD)",
+    netProfit: "Net profit (MTD)",
+    receivablesTitle: "Receivables ageing",
+    receivablesAsAt: "As at",
+    outstanding: "Outstanding",
+    overdue: "Overdue",
+    noReceivables: "No outstanding receivables.",
+    attentionTitle: "Overdue invoices requiring attention",
+    noAttention: "No overdue invoices require attention.",
+    invoice: "Invoice",
+    customer: "Customer",
+    amount: "Outstanding",
+    daysOverdue: "Days overdue",
+    buckets: {
+      current: "Current",
+      d30: "1–30 days",
+      d60: "31–60 days",
+      d90: "61–90 days",
+      d90plus: "90+ days",
+    },
+  },
+} as const;

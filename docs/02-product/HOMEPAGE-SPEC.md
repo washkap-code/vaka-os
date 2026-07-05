@@ -368,6 +368,13 @@ Plans should identify the customer:
 - **Business:** established companies
 - **Enterprise:** larger and more complex organisations
 
+Plan outcomes, limits, live/planned labels, add-ons, and entitlements must
+follow `PRICING-AND-PACKAGING.md`. The homepage must not describe a planned
+capability as included and live merely because its future tier is known.
+Recommended revised prices remain unpublished until leadership validation,
+cost/margin review, entitlement enforcement, billing migration, and an explicit
+go-live decision.
+
 Each plan should show:
 
 - price;
