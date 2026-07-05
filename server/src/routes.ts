@@ -58,13 +58,20 @@ api.use(authenticate as any, lifecycleGate as any);
 
 api.get("/me", wrap(async (req) => {
   const t = (req as any).tenant;
+  const [currentUser] = await db.select({
+    id: schema.users.id,
+    email: schema.users.email,
+    fullName: schema.users.fullName,
+  }).from(schema.users).where(eq(schema.users.id, req.auth!.userId));
   return {
     ...req.auth,
+    user: currentUser,
     tenant: t ? {
       id: t.id, companyName: t.companyName, subdomain: t.subdomain, status: t.status,
       baseCurrency: t.baseCurrency, trialEndsAt: t.trialEndsAt,
       brandPrimaryColor: t.brandPrimaryColor, brandSecondaryColor: t.brandSecondaryColor,
-      logoUrl: t.logoUrl,
+      logoUrl: t.logoUrl, taxNumber: t.taxNumber, vatNumber: t.vatNumber,
+      registrationNumber: t.registrationNumber, physicalAddress: t.physicalAddress,
     } : null,
   };
 }));
@@ -79,16 +86,40 @@ api.post("/auth/change-password", wrap(async (req) => {
 
 api.use(requireCompletedPasswordChange as any);
 
+api.patch("/profile", wrap(async (req) => {
+  const body = z.object({ fullName: z.string().trim().min(2).max(100) }).parse(req.body);
+  const [updated] = await db.update(schema.users).set(body)
+    .where(eq(schema.users.id, req.auth!.userId))
+    .returning({ id: schema.users.id, email: schema.users.email, fullName: schema.users.fullName });
+  if (req.auth!.tenantId) {
+    await audit(db, req.auth!.tenantId, req.auth!.userId,
+      "profile.updated", "user", req.auth!.userId);
+  } else {
+    await db.insert(schema.platformAuditLogs).values({
+      userId: req.auth!.userId,
+      action: "platform_admin.profile_updated",
+    });
+  }
+  return updated;
+}));
+
 // ---------------------------------------------------------------------------
 // Tenant settings & branding (white-label)
 // ---------------------------------------------------------------------------
 api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async (req) => {
   const body = z.object({
-    logoUrl: z.string().url().optional(),
+    companyName: z.string().trim().min(2).max(160).optional(),
+    logoUrl: z.union([
+      z.string().url().refine((value) => new URL(value).protocol === "https:", "Logo URL must use HTTPS"),
+      z.literal(""),
+    ]).optional()
+      .transform((value) => value === "" ? null : value),
     brandPrimaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
     brandSecondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-    taxNumber: z.string().optional(), vatNumber: z.string().optional(),
-    registrationNumber: z.string().optional(), physicalAddress: z.string().optional(),
+    taxNumber: z.string().trim().max(100).optional(),
+    vatNumber: z.string().trim().max(100).optional(),
+    registrationNumber: z.string().trim().max(100).optional(),
+    physicalAddress: z.string().trim().max(500).optional(),
   }).parse(req.body);
   const tid = tenantId(req);
   const [updated] = await db.update(schema.tenants).set(body).where(eq(schema.tenants.id, tid)).returning();

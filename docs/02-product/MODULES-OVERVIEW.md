@@ -389,7 +389,7 @@ Configure VAKA without changing core code or weakening controls.
 
 ## 17. White-label branding
 
-**Status:** Partial
+**Status:** Partial; profile/company Settings foundation available
 
 ### Outcome
 
@@ -407,6 +407,9 @@ Allow approved organisations to present VAKA-powered experiences consistently un
 - “Powered by VAKA” policy.
 
 Semantic security/status colours must not be replaced by inaccessible tenant branding.
+
+The full behaviour, managed uploads, document snapshots, branded sign-in and
+custom-domain safeguards follow `TENANT-CUSTOMISATION-AND-WHITE-LABEL.md`.
 
 ## 18. Shared platform capabilities
 

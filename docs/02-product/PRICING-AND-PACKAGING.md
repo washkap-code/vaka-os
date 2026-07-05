@@ -200,6 +200,9 @@ support, branding, and deployment controls.
 - negotiated user, company/entity, and location limits;
 - multi-entity and consolidation capability when released;
 - white-label branding, custom domains, documents, emails, and portals;
+- managed company identity, logo upload, branded workspace/login, document
+  templates and communication branding subject to verified-domain and security
+  controls;
 - single sign-on and automated user provisioning when released;
 - advanced API, webhook, integration, and data-export limits;
 - dedicated bank/payment/provider integration options;
