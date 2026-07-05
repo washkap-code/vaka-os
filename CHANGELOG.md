@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Security:** Added forced first-login password changes for temporary
+  credentials, server-side route enforcement, and platform password-change
+  audit evidence.
 - **Referral foundation:** Added platform-managed codes, immutable
   transactional signup attribution, rule-version snapshots, self-referral
   protection, tenant audit evidence, and referral-link signup capture. This

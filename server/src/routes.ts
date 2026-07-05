@@ -9,7 +9,8 @@ import { and, eq, desc, sql } from "drizzle-orm";
 import { db, schema, badRequest, notFound, audit, nextDocNumber } from "./lib.js";
 import {
   AuthedRequest, authenticate, lifecycleGate, requirePermission,
-  requirePlatformAdmin, tenantId, signupTenant, login,
+  requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
+  requireCompletedPasswordChange,
 } from "./auth.js";
 import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
@@ -67,6 +68,16 @@ api.get("/me", wrap(async (req) => {
     } : null,
   };
 }));
+
+api.post("/auth/change-password", wrap(async (req) => {
+  const body = z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(12).max(256),
+  }).parse(req.body);
+  return changePassword({ userId: req.auth!.userId, ...body });
+}));
+
+api.use(requireCompletedPasswordChange as any);
 
 // ---------------------------------------------------------------------------
 // Tenant settings & branding (white-label)

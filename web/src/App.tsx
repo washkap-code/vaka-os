@@ -11,7 +11,7 @@ import { appEnglish } from "./locales/app.en";
 // ============================================================================
 
 type Me = {
-  userId: string; permissions: string[]; accessLevel: string;
+  userId: string; permissions: string[]; accessLevel: string; mustChangePassword: boolean;
   tenant: {
     id: string; companyName: string; subdomain: string; status: string;
     baseCurrency: "USD" | "ZWG"; trialEndsAt: string;
@@ -73,8 +73,64 @@ export default function App() {
     if (gate === "landing") return <Landing onLogin={() => setGate("login")} onSignup={() => setGate("signup")} />;
     return <Auth initialMode={gate} onBack={() => setGate("landing")} onDone={refresh} />;
   }
+  if (me.mustChangePassword) return <PasswordChange onDone={refresh} onLogout={logout} />;
   if (!me.tenant) return <PlatformAdmin onLogout={logout} />;
   return <Shell me={me} onLogout={logout} />;
+}
+
+function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: () => void }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setErr("");
+    if (newPassword !== confirmPassword) {
+      setErr(appEnglish.auth.passwordMismatch);
+      return;
+    }
+    setBusy(true);
+    try {
+      await api("/auth/change-password", {
+        method: "POST",
+        body: { currentPassword, newPassword },
+      });
+      await onDone();
+    } catch (error: any) {
+      setErr(error.message);
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div className="auth"><div className="box">
+      <div className="brandline">VAKA Operating System</div>
+      <h1>{appEnglish.auth.changeTemporaryPassword}</h1>
+      <p>{appEnglish.auth.changeTemporaryPasswordHelp}</p>
+      <div className="field">
+        <label>{appEnglish.auth.temporaryPassword}</label>
+        <input type="password" autoComplete="current-password" value={currentPassword}
+          onChange={(event) => setCurrentPassword(event.target.value)} />
+      </div>
+      <div className="field">
+        <label>{appEnglish.auth.newPassword}</label>
+        <input type="password" autoComplete="new-password" value={newPassword}
+          onChange={(event) => setNewPassword(event.target.value)} />
+      </div>
+      <div className="field">
+        <label>{appEnglish.auth.confirmPassword}</label>
+        <input type="password" autoComplete="new-password" value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)} />
+      </div>
+      <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
+        {busy ? appEnglish.auth.changingPassword : appEnglish.auth.changePassword}
+      </button>
+      {err && <div className="err-text">{err}</div>}
+      <div className="alt"><a onClick={onLogout}>{appEnglish.auth.signOut}</a></div>
+    </div></div>
+  );
 }
 
 // ---------------------------------------------------------------------------
