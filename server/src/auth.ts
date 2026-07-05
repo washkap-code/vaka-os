@@ -21,6 +21,7 @@ const ACCESS_TTL = "1h";
 export interface AuthedRequest extends Request {
   auth?: {
     userId: string; tenantId: string | null; isPlatformAdmin: boolean;
+    mustChangePassword: boolean;
     permissions: string[]; accessLevel: "full" | "readonly" | "export_only";
   };
 }
@@ -113,7 +114,11 @@ export async function login(email: string, password: string, subdomain?: string)
     { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin },
     JWT_SECRET, { expiresIn: ACCESS_TTL },
   );
-  return { token, user: { id: user.id, email: user.email, fullName: user.fullName, tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin } };
+  return { token, user: {
+    id: user.id, email: user.email, fullName: user.fullName,
+    tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
+    mustChangePassword: user.mustChangePassword,
+  } };
 }
 
 // ---------------------------------------------------------------------------
@@ -143,10 +148,56 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
     }
     req.auth = {
       userId: user.id, tenantId: user.tenantId,
-      isPlatformAdmin: user.isPlatformAdmin, permissions, accessLevel,
+      isPlatformAdmin: user.isPlatformAdmin,
+      mustChangePassword: user.mustChangePassword,
+      permissions, accessLevel,
     };
     next();
   } catch (e) { next(e); }
+}
+
+export function requireCompletedPasswordChange(req: AuthedRequest, _res: Response, next: NextFunction) {
+  if (!req.auth?.mustChangePassword) return next();
+  next(forbidden("Password change required before continuing"));
+}
+
+export async function changePassword(opts: {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+}) {
+  if (opts.newPassword.length < 12) {
+    throw badRequest("New password must be at least 12 characters");
+  }
+  if (opts.currentPassword === opts.newPassword) {
+    throw badRequest("New password must be different from the temporary password");
+  }
+
+  return db.transaction(async (tx) => {
+    const [user] = await tx.select().from(schema.users).where(eq(schema.users.id, opts.userId));
+    if (!user || user.status !== "active") throw unauthorized();
+    if (!await bcrypt.compare(opts.currentPassword, user.passwordHash)) {
+      throw unauthorized("Current password is incorrect");
+    }
+
+    await tx.update(schema.users).set({
+      passwordHash: await bcrypt.hash(opts.newPassword, 12),
+      mustChangePassword: false,
+    }).where(eq(schema.users.id, user.id));
+
+    if (user.tenantId) {
+      await audit(tx, user.tenantId, user.id, "security.password_changed", "user", user.id, {
+        forcedChangeCompleted: user.mustChangePassword,
+      });
+    } else {
+      await tx.insert(schema.platformAuditLogs).values({
+        userId: user.id,
+        action: "platform_admin.password_changed",
+        metadata: { forcedChangeCompleted: user.mustChangePassword },
+      });
+    }
+    return { changed: true };
+  });
 }
 
 /** Lifecycle gate: suspended tenants are read-only (+ billing + export). */

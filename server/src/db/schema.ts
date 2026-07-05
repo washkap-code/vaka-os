@@ -59,9 +59,18 @@ export const users = pgTable("users", {
   roleId: uuid("role_id"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
   status: text("status").default("active").notNull(), // active | invited | disabled
+  mustChangePassword: boolean("must_change_password").default(false).notNull(),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("users_tenant_email").on(t.tenantId, t.email)]);
+
+export const platformAuditLogs = pgTable("platform_audit_logs", {
+  id: id(),
+  userId: uuid("user_id").references(() => users.id),
+  action: text("action").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: createdAt(),
+}, (t) => [index("platform_audit_time").on(t.createdAt)]);
 
 export const roles = pgTable("roles", {
   id: id(),
