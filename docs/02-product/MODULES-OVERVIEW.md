@@ -441,6 +441,9 @@ Owner-only user presence, session revocation, and material activity history
 follow `USER-SESSION-ACTIVITY-SPEC.md`.
 Commercial availability and plan entitlements follow
 `PRICING-AND-PACKAGING.md`; documentation alone does not enable a feature.
+Referral attribution, professional practice accounts, client portfolios, and
+commission/payout controls follow
+`REFERRAL-AND-PROFESSIONAL-PARTNER-PROGRAM.md`.
 
 ## 19. Country expansion model
 

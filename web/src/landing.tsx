@@ -352,6 +352,23 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
           <ModuleExplorer copy={copy} onInteraction={track} />
         </section>
 
+        <section className="v-section v-roadmap" id="roadmap">
+          <div className="v-section-heading">
+            <span className="v-eyebrow v-eyebrow-dark">{copy.enhanced.eyebrow}</span>
+            <h2>{copy.enhanced.title}</h2>
+            <p>{copy.enhanced.description}</p>
+          </div>
+          <div className="v-roadmap-grid">
+            {copy.enhanced.items.map((item) => (
+              <article className="v-roadmap-card" key={item.title}>
+                <span className="v-planned">{copy.enhanced.status}</span>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="v-section v-ai" id="ai">
           <div className="v-ai-copy">
             <span className="v-eyebrow">{copy.ai.eyebrow}</span>
@@ -406,6 +423,34 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
           <button className="v-button v-button-dark" onClick={() => go("product")}>{copy.proof.cta}</button>
         </section>
 
+        <section className="v-section v-partners" id="partners">
+          <div className="v-partner-copy">
+            <span className="v-eyebrow">{copy.partners.eyebrow}</span>
+            <h2>{copy.partners.title}</h2>
+            <p>{copy.partners.description}</p>
+            <ul>{copy.partners.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}</ul>
+            <div className="v-referral-note"><b>{copy.partners.referralTitle}</b><p>{copy.partners.referralDescription}</p></div>
+            <small>{copy.partners.notice}</small>
+            <button className="v-button v-button-gold" type="button" disabled>{copy.partners.cta}</button>
+          </div>
+          <div className="v-partner-model">
+            <h3>{copy.partners.commissionTitle}</h3>
+            <div className="v-commission-grid">
+              {copy.partners.commission.map((item) => <span key={item}>{item}</span>)}
+            </div>
+            <h3>{copy.partners.tiersTitle}</h3>
+            <div className="v-partner-tiers">
+              {copy.partners.tiers.map((tier) => (
+                <article key={tier.name}>
+                  <b>{tier.name}</b>
+                  <strong>{tier.price}<small>/month</small></strong>
+                  <p>{tier.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="v-section v-pricing" id="pricing">
           <div className="v-section-heading v-heading-centre">
             <span className="v-eyebrow v-eyebrow-dark">{copy.pricing.eyebrow}</span>
@@ -420,6 +465,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
                 <p>{plan.audience}</p>
                 <div className="v-price"><strong>{plan.price}</strong><span>{copy.pricing.period}</span></div>
                 <small>{plan.includes}</small>
+                <em>{plan.note}</em>
                 <button className={`v-button ${index === 1 ? "v-button-gold" : "v-button-dark"}`} onClick={signup}>{copy.pricing.cta}</button>
               </article>
             ))}

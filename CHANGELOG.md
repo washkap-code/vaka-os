@@ -20,6 +20,9 @@
 - **Internal:** Rebased recommended package prices to USD 19, USD 69, USD 249,
   and Enterprise from USD 599/month, with implementation and provider usage
   separated; prices remain proposed pending commercial validation.
+- **Internal:** Defined general referral and Professional Partner account
+  models, consent-based client portfolios, recurring commission hypotheses,
+  append-only commission accounting, and controlled payouts.
 
 ### Changed
 

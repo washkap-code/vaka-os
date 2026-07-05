@@ -386,3 +386,6 @@ Requirements:
 - Zoho One pricing: https://www.zoho.com/one/pricing/
 - Sage South Africa 2025–2026 price list:
   https://mcacomp.co.za/documents/sage-price-list-2025-2026.pdf
+
+Professional Partner account pricing and recurring commission hypotheses are
+defined separately in `REFERRAL-AND-PROFESSIONAL-PARTNER-PROGRAM.md`.

@@ -145,6 +145,7 @@ All product clients use stable APIs:
 - future iOS/Android applications;
 - customer and supplier portals;
 - approved integrations;
+- professional partner workspaces using explicit client grants;
 - background jobs; and
 - VAKA AI tools.
 
@@ -259,6 +260,12 @@ through signature verification, an idempotent inbox, a normalised payment state
 model, and deterministic allocation/posting services.
 
 Provider code must not leak throughout domain modules. Adapters require timeouts, retries, idempotency, monitoring, and safe degradation.
+
+Professional partner portfolios are not ordinary tenant queries. Cross-tenant
+client access requires an explicit, revocable client grant checked on every
+request and background task. Referral attribution never grants data access.
+Commission and payout records use versioned rules, append-only ledgers,
+idempotent subscription events, approval, and reconciliation.
 
 Bank connectivity begins with versioned statement-file parsers and a
 provider-neutral transaction/reconciliation contract. Contracted APIs,

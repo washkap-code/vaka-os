@@ -151,6 +151,8 @@ Priorities:
 
 - customer portal;
 - supplier portal;
+- professional partner accounts, consent-based client portfolios, referral
+  attribution, and commission statements;
 - online statements, invoices, orders, and payment status;
 - secure customer invoice links and downloadable branded PDFs;
 - supplier quotations and procurement collaboration;
