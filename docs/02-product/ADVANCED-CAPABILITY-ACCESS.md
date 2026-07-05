@@ -62,6 +62,9 @@ read-only, **—** no default access.
 | Capture supplier invoice/receipt | Y | A | Y | Y | — | Y | A | A | — | R |
 | Approve/post captured document | Y | — | Y | A | — | — | — | — | — | R |
 | Configure company logo/templates | Y | Y | — | — | — | — | — | — | — | R |
+| Connect/import bank account | Y | A + MFA | A | A | — | — | — | — | — | R |
+| Prepare bank reconciliation | Y | — | Y | Y | — | — | — | limited | — | R |
+| Approve reconciliation exception | Y + approval | — | Y + approval | — | — | — | — | — | — | R |
 | Connect payment provider | Y | A + MFA | — | — | — | — | — | — | — | R |
 | View payment confirmations | Y | A | Y | Y | limited | limited | — | Y | limited | R |
 | Allocate/reconcile payment | Y | — | Y | Y | — | — | — | limited | — | R |
@@ -88,6 +91,9 @@ Evolve broad existing permissions toward capabilities such as:
 - `branding.manage`;
 - `payments.read`, `payments.initiate`, `payments.allocate`,
   `payments.reconcile`, `payments.refund`, `payments.configure`;
+- `bank_accounts.read`, `bank_connections.manage`,
+  `bank_statements.import`, `bank_transactions.match`,
+  `bank_reconciliation.prepare`, and `bank_reconciliation.approve`;
 - `communications.read`, `communications.send`,
   `communications.templates.manage`, `communications.configure`,
   `communications.bulk_send`;
@@ -123,4 +129,3 @@ reviewable changes.
   policy.
 - Shared POS/warehouse devices use constrained device/session modes and never a
   shared owner credential.
-

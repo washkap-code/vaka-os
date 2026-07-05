@@ -10,6 +10,8 @@
 - **Internal:** Defined the iOS/Android mobile direction, camera-assisted
   document capture, Zimbabwe payment-provider strategy, governed WhatsApp
   integration, and advanced-capability role/permission model.
+- **Internal:** Defined secure Zimbabwean bank statement import, contracted
+  read-only feed, transaction matching, and reconciliation requirements.
 
 ### Changed
 

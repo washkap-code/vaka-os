@@ -36,6 +36,7 @@ as the VAKA web application.
 - create, preview, issue, download, and share authorised invoices;
 - share invoices through approved email and WhatsApp delivery workflows;
 - receivables ageing and payment-status notifications;
+- bank-statement upload, connection freshness, and reconciliation exceptions;
 - camera capture of supplier invoices and receipts into a review queue;
 - expense draft creation from a captured document;
 - mobile stock lookup, barcode/QR scanning, counts, and approved adjustments;
@@ -50,6 +51,7 @@ as the VAKA web application.
 
 - quotations, sales orders, delivery notes, and customer signatures;
 - payment links and interoperable QR collection;
+- review of suggested bank-transaction matches within role and amount limits;
 - customer statement delivery;
 - purchase-order receipt with camera evidence;
 - POS companion mode, till/cash-up workflows, and receipt delivery;
@@ -170,4 +172,3 @@ force web components into native interfaces.
 - successful operation under constrained connectivity;
 - mobile task completion and crash-free sessions; and
 - support incidents involving permissions, sync, or document mismatch.
-

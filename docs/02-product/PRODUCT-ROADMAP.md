@@ -90,6 +90,8 @@ Priorities:
 - branded invoice preview, secure PDF download, email delivery history, and
   currency-safe dashboard ageing analysis;
 - bank import and reconciliation;
+- secure Zimbabwean bank statement imports, contracted read-only feeds where
+  available, payment matching, and reconciliation evidence;
 - inventory transfers, counts, replenishment, and costing improvements;
 - procurement approvals and supplier management;
 - useful management reporting and exports;

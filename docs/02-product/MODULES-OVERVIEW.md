@@ -435,7 +435,8 @@ providers are shared platform capabilities. They must use named permissions,
 tenant-scoped adapters, deterministic server workflows, audit logs, and safe
 offline/idempotency controls. See `MOBILE-APP-BLUEPRINT.md`,
 `WHATSAPP-INTEGRATION.md`, `ZIMBABWE-PAYMENTS-INTEGRATION.md`, and
-`ADVANCED-CAPABILITY-ACCESS.md`.
+`ADVANCED-CAPABILITY-ACCESS.md`. Zimbabwean bank statement ingestion and
+reconciliation follow `BANK-CONNECTIVITY-SPEC.md`.
 
 ## 19. Country expansion model
 

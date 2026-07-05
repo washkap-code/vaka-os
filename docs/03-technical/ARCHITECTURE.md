@@ -260,6 +260,13 @@ model, and deterministic allocation/posting services.
 
 Provider code must not leak throughout domain modules. Adapters require timeouts, retries, idempotency, monitoring, and safe degradation.
 
+Bank connectivity begins with versioned statement-file parsers and a
+provider-neutral transaction/reconciliation contract. Contracted APIs,
+host-to-host feeds, SFTP, or regulated aggregators plug into that contract when
+available. Browser scraping, stored internet-banking credentials, and SMS
+interception are prohibited. Read-only ingestion must be proven before any
+outbound bank-payment capability is considered.
+
 ## 15. Reliability, backups, and recovery
 
 - Define service objectives for critical workflows.
