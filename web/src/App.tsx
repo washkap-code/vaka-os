@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, fmt, getToken, setToken } from "./api";
+import { Landing } from "./landing";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -46,70 +47,6 @@ export default function App() {
   }
   if (!me.tenant) return <PlatformAdmin onLogout={logout} />;
   return <Shell me={me} onLogout={logout} />;
-}
-
-// ---------------------------------------------------------------------------
-// Landing — the public home page clients see at vakaos.com
-// ---------------------------------------------------------------------------
-const LANDING_MODULES = [
-  ["CRM & Sales", "Contacts, deal pipeline and activities. Won deals convert straight into invoices — no retyping."],
-  ["Accounting", "Double-entry ledger, USD & ZWG multi-currency, VAT-ready invoices, payments, expenses and live P&L, Balance Sheet and Aged Receivables."],
-  ["Inventory", "Products, warehouses, purchase orders and a tamper-proof stock ledger that refuses to oversell."],
-  ["Your brand", "White-label: your colours, your logo, your workspace. Your staff see your business — powered quietly by VAKA OS."],
-] as const;
-
-const LANDING_PLANS = [
-  ["Starter", "$12", "1 user · 1 location"],
-  ["Growth", "$30", "3 users · 2 locations"],
-  ["Business", "$75", "10 users · 5 locations · approvals"],
-  ["Enterprise", "$150", "Unlimited users · white-label · SLA"],
-] as const;
-
-function Landing({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
-  return (
-    <div className="landing">
-      <header className="l-nav">
-        <div className="l-logo">VAKA<span> OS</span></div>
-        <div className="row">
-          <button className="btn ghost inv" onClick={onLogin}>Sign in</button>
-          <button className="btn accent" onClick={onSignup}>Start free</button>
-        </div>
-      </header>
-      <section className="l-hero">
-        <div className="l-kicker">VAKA — “build” in Shona</div>
-        <h1>The operating system for<br />Zimbabwean business.</h1>
-        <p>CRM, accounting and inventory in one place — built for USD &amp; ZWG reality,
-          VAT-ready invoicing and audit-proof records. Sign up and run your whole business today.</p>
-        <div className="row" style={{ justifyContent: "center" }}>
-          <button className="btn accent lg" onClick={onSignup}>Create your company — 3 months free</button>
-          <button className="btn ghost inv lg" onClick={onLogin}>Sign in</button>
-        </div>
-        <div className="l-trust">No card needed · Your data stays yours — export any time · Full audit trail</div>
-      </section>
-      <section className="l-grid">
-        {LANDING_MODULES.map(([t, d]) => (
-          <div className="l-card" key={t}><h3>{t}</h3><p>{d}</p></div>
-        ))}
-      </section>
-      <section className="l-pricing">
-        <h2>Simple monthly pricing</h2>
-        <p className="l-sub">Every plan starts with 3 months free. Upgrade or cancel any time.</p>
-        <div className="l-plans">
-          {LANDING_PLANS.map(([name, price, desc]) => (
-            <div className="l-plan" key={name}>
-              <div className="l-plan-name">{name}</div>
-              <div className="l-plan-price">{price}<span>/month</span></div>
-              <div className="l-plan-desc">{desc}</div>
-              <button className="btn accent" onClick={onSignup}>Start free</button>
-            </div>
-          ))}
-        </div>
-      </section>
-      <footer className="l-foot">
-        VAKA OS — flagship platform of Jonomi Digital Studio · <a href="https://jonomi.digital">jonomi.digital</a>
-      </footer>
-    </div>
-  );
 }
 
 // ---------------------------------------------------------------------------

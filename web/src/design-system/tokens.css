@@ -1,0 +1,188 @@
+/*
+ * VAKA design tokens.
+ *
+ * These variables are intentionally namespaced and do not replace the
+ * authenticated application's tenant-controlled --brand/--accent contract or
+ * the public homepage's provisional --v-* variables.
+ */
+:root,
+[data-vaka-theme="light"] {
+  color-scheme: light;
+
+  /* Working brand palette — final values remain subject to brand approval. */
+  --vaka-ink-950: #0c0e0b;
+  --vaka-ink-900: #11130f;
+  --vaka-ink-800: #1a1d18;
+  --vaka-ink-700: #292d25;
+  --vaka-paper-50: #fffef9;
+  --vaka-paper-100: #f6f4ed;
+  --vaka-paper-200: #f0ede4;
+  --vaka-paper-300: #ded9cc;
+  --vaka-gold-300: #e1c87d;
+  --vaka-gold-500: #c4a661;
+  --vaka-gold-700: #846c34;
+
+  /* Semantic colour aliases consumed by components. */
+  --vaka-color-canvas: var(--vaka-paper-100);
+  --vaka-color-surface: var(--vaka-paper-50);
+  --vaka-color-surface-subtle: var(--vaka-paper-200);
+  --vaka-color-surface-raised: #ffffff;
+  --vaka-color-text: #171914;
+  --vaka-color-text-muted: #5f6359;
+  --vaka-color-text-inverse: var(--vaka-paper-50);
+  --vaka-color-border: #c9c5b9;
+  --vaka-color-border-strong: #777b70;
+  --vaka-color-primary: var(--vaka-ink-900);
+  --vaka-color-primary-hover: var(--vaka-ink-700);
+  --vaka-color-primary-text: var(--vaka-paper-50);
+  --vaka-color-accent: var(--vaka-gold-500);
+  --vaka-color-accent-hover: var(--vaka-gold-300);
+  --vaka-color-accent-text: var(--vaka-ink-950);
+  --vaka-color-focus: #6f571d;
+  --vaka-color-overlay: rgb(12 14 11 / 68%);
+  --vaka-color-disabled: #e2dfd6;
+  --vaka-color-disabled-text: #696d64;
+
+  --vaka-color-success: #2f7648;
+  --vaka-color-success-surface: #e8f4eb;
+  --vaka-color-success-text: #205431;
+  --vaka-color-warning: #9a6227;
+  --vaka-color-warning-surface: #fff2df;
+  --vaka-color-warning-text: #704312;
+  --vaka-color-danger: #a43b3f;
+  --vaka-color-danger-hover: #842c30;
+  --vaka-color-danger-surface: #fbeaec;
+  --vaka-color-danger-text: #7b292d;
+  --vaka-color-info: #356b8c;
+  --vaka-color-info-surface: #e8f1f7;
+  --vaka-color-info-text: #234f6b;
+
+  /* Typography. System fonts remain the approved fallback. */
+  --vaka-font-sans: Inter, "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --vaka-type-display-xl: clamp(3.5rem, 8vw, 7.5rem);
+  --vaka-type-display-lg: clamp(2.75rem, 6vw, 5rem);
+  --vaka-type-heading-1: clamp(2.25rem, 4vw, 3.5rem);
+  --vaka-type-heading-2: clamp(1.75rem, 3vw, 2.5rem);
+  --vaka-type-heading-3: 1.25rem;
+  --vaka-type-lead: clamp(1.05rem, 1.6vw, 1.3rem);
+  --vaka-type-body: 1rem;
+  --vaka-type-small: 0.875rem;
+  --vaka-type-label: 0.75rem;
+  --vaka-weight-regular: 400;
+  --vaka-weight-medium: 500;
+  --vaka-weight-semibold: 650;
+  --vaka-weight-bold: 750;
+  --vaka-leading-tight: 1.1;
+  --vaka-leading-body: 1.6;
+  --vaka-leading-label: 1.4;
+  --vaka-tracking-display: -0.035em;
+  --vaka-tracking-label: 0.035em;
+
+  /* Four-point spacing scale. */
+  --vaka-space-0: 0;
+  --vaka-space-1: 0.25rem;
+  --vaka-space-2: 0.5rem;
+  --vaka-space-3: 0.75rem;
+  --vaka-space-4: 1rem;
+  --vaka-space-5: 1.25rem;
+  --vaka-space-6: 1.5rem;
+  --vaka-space-8: 2rem;
+  --vaka-space-10: 2.5rem;
+  --vaka-space-12: 3rem;
+  --vaka-space-16: 4rem;
+  --vaka-space-20: 5rem;
+  --vaka-space-24: 6rem;
+  --vaka-space-32: 8rem;
+
+  --vaka-radius-none: 0;
+  --vaka-radius-sm: 0.375rem;
+  --vaka-radius-md: 0.625rem;
+  --vaka-radius-lg: 0.875rem;
+  --vaka-radius-xl: 1.25rem;
+  --vaka-radius-full: 999rem;
+
+  --vaka-shadow-none: none;
+  --vaka-shadow-xs: 0 1px 2px rgb(12 14 11 / 8%);
+  --vaka-shadow-sm: 0 3px 10px rgb(12 14 11 / 10%);
+  --vaka-shadow-md: 0 10px 28px rgb(12 14 11 / 14%);
+  --vaka-shadow-lg: 0 24px 64px rgb(12 14 11 / 20%);
+  --vaka-shadow-overlay: 0 32px 90px rgb(12 14 11 / 30%);
+
+  --vaka-motion-instant: 100ms;
+  --vaka-motion-fast: 180ms;
+  --vaka-motion-standard: 260ms;
+  --vaka-motion-slow: 420ms;
+  --vaka-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --vaka-ease-enter: cubic-bezier(0, 0, 0, 1);
+  --vaka-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  /* Reference values. CSS custom properties cannot be used in media queries. */
+  --vaka-breakpoint-sm: 30rem;
+  --vaka-breakpoint-md: 48rem;
+  --vaka-breakpoint-lg: 64rem;
+  --vaka-breakpoint-xl: 80rem;
+  --vaka-container-max: 75rem;
+  --vaka-reading-max: 44rem;
+
+  --vaka-focus-width: 0.1875rem;
+  --vaka-focus-offset: 0.1875rem;
+  --vaka-control-height-sm: 2.25rem;
+  --vaka-control-height-md: 2.75rem;
+  --vaka-control-height-lg: 3.25rem;
+  --vaka-z-dropdown: 20;
+  --vaka-z-overlay: 40;
+  --vaka-z-tooltip: 60;
+}
+
+[data-vaka-theme="dark"] {
+  color-scheme: dark;
+  --vaka-color-canvas: var(--vaka-ink-950);
+  --vaka-color-surface: var(--vaka-ink-900);
+  --vaka-color-surface-subtle: var(--vaka-ink-800);
+  --vaka-color-surface-raised: var(--vaka-ink-700);
+  --vaka-color-text: var(--vaka-paper-50);
+  --vaka-color-text-muted: #c8cbc2;
+  --vaka-color-text-inverse: var(--vaka-ink-950);
+  --vaka-color-border: #50554a;
+  --vaka-color-border-strong: #a7aa9f;
+  --vaka-color-primary: var(--vaka-gold-300);
+  --vaka-color-primary-hover: #edd58e;
+  --vaka-color-primary-text: var(--vaka-ink-950);
+  --vaka-color-accent: var(--vaka-gold-300);
+  --vaka-color-accent-hover: #edd58e;
+  --vaka-color-focus: #f0d789;
+  --vaka-color-overlay: rgb(0 0 0 / 76%);
+  --vaka-color-disabled: #34382f;
+  --vaka-color-disabled-text: #b0b3aa;
+  --vaka-color-success-surface: #183c28;
+  --vaka-color-success-text: #b9edc8;
+  --vaka-color-warning-surface: #4c3216;
+  --vaka-color-warning-text: #ffddb1;
+  --vaka-color-danger-surface: #4c2024;
+  --vaka-color-danger-text: #ffc6ca;
+  --vaka-color-info-surface: #18364a;
+  --vaka-color-info-text: #c3e6fb;
+  --vaka-shadow-xs: 0 1px 2px rgb(0 0 0 / 30%);
+  --vaka-shadow-sm: 0 3px 10px rgb(0 0 0 / 34%);
+  --vaka-shadow-md: 0 10px 28px rgb(0 0 0 / 42%);
+  --vaka-shadow-lg: 0 24px 64px rgb(0 0 0 / 52%);
+  --vaka-shadow-overlay: 0 32px 90px rgb(0 0 0 / 62%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --vaka-motion-instant: 0.01ms;
+    --vaka-motion-fast: 0.01ms;
+    --vaka-motion-standard: 0.01ms;
+    --vaka-motion-slow: 0.01ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  [data-vaka-theme="light"],
+  [data-vaka-theme="dark"] {
+    --vaka-color-border: var(--vaka-color-border-strong);
+    --vaka-focus-width: 0.25rem;
+  }
+}

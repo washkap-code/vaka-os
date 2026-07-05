@@ -16,10 +16,16 @@ import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./invent
 import { postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary } from "./billing.js";
+import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
   (req: any, res: any, next: any) => fn(req, res).then((r) => r !== undefined && res.json(r)).catch(next);
+const routeParam = (req: AuthedRequest, name: string): string => {
+  const value = req.params[name];
+  if (typeof value !== "string") throw badRequest(`Invalid route parameter: ${name}`);
+  return value;
+};
 
 // ---------------------------------------------------------------------------
 // Public: signup + login
@@ -98,14 +104,14 @@ api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
 api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.partial().parse(req.body);
   const [c] = await db.update(schema.contacts).set(body)
-    .where(and(eq(schema.contacts.id, req.params.id), eq(schema.contacts.tenantId, tenantId(req)))).returning();
+    .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tenantId(req)))).returning();
   if (!c) throw notFound("Contact not found");
   return c;
 }));
 api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
   const tid = tenantId(req);
   const [contact] = await db.select().from(schema.contacts)
-    .where(and(eq(schema.contacts.id, req.params.id), eq(schema.contacts.tenantId, tid)));
+    .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid)));
   if (!contact) throw notFound("Contact not found");
   const dealRows = await db.select().from(schema.deals)
     .where(and(eq(schema.deals.contactId, contact.id), eq(schema.deals.tenantId, tid)));
@@ -133,7 +139,7 @@ api.post("/deals", requirePermission("crm.write"), wrap(async (req) => {
 api.patch("/deals/:id/stage", requirePermission("crm.write"), wrap(async (req) => {
   const { stage } = z.object({ stage: z.enum(["NEW", "QUALIFIED", "PROPOSAL", "WON", "LOST"]) }).parse(req.body);
   const [d] = await db.update(schema.deals).set({ stage })
-    .where(and(eq(schema.deals.id, req.params.id), eq(schema.deals.tenantId, tenantId(req)))).returning();
+    .where(and(eq(schema.deals.id, routeParam(req, "id")), eq(schema.deals.tenantId, tenantId(req)))).returning();
   if (!d) throw notFound("Deal not found");
   await audit(db, tenantId(req), req.auth!.userId, "deal.stage_changed", "deal", d.id, { stage });
   return d;
@@ -250,7 +256,7 @@ api.get("/purchase-orders", requirePermission("inventory.read"), wrap(async (req
     .orderBy(desc(schema.purchaseOrders.createdAt))));
 api.post("/purchase-orders/:id/receive", requirePermission("inventory.write", "accounting.post"), wrap(async (req) =>
   db.transaction((tx) => receivePurchaseOrder(tx, {
-    tenantId: tenantId(req), purchaseOrderId: req.params.id, createdBy: req.auth!.userId,
+    tenantId: tenantId(req), purchaseOrderId: routeParam(req, "id"), createdBy: req.auth!.userId,
   }))));
 
 // ---------------------------------------------------------------------------
@@ -292,7 +298,7 @@ api.get("/invoices", requirePermission("accounting.read"), wrap(async (req) => {
 api.get("/invoices/:id", requirePermission("accounting.read"), wrap(async (req) => {
   const tid = tenantId(req);
   const [inv] = await db.select().from(schema.invoices)
-    .where(and(eq(schema.invoices.id, req.params.id), eq(schema.invoices.tenantId, tid)));
+    .where(and(eq(schema.invoices.id, routeParam(req, "id")), eq(schema.invoices.tenantId, tid)));
   if (!inv) throw notFound("Invoice not found");
   const lines = await db.select().from(schema.invoiceLineItems).where(eq(schema.invoiceLineItems.invoiceId, inv.id));
   const pays = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, inv.id));
@@ -304,17 +310,17 @@ api.post("/invoices", requirePermission("accounting.post"), wrap(async (req) => 
     dueDate: body.dueDate ?? undefined, notes: body.notes ?? undefined });
 }));
 api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) =>
-  issueInvoice({ tenantId: tenantId(req), invoiceId: req.params.id, createdBy: req.auth!.userId })));
+  issueInvoice({ tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId })));
 api.post("/invoices/:id/payments", requirePermission("accounting.post"), wrap(async (req) => {
   const body = z.object({
     amount: z.string(), bankAccountId: z.string().uuid().optional(),
     date: z.coerce.date().optional(), reference: z.string().optional(),
   }).parse(req.body);
-  return recordPayment({ ...body, tenantId: tenantId(req), invoiceId: req.params.id, createdBy: req.auth!.userId });
+  return recordPayment({ ...body, tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId });
 }));
 api.post("/invoices/:id/void", requirePermission("accounting.post"), wrap(async (req) => {
   const { reason } = z.object({ reason: z.string().min(3) }).parse(req.body);
-  return voidInvoice({ tenantId: tenantId(req), invoiceId: req.params.id, reason, createdBy: req.auth!.userId });
+  return voidInvoice({ tenantId: tenantId(req), invoiceId: routeParam(req, "id"), reason, createdBy: req.auth!.userId });
 }));
 
 api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => {
@@ -376,11 +382,33 @@ api.get("/reports/aged-receivables", requirePermission("reports.read"), wrap(asy
   agedReceivables(tenantId(req))));
 
 // ---------------------------------------------------------------------------
+// AI-ready read models — deterministic context only; no model/provider call.
+// ---------------------------------------------------------------------------
+api.get("/ai/read-models/business-summary", requirePermission("reports.read"), wrap(async (req) => {
+  const query = businessSummaryQuerySchema.parse(req.query);
+  const tenant = (req as any).tenant as { baseCurrency: "USD" | "ZWG" };
+  const summary = await getBusinessSummary({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    baseCurrency: tenant.baseCurrency,
+    permissions: req.auth!.permissions,
+  }, query);
+  await audit(db, tenantId(req), req.auth!.userId, "ai.read_model.business_summary_generated", "tenant", tenantId(req), {
+    schemaVersion: summary.schemaVersion,
+    period: summary.scope.period,
+    sectionStatus: Object.fromEntries(
+      Object.entries(summary.sections).map(([name, section]) => [name, section.status]),
+    ),
+  });
+  return summary;
+}));
+
+// ---------------------------------------------------------------------------
 // Data export — always available, even suspended/closed (their data is theirs)
 // ---------------------------------------------------------------------------
 api.get("/export/:entity", wrap(async (req) => {
   const tid = tenantId(req);
-  const entity = req.params.entity;
+  const entity = routeParam(req, "entity");
   const tableMap: Record<string, any> = {
     contacts: schema.contacts, invoices: schema.invoices, products: schema.products,
     expenses: schema.expenses, deals: schema.deals,
@@ -427,7 +455,11 @@ api.post("/platform/billing/run", requirePlatformAdmin as any, wrap(async (req) 
   return runBillingCycle(asOf);
 }));
 api.post("/platform/tenants/:id/mark-invoice-paid/:invoiceId", requirePlatformAdmin as any, wrap(async (req) =>
-  markSubscriptionInvoicePaid({ tenantId: req.params.id, invoiceId: req.params.invoiceId, actorUserId: req.auth!.userId })));
+  markSubscriptionInvoicePaid({
+    tenantId: routeParam(req, "id"),
+    invoiceId: routeParam(req, "invoiceId"),
+    actorUserId: req.auth!.userId,
+  })));
 api.get("/platform/audit/:tenantId", requirePlatformAdmin as any, wrap(async (req) =>
-  db.select().from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, req.params.tenantId))
+  db.select().from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, routeParam(req, "tenantId")))
     .orderBy(desc(schema.auditLogs.createdAt)).limit(200)));
