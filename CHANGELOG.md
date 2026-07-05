@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Workspace settings:** Added personal-name and company-identity settings,
+  colour/logo preview, workspace branding application, registration/tax/address
+  fields, and a complete managed-upload/white-label specification.
 - **Security:** Added forced first-login password changes for temporary
   credentials, server-side route enforcement, and platform password-change
   audit evidence.

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
@@ -12,10 +13,13 @@ import { appEnglish } from "./locales/app.en";
 
 type Me = {
   userId: string; permissions: string[]; accessLevel: string; mustChangePassword: boolean;
+  user: { id: string; email: string; fullName: string };
   tenant: {
     id: string; companyName: string; subdomain: string; status: string;
     baseCurrency: "USD" | "ZWG"; trialEndsAt: string;
     brandPrimaryColor: string; brandSecondaryColor: string; logoUrl: string | null;
+    taxNumber: string | null; vatNumber: string | null;
+    registrationNumber: string | null; physicalAddress: string | null;
   } | null;
 };
 
@@ -75,7 +79,7 @@ export default function App() {
   }
   if (me.mustChangePassword) return <PasswordChange onDone={refresh} onLogout={logout} />;
   if (!me.tenant) return <PlatformAdmin onLogout={logout} />;
-  return <Shell me={me} onLogout={logout} />;
+  return <Shell me={me} onLogout={logout} onRefresh={refresh} />;
 }
 
 function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: () => void }) {
@@ -259,11 +263,11 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 const NAV = [
   ["dashboard", "Dashboard"], ["contacts", "Contacts"], ["pipeline", "Sales Pipeline"],
   ["invoices", "Invoices"], ["products", "Products & Stock"], ["pos", "Purchase Orders"],
-  ["reports", "Reports"], ["billing", "Billing & Plan"],
+  ["reports", "Reports"], ["billing", "Billing & Plan"], ["settings", "Settings"],
 ] as const;
 type Page = (typeof NAV)[number][0];
 
-function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
+function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => void }) {
   const [page, setPage] = useState<Page>("dashboard");
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
@@ -271,7 +275,10 @@ function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo">{t.companyName}<small>VAKA OS</small></div>
+        <div className="logo">
+          {t.logoUrl && <img src={t.logoUrl} alt="" className="workspace-logo" />}
+          {t.companyName}<small>VAKA OS</small>
+        </div>
         <nav>
           {NAV.map(([k, label]) => (
             <button key={k} className={page === k ? "active" : ""} onClick={() => setPage(k)}>{label}</button>
@@ -294,8 +301,108 @@ function Shell({ me, onLogout }: { me: Me; onLogout: () => void }) {
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
         {page === "billing" && <Billing />}
+        {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
       </main>
     </div>
+  );
+}
+
+function Settings({ me, readonly, onSaved }: {
+  me: Me;
+  readonly: boolean;
+  onSaved: () => void;
+}) {
+  const t = me.tenant!;
+  const [profileName, setProfileName] = useState(me.user.fullName);
+  const [company, setCompany] = useState({
+    companyName: t.companyName,
+    logoUrl: t.logoUrl ?? "",
+    brandPrimaryColor: t.brandPrimaryColor,
+    brandSecondaryColor: t.brandSecondaryColor,
+    taxNumber: t.taxNumber ?? "",
+    vatNumber: t.vatNumber ?? "",
+    registrationNumber: t.registrationNumber ?? "",
+    physicalAddress: t.physicalAddress ?? "",
+  });
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const canManageCompany = me.permissions.includes("settings.manage") && !readonly;
+  const setCompanyField = (key: keyof typeof company) => (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => setCompany({ ...company, [key]: event.target.value });
+
+  const save = async () => {
+    setBusy(true);
+    setMessage("");
+    try {
+      await api("/profile", { method: "PATCH", body: { fullName: profileName } });
+      if (canManageCompany) {
+        await api("/settings/branding", { method: "PATCH", body: company });
+      }
+      setMessage(appEnglish.settings.saved);
+      onSaved();
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
+  return (
+    <>
+      <div><h1>{appEnglish.settings.title}</h1><div className="sub">{appEnglish.settings.subtitle}</div></div>
+      <div className="grid2 settings-grid">
+        <div className="panel">
+          <h2>{appEnglish.settings.profile}</h2>
+          <div className="field"><label>{appEnglish.settings.name}</label>
+            <input value={profileName} onChange={(event) => setProfileName(event.target.value)} /></div>
+          <div className="field"><label>{appEnglish.settings.email}</label>
+            <input value={me.user.email} disabled /></div>
+        </div>
+        <div className="panel brand-preview" style={{
+          borderTopColor: company.brandSecondaryColor,
+          background: company.brandPrimaryColor,
+        }}>
+          {company.logoUrl && <img src={company.logoUrl} alt="" />}
+          <strong>{company.companyName || t.companyName}</strong>
+          <span>{appEnglish.settings.preview}</span>
+        </div>
+      </div>
+      <div className="panel">
+        <h2>{appEnglish.settings.company}</h2>
+        {!canManageCompany && <div className="banner warn">{appEnglish.settings.companyPermission}</div>}
+        <div className="grid2">
+          <div className="field"><label>{appEnglish.settings.companyName}</label>
+            <input disabled={!canManageCompany} value={company.companyName} onChange={setCompanyField("companyName")} /></div>
+          <div className="field"><label>{appEnglish.settings.logoUrl}</label>
+            <input type="url" disabled={!canManageCompany} value={company.logoUrl}
+              onChange={setCompanyField("logoUrl")} placeholder="https://example.com/logo.png" />
+            <small>{appEnglish.settings.logoHelp}</small></div>
+          <div className="field"><label>{appEnglish.settings.primaryColour}</label>
+            <input type="color" disabled={!canManageCompany} value={company.brandPrimaryColor}
+              onChange={setCompanyField("brandPrimaryColor")} /></div>
+          <div className="field"><label>{appEnglish.settings.accentColour}</label>
+            <input type="color" disabled={!canManageCompany} value={company.brandSecondaryColor}
+              onChange={setCompanyField("brandSecondaryColor")} /></div>
+          <div className="field"><label>{appEnglish.settings.registrationNumber}</label>
+            <input disabled={!canManageCompany} value={company.registrationNumber}
+              onChange={setCompanyField("registrationNumber")} /></div>
+          <div className="field"><label>{appEnglish.settings.taxNumber}</label>
+            <input disabled={!canManageCompany} value={company.taxNumber}
+              onChange={setCompanyField("taxNumber")} /></div>
+          <div className="field"><label>{appEnglish.settings.vatNumber}</label>
+            <input disabled={!canManageCompany} value={company.vatNumber}
+              onChange={setCompanyField("vatNumber")} /></div>
+        </div>
+        <div className="field"><label>{appEnglish.settings.address}</label>
+          <textarea disabled={!canManageCompany} value={company.physicalAddress}
+            onChange={setCompanyField("physicalAddress")} /></div>
+        <small>{appEnglish.settings.invoiceHelp}</small>
+      </div>
+      <button className="btn accent" disabled={busy || readonly} onClick={save}>
+        {busy ? appEnglish.settings.saving : appEnglish.settings.save}
+      </button>
+      {message && <div className="banner warn" style={{ marginTop: 12 }}>{message}</div>}
+    </>
   );
 }
 

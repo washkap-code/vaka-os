@@ -19,6 +19,12 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .side { background: var(--brand); color: #fff; padding: 20px 0; display: flex; flex-direction: column; }
 .side .logo { padding: 0 20px 18px; font-weight: 700; font-size: 16px; letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.12); }
 .side .logo small { display: block; color: var(--accent); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px; }
+.workspace-logo { display: block; height: 36px; max-width: 150px; object-fit: contain; margin-bottom: 10px; }
+.settings-grid { align-items: stretch; }
+.brand-preview { border-top: 5px solid var(--accent); color: white; display: flex; flex-direction: column; justify-content: center; min-height: 190px; }
+.brand-preview img { max-height: 58px; max-width: 180px; object-fit: contain; margin-bottom: 18px; }
+.brand-preview strong { font-size: 24px; }
+.brand-preview span { color: rgba(255,255,255,.7); margin-top: 6px; }
 .side nav { display: flex; flex-direction: column; padding-top: 10px; flex: 1; }
 .side button { background: none; border: none; color: rgba(255,255,255,.82); text-align: left; padding: 11px 20px; font-size: 13.5px; cursor: pointer; border-left: 3px solid transparent; }
 .side button:hover { background: rgba(255,255,255,.06); color: #fff; }
