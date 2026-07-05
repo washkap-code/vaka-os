@@ -12,8 +12,9 @@ import { and, eq } from "drizzle-orm";
 import { db, schema, unauthorized, forbidden, badRequest, conflict, DEFAULT_ROLES, audit, Permission } from "./lib.js";
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
+import { jwtSecret } from "./config.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
+const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
 
 export interface AuthedRequest extends Request {

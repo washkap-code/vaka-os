@@ -7,10 +7,10 @@ import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { and, eq, sql } from "drizzle-orm";
 import * as schema from "./db/schema.js";
+import { databaseUrl } from "./config.js";
 
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL ||
-    "postgresql://jonomi:jonomi_dev@localhost:5432/jonomi_platform",
+  connectionString: databaseUrl(),
   max: 20,
 });
 export const db = drizzle(pool, { schema });

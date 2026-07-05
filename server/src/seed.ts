@@ -2,6 +2,7 @@
 import bcrypt from "bcryptjs";
 import { db, schema } from "./lib.js";
 import { eq } from "drizzle-orm";
+import { platformAdminPassword } from "./config.js";
 
 const PLANS = [
   { name: "Starter", userLimit: 1, priceAmount: "12.00", features: { inventoryLocations: 1 } },
@@ -11,6 +12,7 @@ const PLANS = [
 ];
 
 async function main() {
+  const adminPassword = platformAdminPassword();
   for (const p of PLANS) {
     const existing = await db.select().from(schema.plans).where(eq(schema.plans.name, p.name));
     if (!existing.length) await db.insert(schema.plans).values(p as any);
@@ -20,7 +22,7 @@ async function main() {
   if (!existing.length) {
     await db.insert(schema.users).values({
       tenantId: null, email: adminEmail,
-      passwordHash: await bcrypt.hash(process.env.PLATFORM_ADMIN_PASSWORD || "ChangeMe-Immediately-2026!", 12),
+      passwordHash: await bcrypt.hash(adminPassword, 12),
       fullName: "Jonomi Platform Admin", isPlatformAdmin: true,
     });
   }
