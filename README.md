@@ -48,10 +48,10 @@ entries — history is never mutated, which is what makes the system auditable.
 ```bash
 # 1. PostgreSQL 16 running, then:
 cd server
-cp .env.example .env          # set DATABASE_URL, JWT_SECRET (64 random bytes in prod)
+cp .env.example .env          # set DATABASE_URL and a JWT_SECRET of at least 64 random bytes
 npm install
 npm run db:push               # create schema
-npm run seed                  # plans + platform admin
+PLATFORM_ADMIN_PASSWORD='replace-with-a-strong-secret' npm run seed
 npm run dev                   # API on :4000
 
 # 2. Frontend
@@ -67,7 +67,8 @@ Sign up at the web UI → you get a fully seeded tenant (chart of accounts,
 roles, default warehouse, trial subscription) and 3 months free.
 
 Platform admin: `platform-admin@jonomi.digital` (password from
-`PLATFORM_ADMIN_PASSWORD` env var at seed time — **change immediately**).
+`PLATFORM_ADMIN_PASSWORD` at seed time). Seeding fails closed when that variable
+is missing, weak, or still contains the example placeholder.
 Monthly billing run: `POST /api/v1/platform/billing/run` (wire to cron in production).
 
 ## Repository layout
