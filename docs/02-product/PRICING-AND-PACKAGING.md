@@ -224,6 +224,11 @@ training, white-label deployment, and dedicated environments increase scope.
 
 Legend: **Included**, **Limited**, **Eligible/add-on**, **Planned**, or **—**.
 
+The tenant workspace should provide an **Upgrade** area that displays this
+comparison, identifies the current package, distinguishes package eligibility
+from live availability, and records upgrade interest without changing billing
+until VAKA confirms price, effective date and implementation/provider charges.
+
 | Capability | Starter | Growth | Business | Enterprise |
 |---|---|---|---|---|
 | Users | 1 | 5 | 15 | Contracted |

@@ -25,6 +25,17 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .brand-preview img { max-height: 58px; max-width: 180px; object-fit: contain; margin-bottom: 18px; }
 .brand-preview strong { font-size: 24px; }
 .brand-preview span { color: rgba(255,255,255,.7); margin-top: 6px; }
+.upgrade-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 22px 0; }
+.upgrade-plan { display: flex; flex-direction: column; min-width: 0; }
+.upgrade-plan.current { border: 2px solid var(--accent); }
+.upgrade-plan .pill { align-self: flex-start; margin-bottom: 10px; }
+.upgrade-price { color: var(--brand); font-size: 25px; font-weight: 750; margin: 8px 0; }
+.upgrade-capacity { font-size: 12px; font-weight: 700; margin: 18px 0 4px; }
+.upgrade-plan ul { flex: 1; margin: 14px 0 20px; padding-left: 18px; }
+.upgrade-plan li { color: var(--muted); font-size: 12px; line-height: 1.55; margin-bottom: 7px; }
+.upgrade-notice p { color: var(--muted); line-height: 1.6; }
+@media (max-width: 1050px) { .upgrade-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .upgrade-grid { grid-template-columns: 1fr; } }
 .side nav { display: flex; flex-direction: column; padding-top: 10px; flex: 1; }
 .side button { background: none; border: none; color: rgba(255,255,255,.82); text-align: left; padding: 11px 20px; font-size: 13.5px; cursor: pointer; border-left: 3px solid transparent; }
 .side button:hover { background: rgba(255,255,255,.06); color: #fff; }

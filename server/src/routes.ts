@@ -479,6 +479,32 @@ api.get("/billing/invoices", wrap(async (req) =>
   db.select().from(schema.subscriptionInvoices).where(eq(schema.subscriptionInvoices.tenantId, tenantId(req)))
     .orderBy(desc(schema.subscriptionInvoices.issuedAt))));
 api.get("/billing/plans", wrap(async () => db.select().from(schema.plans)));
+api.post("/billing/upgrade-interest", requirePermission("billing.manage"), wrap(async (req) => {
+  const body = z.object({
+    requestedPlan: z.enum(["Starter", "Growth", "Business", "Enterprise"]),
+  }).parse(req.body);
+  const tid = tenantId(req);
+  const [subscription] = await db.select().from(schema.subscriptions)
+    .where(eq(schema.subscriptions.tenantId, tid));
+  if (!subscription) throw notFound("Subscription not found");
+  const [currentPlan] = await db.select().from(schema.plans)
+    .where(eq(schema.plans.id, subscription.planId));
+  if (!currentPlan) throw notFound("Current plan not found");
+  const order = ["Starter", "Growth", "Business", "Enterprise"];
+  if (order.indexOf(body.requestedPlan) <= order.indexOf(currentPlan.name)) {
+    throw badRequest("Select a plan above your current package");
+  }
+  await audit(db, tid, req.auth!.userId, "billing.upgrade_interest_recorded",
+    "subscription", subscription.id, {
+      currentPlan: currentPlan.name,
+      requestedPlan: body.requestedPlan,
+    });
+  return {
+    recorded: true,
+    currentPlan: currentPlan.name,
+    requestedPlan: body.requestedPlan,
+  };
+}));
 
 // ---------------------------------------------------------------------------
 // Platform admin (Jonomi staff only)

@@ -263,7 +263,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 const NAV = [
   ["dashboard", "Dashboard"], ["contacts", "Contacts"], ["pipeline", "Sales Pipeline"],
   ["invoices", "Invoices"], ["products", "Products & Stock"], ["pos", "Purchase Orders"],
-  ["reports", "Reports"], ["billing", "Billing & Plan"], ["settings", "Settings"],
+  ["reports", "Reports"], ["billing", "Billing & Plan"], ["upgrade", "Upgrade"], ["settings", "Settings"],
 ] as const;
 type Page = (typeof NAV)[number][0];
 
@@ -301,6 +301,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
         {page === "billing" && <Billing />}
+        {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
       </main>
     </div>
@@ -888,8 +889,71 @@ function Reports({ ccy }: { ccy: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Billing
+// Upgrade and billing
 // ---------------------------------------------------------------------------
+function Upgrade() {
+  const [sub] = useLoad(() => api("/billing/subscription"));
+  const [message, setMessage] = useState("");
+  const [busyPlan, setBusyPlan] = useState("");
+  const copy = appEnglish.upgrade;
+  const currentPlan = sub?.plan?.name as string | undefined;
+  const order = copy.plans.map((plan) => plan.name);
+
+  const requestUpgrade = async (requestedPlan: string) => {
+    setBusyPlan(requestedPlan);
+    setMessage("");
+    try {
+      await api("/billing/upgrade-interest", {
+        method: "POST",
+        body: { requestedPlan },
+      });
+      setMessage(copy.recorded.replace("{plan}", requestedPlan));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusyPlan("");
+  };
+
+  return (<>
+    <h1>{copy.title}</h1>
+    <div className="sub">{copy.subtitle}</div>
+    <div className="upgrade-grid">
+      {copy.plans.map((plan) => {
+        const isCurrent = plan.name === currentPlan;
+        const isUpgrade = currentPlan
+          ? order.indexOf(plan.name) > order.indexOf(currentPlan as typeof plan.name)
+          : false;
+        return (
+          <section className={`panel upgrade-plan ${isCurrent ? "current" : ""}`} key={plan.name}>
+            {isCurrent && <span className="pill ACTIVE">{copy.current}</span>}
+            <h2>{plan.name}</h2>
+            <div className="upgrade-price">{plan.price}</div>
+            <div className="sub">{plan.audience}</div>
+            <div className="upgrade-capacity">{plan.users} · {plan.locations}</div>
+            <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+            {isCurrent ? (
+              <button className="btn ghost" disabled>{copy.current}</button>
+            ) : isUpgrade ? (
+              <button className="btn accent" disabled={Boolean(busyPlan)}
+                onClick={() => requestUpgrade(plan.name)}>
+                {busyPlan === plan.name ? copy.recording : copy.request}
+              </button>
+            ) : (
+              <button className="btn ghost" disabled>{copy.includedBelow}</button>
+            )}
+          </section>
+        );
+      })}
+    </div>
+    <div className="panel upgrade-notice">
+      <h2>{copy.notesTitle}</h2>
+      <p>{copy.notes}</p>
+      <p>{copy.planned}</p>
+    </div>
+    {message && <div className="banner warn">{message}</div>}
+  </>);
+}
+
 function Billing() {
   const [sub] = useLoad(() => api("/billing/subscription"));
   const [invs] = useLoad(() => api("/billing/invoices"));
