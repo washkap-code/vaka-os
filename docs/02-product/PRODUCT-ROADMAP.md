@@ -105,7 +105,9 @@ Priorities:
 - provider-neutral payment attempts, confirmations, and reconciliation,
   beginning with approved Zimbabwean gateway coverage;
 - WhatsApp-friendly onboarding and support entry points;
-- reliable import of existing customers, products, and opening balances; and
+- reliable import of existing customers, products, and opening balances;
+- a self-service import centre with mapping, preview, validation, deduplication,
+  idempotent processing, safe rollback and auditable document capture; and
 - English product content managed through localisation catalogues.
 
 Exit evidence:

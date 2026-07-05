@@ -22,6 +22,8 @@ This directory is the canonical home for VAKA OS foundation, brand, product, tec
   - [VAKA AI Blueprint](02-product/VAKA-AI-BLUEPRINT.md)
   - [Localisation Strategy](02-product/LOCALISATION-STRATEGY.md)
   - [Zimbabwe-First Requirements](02-product/ZIMBABWE-FIRST-REQUIREMENTS.md)
+  - [Self-Service Imports and Document Capture](02-product/SELF-SERVICE-IMPORTS-AND-DOCUMENT-CAPTURE.md)
+  - [Platform Administration and Management Analytics](02-product/PLATFORM-ADMIN-ANALYTICS-SPEC.md)
 - [03 — Technical](03-technical/)
   - [Architecture](03-technical/ARCHITECTURE.md)
   - [Database Principles](03-technical/DATABASE-PRINCIPLES.md)
@@ -54,6 +56,9 @@ This directory is the canonical home for VAKA OS foundation, brand, product, tec
   - [AI Implementation Roadmap](05-ai/AI-IMPLEMENTATION-ROADMAP.md)
   - [Business Summary Read Model](05-ai/BUSINESS-SUMMARY-READ-MODEL.md)
   - [Evaluation Harness](05-ai/EVALUATION-HARNESS.md)
+- [06 — Guides](06-guides/)
+  - [VAKA User Guide](06-guides/VAKA-USER-GUIDE.md)
+  - [Platform Administrator Guide](06-guides/PLATFORM-ADMIN-GUIDE.md)
 
 ## Existing operational documents
 

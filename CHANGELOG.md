@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Documentation:** Added current-state user and platform-administrator guides,
+  a self-service import/document-capture specification, and a privacy-safe
+  platform management analytics specification.
 - **Referral foundation:** Added platform-managed codes, immutable
   transactional signup attribution, rule-version snapshots, self-referral
   protection, tenant audit evidence, and referral-link signup capture. This

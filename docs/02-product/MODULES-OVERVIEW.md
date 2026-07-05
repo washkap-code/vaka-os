@@ -430,6 +430,12 @@ Every module depends on:
 - backup and recovery; and
 - support operations.
 
+Self-service imports use a shared staging, validation, deduplication, approval,
+audit and job-processing capability. Channels may include CSV/XLSX, structured
+bank formats, APIs, email, mobile camera capture, OCR-assisted documents,
+business cards and barcode/QR scanning. Extracted information remains draft
+until an authorised user reviews it.
+
 Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
 providers are shared platform capabilities. They must use named permissions,
 tenant-scoped adapters, deterministic server workflows, audit logs, and safe
@@ -444,6 +450,10 @@ Commercial availability and plan entitlements follow
 Referral attribution, professional practice accounts, client portfolios, and
 commission/payout controls follow
 `REFERRAL-AND-PROFESSIONAL-PARTNER-PROGRAM.md`.
+Import and capture controls follow
+`SELF-SERVICE-IMPORTS-AND-DOCUMENT-CAPTURE.md`. Platform leadership analytics,
+reliable session aggregates and management reporting follow
+`PLATFORM-ADMIN-ANALYTICS-SPEC.md`.
 
 ## 19. Country expansion model
 
