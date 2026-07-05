@@ -439,6 +439,8 @@ offline/idempotency controls. See `MOBILE-APP-BLUEPRINT.md`,
 reconciliation follow `BANK-CONNECTIVITY-SPEC.md`.
 Owner-only user presence, session revocation, and material activity history
 follow `USER-SESSION-ACTIVITY-SPEC.md`.
+Commercial availability and plan entitlements follow
+`PRICING-AND-PACKAGING.md`; documentation alone does not enable a feature.
 
 ## 19. Country expansion model
 

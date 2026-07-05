@@ -14,6 +14,9 @@
   read-only feed, transaction matching, and reconciliation requirements.
 - **Internal:** Defined explicit tenant ownership, server-side session
   visibility, revocation, and owner-only privacy-minimised activity history.
+- **Internal:** Revised Starter, Growth, Business, and Enterprise packaging
+  around operational outcomes and defined the required versioned entitlement
+  architecture.
 
 ### Changed
 

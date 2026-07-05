@@ -67,6 +67,11 @@
 
 **Rollback requirements:** CI/config changes are independently revertible; preserve previous local commands; no production schema/data changes.
 
+**Commercial foundation:** Before plan-restricted modules ship, establish the
+typed, versioned entitlement catalogue in `PRICING-AND-PACKAGING.md`. Public
+pricing, signup, billing, enforcement, and upgrade/downgrade behavior must use
+the same governed definitions.
+
 ## 4. Stage 2 — Brand tokens and design system foundation
 
 **Objective:** Create accessible shared tokens and primitives without redesigning product behavior.

@@ -261,6 +261,11 @@ The following are not optional side projects:
 - import/export;
 - performance and scalability; and
 - professional legal, tax, accounting, payroll, and regulatory review.
+- governed pricing, plan versioning, and server-side entitlements.
+
+Package eligibility does not equal feature availability. Starter, Growth,
+Business, and Enterprise definitions follow `PRICING-AND-PACKAGING.md`; a
+capability remains planned until its implementation and release gates pass.
 
 ## 7. Prioritisation framework
 
