@@ -9,8 +9,10 @@
 supports platform-created referral codes and immutable referral attribution
 during transactional company signup. It snapshots the programme and rule
 version, rejects invalid and obvious self-referrals, and creates a tenant audit
-event. Commission calculation, qualification, partner-client access, disputes,
-and payouts remain unimplemented.
+event. An internal append-only review queue now records pending, qualified,
+rejected, and held decisions with an actor and reason; it does not yet make a
+referral commission-eligible automatically. Commission calculation,
+partner-client access, disputes, and payouts remain unimplemented.
 
 ## 1. Purpose
 

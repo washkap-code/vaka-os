@@ -8,6 +8,9 @@
   transactional signup attribution, rule-version snapshots, self-referral
   protection, tenant audit evidence, and referral-link signup capture. This
   does not calculate commissions, grant client access, or issue payouts.
+- **Referral review:** Added a platform-only attribution review queue with
+  append-only pending, qualified, rejected, and held events, recorded actors,
+  reason codes, tenant audit evidence, and database mutation protection.
 - **Internal:** Defined the controlled product and technical requirements for
   branded invoice PDFs, invoice delivery, secure customer access, managed
   company logos, and currency-safe dashboard ageing.

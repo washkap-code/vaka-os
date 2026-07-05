@@ -1,7 +1,8 @@
 import { and, eq, gt, isNull, or } from "drizzle-orm";
-import { badRequest, conflict, db, DB, schema } from "./lib.js";
+import { audit, badRequest, conflict, db, DB, schema } from "./lib.js";
 
 export type ReferralProgram = "GENERAL" | "PROFESSIONAL";
+export type ReferralReviewDecision = "PENDING" | "QUALIFIED" | "REJECTED" | "HELD";
 
 const CODE_PATTERN = /^[A-Z0-9][A-Z0-9-]{4,31}$/;
 
@@ -106,7 +107,58 @@ export async function captureReferralAttribution(
     program: referral.program,
     ruleVersion: referral.ruleVersion,
   }).returning();
+  await tx.insert(schema.referralReviewEvents).values({
+    referralAttributionId: attribution.id,
+    decision: "PENDING",
+    reasonCode: "AUTOMATED_CAPTURE",
+  });
   return { attribution, referral };
+}
+
+export function validateReferralReview(opts: {
+  decision: ReferralReviewDecision;
+  reasonCode: string;
+  notes?: string | null;
+}) {
+  const reasonCode = opts.reasonCode.trim().toUpperCase();
+  if (!/^[A-Z][A-Z0-9_]{2,49}$/.test(reasonCode)) {
+    throw badRequest("A valid referral review reason code is required");
+  }
+  const notes = opts.notes?.trim() || null;
+  if (notes && notes.length > 500) {
+    throw badRequest("Referral review notes must be 500 characters or fewer");
+  }
+  return { decision: opts.decision, reasonCode, notes };
+}
+
+export async function recordReferralReview(opts: {
+  referralAttributionId: string;
+  decision: ReferralReviewDecision;
+  reasonCode: string;
+  notes?: string | null;
+  actorUserId: string;
+}) {
+  const review = validateReferralReview(opts);
+  return db.transaction(async (tx) => {
+    const [attribution] = await tx.select().from(schema.referralAttributions)
+      .where(eq(schema.referralAttributions.id, opts.referralAttributionId));
+    if (!attribution) throw badRequest("Referral attribution not found");
+
+    const [event] = await tx.insert(schema.referralReviewEvents).values({
+      referralAttributionId: attribution.id,
+      decision: review.decision,
+      reasonCode: review.reasonCode,
+      notes: review.notes,
+      actorUserId: opts.actorUserId,
+    }).returning();
+
+    await audit(tx, attribution.referredTenantId, opts.actorUserId,
+      "referral.review_recorded", "referral_attribution", attribution.id, {
+        decision: review.decision,
+        reasonCode: review.reasonCode,
+      });
+    return event;
+  });
 }
 
 // Keeps code creation atomic without exposing transaction plumbing to routes.

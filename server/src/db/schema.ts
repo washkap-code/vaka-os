@@ -115,6 +115,25 @@ export const referralAttributions = pgTable("referral_attributions", {
   capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [index("referral_attribution_code").on(t.referralCodeId, t.capturedAt)]);
 
+// Append-only internal review history. Current qualification state is derived
+// from the latest event; prior decisions remain available for disputes/audit.
+export const referralReviewEvents = pgTable("referral_review_events", {
+  id: id(),
+  referralAttributionId: uuid("referral_attribution_id").notNull()
+    .references(() => referralAttributions.id),
+  decision: text("decision").notNull(), // PENDING | QUALIFIED | REJECTED | HELD
+  reasonCode: text("reason_code").notNull(),
+  notes: text("notes"),
+  actorUserId: uuid("actor_user_id").references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  check("referral_review_decision_valid",
+    sql`${t.decision} IN ('PENDING', 'QUALIFIED', 'REJECTED', 'HELD')`),
+  check("referral_review_reason_valid",
+    sql`${t.reasonCode} ~ '^[A-Z][A-Z0-9_]{2,49}$'`),
+  index("referral_review_history").on(t.referralAttributionId, t.createdAt),
+]);
+
 // Per-tenant sequential document numbering (invoices, POs, payments)
 export const numberSequences = pgTable("number_sequences", {
   id: id(),

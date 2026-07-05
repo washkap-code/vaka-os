@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeReferralCode } from "../src/referrals.js";
+import { normalizeReferralCode, validateReferralReview } from "../src/referrals.js";
 
 describe("referral code normalization", () => {
   it("normalizes safe link codes", () => {
@@ -15,6 +15,30 @@ describe("referral code normalization", () => {
           message: "Referral code is invalid or unavailable",
         }),
       );
+    },
+  );
+});
+
+describe("referral review validation", () => {
+  it("normalizes reason codes without changing the decision", () => {
+    expect(validateReferralReview({
+      decision: "QUALIFIED",
+      reasonCode: " verified_business ",
+      notes: " Evidence checked. ",
+    })).toEqual({
+      decision: "QUALIFIED",
+      reasonCode: "VERIFIED_BUSINESS",
+      notes: "Evidence checked.",
+    });
+  });
+
+  it.each(["", "x", "has spaces", "symbols!"])(
+    "rejects invalid reason code %j",
+    (reasonCode) => {
+      expect(() => validateReferralReview({
+        decision: "HELD",
+        reasonCode,
+      })).toThrow("A valid referral review reason code is required");
     },
   );
 });

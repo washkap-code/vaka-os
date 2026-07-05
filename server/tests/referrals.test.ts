@@ -67,6 +67,15 @@ describe("referral attribution", () => {
       action: "referral.attribution_captured",
       entityType: "referral_attribution",
     });
+    const reviews = await db.select().from(schema.referralReviewEvents)
+      .where(eq(schema.referralReviewEvents.referralAttributionId, attribution.id));
+    expect(reviews).toEqual([
+      expect.objectContaining({
+        decision: "PENDING",
+        reasonCode: "AUTOMATED_CAPTURE",
+        actorUserId: null,
+      }),
+    ]);
   });
 
   it("rejects an unknown code and rolls back the entire company signup", async () => {
