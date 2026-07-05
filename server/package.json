@@ -10,7 +10,11 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "seed": "tsx src/seed.ts",
-    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --fileParallelism=false",
+    "test:ai-evaluation": "vitest run tests/ai-evaluation.test.ts tests/ai-evaluation-runner.test.ts tests/business-summary.contract.test.ts",
+    "test:integration": "vitest run --fileParallelism=false tests/critical.test.ts tests/business-summary.test.ts",
+    "ai:evaluate": "node --import tsx src/ai/evaluation/cli.ts",
     "db:push": "drizzle-kit push"
   },
   "keywords": [],

@@ -1,0 +1,104 @@
+name: VAKA quality gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Type, build, tests, and AI foundations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: jonomi
+          POSTGRES_PASSWORD: jonomi_ci
+          POSTGRES_DB: jonomi_platform_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jonomi -d jonomi_platform_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgresql://jonomi:jonomi_ci@127.0.0.1:5432/jonomi_platform_test
+      JWT_SECRET: ci-only-vaka-jwt-secret-not-for-production-2026
+      PLATFORM_ADMIN_PASSWORD: CI-Only-Platform-Password-2026
+      NODE_ENV: test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            web/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci --workspaces=false --ignore-scripts
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci --workspaces=false --ignore-scripts
+
+      - name: Create test database schema
+        working-directory: server
+        run: npm run db:push -- --force
+
+      - name: Seed required reference data
+        working-directory: server
+        run: node --import tsx src/seed.ts
+
+      - name: Type-check server and web
+        run: npm run typecheck
+
+      - name: Build web
+        run: npm run build
+
+      - name: Run PostgreSQL and foundation tests
+        run: npm test
+
+      - name: Generate intentionally gated evaluation example
+        working-directory: server
+        shell: bash
+        run: |
+          set +e
+          npm run ai:evaluate -- \
+            --input fixtures/ai-evaluation/candidates.example.json \
+            --allow-partial \
+            --json artifacts/ai-evaluation/example-report.json \
+            --markdown artifacts/ai-evaluation/example-report.md
+          evaluation_status=$?
+          set -e
+          if [ "$evaluation_status" -ne 1 ]; then
+            echo "Expected the partial, human-review-pending example to exit with status 1."
+            exit 1
+          fi
+
+      - name: Upload AI evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vaka-ai-evaluation-${{ github.run_id }}
+          path: server/artifacts/ai-evaluation/
+          if-no-files-found: error
+          retention-days: 30
