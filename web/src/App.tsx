@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
+import { appEnglish } from "./locales/app.en";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -17,6 +18,33 @@ type Me = {
     brandPrimaryColor: string; brandSecondaryColor: string; logoUrl: string | null;
   } | null;
 };
+
+type AgeingBucketKey = "current" | "d30" | "d60" | "d90" | "d90plus";
+type CurrencyAgeingView = {
+  currency: "USD" | "ZWG";
+  outstanding: string;
+  overdue: string;
+  buckets: Record<AgeingBucketKey, string>;
+};
+type AgedReceivableView = {
+  invoiceId: string;
+  number: string | null;
+  contact: string;
+  currency: "USD" | "ZWG";
+  outstanding: string;
+  daysOverdue: number;
+};
+type AgedReceivablesView = {
+  asAt: string;
+  currencies: CurrencyAgeingView[];
+  items: AgedReceivableView[];
+};
+type DashboardReceivablesView = Pick<AgedReceivablesView, "asAt" | "currencies"> & {
+  attentionItems: AgedReceivableView[];
+};
+const AGEING_BUCKET_LABELS = Object.entries(appEnglish.dashboard.buckets) as Array<
+  [AgeingBucketKey, string]
+>;
 
 export default function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -218,15 +246,57 @@ const useLoad = (fn: () => Promise<any>, deps: any[] = []) => {
 // ---------------------------------------------------------------------------
 function Dashboard({ ccy }: { ccy: string }) {
   const [d] = useLoad(() => api("/reports/dashboard"));
-  if (!d) return <p className="sub">Loading…</p>;
+  const copy = appEnglish.dashboard;
+  if (!d) return <p className="sub">{copy.loading}</p>;
+  const receivables = d.receivables as DashboardReceivablesView;
   return (<>
-    <h1>Dashboard</h1><div className="sub">Live across CRM, Accounting and Inventory — month to date</div>
+    <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
     <div className="cards">
-      <div className="card"><div className="k">Income (MTD)</div><div className="v ok">{fmt(d.monthToDate.income, ccy)}</div></div>
-      <div className="card"><div className="k">Expenses (MTD)</div><div className="v">{fmt(d.monthToDate.expenses, ccy)}</div></div>
-      <div className="card"><div className="k">Net profit (MTD)</div><div className={`v ${d.monthToDate.netProfit >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
-      <div className="card"><div className="k">Receivables outstanding</div><div className="v">{fmt(d.receivables.outstanding, ccy)}</div></div>
-      <div className="card"><div className="k">Overdue</div><div className={`v ${d.receivables.overdue > 0 ? "bad" : "ok"}`}>{fmt(d.receivables.overdue, ccy)}</div></div>
+      <div className="card"><div className="k">{copy.income}</div><div className="v ok">{fmt(d.monthToDate.income, ccy)}</div></div>
+      <div className="card"><div className="k">{copy.expenses}</div><div className="v">{fmt(d.monthToDate.expenses, ccy)}</div></div>
+      <div className="card"><div className="k">{copy.netProfit}</div><div className={`v ${d.monthToDate.netProfit >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
+    </div>
+    <div className="panel">
+      <div className="panel-heading">
+        <h2>{copy.receivablesTitle}</h2>
+        <span className="sub">{copy.receivablesAsAt} {new Date(receivables.asAt).toLocaleDateString("en-ZW")}</span>
+      </div>
+      {receivables.currencies.length === 0 ? <p className="sub">{copy.noReceivables}</p> : (
+        <div className="receivables-currencies">
+          {receivables.currencies.map((currency) => (
+            <section className="receivables-currency" key={currency.currency} aria-labelledby={`ageing-${currency.currency}`}>
+              <div className="row receivables-summary">
+                <h3 id={`ageing-${currency.currency}`}>{currency.currency}</h3>
+                <span>{copy.outstanding}: <b>{fmt(currency.outstanding, currency.currency)}</b></span>
+                <span>{copy.overdue}: <b className={Number(currency.overdue) > 0 ? "bad-text" : "ok-text"}>{fmt(currency.overdue, currency.currency)}</b></span>
+              </div>
+              <div className="ageing-grid">
+                {AGEING_BUCKET_LABELS.map(([key, label]) => (
+                  <div className="ageing-bucket" key={key}>
+                    <span>{label}</span>
+                    <b>{fmt(currency.buckets[key], currency.currency)}</b>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+      <h3 className="attention-heading">{copy.attentionTitle}</h3>
+      {receivables.attentionItems.length === 0 ? <p className="sub">{copy.noAttention}</p> : (
+        <div className="table-scroll">
+          <table><thead><tr><th>{copy.invoice}</th><th>{copy.customer}</th><th className="num">{copy.amount}</th><th className="num">{copy.daysOverdue}</th></tr></thead>
+            <tbody>{receivables.attentionItems.map((item) => (
+              <tr key={item.invoiceId}>
+                <td><b>{item.number}</b></td>
+                <td>{item.contact}</td>
+                <td className="num">{fmt(item.outstanding, item.currency)}</td>
+                <td className="num bad-text">{item.daysOverdue}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
     </div>
     <div className="panel"><h2>Low / out-of-stock items</h2>
       {d.lowStock.length === 0 ? <p className="sub">All stock above reorder levels.</p> :
@@ -614,13 +684,18 @@ function Reports({ ccy }: { ccy: string }) {
     </div>}
     {tab === "ar" && ar && <div className="panel">
       <h2>Aged Receivables</h2>
-      <div className="cards">
-        {Object.entries({ current: "Current", d30: "1–30 days", d60: "31–60 days", d90: "61–90 days", d90plus: "90+ days" }).map(([k, label]) => (
-          <div className="card" key={k}><div className="k">{label}</div><div className={`v ${k === "current" ? "" : "bad"}`}>{fmt((ar.buckets as any)[k], ccy)}</div></div>
-        ))}
-      </div>
+      {(ar as AgedReceivablesView).currencies.map((currency) => (
+        <div key={currency.currency}>
+          <h3>{currency.currency}</h3>
+          <div className="cards">
+            {AGEING_BUCKET_LABELS.map(([k, label]) => (
+              <div className="card" key={k}><div className="k">{label}</div><div className={`v ${k === "current" ? "" : "bad"}`}>{fmt(currency.buckets[k], currency.currency)}</div></div>
+            ))}
+          </div>
+        </div>
+      ))}
       <table><thead><tr><th>Invoice</th><th>Customer</th><th className="num">Outstanding</th><th className="num">Days overdue</th></tr></thead>
-        <tbody>{ar.items.map((r: any) => (
+        <tbody>{(ar as AgedReceivablesView).items.map((r) => (
           <tr key={r.invoiceId}><td>{r.number}</td><td>{r.contact}</td><td className="num">{fmt(r.outstanding, r.currency)}</td><td className="num">{r.daysOverdue}</td></tr>
         ))}</tbody></table>
     </div>}

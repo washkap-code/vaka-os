@@ -173,11 +173,12 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
 });
 
 describe("multi-currency (ZWG invoice, USD base)", () => {
-  it("posts ZWG revenue into the base ledger at the snapshot rate", async () => {
+  it("posts ZWG revenue at the snapshot rate and keeps ageing currencies separate", async () => {
     const c = await request(app).post("/api/v1/contacts").set(auth(A.token)).send({ name: "ZWG Customer" });
+    const dueDate = new Date(Date.now() - 40 * 86_400_000).toISOString();
     // service line (no stock) at ZWG 2,700 + 15% VAT, rate 27 ZWG/USD -> base 100 net
     const draft = await request(app).post("/api/v1/invoices").set(auth(A.token)).send({
-      contactId: c.body.id, currency: "ZWG", rateToBase: "0.037037",
+      contactId: c.body.id, currency: "ZWG", rateToBase: "0.037037", dueDate,
       lines: [{ description: "Consulting services", quantity: "1", unitPrice: "2700.00", taxRate: "15" }],
     });
     const before = (await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token))).body
@@ -186,6 +187,33 @@ describe("multi-currency (ZWG invoice, USD base)", () => {
     const after = (await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token))).body
       .find((r: any) => r.code === "4000").balance;
     expect(after - before).toBeCloseTo(-100, 1); // ~USD 100 more sales (credit)
+
+    const usdDraft = await request(app).post("/api/v1/invoices").set(auth(A.token)).send({
+      contactId: c.body.id, currency: "USD", dueDate,
+      lines: [{ description: "USD advisory", quantity: "1", unitPrice: "100.00", taxRate: "15" }],
+    });
+    await request(app).post(`/api/v1/invoices/${usdDraft.body.id}/issue`).set(auth(A.token)).send({});
+
+    const ageing = await request(app).get("/api/v1/reports/aged-receivables").set(auth(A.token));
+    expect(ageing.status).toBe(200);
+    expect(ageing.body.currencies).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        currency: "USD", outstanding: "115.00", overdue: "115.00",
+        buckets: expect.objectContaining({ d60: "115.00" }),
+      }),
+      expect.objectContaining({
+        currency: "ZWG", outstanding: "3105.00", overdue: "3105.00",
+        buckets: expect.objectContaining({ d60: "3105.00" }),
+      }),
+    ]));
+
+    const dashboard = await request(app).get("/api/v1/reports/dashboard").set(auth(A.token));
+    expect(dashboard.status).toBe(200);
+    expect(dashboard.body.receivables.currencies).toHaveLength(2);
+    expect(dashboard.body.receivables.attentionItems).toEqual(expect.arrayContaining([
+      expect.objectContaining({ currency: "USD", outstanding: "115.00" }),
+      expect.objectContaining({ currency: "ZWG", outstanding: "3105.00" }),
+    ]));
   });
 });
 

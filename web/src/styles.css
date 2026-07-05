@@ -41,6 +41,20 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
 .panel h2 { font-size: 15px; margin-bottom: 12px; }
+.panel-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.panel-heading .sub { margin-bottom: 12px; }
+.receivables-currency { border-top: 1px solid var(--line); padding: 14px 0; }
+.receivables-currency:first-child { border-top: 0; padding-top: 0; }
+.receivables-summary h3 { min-width: 48px; font-size: 14px; }
+.receivables-summary span { color: var(--muted); font-size: 12px; }
+.ageing-grid { display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 8px; margin-top: 12px; }
+.ageing-bucket { background: var(--bg); border-radius: 7px; padding: 10px; display: grid; gap: 5px; }
+.ageing-bucket span { color: var(--muted); font-size: 11px; }
+.ageing-bucket b { font-variant-numeric: tabular-nums; }
+.attention-heading { font-size: 14px; margin: 16px 0 10px; }
+.bad-text { color: var(--danger); }
+.ok-text { color: var(--ok); }
+.table-scroll { overflow-x: auto; }
 
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--line); }
@@ -63,6 +77,11 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .field { margin-bottom: 12px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+@media (max-width: 760px) {
+  .ageing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ageing-bucket:last-child { grid-column: 1 / -1; }
+}
 
 .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
 .pill.DRAFT { background: #EEE; color: #555; }

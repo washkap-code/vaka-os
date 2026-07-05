@@ -47,7 +47,7 @@ later add statements, payment status, and preferences.
 | Record payment and void | Working foundation |
 | Aged receivables report | Working foundation |
 | Dashboard outstanding/overdue totals | Partial |
-| Currency-safe dashboard ageing analysis | Missing |
+| Currency-safe dashboard ageing analysis | Implemented foundation; pending release verification |
 | Company logo field and branding update API | Partial; URL only |
 | Managed logo upload | Missing |
 | Branded invoice template | Missing |
