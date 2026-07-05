@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Upgrade comparison:** Added a tenant Upgrade tab with current-package
+  context, responsive package comparison, honest planned-feature labels, and an
+  audited upgrade-interest workflow that does not change billing automatically.
 - **Workspace settings:** Added personal-name and company-identity settings,
   colour/logo preview, workspace branding application, registration/tax/address
   fields, and a complete managed-upload/white-label specification.
