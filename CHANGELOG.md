@@ -17,6 +17,9 @@
 - **Internal:** Revised Starter, Growth, Business, and Enterprise packaging
   around operational outcomes and defined the required versioned entitlement
   architecture.
+- **Internal:** Rebased recommended package prices to USD 19, USD 69, USD 249,
+  and Enterprise from USD 599/month, with implementation and provider usage
+  separated; prices remain proposed pending commercial validation.
 
 ### Changed
 

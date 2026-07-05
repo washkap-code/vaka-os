@@ -1,6 +1,7 @@
 # VAKA Pricing and Packaging
 
-**Status:** Approved packaging direction; entitlement implementation pending  
+**Status:** Recommended commercial model; leadership validation and entitlement implementation pending
+
 **Owner:** Product, Commercial, Finance, and Engineering  
 **Last reviewed:** 2026-07-05
 
@@ -17,10 +18,44 @@ Plans must not weaken tenant isolation, encryption, backups, data ownership,
 essential permissions, audit integrity, accessibility, or customer export
 rights. Trust is not a premium add-on.
 
-Current prices remain provisional early-access prices until commercial,
-support-cost, provider-cost, tax, and pilot evidence is reviewed.
+Recommended prices below are list-price hypotheses for validation. They exclude
+applicable taxes, payment-provider fees, messaging, OCR, AI, premium storage,
+custom implementation, and other explicitly metered services.
 
-## 2. Current implementation warning
+## 2. Market and cost review
+
+Official pricing reviewed on 2026-07-05 shows:
+
+- Xero’s US Established accounting plan normally costs USD 90/month and still
+  charges separately for some usage/payment services.
+- Odoo lists Standard and Custom plans at approximately EUR 14.80 and EUR 28.00
+  per user/month on monthly billing, with implementation and in-app credits
+  outside the subscription.
+- Zoho One lists flexible-user pricing at USD 90 per user/month.
+- Sage South Africa separates accounting, inventory, multi-currency, payroll,
+  users, warehousing, POS, and other modules through product tiers/add-ons.
+
+VAKA is intended to combine CRM, finance, inventory, local payments,
+communications, mobile work, banking, portals, AI, and operational controls.
+The earlier USD 75 Business price for 15 users and USD 150 Enterprise floor did
+not leave credible room for implementation, support, provider costs, security,
+or continued development.
+
+### Recommended commercial guardrails
+
+- Price the durable operating platform, not merely today’s unfinished screens.
+- Preserve an accessible entry tier for Zimbabwean micro-businesses.
+- Charge established businesses for team scale, controls, integrations, and
+  support value.
+- Keep variable third-party costs metered or allowance-based.
+- Charge separately for material onboarding, migration, configuration, and
+  custom integration work.
+- Use annual commitment discounts rather than an unsustainably low permanent
+  list price.
+- Review prices at least annually against USD costs, provider prices, support
+  demand, inflation, exchange controls, and demonstrated customer value.
+
+## 3. Current implementation warning
 
 The repository currently stores a plan name, monthly price, user limit, and a
 small JSON feature object. Most application routes do not enforce feature
@@ -34,12 +69,13 @@ Therefore:
   plan-restricted; and
 - changing a seed object alone does not change an existing production plan.
 
-## 3. Proposed packages
+## 4. Proposed packages
 
 ### Starter — Run the essentials
 
 **Audience:** founders, sole traders, and very small businesses  
-**Early-access price:** USD 12/month  
+**Recommended list price:** USD 19/month, or USD 190/year
+
 **Included users:** 1  
 **Locations:** 1
 
@@ -74,7 +110,8 @@ in higher tiers.
 ### Growth — Coordinate a growing team
 
 **Audience:** growing businesses with sales, finance, and stock responsibilities  
-**Early-access price:** USD 30/month  
+**Recommended list price:** USD 69/month, or USD 690/year
+
 **Included users:** 5  
 **Locations:** 2
 
@@ -107,7 +144,8 @@ control.
 
 **Audience:** established SMEs with departments, locations, approvals, and
 stronger reporting needs  
-**Early-access price:** USD 75/month  
+**Recommended list price:** USD 249/month, or USD 2,490/year
+
 **Included users:** 15  
 **Locations:** 5
 
@@ -140,11 +178,17 @@ stronger reporting needs
 Payroll, HR, POS, messaging, OCR, and AI may require country review, provider
 costs, usage limits, or separate add-ons even when the plan is eligible.
 
+**Implementation:** guided onboarding and migration are separately scoped,
+starting from USD 750 for a standard Business implementation. Complex data,
+workflows, training, integrations, or onsite work require a quote.
+
 ### Enterprise — Govern a complex organisation
 
 **Audience:** larger, multi-entity, regulated, franchise, or white-label
 organisations  
-**Early-access commercial floor:** from USD 150/month; final price by agreement  
+**Recommended commercial floor:** from USD 599/month on annual agreement;
+final price by scope
+
 **Included users:** contracted  
 **Locations/entities:** contracted
 
@@ -169,7 +213,11 @@ support, branding, and deployment controls.
 Enterprise is not a self-service promise of arbitrary custom development.
 Scope, dependencies, security, support, and commercial terms require agreement.
 
-## 4. Comparison matrix
+**Implementation:** starts from USD 3,000 and is quoted after discovery. Custom
+integrations, historical migration, multi-entity design, security review,
+training, white-label deployment, and dedicated environments increase scope.
+
+## 5. Comparison matrix
 
 Legend: **Included**, **Limited**, **Eligible/add-on**, **Planned**, or **—**.
 
@@ -199,7 +247,21 @@ Legend: **Included**, **Limited**, **Eligible/add-on**, **Planned**, or **—**.
 | White-label/custom domain | — | — | — | Eligible |
 | Support | Standard | Priority email | Priority targets | Contracted SLA |
 
-## 5. Usage-based services
+## 6. Additional capacity
+
+Recommended starting points:
+
+- Growth additional internal user: USD 10/month;
+- Business additional internal user: USD 15/month;
+- Enterprise users, entities, locations, and environments: contracted;
+- customer and supplier portal identities: not charged as internal users under
+  normal fair-use policy; and
+- temporary implementation/support users: governed separately and never used
+  to bypass licensing.
+
+Additional capacity does not automatically grant permissions or module access.
+
+## 7. Usage-based services
 
 External providers charge by message, OCR page, model usage, payment, storage,
 or support volume. VAKA should use transparent included allowances and
@@ -220,7 +282,21 @@ Potential metered dimensions:
 No usage charge may block access to owned data or required export after
 subscription suspension.
 
-## 6. Entitlement architecture
+## 8. Trial, pilot, and discount policy
+
+- Replace the broad three-month free period with a 30-day product trial once
+  onboarding and billing are production-ready.
+- Keep pilot programmes separate, invitation-only, time-bounded, and tied to
+  feedback/support commitments.
+- Annual prepayment may provide approximately two months’ value, reflected in
+  the recommended annual prices.
+- Discount the subscription deliberately; do not silently waive provider,
+  implementation, custom development, or pass-through costs.
+- Record discount reason, owner, duration, renewal price, and approval.
+- Non-profit, education, accelerator, or partner programmes require published
+  eligibility and must not redefine the standard list price.
+
+## 9. Entitlement architecture
 
 Create a governed entitlement catalogue with stable machine keys, for example:
 
@@ -261,7 +337,7 @@ Requirements:
 - emergency/provider kill switches that can disable a capability regardless of
   plan.
 
-## 7. Upgrade, downgrade, and suspension
+## 10. Upgrade, downgrade, and suspension
 
 - Upgrades must not silently grant permissions to existing users.
 - Downgrades must not delete data or mutate historical records.
@@ -273,10 +349,11 @@ Requirements:
 - Suspension retains read, billing, and export behavior defined by VAKA policy.
 - Enterprise contract expiry follows an explicit offboarding/export plan.
 
-## 8. Implementation order
+## 11. Implementation order
 
-1. Approve commercial names, limits, provisional prices, and availability
-   labels.
+1. Validate willingness-to-pay with Zimbabwean micro, growing, established, and
+   enterprise pilot customers; approve names, limits, list prices, onboarding
+   fees, annual terms, taxes, and availability labels.
 2. Create a typed, versioned plan/entitlement catalogue shared by seed,
    billing, public pricing, and application UI.
 3. Add plan-version and tenant-entitlement persistence through migrations.
@@ -289,7 +366,7 @@ Requirements:
 9. Add usage metering only for released provider-backed capabilities.
 10. Publish packages only when live entitlements match the claims.
 
-## 9. Acceptance criteria
+## 12. Acceptance criteria
 
 - The public price, signup selection, billing plan, and server entitlements
   resolve from one governed plan version.
@@ -302,3 +379,10 @@ Requirements:
 - Usage counters and provider limits are tenant-safe, exact, and auditable.
 - Existing subscribers receive an explicit migration/grandfathering decision.
 
+## 13. Pricing references
+
+- Xero US pricing: https://www.xero.com/us/pricing-plans/
+- Odoo pricing: https://www.odoo.com/pricing
+- Zoho One pricing: https://www.zoho.com/one/pricing/
+- Sage South Africa 2025–2026 price list:
+  https://mcacomp.co.za/documents/sage-price-list-2025-2026.pdf
