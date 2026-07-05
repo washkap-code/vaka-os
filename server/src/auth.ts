@@ -13,6 +13,7 @@ import { db, schema, unauthorized, forbidden, badRequest, conflict, DEFAULT_ROLE
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
+import { captureReferralAttribution } from "./referrals.js";
 
 const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
@@ -31,6 +32,7 @@ export interface AuthedRequest extends Request {
 export async function signupTenant(opts: {
   companyName: string; subdomain: string; baseCurrency: "USD" | "ZWG";
   ownerEmail: string; ownerPassword: string; ownerName: string; planName?: string;
+  referralCode?: string;
 }) {
   const sub = opts.subdomain.toLowerCase().trim();
   if (!/^[a-z0-9][a-z0-9-]{2,30}$/.test(sub)) throw badRequest("Subdomain must be 3-31 chars, lowercase letters/numbers/hyphens");
@@ -71,6 +73,20 @@ export async function signupTenant(opts: {
       tenantId: tenant.id, planId: plan.id, status: "TRIALING",
       currentPeriodStart: new Date(), currentPeriodEnd: trialEndsAt, trialEnd: trialEndsAt,
     });
+
+    if (opts.referralCode) {
+      const { attribution, referral } = await captureReferralAttribution(tx, {
+        referralCode: opts.referralCode,
+        referredTenantId: tenant.id,
+        ownerEmail: opts.ownerEmail,
+      });
+      await audit(tx, tenant.id, owner.id, "referral.attribution_captured",
+        "referral_attribution", attribution.id, {
+          referralCodeId: referral.id,
+          program: referral.program,
+          ruleVersion: referral.ruleVersion,
+        });
+    }
 
     await audit(tx, tenant.id, owner.id, "tenant.created", "tenant", tenant.id,
       { plan: planName, baseCurrency: opts.baseCurrency });

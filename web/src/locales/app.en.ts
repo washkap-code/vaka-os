@@ -1,4 +1,9 @@
 export const appEnglish = {
+  auth: {
+    referralCode: "Referral code (optional)",
+    referralPlaceholder: "VAKA-XXXXX",
+    referralHelp: "A referral records who introduced your company. It does not grant them access to your workspace.",
+  },
   dashboard: {
     loading: "Loading…",
     title: "Dashboard",

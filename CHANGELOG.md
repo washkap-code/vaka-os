@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Referral foundation:** Added platform-managed codes, immutable
+  transactional signup attribution, rule-version snapshots, self-referral
+  protection, tenant audit evidence, and referral-link signup capture. This
+  does not calculate commissions, grant client access, or issue payouts.
 - **Internal:** Defined the controlled product and technical requirements for
   branded invoice PDFs, invoice delivery, secure customer access, managed
   company logos, and currency-safe dashboard ageing.

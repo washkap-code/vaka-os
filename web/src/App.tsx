@@ -139,7 +139,11 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
 // ---------------------------------------------------------------------------
 function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; initialMode?: "login" | "signup"; onBack?: () => void }) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
-  const [f, setF] = useState<any>({ baseCurrency: "USD", planName: "Starter" });
+  const [f, setF] = useState<any>({
+    baseCurrency: "USD",
+    planName: "Starter",
+    referralCode: new URLSearchParams(window.location.search).get("ref") ?? "",
+  });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const set = (k: string) => (e: any) => setF({ ...f, [k]: e.target.value });
 
@@ -174,6 +178,11 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
         <select value={f.planName} onChange={set("planName")}>
           <option>Starter</option><option>Growth</option><option>Business</option><option>Enterprise</option>
         </select></div>}
+      {mode === "signup" && <div className="field">
+        <label>{appEnglish.auth.referralCode}</label>
+        <input value={f.referralCode ?? ""} onChange={set("referralCode")} placeholder={appEnglish.auth.referralPlaceholder} />
+        <small>{appEnglish.auth.referralHelp}</small>
+      </div>}
       <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
         {busy ? "Working…" : mode === "login" ? "Sign in" : "Create company — start 3 months free"}
       </button>

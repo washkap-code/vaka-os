@@ -5,6 +5,13 @@
 **Owner:** Partnerships, Product, Finance, Legal, Security, and Engineering  
 **Last reviewed:** 2026-07-05
 
+**Implementation note (2026-07-05):** The first controlled foundation now
+supports platform-created referral codes and immutable referral attribution
+during transactional company signup. It snapshots the programme and rule
+version, rejects invalid and obvious self-referrals, and creates a tenant audit
+event. Commission calculation, qualification, partner-client access, disputes,
+and payouts remain unimplemented.
+
 ## 1. Purpose
 
 Build a trusted distribution network around accountants, bookkeepers, business
@@ -342,4 +349,3 @@ retention rules, and rollback/reconciliation procedures.
   https://central.xero.com/s/article/The-Xero-partner-program-explained
 - Odoo affiliate programme:
   https://www.odoo.com/affiliate
-
