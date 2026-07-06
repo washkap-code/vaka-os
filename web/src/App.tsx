@@ -345,7 +345,7 @@ function ArrearsBar({ status, onBilling }: { status: ArrearsStatus; onBilling: (
   );
 }
 
-type ContactImportPreview = {
+type ImportPreview = {
   batch: {
     id: string;
     totalRows: number;
@@ -362,7 +362,8 @@ type ContactImportPreview = {
 };
 
 function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove: boolean }) {
-  const [preview, setPreview] = useState<ContactImportPreview | null>(null);
+  const [kind, setKind] = useState<"contacts" | "products">("contacts");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -385,7 +386,7 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
     setFileName(file.name);
     try {
       const csvText = await file.text();
-      setPreview(await api("/imports/contacts/preview", {
+      setPreview(await api(`/imports/${kind}/preview`, {
         method: "POST",
         body: { csvText },
       }));
@@ -400,11 +401,12 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
     setBusy(true);
     setMessage("");
     try {
-      const result = await api(`/imports/contacts/${preview.batch.id}/commit`, {
+      const result = await api(`/imports/${kind}/${preview.batch.id}/commit`, {
         method: "POST",
         body: {},
       });
-      setMessage(copy.completed.replace("{count}", String(result.importedRows)));
+      setMessage((kind === "contacts" ? copy.contactsCompleted : copy.productsCompleted)
+        .replace("{count}", String(result.importedRows)));
       setPreview(null);
       setFileName("");
     } catch (error: any) {
@@ -416,10 +418,24 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
   return (<>
     <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
     <div className="panel">
-      <h2>{copy.contactsTitle}</h2>
-      <p className="sub">{copy.contactsHelp}</p>
+      <div className="field">
+        <label htmlFor="import-type">{copy.importType}</label>
+        <select id="import-type" value={kind} disabled={busy} onChange={(event) => {
+          setKind(event.target.value as "contacts" | "products");
+          setPreview(null);
+          setFileName("");
+          setMessage("");
+        }}>
+          <option value="contacts">{copy.contactsOption}</option>
+          <option value="products">{copy.productsOption}</option>
+        </select>
+      </div>
+      <h2>{kind === "contacts" ? copy.contactsTitle : copy.productsTitle}</h2>
+      <p className="sub">{kind === "contacts" ? copy.contactsHelp : copy.productsHelp}</p>
       <div className="import-template">
-        <code>name,email,phone,type,is_customer,is_vendor,tax_number,tags</code>
+        <code>{kind === "contacts"
+          ? "name,email,phone,type,is_customer,is_vendor,tax_number,tags"
+          : "sku,name,description,unit,cost_price,sale_price,currency,tax_rate,reorder_level,track_stock,is_active"}</code>
       </div>
       <div className="field">
         <label>{copy.chooseCsv}</label>
@@ -436,12 +452,17 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
       </div>
       <div className="table-scroll">
         <table>
-          <thead><tr><th>{copy.row}</th><th>{copy.name}</th><th>{copy.email}</th><th>{copy.status}</th><th>{copy.issue}</th></tr></thead>
+          <thead><tr><th>{copy.row}</th>
+            {kind === "products" && <th>{copy.sku}</th>}
+            <th>{copy.name}</th>
+            <th>{kind === "contacts" ? copy.email : copy.salePrice}</th>
+            <th>{copy.status}</th><th>{copy.issue}</th></tr></thead>
           <tbody>{preview.rows.map((row) => (
             <tr key={row.rowNumber}>
               <td>{row.rowNumber}</td>
+              {kind === "products" && <td>{String(row.data.sku ?? "—")}</td>}
               <td>{String(row.data.name ?? "—")}</td>
-              <td>{String(row.data.email ?? "—")}</td>
+              <td>{String((kind === "contacts" ? row.data.email : row.data.salePrice) ?? "—")}</td>
               <td><span className={`pill ${row.status}`}>{row.status}</span></td>
               <td>{row.error ?? "—"}</td>
             </tr>

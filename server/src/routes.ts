@@ -19,7 +19,10 @@ import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard }
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
-import { commitContactImport, listImportBatches, previewContactImport } from "./imports.js";
+import {
+  commitContactImport, commitProductImport, listImportBatches,
+  previewContactImport, previewProductImport,
+} from "./imports.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -143,6 +146,22 @@ api.post("/imports/contacts/preview", requirePermission("imports.create"), wrap(
 }));
 api.post("/imports/contacts/:id/commit", requirePermission("imports.approve"), wrap(async (req) =>
   commitContactImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    batchId: routeParam(req, "id"),
+  })));
+api.post("/imports/products/preview", requirePermission("imports.create"), wrap(async (req) => {
+  const body = z.object({ csvText: z.string().min(1).max(1_000_000) }).parse(req.body);
+  return previewProductImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    csvText: body.csvText,
+  });
+}));
+api.post("/imports/products/:id/commit",
+  requirePermission("imports.approve"),
+  requirePermission("inventory.write"),
+  wrap(async (req) => commitProductImport({
     tenantId: tenantId(req),
     actorUserId: req.auth!.userId,
     batchId: routeParam(req, "id"),
