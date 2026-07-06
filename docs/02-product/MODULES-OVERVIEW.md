@@ -433,10 +433,11 @@ Every module depends on:
 - backup and recovery; and
 - support operations.
 
-The first self-service import slice provides staged contact CSV preview,
-validation, duplicate detection, explicit approval and auditable transactional
-commit. See `CONTACT-CSV-IMPORT.md`. Product, stock, bank, document/OCR and
-other adapters build on the same batch foundation.
+The self-service import foundation provides staged contact and product catalogue
+CSV preview, validation, duplicate detection, explicit approval and auditable
+transactional commit. See `CONTACT-CSV-IMPORT.md`. Product imports do not alter
+stock. Opening stock, bank, document/OCR and other adapters build on the same
+batch foundation with domain-specific reconciliation controls.
 
 Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
 providers are shared platform capabilities. They must use named permissions,

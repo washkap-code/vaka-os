@@ -1,6 +1,6 @@
-# Contact CSV Import
+# Self-Service CSV Imports
 
-**Status:** First self-service import slice implemented
+**Status:** Contact and product catalogue slices implemented
 **Owner:** Product, Engineering, Security, and Data
 **Last reviewed:** 2026-07-06
 
@@ -17,12 +17,22 @@ Authorised tenant Owners and Administrators can:
 Supported headings include name/company name, email, phone, type, customer,
 supplier/vendor, address, tax number and semicolon-separated tags.
 
+Authorised Owners and Administrators can use the same staged workflow for
+products and services. Supported headings include SKU, name, description, unit
+of measure, cost and sale price, USD/ZWG currency, tax rate, reorder level,
+stock tracking and active status.
+
+Product imports create catalogue records only. They deliberately do not create
+opening quantities, warehouses, stock movements or accounting entries.
+
 ## Controls
 
 - The CSV is parsed server-side and staged before writes.
 - Files with malformed quotes or unsafe limits are rejected.
 - Formula-like values and malformed emails are rejected.
 - Existing and within-file duplicate names/emails are skipped.
+- Existing and within-file duplicate product SKUs are skipped.
+- Prices, tax rates, currencies, reorder levels and product flags are validated.
 - Only `VALID` rows can be committed.
 - Commit is tenant-scoped, transactional and cannot be replayed.
 - Preview and completion create audit evidence.
@@ -31,13 +41,12 @@ supplier/vendor, address, tax number and semicolon-separated tags.
 
 ## Next adapters
 
-This batch/staging foundation should be extended to:
+This batch/staging foundation should next be extended to:
 
-- products and price lists;
-- opening stock with approval and reconciliation;
+- opening stock with warehouse mapping, approval, valuation and balanced
+  opening-equity reconciliation;
 - bank CSV and structured statement formats;
 - draft invoices, bills and expenses;
 - XLSX mapping;
 - mobile document capture/OCR; and
 - API, email and assisted migration channels.
-

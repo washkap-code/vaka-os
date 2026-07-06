@@ -7,6 +7,9 @@
 - **Self-service imports:** Added tenant-scoped contact CSV preview, row
   validation, duplicate detection, explicit approval, idempotent transactional
   commit, audit batches and a responsive Imports interface.
+- **Product imports:** Extended staged imports to product and service catalogues
+  with SKU deduplication, exact price/tax validation, USD/ZWG support and an
+  explicit safeguard against changing stock quantities.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.
