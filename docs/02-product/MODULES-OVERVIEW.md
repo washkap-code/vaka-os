@@ -436,8 +436,10 @@ Every module depends on:
 The self-service import foundation provides staged contact and product catalogue
 CSV preview, validation, duplicate detection, explicit approval and auditable
 transactional commit. See `CONTACT-CSV-IMPORT.md`. Product imports do not alter
-stock. Opening stock, bank, document/OCR and other adapters build on the same
-batch foundation with domain-specific reconciliation controls.
+stock. Opening-stock imports separately map SKUs and warehouses, refuse
+pre-existing balances, append stock movements and post balanced Inventory /
+Opening Balance Equity journals atomically. Bank, document/OCR and other
+adapters build on the same batch foundation with domain-specific controls.
 
 Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
 providers are shared platform capabilities. They must use named permissions,

@@ -10,6 +10,9 @@
 - **Product imports:** Extended staged imports to product and service catalogues
   with SKU deduplication, exact price/tax validation, USD/ZWG support and an
   explicit safeguard against changing stock quantities.
+- **Opening stock imports:** Added warehouse-mapped opening quantities and unit
+  costs with zero-balance enforcement, append-only movements, product costing,
+  balanced opening-equity journals, explicit approval and atomic audit evidence.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.
