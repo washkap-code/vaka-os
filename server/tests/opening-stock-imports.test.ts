@@ -81,7 +81,8 @@ describe("opening stock CSV imports", () => {
     expect(movements).toHaveLength(2);
     const levels = await db.select().from(schema.stockLevels)
       .where(eq(schema.stockLevels.productId, product.body.id));
-    expect(levels.map((level) => Number(level.quantityOnHand)).sort()).toEqual([5, 10]);
+    expect(levels.map((level) => Number(level.quantityOnHand)).sort((a, b) => a - b))
+      .toEqual([5, 10]);
     expect(await db.select().from(schema.journalLines).where(
       eq(schema.journalLines.journalEntryId, committed.body.journalEntryId),
     )).toHaveLength(2);
