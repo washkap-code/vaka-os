@@ -20,8 +20,8 @@ import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getA
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
 import {
-  commitContactImport, commitProductImport, listImportBatches,
-  previewContactImport, previewProductImport,
+  commitContactImport, commitOpeningStockImport, commitProductImport, listImportBatches,
+  previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 
 export const api = Router();
@@ -166,6 +166,25 @@ api.post("/imports/products/:id/commit",
     actorUserId: req.auth!.userId,
     batchId: routeParam(req, "id"),
   })));
+api.post("/imports/opening-stock/preview",
+  requirePermission("imports.create"),
+  requirePermission("inventory.write"),
+  wrap(async (req) => {
+    const body = z.object({ csvText: z.string().min(1).max(1_000_000) }).parse(req.body);
+    return previewOpeningStockImport({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      csvText: body.csvText,
+    });
+  }));
+api.post("/imports/opening-stock/:id/commit",
+  requirePermission("imports.approve"),
+  requirePermission("inventory.write"),
+  wrap(async (req) => commitOpeningStockImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    batchId: routeParam(req, "id"),
+  })));
 
 // ---------------------------------------------------------------------------
 // CRM
@@ -287,6 +306,7 @@ api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req
       tenantId: tid, productId: body.productId, warehouseId: body.warehouseId,
       quantityDelta: body.quantity, unitCost: body.unitCost, reason: "OPENING",
       sourceType: "manual", createdBy: req.auth!.userId,
+      requireZeroCurrent: true, requireNoHistory: true,
     });
     const { toCents, fromCents, mulRate } = await import("./lib.js");
     const { systemAccount, postJournal } = await import("./accounting.js");

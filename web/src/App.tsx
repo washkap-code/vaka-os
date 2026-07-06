@@ -359,10 +359,12 @@ type ImportPreview = {
     error: string | null;
     data: Record<string, unknown>;
   }>;
+  baseCurrency?: "USD" | "ZWG";
 };
 
 function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove: boolean }) {
-  const [kind, setKind] = useState<"contacts" | "products">("contacts");
+  type ImportKind = "contacts" | "products" | "opening-stock";
+  const [kind, setKind] = useState<ImportKind>("contacts");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
@@ -405,8 +407,13 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
         method: "POST",
         body: {},
       });
-      setMessage((kind === "contacts" ? copy.contactsCompleted : copy.productsCompleted)
-        .replace("{count}", String(result.importedRows)));
+      const completion = kind === "contacts"
+        ? copy.contactsCompleted
+        : kind === "products"
+          ? copy.productsCompleted
+          : copy.openingStockCompleted
+            .replace("{value}", `${preview.baseCurrency} ${result.totalValue}`);
+      setMessage(completion.replace("{count}", String(result.importedRows)));
       setPreview(null);
       setFileName("");
     } catch (error: any) {
@@ -421,22 +428,30 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
       <div className="field">
         <label htmlFor="import-type">{copy.importType}</label>
         <select id="import-type" value={kind} disabled={busy} onChange={(event) => {
-          setKind(event.target.value as "contacts" | "products");
+          setKind(event.target.value as ImportKind);
           setPreview(null);
           setFileName("");
           setMessage("");
         }}>
           <option value="contacts">{copy.contactsOption}</option>
           <option value="products">{copy.productsOption}</option>
+          <option value="opening-stock">{copy.openingStockOption}</option>
         </select>
       </div>
-      <h2>{kind === "contacts" ? copy.contactsTitle : copy.productsTitle}</h2>
-      <p className="sub">{kind === "contacts" ? copy.contactsHelp : copy.productsHelp}</p>
+      <h2>{kind === "contacts"
+        ? copy.contactsTitle
+        : kind === "products" ? copy.productsTitle : copy.openingStockTitle}</h2>
+      <p className="sub">{kind === "contacts"
+        ? copy.contactsHelp
+        : kind === "products" ? copy.productsHelp : copy.openingStockHelp}</p>
       <div className="import-template">
         <code>{kind === "contacts"
           ? "name,email,phone,type,is_customer,is_vendor,tax_number,tags"
-          : "sku,name,description,unit,cost_price,sale_price,currency,tax_rate,reorder_level,track_stock,is_active"}</code>
+          : kind === "products"
+            ? "sku,name,description,unit,cost_price,sale_price,currency,tax_rate,reorder_level,track_stock,is_active"
+            : "sku,warehouse,quantity,unit_cost"}</code>
       </div>
+      {kind === "opening-stock" && <p className="sub">{copy.openingStockWarning}</p>}
       <div className="field">
         <label>{copy.chooseCsv}</label>
         <input type="file" accept=".csv,text/csv" disabled={readonly || busy} onChange={selectFile} />
@@ -453,16 +468,21 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
       <div className="table-scroll">
         <table>
           <thead><tr><th>{copy.row}</th>
-            {kind === "products" && <th>{copy.sku}</th>}
-            <th>{copy.name}</th>
-            <th>{kind === "contacts" ? copy.email : copy.salePrice}</th>
+            {kind !== "contacts" && <th>{copy.sku}</th>}
+            {kind === "opening-stock"
+              ? <><th>{copy.warehouse}</th><th>{copy.quantity}</th><th>{copy.unitCost}</th></>
+              : <><th>{copy.name}</th><th>{kind === "contacts" ? copy.email : copy.salePrice}</th></>}
             <th>{copy.status}</th><th>{copy.issue}</th></tr></thead>
           <tbody>{preview.rows.map((row) => (
             <tr key={row.rowNumber}>
               <td>{row.rowNumber}</td>
-              {kind === "products" && <td>{String(row.data.sku ?? "—")}</td>}
-              <td>{String(row.data.name ?? "—")}</td>
-              <td>{String((kind === "contacts" ? row.data.email : row.data.salePrice) ?? "—")}</td>
+              {kind !== "contacts" && <td>{String(row.data.sku ?? "—")}</td>}
+              {kind === "opening-stock"
+                ? <><td>{String(row.data.warehouse ?? "—")}</td>
+                  <td>{String(row.data.quantity ?? "—")}</td>
+                  <td>{String(row.data.unitCost ?? "—")}</td></>
+                : <><td>{String(row.data.name ?? "—")}</td>
+                  <td>{String((kind === "contacts" ? row.data.email : row.data.salePrice) ?? "—")}</td></>}
               <td><span className={`pill ${row.status}`}>{row.status}</span></td>
               <td>{row.error ?? "—"}</td>
             </tr>

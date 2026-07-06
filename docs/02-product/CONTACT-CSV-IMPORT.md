@@ -1,6 +1,6 @@
 # Self-Service CSV Imports
 
-**Status:** Contact and product catalogue slices implemented
+**Status:** Contact, product catalogue and controlled opening-stock slices implemented
 **Owner:** Product, Engineering, Security, and Data
 **Last reviewed:** 2026-07-06
 
@@ -25,6 +25,17 @@ stock tracking and active status.
 Product imports create catalogue records only. They deliberately do not create
 opening quantities, warehouses, stock movements or accounting entries.
 
+Opening-stock CSVs can then map existing SKUs to existing warehouses with a
+positive quantity and unit cost in the workspace base currency. Approval:
+
+- refuses products or locations with existing stock;
+- requires one consistent unit cost per product across locations;
+- creates append-only `OPENING` stock movements;
+- updates the product cost used by the current simple-costing model;
+- debits Inventory and credits Opening Balance Equity in one balanced journal;
+- commits stock, product cost, journal and audit evidence atomically; and
+- cannot be replayed.
+
 ## Controls
 
 - The CSV is parsed server-side and staged before writes.
@@ -42,9 +53,6 @@ opening quantities, warehouses, stock movements or accounting entries.
 ## Next adapters
 
 This batch/staging foundation should next be extended to:
-
-- opening stock with warehouse mapping, approval, valuation and balanced
-  opening-equity reconciliation;
 - bank CSV and structured statement formats;
 - draft invoices, bills and expenses;
 - XLSX mapping;

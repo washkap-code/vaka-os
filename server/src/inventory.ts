@@ -20,10 +20,26 @@ export async function recordStockMovement(
     reason: "SALE" | "PURCHASE" | "ADJUSTMENT" | "TRANSFER_IN" | "TRANSFER_OUT" | "OPENING";
     sourceType?: string; sourceId?: string; note?: string; createdBy?: string | null;
     allowNegative?: boolean;       // default false — protects against overselling
+    requireZeroCurrent?: boolean;  // opening balances must not be layered onto existing stock
+    requireNoHistory?: boolean;    // opening balances are invalid after any prior movement
   },
 ) {
   const delta = Number(opts.quantityDelta);
   if (!isFinite(delta) || delta === 0) throw badRequest("quantityDelta must be a non-zero number");
+  const [product] = await tx.select({
+    id: schema.products.id,
+    trackStock: schema.products.trackStock,
+  }).from(schema.products).where(and(
+    eq(schema.products.id, opts.productId),
+    eq(schema.products.tenantId, opts.tenantId),
+  ));
+  const [warehouse] = await tx.select({ id: schema.warehouses.id })
+    .from(schema.warehouses).where(and(
+      eq(schema.warehouses.id, opts.warehouseId),
+      eq(schema.warehouses.tenantId, opts.tenantId),
+    ));
+  if (!product || !warehouse) throw badRequest("Product or warehouse not found");
+  if (!product.trackStock) throw badRequest("Stock movements cannot be recorded for a non-stock service");
 
   // Upsert + lock the cached level row, then apply delta atomically.
   await tx.execute(sql`
@@ -37,6 +53,19 @@ export async function recordStockMovement(
     FOR UPDATE
   `);
   const current = Number((locked as any).rows[0].quantity_on_hand);
+  if (opts.requireZeroCurrent && current !== 0) {
+    throw conflict("Opening stock can only be recorded when current stock is zero");
+  }
+  if (opts.requireNoHistory) {
+    const history = await tx.execute(sql`
+      SELECT 1 FROM stock_movements
+      WHERE product_id = ${opts.productId} AND warehouse_id = ${opts.warehouseId}
+      LIMIT 1
+    `);
+    if ((history as any).rows.length) {
+      throw conflict("Opening stock cannot be recorded after stock movement history exists");
+    }
+  }
   const next = current + delta;
   if (next < 0 && !opts.allowNegative) {
     throw conflict(`Insufficient stock: on hand ${current}, requested ${Math.abs(delta)}`);

@@ -1,10 +1,13 @@
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { audit, badRequest, conflict, db, schema } from "./lib.js";
+import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } from "./lib.js";
+import { postJournal, systemAccount } from "./accounting.js";
+import { recordStockMovement } from "./inventory.js";
 
 const MAX_CSV_BYTES = 1_000_000;
 const MAX_ROWS = 5_000;
 const MAX_COLUMNS = 50;
+const MAX_MONEY_CENTS = 99_999_999_999_999n;
 
 type ContactImportData = {
   type: "INDIVIDUAL" | "COMPANY";
@@ -30,6 +33,15 @@ type ProductImportData = {
   reorderLevel: number;
   trackStock: boolean;
   isActive: boolean;
+};
+
+type OpeningStockImportData = {
+  sku: string;
+  warehouse: string;
+  quantity: string;
+  unitCost: string;
+  productId: string;
+  warehouseId: string;
 };
 
 const headerAliases: Record<string, keyof ContactImportData> = {
@@ -81,6 +93,21 @@ const productHeaderAliases: Record<string, keyof ProductImportData> = {
   active: "isActive",
 };
 
+const openingStockHeaderAliases: Record<string, "sku" | "warehouse" | "quantity" | "unitCost"> = {
+  sku: "sku",
+  product_code: "sku",
+  item_code: "sku",
+  warehouse: "warehouse",
+  warehouse_name: "warehouse",
+  location: "warehouse",
+  quantity: "quantity",
+  quantity_on_hand: "quantity",
+  opening_quantity: "quantity",
+  unit_cost: "unitCost",
+  cost: "unitCost",
+  cost_price: "unitCost",
+};
+
 function safeText(value: string, field: string, max: number): string | null {
   const clean = value.trim();
   if (!clean) return null;
@@ -111,6 +138,14 @@ function parseRate(value: string): string {
     throw new Error("Tax rate must be between 0 and 100 with no more than 2 decimal places");
   }
   return Number(clean).toFixed(2);
+}
+
+function parseQuantity(value: string): string {
+  const clean = value.trim();
+  if (!/^\d{1,9}(\.\d{1,3})?$/.test(clean) || Number(clean) <= 0) {
+    throw new Error("Quantity must be greater than zero with no more than 3 decimal places");
+  }
+  return Number(clean).toFixed(3);
 }
 
 function parseCsv(csvText: string): string[][] {
@@ -216,6 +251,45 @@ function parseProductRow(headers: Array<keyof ProductImportData | null>, cells: 
     reorderLevel: Number(reorder),
     trackStock: parseBoolean(source.get("trackStock") ?? "", true),
     isActive: parseBoolean(source.get("isActive") ?? "", true),
+  };
+}
+
+function parseOpeningStockRow(
+  headers: Array<"sku" | "warehouse" | "quantity" | "unitCost" | null>,
+  cells: string[],
+  products: Map<string, { id: string; currency: "USD" | "ZWG"; trackStock: boolean }>,
+  warehouses: Map<string, string>,
+  baseCurrency: "USD" | "ZWG",
+): OpeningStockImportData {
+  const source = new Map<"sku" | "warehouse" | "quantity" | "unitCost", string>();
+  headers.forEach((header, index) => {
+    if (header) source.set(header, cells[index] ?? "");
+  });
+  const sku = safeText(source.get("sku") ?? "", "SKU", 100);
+  if (!sku) throw new Error("SKU is required");
+  const warehouse = safeText(source.get("warehouse") ?? "", "Warehouse", 200);
+  if (!warehouse) throw new Error("Warehouse is required");
+  const product = products.get(sku.toLowerCase());
+  if (!product) throw new Error("Product SKU was not found in this workspace");
+  if (!product.trackStock) throw new Error("Opening stock cannot be added to a non-stock service");
+  if (product.currency !== baseCurrency) {
+    throw new Error(`Product currency must match workspace base currency ${baseCurrency}`);
+  }
+  const warehouseId = warehouses.get(warehouse.toLowerCase());
+  if (!warehouseId) throw new Error("Warehouse was not found in this workspace");
+  const unitCost = parseMoney(source.get("unitCost") ?? "", "Unit cost");
+  if (toCents(unitCost) <= 0n) throw new Error("Unit cost must be greater than zero");
+  const quantity = parseQuantity(source.get("quantity") ?? "");
+  if (mulRate(toCents(unitCost), quantity) > MAX_MONEY_CENTS) {
+    throw new Error("Opening stock row value exceeds the supported financial limit");
+  }
+  return {
+    sku,
+    warehouse,
+    quantity,
+    unitCost,
+    productId: product.id,
+    warehouseId,
   };
 }
 
@@ -430,6 +504,208 @@ export async function commitProductImport(opts: {
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
     return { batch: completed, importedRows: created.length };
+  });
+}
+
+export async function previewOpeningStockImport(opts: {
+  tenantId: string;
+  actorUserId: string;
+  csvText: string;
+}) {
+  const csvRows = parseCsv(opts.csvText.replace(/^\uFEFF/, ""));
+  const headers = csvRows[0].map(normalizeHeader)
+    .map((header) => openingStockHeaderAliases[header] ?? null);
+  if (!headers.includes("sku") || !headers.includes("warehouse")
+    || !headers.includes("quantity") || !headers.includes("unitCost")) {
+    throw badRequest("CSV must include sku, warehouse, quantity and unit_cost columns");
+  }
+  const [tenant] = await db.select({ baseCurrency: schema.tenants.baseCurrency })
+    .from(schema.tenants).where(eq(schema.tenants.id, opts.tenantId));
+  if (!tenant) throw badRequest("Workspace was not found");
+  const productRows = await db.select({
+    id: schema.products.id,
+    sku: schema.products.sku,
+    currency: schema.products.currency,
+    trackStock: schema.products.trackStock,
+  }).from(schema.products).where(eq(schema.products.tenantId, opts.tenantId));
+  const warehouseRows = await db.select({
+    id: schema.warehouses.id,
+    name: schema.warehouses.name,
+  }).from(schema.warehouses).where(eq(schema.warehouses.tenantId, opts.tenantId));
+  const existingMovements = await db.select({
+    productId: schema.stockMovements.productId,
+    warehouseId: schema.stockMovements.warehouseId,
+  }).from(schema.stockMovements).where(eq(schema.stockMovements.tenantId, opts.tenantId));
+  const products = new Map(productRows.map((product) => [
+    product.sku.trim().toLowerCase(),
+    { id: product.id, currency: product.currency, trackStock: product.trackStock },
+  ]));
+  const warehouses = new Map(warehouseRows.map((warehouse) => [
+    warehouse.name.trim().toLowerCase(), warehouse.id,
+  ]));
+  const usedPairs = new Set(existingMovements.map((movement) =>
+    `${movement.productId}:${movement.warehouseId}`));
+  const costsByProduct = new Map<string, string>();
+  const staged = csvRows.slice(1).map((cells, index) => {
+    try {
+      const data = parseOpeningStockRow(
+        headers, cells, products, warehouses, tenant.baseCurrency,
+      );
+      const pair = `${data.productId}:${data.warehouseId}`;
+      const previousCost = costsByProduct.get(data.productId);
+      const duplicate = usedPairs.has(pair);
+      const inconsistentCost = previousCost !== undefined && previousCost !== data.unitCost;
+      usedPairs.add(pair);
+      if (!previousCost) costsByProduct.set(data.productId, data.unitCost);
+      return {
+        rowNumber: index + 2,
+        data,
+        status: duplicate || inconsistentCost ? "DUPLICATE" : "VALID",
+        error: duplicate
+          ? "Stock already exists for this product and warehouse"
+          : inconsistentCost
+            ? "Use the same unit cost for a product across all warehouses"
+            : null,
+      };
+    } catch (error: unknown) {
+      return {
+        rowNumber: index + 2,
+        data: { source: cells },
+        status: "INVALID",
+        error: error instanceof Error ? error.message : "Invalid row",
+      };
+    }
+  });
+  const summary = {
+    totalRows: staged.length,
+    validRows: staged.filter((row) => row.status === "VALID").length,
+    invalidRows: staged.filter((row) => row.status === "INVALID").length,
+    duplicateRows: staged.filter((row) => row.status === "DUPLICATE").length,
+  };
+  return db.transaction(async (tx) => {
+    const [batch] = await tx.insert(schema.importBatches).values({
+      tenantId: opts.tenantId,
+      entityType: "opening_stock",
+      status: "PREVIEW",
+      ...summary,
+      createdBy: opts.actorUserId,
+    }).returning();
+    await tx.insert(schema.importRows).values(staged.map((row) => ({
+      batchId: batch.id,
+      ...row,
+    })));
+    await audit(tx, opts.tenantId, opts.actorUserId,
+      "stock.opening_import_previewed", "import_batch", batch.id, summary);
+    return {
+      batch,
+      rows: staged.slice(0, 100),
+      baseCurrency: tenant.baseCurrency,
+    };
+  });
+}
+
+export async function commitOpeningStockImport(opts: {
+  tenantId: string;
+  actorUserId: string;
+  batchId: string;
+}) {
+  return db.transaction(async (tx) => {
+    const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
+      eq(schema.importBatches.id, opts.batchId),
+      eq(schema.importBatches.tenantId, opts.tenantId),
+      eq(schema.importBatches.entityType, "opening_stock"),
+      eq(schema.importBatches.status, "PREVIEW"),
+    )).returning();
+    if (!claimed) throw conflict("Import batch is unavailable or already processed");
+    const rows = await tx.select().from(schema.importRows).where(and(
+      eq(schema.importRows.batchId, claimed.id),
+      eq(schema.importRows.status, "VALID"),
+    )).orderBy(schema.importRows.rowNumber);
+    const [tenant] = await tx.select({ baseCurrency: schema.tenants.baseCurrency })
+      .from(schema.tenants).where(eq(schema.tenants.id, opts.tenantId));
+    if (!tenant) throw badRequest("Workspace was not found");
+    let totalValue = 0n;
+    const costsByProduct = new Map<string, string>();
+    for (const row of rows) {
+      const data = row.data as OpeningStockImportData;
+      const [product] = await tx.select().from(schema.products).where(and(
+        eq(schema.products.id, data.productId),
+        eq(schema.products.tenantId, opts.tenantId),
+      ));
+      const [warehouse] = await tx.select().from(schema.warehouses).where(and(
+        eq(schema.warehouses.id, data.warehouseId),
+        eq(schema.warehouses.tenantId, opts.tenantId),
+      ));
+      if (!product || !warehouse || !product.trackStock) {
+        throw conflict("A staged product or warehouse is no longer available");
+      }
+      if (product.currency !== tenant.baseCurrency) {
+        throw conflict("Product currency no longer matches the workspace base currency");
+      }
+      const movement = await recordStockMovement(tx, {
+        tenantId: opts.tenantId,
+        productId: product.id,
+        warehouseId: warehouse.id,
+        quantityDelta: data.quantity,
+        unitCost: data.unitCost,
+        reason: "OPENING",
+        sourceType: "import_batch",
+        sourceId: claimed.id,
+        note: "Opening stock CSV import",
+        createdBy: opts.actorUserId,
+        requireZeroCurrent: true,
+        requireNoHistory: true,
+      });
+      totalValue += mulRate(toCents(data.unitCost), data.quantity);
+      if (totalValue > MAX_MONEY_CENTS) {
+        throw badRequest("Opening stock total exceeds the supported financial limit");
+      }
+      costsByProduct.set(product.id, data.unitCost);
+      await tx.update(schema.importRows).set({
+        status: "IMPORTED",
+        createdRecordId: movement.movementId,
+      }).where(eq(schema.importRows.id, row.id));
+    }
+    if (totalValue <= 0n) throw badRequest("Opening stock import has no positive value");
+    for (const [productId, costPrice] of costsByProduct) {
+      await tx.update(schema.products).set({ costPrice }).where(and(
+        eq(schema.products.id, productId),
+        eq(schema.products.tenantId, opts.tenantId),
+      ));
+    }
+    const inventory = await systemAccount(tx, opts.tenantId, "INVENTORY");
+    const opening = await systemAccount(tx, opts.tenantId, "OPENING_EQUITY");
+    const journalEntryId = await postJournal(tx, {
+      tenantId: opts.tenantId,
+      date: new Date(),
+      memo: `Opening stock import — ${rows.length} rows`,
+      sourceType: "opening_stock_import",
+      sourceId: claimed.id,
+      createdBy: opts.actorUserId,
+      lines: [
+        { accountId: inventory.id, debit: fromCents(totalValue) },
+        { accountId: opening.id, credit: fromCents(totalValue) },
+      ],
+    });
+    const [completed] = await tx.update(schema.importBatches).set({
+      status: "COMPLETED",
+      completedAt: new Date(),
+    }).where(eq(schema.importBatches.id, claimed.id)).returning();
+    await audit(tx, opts.tenantId, opts.actorUserId,
+      "stock.opening_import_completed", "import_batch", claimed.id, {
+        importedRows: rows.length,
+        skippedRows: claimed.invalidRows + claimed.duplicateRows,
+        value: fromCents(totalValue),
+        currency: tenant.baseCurrency,
+        journalEntryId,
+      });
+    return {
+      batch: completed,
+      importedRows: rows.length,
+      totalValue: fromCents(totalValue),
+      currency: tenant.baseCurrency,
+      journalEntryId,
+    };
   });
 }
 
