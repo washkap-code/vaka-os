@@ -54,6 +54,9 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .arrears-bar.urgent { background: #A61B29; border-color: #7D101B; color: #FFF; }
 .arrears-bar.urgent .btn { background: #FFF; color: #8C1723; }
 @media (max-width: 650px) { .arrears-bar { align-items: stretch; flex-direction: column; top: 4px; } }
+.import-template { background: #F6F6F3; border: 1px solid var(--border); border-radius: 7px; margin: 14px 0; overflow-x: auto; padding: 12px; }
+.import-summary { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px; }
+.table-scroll { overflow-x: auto; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }

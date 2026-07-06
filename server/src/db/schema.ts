@@ -72,6 +72,30 @@ export const platformAuditLogs = pgTable("platform_audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("platform_audit_time").on(t.createdAt)]);
 
+export const importBatches = pgTable("import_batches", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  entityType: text("entity_type").notNull(),
+  status: text("status").default("PREVIEW").notNull(),
+  totalRows: integer("total_rows").default(0).notNull(),
+  validRows: integer("valid_rows").default(0).notNull(),
+  invalidRows: integer("invalid_rows").default(0).notNull(),
+  duplicateRows: integer("duplicate_rows").default(0).notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [index("imports_tenant_time").on(t.tenantId, t.createdAt)]);
+
+export const importRows = pgTable("import_rows", {
+  id: id(),
+  batchId: uuid("batch_id").notNull().references(() => importBatches.id),
+  rowNumber: integer("row_number").notNull(),
+  data: jsonb("data").notNull(),
+  status: text("status").notNull(),
+  error: text("error"),
+  createdRecordId: uuid("created_record_id"),
+}, (t) => [uniqueIndex("import_batch_row").on(t.batchId, t.rowNumber)]);
+
 export const roles = pgTable("roles", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

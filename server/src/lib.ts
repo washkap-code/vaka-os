@@ -68,6 +68,7 @@ export const PERMISSIONS = [
   "billing.manage",
   "users.manage",
   "settings.manage",
+  "imports.create", "imports.approve",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
