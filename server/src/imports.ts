@@ -44,7 +44,7 @@ function safeText(value: string, field: string, max: number): string | null {
   const clean = value.trim();
   if (!clean) return null;
   if (clean.length > max) throw new Error(`${field} exceeds ${max} characters`);
-  if (/^[=+@]/.test(clean)) throw new Error(`${field} begins with an unsafe spreadsheet formula character`);
+  if (/^[=@]/.test(clean)) throw new Error(`${field} begins with an unsafe spreadsheet formula character`);
   return clean;
 }
 
