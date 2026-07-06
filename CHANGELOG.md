@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Self-service imports:** Added tenant-scoped contact CSV preview, row
+  validation, duplicate detection, explicit approval, idempotent transactional
+  commit, audit batches and a responsive Imports interface.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

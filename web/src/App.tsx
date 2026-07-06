@@ -271,7 +271,8 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 const NAV = [
   ["dashboard", "Dashboard"], ["contacts", "Contacts"], ["pipeline", "Sales Pipeline"],
   ["invoices", "Invoices"], ["products", "Products & Stock"], ["pos", "Purchase Orders"],
-  ["reports", "Reports"], ["billing", "Billing & Plan"], ["upgrade", "Upgrade"], ["settings", "Settings"],
+  ["reports", "Reports"], ["imports", "Imports"], ["billing", "Billing & Plan"],
+  ["upgrade", "Upgrade"], ["settings", "Settings"],
 ] as const;
 type Page = (typeof NAV)[number][0];
 
@@ -280,6 +281,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
   const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
+  const visibleNav = NAV.filter(([key]) =>
+    key !== "imports" || me.permissions.includes("imports.create"));
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
   return (
     <div className="shell">
@@ -289,7 +292,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           {t.companyName}<small>VAKA OS</small>
         </div>
         <nav>
-          {NAV.map(([k, label]) => (
+          {visibleNav.map(([k, label]) => (
             <button key={k} className={page === k ? "active" : ""} onClick={() => setPage(k)}>{label}</button>
           ))}
         </nav>
@@ -310,6 +313,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "products" && <Products readonly={suspended} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
+        {page === "imports" && <ImportCenter readonly={suspended} canApprove={me.permissions.includes("imports.approve")} />}
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
@@ -339,6 +343,118 @@ function ArrearsBar({ status, onBilling }: { status: ArrearsStatus; onBilling: (
       <button className="btn sm" onClick={onBilling}>{copy.openBilling}</button>
     </div>
   );
+}
+
+type ContactImportPreview = {
+  batch: {
+    id: string;
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    duplicateRows: number;
+  };
+  rows: Array<{
+    rowNumber: number;
+    status: "VALID" | "INVALID" | "DUPLICATE";
+    error: string | null;
+    data: Record<string, unknown>;
+  }>;
+};
+
+function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove: boolean }) {
+  const [preview, setPreview] = useState<ContactImportPreview | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const copy = appEnglish.imports;
+
+  const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setPreview(null);
+    setMessage("");
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setMessage(copy.csvOnly);
+      return;
+    }
+    if (file.size > 1_000_000) {
+      setMessage(copy.tooLarge);
+      return;
+    }
+    setBusy(true);
+    setFileName(file.name);
+    try {
+      const csvText = await file.text();
+      setPreview(await api("/imports/contacts/preview", {
+        method: "POST",
+        body: { csvText },
+      }));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
+  const commit = async () => {
+    if (!preview) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await api(`/imports/contacts/${preview.batch.id}/commit`, {
+        method: "POST",
+        body: {},
+      });
+      setMessage(copy.completed.replace("{count}", String(result.importedRows)));
+      setPreview(null);
+      setFileName("");
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
+  return (<>
+    <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
+    <div className="panel">
+      <h2>{copy.contactsTitle}</h2>
+      <p className="sub">{copy.contactsHelp}</p>
+      <div className="import-template">
+        <code>name,email,phone,type,is_customer,is_vendor,tax_number,tags</code>
+      </div>
+      <div className="field">
+        <label>{copy.chooseCsv}</label>
+        <input type="file" accept=".csv,text/csv" disabled={readonly || busy} onChange={selectFile} />
+        {fileName && <small>{fileName}</small>}
+      </div>
+    </div>
+    {preview && <div className="panel">
+      <div className="import-summary">
+        <span>{copy.total}: <b>{preview.batch.totalRows}</b></span>
+        <span>{copy.valid}: <b>{preview.batch.validRows}</b></span>
+        <span>{copy.duplicates}: <b>{preview.batch.duplicateRows}</b></span>
+        <span>{copy.invalid}: <b>{preview.batch.invalidRows}</b></span>
+      </div>
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>{copy.row}</th><th>{copy.name}</th><th>{copy.email}</th><th>{copy.status}</th><th>{copy.issue}</th></tr></thead>
+          <tbody>{preview.rows.map((row) => (
+            <tr key={row.rowNumber}>
+              <td>{row.rowNumber}</td>
+              <td>{String(row.data.name ?? "—")}</td>
+              <td>{String(row.data.email ?? "—")}</td>
+              <td><span className={`pill ${row.status}`}>{row.status}</span></td>
+              <td>{row.error ?? "—"}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <p className="sub">{copy.previewNotice}</p>
+      <button className="btn accent" disabled={!canApprove || readonly || busy || preview.batch.validRows === 0}
+        onClick={commit}>{busy ? copy.importing : copy.approve}</button>
+      {!canApprove && <p className="sub">{copy.approvalPermission}</p>}
+    </div>}
+    {message && <div className="banner warn">{message}</div>}
+  </>);
 }
 
 function Settings({ me, readonly, onSaved }: {

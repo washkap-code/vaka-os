@@ -19,6 +19,7 @@ import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard }
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
+import { commitContactImport, listImportBatches, previewContactImport } from "./imports.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -126,6 +127,26 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
   await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, body);
   return updated;
 }));
+
+// ---------------------------------------------------------------------------
+// Self-service imports — staged preview before explicit approval
+// ---------------------------------------------------------------------------
+api.get("/imports", requirePermission("imports.create"), wrap(async (req) =>
+  listImportBatches(tenantId(req))));
+api.post("/imports/contacts/preview", requirePermission("imports.create"), wrap(async (req) => {
+  const body = z.object({ csvText: z.string().min(1).max(1_000_000) }).parse(req.body);
+  return previewContactImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    csvText: body.csvText,
+  });
+}));
+api.post("/imports/contacts/:id/commit", requirePermission("imports.approve"), wrap(async (req) =>
+  commitContactImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    batchId: routeParam(req, "id"),
+  })));
 
 // ---------------------------------------------------------------------------
 // CRM
