@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Arrears notifications:** Added server-derived due-soon, overdue, suspended
+  and cleared billing states with exact currency amounts and a persistent red
+  portal bar linking directly to Billing.
 - **Upgrade comparison:** Added a tenant Upgrade tab with current-package
   context, responsive package comparison, honest planned-feature labels, and an
   audited upgrade-interest workflow that does not change billing automatically.

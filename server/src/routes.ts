@@ -16,7 +16,7 @@ import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
 import { postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
-import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary } from "./billing.js";
+import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
 
@@ -479,6 +479,10 @@ api.get("/billing/invoices", wrap(async (req) =>
   db.select().from(schema.subscriptionInvoices).where(eq(schema.subscriptionInvoices.tenantId, tenantId(req)))
     .orderBy(desc(schema.subscriptionInvoices.issuedAt))));
 api.get("/billing/plans", wrap(async () => db.select().from(schema.plans)));
+api.get("/billing/arrears-status", wrap(async (req) => {
+  const tenant = (req as any).tenant as { status: string };
+  return getArrearsStatus(tenantId(req), tenant.status);
+}));
 api.post("/billing/upgrade-interest", requirePermission("billing.manage"), wrap(async (req) => {
   const body = z.object({
     requestedPlan: z.enum(["Starter", "Growth", "Business", "Enterprise"]),
