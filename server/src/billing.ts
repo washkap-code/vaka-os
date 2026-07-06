@@ -8,8 +8,8 @@
 // CLOSED is only reachable via the platform-admin long-stop process with the
 // export-first requirement — there is deliberately no automatic path to it.
 // ============================================================================
-import { and, eq, lt, count, gte } from "drizzle-orm";
-import { DB, db, schema, badRequest, conflict, notFound, audit } from "./lib.js";
+import { and, eq, lt, count, or } from "drizzle-orm";
+import { DB, db, schema, badRequest, conflict, notFound, audit, fromCents, toCents } from "./lib.js";
 
 const GRACE_DAYS = 14;            // invoice due date after issue
 const PAST_DUE_TO_SUSPEND_DAYS = 75; // ~2.5 months past due => suspend (matches business plan's 2–3 months)
@@ -28,6 +28,60 @@ export async function collectUsageSummary(tx: DB, tenantId: string) {
   return {
     activeUsers: Number(u.c), invoicesIssued: Number(inv.c),
     contacts: Number(con.c), products: Number(prod.c), stockMovements: Number(mov.c),
+  };
+}
+
+export async function getArrearsStatus(
+  tenantId: string,
+  tenantStatus: string,
+  asOf = new Date(),
+) {
+  const invoices = await db.select().from(schema.subscriptionInvoices).where(and(
+    eq(schema.subscriptionInvoices.tenantId, tenantId),
+    or(
+      eq(schema.subscriptionInvoices.status, "pending"),
+      eq(schema.subscriptionInvoices.status, "overdue"),
+    ),
+  ));
+  const dueSoonCutoff = addDays(asOf, 7);
+  const overdue = invoices.filter((invoice) => invoice.dueAt < asOf);
+  const dueSoon = invoices.filter((invoice) =>
+    invoice.dueAt >= asOf && invoice.dueAt <= dueSoonCutoff);
+  const relevant = [...overdue, ...dueSoon];
+  const amounts = new Map<string, bigint>();
+  for (const invoice of relevant) {
+    amounts.set(
+      invoice.currency,
+      (amounts.get(invoice.currency) ?? 0n) + toCents(invoice.amount),
+    );
+  }
+  const oldestDueAt = overdue.length
+    ? new Date(Math.min(...overdue.map((invoice) => invoice.dueAt.getTime())))
+    : dueSoon.length
+      ? new Date(Math.min(...dueSoon.map((invoice) => invoice.dueAt.getTime())))
+      : null;
+  const daysOverdue = oldestDueAt && oldestDueAt < asOf
+    ? Math.floor((asOf.getTime() - oldestDueAt.getTime()) / 86_400_000)
+    : 0;
+  const stage = tenantStatus === "SUSPENDED"
+    ? "SUSPENDED"
+    : overdue.length
+      ? "OVERDUE"
+      : dueSoon.length
+        ? "DUE_SOON"
+        : "CLEAR";
+
+  return {
+    asAt: asOf.toISOString(),
+    stage,
+    overdueInvoiceCount: overdue.length,
+    dueSoonInvoiceCount: dueSoon.length,
+    oldestDueAt: oldestDueAt?.toISOString() ?? null,
+    daysOverdue,
+    amounts: [...amounts.entries()].map(([currency, cents]) => ({
+      currency,
+      amount: fromCents(cents),
+    })),
   };
 }
 

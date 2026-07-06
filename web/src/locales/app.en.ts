@@ -13,6 +13,14 @@ export const appEnglish = {
     changingPassword: "Changing password…",
     signOut: "Sign out",
   },
+  arrears: {
+    reminder: "Payment reminder.",
+    actionRequired: "Payment required.",
+    dueSoon: "{amount} is due by {date}. Please arrange payment to keep your workspace in good standing.",
+    overdue: "{amount} is overdue by {days} days. Please settle the outstanding balance to avoid account restrictions.",
+    suspended: "{amount} remains outstanding. Your account is restricted, but your data remains safe and available for controlled viewing and export.",
+    openBilling: "Open Billing",
+  },
   dashboard: {
     loading: "Loading…",
     title: "Dashboard",

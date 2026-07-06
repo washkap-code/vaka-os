@@ -49,6 +49,11 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .banner { padding: 10px 16px; border-radius: 8px; margin-bottom: 18px; font-size: 13px; }
 .banner.warn { background: #FFF6E0; border: 1px solid #E7CE8A; color: #7A5C00; }
 .banner.err { background: #FCEBEC; border: 1px solid #E7A6AA; color: var(--danger); }
+.arrears-bar { align-items: center; border: 1px solid; border-radius: 8px; display: flex; gap: 16px; justify-content: space-between; margin: -8px 0 18px; padding: 11px 14px; position: sticky; top: 8px; z-index: 20; box-shadow: 0 6px 20px rgba(17, 24, 39, .12); }
+.arrears-bar.notice { background: #FFF6E0; border-color: #E7CE8A; color: #6B5000; }
+.arrears-bar.urgent { background: #A61B29; border-color: #7D101B; color: #FFF; }
+.arrears-bar.urgent .btn { background: #FFF; color: #8C1723; }
+@media (max-width: 650px) { .arrears-bar { align-items: stretch; flex-direction: column; top: 4px; } }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 22px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }

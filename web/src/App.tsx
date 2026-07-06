@@ -22,6 +22,14 @@ type Me = {
     registrationNumber: string | null; physicalAddress: string | null;
   } | null;
 };
+type ArrearsStatus = {
+  stage: "CLEAR" | "DUE_SOON" | "OVERDUE" | "SUSPENDED";
+  overdueInvoiceCount: number;
+  dueSoonInvoiceCount: number;
+  oldestDueAt: string | null;
+  daysOverdue: number;
+  amounts: Array<{ currency: string; amount: string }>;
+};
 
 type AgeingBucketKey = "current" | "d30" | "d60" | "d90" | "d90plus";
 type CurrencyAgeingView = {
@@ -269,6 +277,7 @@ type Page = (typeof NAV)[number][0];
 
 function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => void }) {
   const [page, setPage] = useState<Page>("dashboard");
+  const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
@@ -290,9 +299,10 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         </div>
       </aside>
       <main className="main">
+        {arrears && arrears.stage !== "CLEAR" && (
+          <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setPage("billing")} />
+        )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
-        {t.status === "PAST_DUE" && <div className="banner warn">Your latest platform invoice is overdue. Please settle it under Billing &amp; Plan to avoid suspension.</div>}
-        {suspended && <div className="banner err">Account suspended for non-payment. <b>Your data is safe and retained.</b> You have read-only access and can export everything at any time. Settle the balance under Billing &amp; Plan to restore full access.</div>}
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
         {page === "contacts" && <Contacts readonly={suspended} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
@@ -304,6 +314,29 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
       </main>
+    </div>
+  );
+}
+
+function ArrearsBar({ status, onBilling }: { status: ArrearsStatus; onBilling: () => void }) {
+  const copy = appEnglish.arrears;
+  const amounts = status.amounts.map((item) => fmt(item.amount, item.currency)).join(" + ");
+  const isUrgent = status.stage === "OVERDUE" || status.stage === "SUSPENDED";
+  const message = status.stage === "SUSPENDED"
+    ? copy.suspended.replace("{amount}", amounts)
+    : status.stage === "OVERDUE"
+      ? copy.overdue
+        .replace("{amount}", amounts)
+        .replace("{days}", String(status.daysOverdue))
+      : copy.dueSoon
+        .replace("{amount}", amounts)
+        .replace("{date}", status.oldestDueAt
+          ? new Date(status.oldestDueAt).toLocaleDateString("en-ZW")
+          : "");
+  return (
+    <div className={`arrears-bar ${isUrgent ? "urgent" : "notice"}`} role={isUrgent ? "alert" : "status"}>
+      <span><b>{isUrgent ? copy.actionRequired : copy.reminder}</b> {message}</span>
+      <button className="btn sm" onClick={onBilling}>{copy.openBilling}</button>
     </div>
   );
 }
