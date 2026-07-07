@@ -434,6 +434,71 @@ export async function getBankReconciliationReport(opts: {
   };
 }
 
+export async function postBankTransactionFee(opts: {
+  tenantId: string;
+  actorUserId: string;
+  bankTransactionId: string;
+}) {
+  return db.transaction(async (tx) => {
+    const transaction = await loadTenantBankTransaction(tx, opts.tenantId, opts.bankTransactionId);
+    if (!transaction) throw notFound("Bank transaction not found");
+    if (transaction.matched_journal_entry_id) throw conflict("Bank transaction is already matched");
+    const feeCents = -toCents(transaction.amount);
+    if (feeCents <= 0n) throw badRequest("Only negative bank lines can be posted as bank fees.");
+
+    const [bankAccount] = await tx.select().from(schema.bankAccounts)
+      .where(sql`${schema.bankAccounts.id} = ${transaction.bank_account_id}
+        AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
+    if (!bankAccount) throw notFound("Bank account not found");
+    const [feeAccount] = await tx.select().from(schema.accounts)
+      .where(sql`${schema.accounts.tenantId} = ${opts.tenantId}
+        AND ${schema.accounts.code} = '6400'
+        AND ${schema.accounts.type} = 'EXPENSE'`);
+    if (!feeAccount) throw badRequest("Bank Charges & IMTT account 6400 is missing for this tenant.");
+    const bankLedgerId = bankAccount.ledgerAccountId ?? (await systemAccount(tx, opts.tenantId, "BANK")).id;
+    const amount = fromCents(feeCents);
+
+    const journalEntryId = await postJournal(tx, {
+      tenantId: opts.tenantId,
+      date: new Date(transaction.date),
+      memo: `Bank fee — ${transaction.description}`,
+      sourceType: "bank_fee",
+      sourceId: transaction.id,
+      createdBy: opts.actorUserId,
+      lines: [
+        {
+          accountId: feeAccount.id,
+          debit: amount,
+          originalAmount: amount,
+          originalCurrency: transaction.currency,
+          exchangeRate: "1",
+        },
+        {
+          accountId: bankLedgerId,
+          credit: amount,
+          originalAmount: amount,
+          originalCurrency: transaction.currency,
+          exchangeRate: "1",
+        },
+      ],
+    });
+    const matched = await tx.update(schema.bankTransactions)
+      .set({ matchedJournalEntryId: journalEntryId })
+      .where(sql`${schema.bankTransactions.id} = ${transaction.id}
+        AND ${schema.bankTransactions.matchedJournalEntryId} IS NULL`)
+      .returning({ id: schema.bankTransactions.id });
+    if (!matched.length) throw conflict("Bank transaction was matched by another process");
+    await audit(tx, opts.tenantId, opts.actorUserId, "bank_transaction.fee_posted",
+      "bank_transaction", transaction.id, {
+        journalEntryId,
+        amount,
+        currency: transaction.currency,
+        expenseAccountId: feeAccount.id,
+      });
+    return { bankTransactionId: transaction.id, journalEntryId, amount, currency: transaction.currency };
+  });
+}
+
 export async function listBankInvoiceMatchCandidates(opts: {
   tenantId: string;
   bankTransactionId: string;

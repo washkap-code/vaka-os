@@ -74,6 +74,33 @@ describe("bank statement CSV imports", () => {
       netMovement: "80.00",
       unreviewedNet: "80.00",
     });
+    const feeLine = transactions.find((row) => row.amount === "-20.00");
+    expect(feeLine).toBeTruthy();
+    const feePost = await request(app)
+      .post(`/api/v1/bank-transactions/${feeLine!.id}/post-bank-fee`)
+      .set(auth)
+      .send({});
+    expect(feePost.status).toBe(200);
+    expect(feePost.body).toMatchObject({ amount: "20.00", currency: "USD" });
+    const [postedFeeLine] = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.id, feeLine!.id));
+    expect(postedFeeLine.matchedJournalEntryId).toBe(feePost.body.journalEntryId);
+    const [feeJournal] = await db.select().from(schema.journalEntries)
+      .where(eq(schema.journalEntries.id, feePost.body.journalEntryId));
+    expect(feeJournal.sourceType).toBe("bank_fee");
+    const feeAudit = await db.select().from(schema.auditLogs)
+      .where(eq(schema.auditLogs.entityId, feeLine!.id));
+    expect(feeAudit.some((event) => event.action === "bank_transaction.fee_posted")).toBe(true);
+    const summaryAfterFee = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-summary`)
+      .set(auth);
+    expect(summaryAfterFee.status).toBe(200);
+    expect(summaryAfterFee.body).toMatchObject({
+      totalLines: 2,
+      matchedLines: 1,
+      unreviewedLines: 1,
+      unreviewedNet: "100.00",
+    });
     const worksheet = await request(app)
       .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-worksheet?statementDate=2026-07-31&statementClosingBalance=80.00`)
       .set(auth);
@@ -86,9 +113,9 @@ describe("bank statement CSV imports", () => {
       expectedBookBalance: "80.00",
       difference: "0.00",
       totalLines: 2,
-      matchedLines: 0,
-      unreviewedLines: 2,
-      unreviewedNet: "80.00",
+      matchedLines: 1,
+      unreviewedLines: 1,
+      unreviewedNet: "100.00",
       status: "needs_review",
     });
     const differenceWorksheet = await request(app)
@@ -106,7 +133,7 @@ describe("bank statement CSV imports", () => {
       statementClosingBalance: "80.00",
       expectedBookBalance: "80.00",
       difference: "0.00",
-      unreviewedLines: 2,
+      unreviewedLines: 1,
       status: "PREPARED",
       reconciliationStatus: "needs_review",
     });
@@ -130,7 +157,7 @@ describe("bank statement CSV imports", () => {
         id: prepared.body.id,
         statementDate: "2026-07-31",
         difference: "0.00",
-        unreviewedLines: 2,
+        unreviewedLines: 1,
       },
     });
     expect(reportDownload.body.lines).toHaveLength(2);
@@ -213,6 +240,11 @@ describe("bank statement CSV imports", () => {
       .get(`/api/v1/bank-reconciliations/${prepared.body.id}/report`)
       .set({ Authorization: `Bearer ${other.token}` });
     expect(otherReportDownload.status).toBe(404);
+    const otherFeePost = await request(app)
+      .post(`/api/v1/bank-transactions/${feeLine!.id}/post-bank-fee`)
+      .set({ Authorization: `Bearer ${other.token}` })
+      .send({});
+    expect(otherFeePost.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)

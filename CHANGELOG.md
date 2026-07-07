@@ -35,6 +35,10 @@
 - **Bank reconciliation report download:** Added audited CSV report generation
   for saved bank reconciliations, including account details, saved worksheet
   totals, sign-off evidence and supporting imported bank lines.
+- **Bank fee posting:** Added controlled posting for negative bank statement
+  lines as bank fees, debiting Bank Charges & IMTT, crediting the selected bank
+  account, linking the bank line to the journal entry and recording audit
+  evidence.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

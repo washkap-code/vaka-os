@@ -28,7 +28,7 @@ import {
   approveBankReconciliation, getBankReconciliationReport, getBankReconciliationSummary,
   getBankReconciliationWorksheet, listBankReconciliations, prepareBankReconciliation,
   listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
-  matchBankTransactionToInvoice, matchBankTransactionToInvoices,
+  matchBankTransactionToInvoice, matchBankTransactionToInvoices, postBankTransactionFee,
 } from "./bank-reconciliation.js";
 
 export const api = Router();
@@ -337,6 +337,14 @@ api.get("/bank-transactions/:id/split-candidates",
   requirePermission("accounting.read"),
   wrap(async (req) => listBankSplitMatchCandidates({
     tenantId: tenantId(req),
+    bankTransactionId: routeParam(req, "id"),
+  })));
+api.post("/bank-transactions/:id/post-bank-fee",
+  requirePermission("bank_transactions.match"),
+  requirePermission("accounting.post"),
+  wrap(async (req) => postBankTransactionFee({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
     bankTransactionId: routeParam(req, "id"),
   })));
 api.post("/bank-transactions/:id/match-invoices",

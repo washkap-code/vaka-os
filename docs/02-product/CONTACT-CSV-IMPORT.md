@@ -61,8 +61,10 @@ summary of imported lines, matched/unreviewed counts and signed movement
 totals, plus a worksheet preview that compares a user-entered statement date
 and closing balance against VAKA's imported bank movement. Users can save that
 worksheet as a prepared reconciliation report, and approval is blocked unless
-the report is balanced with no unreviewed bank lines. Bank fees, internal
-transfers, refunds and downloadable reconciliation packs remain later adapters.
+the report is balanced with no unreviewed bank lines. Negative bank lines can
+now be posted as bank fees by authorised users, creating a Bank Charges & IMTT /
+Bank journal entry and audit evidence. Internal transfers, refunds and PDF
+reconciliation packs remain later adapters.
 
 ## Controls
 
