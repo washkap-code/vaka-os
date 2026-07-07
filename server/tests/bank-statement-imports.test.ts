@@ -61,6 +61,19 @@ describe("bank statement CSV imports", () => {
       .where(eq(schema.bankTransactions.bankAccountId, account.body.id));
     expect(transactions.map((row) => row.amount).sort()).toEqual(["-20.00", "100.00"]);
     expect(transactions.every((row) => row.matchedJournalEntryId === null)).toBe(true);
+    const summary = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-summary`)
+      .set(auth);
+    expect(summary.status).toBe(200);
+    expect(summary.body).toMatchObject({
+      totalLines: 2,
+      matchedLines: 0,
+      unreviewedLines: 2,
+      inflow: "100.00",
+      outflow: "20.00",
+      netMovement: "80.00",
+      unreviewedNet: "80.00",
+    });
     const importedJournal = await db.select().from(schema.journalEntries)
       .where(eq(schema.journalEntries.sourceType, "bank_statement_import"));
     expect(importedJournal).toHaveLength(0);
@@ -69,6 +82,10 @@ describe("bank statement CSV imports", () => {
       .get(`/api/v1/bank-transactions?bankAccountId=${account.body.id}`)
       .set({ Authorization: `Bearer ${other.token}` });
     expect(otherRead.status).toBe(404);
+    const otherSummary = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-summary`)
+      .set({ Authorization: `Bearer ${other.token}` });
+    expect(otherSummary.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)

@@ -385,6 +385,20 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     reference: string | null;
     matchedJournalEntryId: string | null;
   }>>([]);
+  const [bankSummary, setBankSummary] = useState<null | {
+    account: { id: string; currency: "USD" | "ZWG" };
+    totalLines: number;
+    matchedLines: number;
+    unreviewedLines: number;
+    inflow: string;
+    outflow: string;
+    netMovement: string;
+    matchedNet: string;
+    unreviewedNet: string;
+    firstTransactionDate: string | null;
+    lastTransactionDate: string | null;
+    oldestUnreviewedDate: string | null;
+  }>(null);
   const [bankAccountId, setBankAccountId] = useState("");
   const [newBank, setNewBank] = useState({
     name: "", bankName: "", accountNumber: "", currency: "USD" as "USD" | "ZWG",
@@ -412,13 +426,27 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     }
   };
 
+  const loadBankSummary = async (accountId: string) => {
+    try {
+      setBankSummary(await api(`/bank-accounts/${accountId}/reconciliation-summary`));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+  };
+
   useEffect(() => {
     if (kind === "bank-statement") void loadBankAccounts();
   }, [kind]);
 
   useEffect(() => {
-    if (kind === "bank-statement" && bankAccountId) void loadBankTransactions(bankAccountId);
-    if (kind !== "bank-statement") setBankTransactions([]);
+    if (kind === "bank-statement" && bankAccountId) {
+      void loadBankTransactions(bankAccountId);
+      void loadBankSummary(bankAccountId);
+    }
+    if (kind !== "bank-statement") {
+      setBankTransactions([]);
+      setBankSummary(null);
+    }
   }, [kind, bankAccountId]);
 
   const selectedBankAccount = bankAccounts.find((account) => account.id === bankAccountId);
@@ -431,6 +459,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       setBankAccounts((current) => [...current, account]);
       setBankAccountId(account.id);
       setBankTransactions([]);
+      setBankSummary(null);
       setNewBank({ name: "", bankName: "", accountNumber: "", currency: "USD" });
     } catch (error: any) {
       setMessage(error.message);
@@ -465,7 +494,10 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
         body: { invoiceId: candidate.id },
       });
       setMessage(copy.matchedInvoice.replace("{invoice}", candidate.number ?? candidate.id));
-      if (bankAccountId) await loadBankTransactions(bankAccountId);
+      if (bankAccountId) {
+        await loadBankTransactions(bankAccountId);
+        await loadBankSummary(bankAccountId);
+      }
     } catch (error: any) {
       setMessage(error.message);
     }
@@ -509,7 +541,10 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
         body: { allocations },
       });
       setMessage(copy.splitMatched.replace("{count}", String(allocations.length)));
-      if (bankAccountId) await loadBankTransactions(bankAccountId);
+      if (bankAccountId) {
+        await loadBankTransactions(bankAccountId);
+        await loadBankSummary(bankAccountId);
+      }
     } catch (error: any) {
       setMessage(error.message);
     }
@@ -560,7 +595,10 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
             ? copy.openingStockCompleted.replace("{value}", `${preview.baseCurrency} ${result.totalValue}`)
             : copy.bankStatementCompleted;
       setMessage(completion.replace("{count}", String(result.importedRows)));
-      if (kind === "bank-statement" && bankAccountId) void loadBankTransactions(bankAccountId);
+      if (kind === "bank-statement" && bankAccountId) {
+        void loadBankTransactions(bankAccountId);
+        void loadBankSummary(bankAccountId);
+      }
       setPreview(null);
       setFileName("");
     } catch (error: any) {
@@ -688,6 +726,25 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       <button className="btn accent" disabled={!canApprove || readonly || busy || preview.batch.validRows === 0}
         onClick={commit}>{busy ? copy.importing : copy.approve}</button>
       {!canApprove && <p className="sub">{copy.approvalPermission}</p>}
+    </div>}
+    {kind === "bank-statement" && bankAccountId && <div className="panel">
+      <h2>{copy.reconciliationSummaryTitle}</h2>
+      <p className="sub">{copy.reconciliationSummaryHelp}</p>
+      {bankSummary && <div className="import-summary">
+        <span>{copy.totalLines}: <b>{bankSummary.totalLines}</b></span>
+        <span>{copy.matchedLines}: <b>{bankSummary.matchedLines}</b></span>
+        <span>{copy.unreviewedLines}: <b>{bankSummary.unreviewedLines}</b></span>
+        <span>{copy.inflow}: <b>{fmt(bankSummary.inflow, bankSummary.account.currency)}</b></span>
+        <span>{copy.outflow}: <b>{fmt(bankSummary.outflow, bankSummary.account.currency)}</b></span>
+        <span>{copy.netMovement}: <b>{fmt(bankSummary.netMovement, bankSummary.account.currency)}</b></span>
+        <span>{copy.unreviewedNet}: <b>{fmt(bankSummary.unreviewedNet, bankSummary.account.currency)}</b></span>
+        <span>{copy.dateRange}: <b>{bankSummary.firstTransactionDate
+          ? `${new Date(bankSummary.firstTransactionDate).toLocaleDateString("en-ZW")} – ${new Date(bankSummary.lastTransactionDate ?? bankSummary.firstTransactionDate).toLocaleDateString("en-ZW")}`
+          : "—"}</b></span>
+        <span>{copy.oldestUnreviewed}: <b>{bankSummary.oldestUnreviewedDate
+          ? new Date(bankSummary.oldestUnreviewedDate).toLocaleDateString("en-ZW")
+          : "—"}</b></span>
+      </div>}
     </div>}
     {kind === "bank-statement" && bankAccountId && <div className="panel">
       <h2>{copy.recentBankFeedTitle}</h2>
