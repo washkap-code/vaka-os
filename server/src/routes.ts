@@ -25,7 +25,7 @@ import {
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 import {
-  listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
+  getBankReconciliationSummary, listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
   matchBankTransactionToInvoice, matchBankTransactionToInvoices,
 } from "./bank-reconciliation.js";
 
@@ -253,6 +253,12 @@ api.get("/bank-transactions", requirePermission("bank_transactions.read"), wrap(
     .orderBy(desc(schema.bankTransactions.date))
     .limit(500);
 }));
+api.get("/bank-accounts/:id/reconciliation-summary",
+  requirePermission("bank_transactions.read"),
+  wrap(async (req) => getBankReconciliationSummary({
+    tenantId: tenantId(req),
+    bankAccountId: routeParam(req, "id"),
+  })));
 api.get("/bank-transactions/:id/match-candidates",
   requirePermission("bank_transactions.read"),
   requirePermission("accounting.read"),

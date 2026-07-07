@@ -21,6 +21,10 @@
   split allocation across multiple invoices, with permission checks, payment
   posting, journal linkage, tenant isolation and audit evidence. Fee, transfer,
   refund and full reconciliation reporting remain future work.
+- **Bank reconciliation summary:** Added a tenant-scoped read-only summary for
+  registered bank accounts, showing imported lines, matched/unreviewed counts,
+  inflows, outflows, net movement, unreviewed net and date coverage before full
+  statement-balance reconciliation is implemented.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

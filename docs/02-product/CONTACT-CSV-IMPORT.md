@@ -56,8 +56,10 @@ the currency matches. A single line can be matched to one invoice as an exact
 or partial payment, or split across multiple invoices when the allocation total
 equals the bank line exactly. Approval creates normal invoice payments, posts
 deterministic payment journal evidence, links the bank line to that journal
-entry, and records audit evidence. Bank fees, internal transfers, refunds and
-full reconciliation reports remain later adapters.
+entry, and records audit evidence. The bank account page also shows a read-only
+summary of imported lines, matched/unreviewed counts and signed movement
+totals. Bank fees, internal transfers, refunds and statement-balance
+reconciliation reports remain later adapters.
 
 ## Controls
 
