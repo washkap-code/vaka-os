@@ -313,7 +313,11 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "products" && <Products readonly={suspended} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
-        {page === "imports" && <ImportCenter readonly={suspended} canApprove={me.permissions.includes("imports.approve")} />}
+        {page === "imports" && <ImportCenter
+          readonly={suspended}
+          canApprove={me.permissions.includes("imports.approve")}
+          canConfigureBanks={me.permissions.includes("bank_accounts.configure")}
+        />}
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
@@ -362,14 +366,53 @@ type ImportPreview = {
   baseCurrency?: "USD" | "ZWG";
 };
 
-function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove: boolean }) {
-  type ImportKind = "contacts" | "products" | "opening-stock";
+function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
+  readonly: boolean;
+  canApprove: boolean;
+  canConfigureBanks: boolean;
+}) {
+  type ImportKind = "contacts" | "products" | "opening-stock" | "bank-statement";
   const [kind, setKind] = useState<ImportKind>("contacts");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<Array<{
+    id: string; name: string; bankName: string; accountNumber: string; currency: "USD" | "ZWG";
+  }>>([]);
+  const [bankAccountId, setBankAccountId] = useState("");
+  const [newBank, setNewBank] = useState({
+    name: "", bankName: "", accountNumber: "", currency: "USD" as "USD" | "ZWG",
+  });
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.imports;
+
+  const loadBankAccounts = async () => {
+    try {
+      const accounts = await api("/bank-accounts");
+      setBankAccounts(accounts);
+      setBankAccountId((current) => current || accounts[0]?.id || "");
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (kind === "bank-statement") void loadBankAccounts();
+  }, [kind]);
+
+  const createBankAccount = async () => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const account = await api("/bank-accounts", { method: "POST", body: newBank });
+      setBankAccounts((current) => [...current, account]);
+      setBankAccountId(account.id);
+      setNewBank({ name: "", bankName: "", accountNumber: "", currency: "USD" });
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
 
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -390,7 +433,7 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
       const csvText = await file.text();
       setPreview(await api(`/imports/${kind}/preview`, {
         method: "POST",
-        body: { csvText },
+        body: kind === "bank-statement" ? { csvText, bankAccountId } : { csvText },
       }));
     } catch (error: any) {
       setMessage(error.message);
@@ -411,8 +454,9 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
         ? copy.contactsCompleted
         : kind === "products"
           ? copy.productsCompleted
-          : copy.openingStockCompleted
-            .replace("{value}", `${preview.baseCurrency} ${result.totalValue}`);
+          : kind === "opening-stock"
+            ? copy.openingStockCompleted.replace("{value}", `${preview.baseCurrency} ${result.totalValue}`)
+            : copy.bankStatementCompleted;
       setMessage(completion.replace("{count}", String(result.importedRows)));
       setPreview(null);
       setFileName("");
@@ -436,25 +480,67 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
           <option value="contacts">{copy.contactsOption}</option>
           <option value="products">{copy.productsOption}</option>
           <option value="opening-stock">{copy.openingStockOption}</option>
+          <option value="bank-statement">{copy.bankStatementOption}</option>
         </select>
       </div>
       <h2>{kind === "contacts"
         ? copy.contactsTitle
-        : kind === "products" ? copy.productsTitle : copy.openingStockTitle}</h2>
+        : kind === "products"
+          ? copy.productsTitle
+          : kind === "opening-stock" ? copy.openingStockTitle : copy.bankStatementTitle}</h2>
       <p className="sub">{kind === "contacts"
         ? copy.contactsHelp
-        : kind === "products" ? copy.productsHelp : copy.openingStockHelp}</p>
+        : kind === "products"
+          ? copy.productsHelp
+          : kind === "opening-stock" ? copy.openingStockHelp : copy.bankStatementHelp}</p>
+      {kind === "bank-statement" && <>
+        {bankAccounts.length > 0 && <div className="field">
+          <label htmlFor="bank-account">{copy.bankAccount}</label>
+          <select id="bank-account" value={bankAccountId}
+            onChange={(event) => setBankAccountId(event.target.value)}>
+            {bankAccounts.map((account) => <option key={account.id} value={account.id}>
+              {account.bankName} · {account.name} · {account.accountNumber} · {account.currency}
+            </option>)}
+          </select>
+        </div>}
+        {bankAccounts.length === 0 && canConfigureBanks && <div className="import-bank-setup">
+          <h3>{copy.addBankAccount}</h3>
+          <div className="grid2">
+            <div className="field"><label>{copy.accountName}</label>
+              <input value={newBank.name} onChange={(event) =>
+                setNewBank({ ...newBank, name: event.target.value })} /></div>
+            <div className="field"><label>{copy.bankName}</label>
+              <input value={newBank.bankName} onChange={(event) =>
+                setNewBank({ ...newBank, bankName: event.target.value })} /></div>
+            <div className="field"><label>{copy.maskedAccount}</label>
+              <input value={newBank.accountNumber} placeholder={copy.maskedAccountPlaceholder} onChange={(event) =>
+                setNewBank({ ...newBank, accountNumber: event.target.value })} /></div>
+            <div className="field"><label>{copy.currency}</label>
+              <select value={newBank.currency} onChange={(event) =>
+                setNewBank({ ...newBank, currency: event.target.value as "USD" | "ZWG" })}>
+                <option value="USD">USD</option><option value="ZWG">ZWG</option>
+              </select></div>
+          </div>
+          <button className="btn" disabled={readonly || busy} onClick={createBankAccount}>
+            {copy.createBankAccount}</button>
+        </div>}
+      </>}
       <div className="import-template">
         <code>{kind === "contacts"
           ? "name,email,phone,type,is_customer,is_vendor,tax_number,tags"
           : kind === "products"
             ? "sku,name,description,unit,cost_price,sale_price,currency,tax_rate,reorder_level,track_stock,is_active"
-            : "sku,warehouse,quantity,unit_cost"}</code>
+            : kind === "opening-stock"
+              ? "sku,warehouse,quantity,unit_cost"
+              : "date,description,amount,reference"}</code>
       </div>
       {kind === "opening-stock" && <p className="sub">{copy.openingStockWarning}</p>}
+      {kind === "bank-statement" && <p className="sub">{copy.bankStatementWarning}</p>}
       <div className="field">
         <label>{copy.chooseCsv}</label>
-        <input type="file" accept=".csv,text/csv" disabled={readonly || busy} onChange={selectFile} />
+        <input type="file" accept=".csv,text/csv"
+          disabled={readonly || busy || (kind === "bank-statement" && !bankAccountId)}
+          onChange={selectFile} />
         {fileName && <small>{fileName}</small>}
       </div>
     </div>
@@ -468,19 +554,25 @@ function ImportCenter({ readonly, canApprove }: { readonly: boolean; canApprove:
       <div className="table-scroll">
         <table>
           <thead><tr><th>{copy.row}</th>
-            {kind !== "contacts" && <th>{copy.sku}</th>}
+            {kind !== "contacts" && kind !== "bank-statement" && <th>{copy.sku}</th>}
             {kind === "opening-stock"
               ? <><th>{copy.warehouse}</th><th>{copy.quantity}</th><th>{copy.unitCost}</th></>
+              : kind === "bank-statement"
+                ? <><th>{copy.date}</th><th>{copy.description}</th><th>{copy.amount}</th></>
               : <><th>{copy.name}</th><th>{kind === "contacts" ? copy.email : copy.salePrice}</th></>}
             <th>{copy.status}</th><th>{copy.issue}</th></tr></thead>
           <tbody>{preview.rows.map((row) => (
             <tr key={row.rowNumber}>
               <td>{row.rowNumber}</td>
-              {kind !== "contacts" && <td>{String(row.data.sku ?? "—")}</td>}
+              {kind !== "contacts" && kind !== "bank-statement" && <td>{String(row.data.sku ?? "—")}</td>}
               {kind === "opening-stock"
                 ? <><td>{String(row.data.warehouse ?? "—")}</td>
                   <td>{String(row.data.quantity ?? "—")}</td>
                   <td>{String(row.data.unitCost ?? "—")}</td></>
+                : kind === "bank-statement"
+                  ? <><td>{row.data.date ? new Date(String(row.data.date)).toLocaleDateString("en-ZW") : "—"}</td>
+                    <td>{String(row.data.description ?? "—")}</td>
+                    <td>{String(row.data.amount ?? "—")}</td></>
                 : <><td>{String(row.data.name ?? "—")}</td>
                   <td>{String((kind === "contacts" ? row.data.email : row.data.salePrice) ?? "—")}</td></>}
               <td><span className={`pill ${row.status}`}>{row.status}</span></td>

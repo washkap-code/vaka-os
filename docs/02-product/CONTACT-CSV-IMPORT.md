@@ -1,6 +1,6 @@
 # Self-Service CSV Imports
 
-**Status:** Contact, product catalogue and controlled opening-stock slices implemented
+**Status:** Contact, product, opening-stock and generic bank CSV slices implemented
 **Owner:** Product, Engineering, Security, and Data
 **Last reviewed:** 2026-07-06
 
@@ -36,6 +36,21 @@ positive quantity and unit cost in the workspace base currency. Approval:
 - commits stock, product cost, journal and audit evidence atomically; and
 - cannot be replayed.
 
+Owners and Administrators can also register a tenant-owned bank account using a
+masked identifier and import a generic bank CSV with date, description, signed
+amount and optional reference columns. Debit/credit column pairs are also
+supported. These imports:
+
+- normalise exact signed amounts and supported statement dates;
+- derive a deterministic per-account duplicate key;
+- stage invalid and duplicate rows for review;
+- create an unreviewed bank feed only; and
+- never post a journal, mark an invoice paid or initiate a payment.
+
+The generic parser is not a claim that every Zimbabwean bank export is already
+supported. Bank-specific profiles require consented sample files and pilot
+validation.
+
 ## Controls
 
 - The CSV is parsed server-side and staged before writes.
@@ -53,7 +68,7 @@ positive quantity and unit cost in the workspace base currency. Approval:
 ## Next adapters
 
 This batch/staging foundation should next be extended to:
-- bank CSV and structured statement formats;
+- bank-specific CSV profiles and structured statement formats;
 - draft invoices, bills and expenses;
 - XLSX mapping;
 - mobile document capture/OCR; and
