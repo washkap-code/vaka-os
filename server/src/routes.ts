@@ -24,6 +24,7 @@ import {
   commitProductImport, listImportBatches, previewBankStatementImport,
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
+import { listBankInvoiceMatchCandidates, matchBankTransactionToInvoice } from "./bank-reconciliation.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -249,6 +250,25 @@ api.get("/bank-transactions", requirePermission("bank_transactions.read"), wrap(
     .orderBy(desc(schema.bankTransactions.date))
     .limit(500);
 }));
+api.get("/bank-transactions/:id/match-candidates",
+  requirePermission("bank_transactions.read"),
+  requirePermission("accounting.read"),
+  wrap(async (req) => listBankInvoiceMatchCandidates({
+    tenantId: tenantId(req),
+    bankTransactionId: routeParam(req, "id"),
+  })));
+api.post("/bank-transactions/:id/match-invoice",
+  requirePermission("bank_transactions.match"),
+  requirePermission("accounting.post"),
+  wrap(async (req) => {
+    const body = z.object({ invoiceId: z.string().uuid() }).parse(req.body);
+    return matchBankTransactionToInvoice({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      bankTransactionId: routeParam(req, "id"),
+      invoiceId: body.invoiceId,
+    });
+  }));
 
 // ---------------------------------------------------------------------------
 // CRM

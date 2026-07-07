@@ -438,6 +438,39 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     setBusy(false);
   };
 
+  const matchBankTransaction = async (transaction: {
+    id: string; amount: string; reference: string | null; description: string;
+  }) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await api(`/bank-transactions/${transaction.id}/match-candidates`);
+      const candidate = result.candidates?.[0];
+      if (!candidate) {
+        setMessage(copy.noInvoiceMatch);
+        setBusy(false);
+        return;
+      }
+      const confirmed = window.confirm(copy.matchConfirm
+        .replace("{invoice}", candidate.number ?? candidate.id)
+        .replace("{customer}", candidate.contact_name)
+        .replace("{amount}", `${candidate.currency} ${candidate.outstanding}`));
+      if (!confirmed) {
+        setBusy(false);
+        return;
+      }
+      await api(`/bank-transactions/${transaction.id}/match-invoice`, {
+        method: "POST",
+        body: { invoiceId: candidate.id },
+      });
+      setMessage(copy.matchedInvoice.replace("{invoice}", candidate.number ?? candidate.id));
+      if (bankAccountId) await loadBankTransactions(bankAccountId);
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -624,6 +657,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
               <th>{copy.reference}</th>
               <th>{copy.amount}</th>
               <th>{copy.status}</th>
+              <th>{copy.action}</th>
             </tr></thead>
             <tbody>{bankTransactions.map((transaction) => (
               <tr key={transaction.id}>
@@ -632,6 +666,10 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
                 <td>{transaction.reference ?? "—"}</td>
                 <td>{selectedBankAccount?.currency ?? ""} {transaction.amount}</td>
                 <td>{transaction.matchedJournalEntryId ? copy.reconciled : copy.unreviewed}</td>
+                <td>{!transaction.matchedJournalEntryId && Number(transaction.amount) > 0
+                  ? <button className="btn sm" disabled={busy || readonly}
+                    onClick={() => matchBankTransaction(transaction)}>{copy.findInvoiceMatch}</button>
+                  : "—"}</td>
               </tr>
             ))}</tbody>
           </table>

@@ -248,12 +248,18 @@ future outbound payments. Auditors remain read-only.
 10. Consider outbound payment initiation only after read-only reconciliation is
     proven and separately approved.
 
-Steps 1 and the generic portion of step 2 now have an implemented foundation.
-It supports tenant-owned account registration with a masked identifier,
-date/description/signed-amount CSV preview, deterministic duplicate prevention,
-and import into an unreviewed feed. It does not yet preserve original files,
-validate statement opening/closing balances, provide bank-specific profiles,
-match transactions, reconcile, auto-post, connect to a bank, or move money.
+Steps 1, the generic portion of step 2, and a narrow part of step 5 now have an
+implemented foundation. VAKA supports tenant-owned account registration with a
+masked identifier, date/description/signed-amount CSV preview, deterministic
+duplicate prevention, import into an unreviewed feed, and exact one-to-one
+matching from a positive bank line to a single open invoice. Approved matches
+create the normal payment and journal evidence and link the bank line to that
+journal entry.
+
+It does not yet preserve original files, validate statement opening/closing
+balances, provide bank-specific profiles, handle partial or split matches,
+match fees/transfers/refunds, produce a full reconciliation report, connect to a
+bank, or move money.
 
 ## 12. Acceptance criteria
 
