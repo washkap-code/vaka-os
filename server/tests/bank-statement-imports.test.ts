@@ -74,6 +74,28 @@ describe("bank statement CSV imports", () => {
       netMovement: "80.00",
       unreviewedNet: "80.00",
     });
+    const worksheet = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-worksheet?statementDate=2026-07-31&statementClosingBalance=80.00`)
+      .set(auth);
+    expect(worksheet.status).toBe(200);
+    expect(worksheet.body).toMatchObject({
+      statementDate: "2026-07-31",
+      statementClosingBalance: "80.00",
+      openingBalance: "0.00",
+      importedNetMovement: "80.00",
+      expectedBookBalance: "80.00",
+      difference: "0.00",
+      totalLines: 2,
+      matchedLines: 0,
+      unreviewedLines: 2,
+      unreviewedNet: "80.00",
+      status: "needs_review",
+    });
+    const differenceWorksheet = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-worksheet?statementDate=2026-07-31&statementClosingBalance=70.00`)
+      .set(auth);
+    expect(differenceWorksheet.status).toBe(200);
+    expect(differenceWorksheet.body.difference).toBe("10.00");
     const importedJournal = await db.select().from(schema.journalEntries)
       .where(eq(schema.journalEntries.sourceType, "bank_statement_import"));
     expect(importedJournal).toHaveLength(0);
@@ -86,6 +108,10 @@ describe("bank statement CSV imports", () => {
       .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-summary`)
       .set({ Authorization: `Bearer ${other.token}` });
     expect(otherSummary.status).toBe(404);
+    const otherWorksheet = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-worksheet?statementDate=2026-07-31&statementClosingBalance=80.00`)
+      .set({ Authorization: `Bearer ${other.token}` });
+    expect(otherWorksheet.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)
