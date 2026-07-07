@@ -51,6 +51,14 @@ The generic parser is not a claim that every Zimbabwean bank export is already
 supported. Bank-specific profiles require consented sample files and pilot
 validation.
 
+Positive imported bank lines can also be matched to exact open customer
+invoices when the currency and outstanding amount match. Approval creates the
+normal invoice payment, posts the deterministic payment journal, links the bank
+line to that journal entry, and records audit evidence. This is an exact
+one-to-one first release only; partial allocations, split payments, bank fees,
+internal transfers, refunds and full reconciliation reports remain later
+adapters.
+
 ## Controls
 
 - The CSV is parsed server-side and staged before writes.

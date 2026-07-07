@@ -70,14 +70,17 @@ export const PERMISSIONS = [
   "settings.manage",
   "imports.create", "imports.approve",
   "bank_accounts.read", "bank_accounts.configure",
-  "bank_statements.import", "bank_transactions.read",
+  "bank_statements.import", "bank_transactions.read", "bank_transactions.match",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 export const DEFAULT_ROLES: { name: string; permissions: Permission[] }[] = [
   { name: "Owner", permissions: [...PERMISSIONS] },
   { name: "Admin", permissions: [...PERMISSIONS] },
-  { name: "Accountant", permissions: ["accounting.read", "accounting.post", "reports.read", "crm.read", "inventory.read"] },
+  { name: "Accountant", permissions: [
+    "accounting.read", "accounting.post", "reports.read", "crm.read", "inventory.read",
+    "bank_accounts.read", "bank_transactions.read", "bank_transactions.match",
+  ] },
   { name: "Sales", permissions: ["crm.read", "crm.write", "accounting.read", "inventory.read"] },
   { name: "Stock Controller", permissions: ["inventory.read", "inventory.write", "crm.read"] },
   { name: "Staff", permissions: ["crm.read", "inventory.read"] },
