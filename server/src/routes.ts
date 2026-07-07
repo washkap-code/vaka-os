@@ -25,7 +25,8 @@ import {
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 import {
-  getBankReconciliationSummary, getBankReconciliationWorksheet,
+  approveBankReconciliation, getBankReconciliationSummary, getBankReconciliationWorksheet,
+  listBankReconciliations, prepareBankReconciliation,
   listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
   matchBankTransactionToInvoice, matchBankTransactionToInvoices,
 } from "./bank-reconciliation.js";
@@ -42,6 +43,9 @@ const reconciliationWorksheetQuerySchema = z.object({
   statementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Statement date must be YYYY-MM-DD"),
   statementClosingBalance: z.string().trim()
     .regex(/^-?\d{1,12}(\.\d{1,2})?$/, "Statement closing balance must be a money amount"),
+});
+const prepareReconciliationSchema = reconciliationWorksheetQuerySchema.extend({
+  notes: z.string().trim().max(1000).optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -276,6 +280,32 @@ api.get("/bank-accounts/:id/reconciliation-worksheet",
       statementClosingBalance: query.statementClosingBalance,
     });
   }));
+api.get("/bank-accounts/:id/reconciliations",
+  requirePermission("bank_transactions.read"),
+  wrap(async (req) => listBankReconciliations({
+    tenantId: tenantId(req),
+    bankAccountId: routeParam(req, "id"),
+  })));
+api.post("/bank-accounts/:id/reconciliations",
+  requirePermission("bank_reconciliation.prepare"),
+  wrap(async (req) => {
+    const body = prepareReconciliationSchema.parse(req.body);
+    return prepareBankReconciliation({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      bankAccountId: routeParam(req, "id"),
+      statementDate: body.statementDate,
+      statementClosingBalance: body.statementClosingBalance,
+      notes: body.notes,
+    });
+  }));
+api.post("/bank-reconciliations/:id/approve",
+  requirePermission("bank_reconciliation.approve"),
+  wrap(async (req) => approveBankReconciliation({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    reconciliationId: routeParam(req, "id"),
+  })));
 api.get("/bank-transactions/:id/match-candidates",
   requirePermission("bank_transactions.read"),
   requirePermission("accounting.read"),

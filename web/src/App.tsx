@@ -317,6 +317,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           readonly={suspended}
           canApprove={me.permissions.includes("imports.approve")}
           canConfigureBanks={me.permissions.includes("bank_accounts.configure")}
+          canPrepareReconciliation={me.permissions.includes("bank_reconciliation.prepare")}
+          canApproveReconciliation={me.permissions.includes("bank_reconciliation.approve")}
         />}
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
@@ -366,10 +368,12 @@ type ImportPreview = {
   baseCurrency?: "USD" | "ZWG";
 };
 
-function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
+function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareReconciliation, canApproveReconciliation }: {
   readonly: boolean;
   canApprove: boolean;
   canConfigureBanks: boolean;
+  canPrepareReconciliation: boolean;
+  canApproveReconciliation: boolean;
 }) {
   type ImportKind = "contacts" | "products" | "opening-stock" | "bank-statement";
   const [kind, setKind] = useState<ImportKind>("contacts");
@@ -417,6 +421,18 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     lastTransactionDate: string | null;
     status: "balanced" | "needs_review";
   }>(null);
+  const [bankReconciliations, setBankReconciliations] = useState<Array<{
+    id: string;
+    statementDate: string;
+    statementClosingBalance: string;
+    expectedBookBalance: string;
+    difference: string;
+    unreviewedLines: number;
+    status: "PREPARED" | "APPROVED";
+    reconciliationStatus: "balanced" | "needs_review";
+    preparedAt: string;
+    approvedAt: string | null;
+  }>>([]);
   const [bankAccountId, setBankAccountId] = useState("");
   const [worksheetInput, setWorksheetInput] = useState({
     statementDate: new Date().toISOString().slice(0, 10),
@@ -456,6 +472,14 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     }
   };
 
+  const loadBankReconciliations = async (accountId: string) => {
+    try {
+      setBankReconciliations(await api(`/bank-accounts/${accountId}/reconciliations`));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+  };
+
   const previewBankWorksheet = async () => {
     if (!bankAccountId) return;
     setBusy(true);
@@ -472,6 +496,39 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     setBusy(false);
   };
 
+  const prepareBankReconciliation = async () => {
+    if (!bankAccountId || !bankWorksheet) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await api(`/bank-accounts/${bankAccountId}/reconciliations`, {
+        method: "POST",
+        body: {
+          statementDate: bankWorksheet.statementDate,
+          statementClosingBalance: bankWorksheet.statementClosingBalance,
+        },
+      });
+      setMessage(copy.reconciliationPrepared);
+      await loadBankReconciliations(bankAccountId);
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
+  const approveBankReconciliation = async (reportId: string) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      await api(`/bank-reconciliations/${reportId}/approve`, { method: "POST", body: {} });
+      setMessage(copy.reconciliationApproved);
+      if (bankAccountId) await loadBankReconciliations(bankAccountId);
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   useEffect(() => {
     if (kind === "bank-statement") void loadBankAccounts();
   }, [kind]);
@@ -481,11 +538,13 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       setBankWorksheet(null);
       void loadBankTransactions(bankAccountId);
       void loadBankSummary(bankAccountId);
+      void loadBankReconciliations(bankAccountId);
     }
     if (kind !== "bank-statement") {
       setBankTransactions([]);
       setBankSummary(null);
       setBankWorksheet(null);
+      setBankReconciliations([]);
     }
   }, [kind, bankAccountId]);
 
@@ -501,6 +560,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       setBankTransactions([]);
       setBankSummary(null);
       setBankWorksheet(null);
+      setBankReconciliations([]);
       setNewBank({ name: "", bankName: "", accountNumber: "", currency: "USD" });
     } catch (error: any) {
       setMessage(error.message);
@@ -641,6 +701,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       if (kind === "bank-statement" && bankAccountId) {
         void loadBankTransactions(bankAccountId);
         void loadBankSummary(bankAccountId);
+        void loadBankReconciliations(bankAccountId);
         setBankWorksheet(null);
       }
       setPreview(null);
@@ -815,6 +876,44 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
         <span>{copy.unreviewedNet}: <b>{fmt(bankWorksheet.unreviewedNet, bankWorksheet.account.currency)}</b></span>
       </div>}
       {bankWorksheet && <p className="sub">{copy.reconciliationWorksheetNotice}</p>}
+      {bankWorksheet && <button className="btn sm" disabled={readonly || busy || !canPrepareReconciliation}
+        onClick={prepareBankReconciliation}>{copy.prepareReconciliationReport}</button>}
+      {bankWorksheet && !canPrepareReconciliation && <p className="sub">{copy.preparePermission}</p>}
+    </div>}
+    {kind === "bank-statement" && bankAccountId && <div className="panel">
+      <h2>{copy.savedReconciliationsTitle}</h2>
+      <p className="sub">{copy.savedReconciliationsHelp}</p>
+      {bankReconciliations.length === 0
+        ? <p className="empty">{copy.noSavedReconciliations}</p>
+        : <div className="table-scroll">
+          <table>
+            <thead><tr>
+              <th>{copy.statementDate}</th>
+              <th>{copy.status}</th>
+              <th>{copy.statementClosingBalance}</th>
+              <th>{copy.expectedBookBalance}</th>
+              <th>{copy.difference}</th>
+              <th>{copy.unreviewedLines}</th>
+              <th>{copy.action}</th>
+            </tr></thead>
+            <tbody>{bankReconciliations.map((report) => (
+              <tr key={report.id}>
+                <td>{new Date(`${report.statementDate}T00:00:00`).toLocaleDateString("en-ZW")}</td>
+                <td>{report.status === "APPROVED" ? copy.approved : copy.prepared}</td>
+                <td>{fmt(report.statementClosingBalance, selectedBankAccount?.currency ?? "USD")}</td>
+                <td>{fmt(report.expectedBookBalance, selectedBankAccount?.currency ?? "USD")}</td>
+                <td><span className={Number(report.difference) === 0 ? "ok-text" : "bad-text"}>
+                  {fmt(report.difference, selectedBankAccount?.currency ?? "USD")}</span></td>
+                <td>{report.unreviewedLines}</td>
+                <td>{report.status === "PREPARED"
+                  ? <button className="btn sm" disabled={readonly || busy || !canApproveReconciliation
+                    || report.reconciliationStatus !== "balanced" || report.unreviewedLines > 0}
+                    onClick={() => approveBankReconciliation(report.id)}>{copy.approveReconciliation}</button>
+                  : "—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>}
     </div>}
     {kind === "bank-statement" && bankAccountId && <div className="panel">
       <h2>{copy.recentBankFeedTitle}</h2>

@@ -71,6 +71,7 @@ export const PERMISSIONS = [
   "imports.create", "imports.approve",
   "bank_accounts.read", "bank_accounts.configure",
   "bank_statements.import", "bank_transactions.read", "bank_transactions.match",
+  "bank_reconciliation.prepare", "bank_reconciliation.approve",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -80,6 +81,7 @@ export const DEFAULT_ROLES: { name: string; permissions: Permission[] }[] = [
   { name: "Accountant", permissions: [
     "accounting.read", "accounting.post", "reports.read", "crm.read", "inventory.read",
     "bank_accounts.read", "bank_transactions.read", "bank_transactions.match",
+    "bank_reconciliation.prepare",
   ] },
   { name: "Sales", permissions: ["crm.read", "crm.write", "accounting.read", "inventory.read"] },
   { name: "Stock Controller", permissions: ["inventory.read", "inventory.write", "crm.read"] },

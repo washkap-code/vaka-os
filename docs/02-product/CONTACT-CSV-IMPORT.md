@@ -59,9 +59,10 @@ deterministic payment journal evidence, links the bank line to that journal
 entry, and records audit evidence. The bank account page also shows a read-only
 summary of imported lines, matched/unreviewed counts and signed movement
 totals, plus a worksheet preview that compares a user-entered statement date
-and closing balance against VAKA's imported bank movement. Bank fees, internal
-transfers, refunds and saved statement-balance reconciliation reports remain
-later adapters.
+and closing balance against VAKA's imported bank movement. Users can save that
+worksheet as a prepared reconciliation report, and approval is blocked unless
+the report is balanced with no unreviewed bank lines. Bank fees, internal
+transfers, refunds and downloadable reconciliation packs remain later adapters.
 
 ## Controls
 

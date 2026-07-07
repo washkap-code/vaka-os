@@ -14,6 +14,34 @@ type BankTransactionRow = {
   matched_journal_entry_id: string | null;
 };
 
+type BankReconciliationRecord = typeof schema.bankReconciliations.$inferSelect;
+
+function serializeBankReconciliation(record: BankReconciliationRecord) {
+  return {
+    id: record.id,
+    tenantId: record.tenantId,
+    bankAccountId: record.bankAccountId,
+    statementDate: record.statementDate.toISOString().slice(0, 10),
+    statementClosingBalance: record.statementClosingBalance,
+    openingBalance: record.openingBalance,
+    importedNetMovement: record.importedNetMovement,
+    expectedBookBalance: record.expectedBookBalance,
+    difference: record.difference,
+    totalLines: record.totalLines,
+    matchedLines: record.matchedLines,
+    unreviewedLines: record.unreviewedLines,
+    unreviewedNet: record.unreviewedNet,
+    status: record.status,
+    reconciliationStatus: record.reconciliationStatus,
+    notes: record.notes,
+    preparedBy: record.preparedBy,
+    preparedAt: record.preparedAt.toISOString(),
+    approvedBy: record.approvedBy,
+    approvedAt: record.approvedAt ? record.approvedAt.toISOString() : null,
+    createdAt: record.createdAt.toISOString(),
+  };
+}
+
 async function loadTenantBankTransaction(tx: DB, tenantId: string, bankTransactionId: string) {
   const result = await tx.execute(sql`
     SELECT bt.*, ba.tenant_id, ba.currency
@@ -173,6 +201,114 @@ export async function getBankReconciliationWorksheet(opts: {
     lastTransactionDate: row.last_transaction_date ? new Date(row.last_transaction_date).toISOString() : null,
     status: differenceCents === 0n && Number(row.unreviewed_lines) === 0 ? "balanced" : "needs_review",
   };
+}
+
+export async function listBankReconciliations(opts: {
+  tenantId: string;
+  bankAccountId: string;
+}) {
+  const accountResult = await db.execute(sql`
+    SELECT id
+    FROM bank_accounts
+    WHERE id = ${opts.bankAccountId} AND tenant_id = ${opts.tenantId}
+    LIMIT 1
+  `);
+  const account = (accountResult as unknown as { rows: Array<{ id: string }> }).rows[0] ?? null;
+  if (!account) throw notFound("Bank account not found");
+
+  const reports = await db.select().from(schema.bankReconciliations)
+    .where(sql`${schema.bankReconciliations.tenantId} = ${opts.tenantId}
+      AND ${schema.bankReconciliations.bankAccountId} = ${opts.bankAccountId}`)
+    .orderBy(sql`${schema.bankReconciliations.statementDate} DESC`)
+    .limit(24);
+  return reports.map(serializeBankReconciliation);
+}
+
+export async function prepareBankReconciliation(opts: {
+  tenantId: string;
+  actorUserId: string;
+  bankAccountId: string;
+  statementDate: string;
+  statementClosingBalance: string;
+  notes?: string | null;
+}) {
+  const worksheet = await getBankReconciliationWorksheet({
+    tenantId: opts.tenantId,
+    bankAccountId: opts.bankAccountId,
+    statementDate: opts.statementDate,
+    statementClosingBalance: opts.statementClosingBalance,
+  });
+  return db.transaction(async (tx) => {
+    const statementDate = new Date(`${opts.statementDate}T00:00:00.000Z`);
+    const [existing] = await tx.select({ id: schema.bankReconciliations.id })
+      .from(schema.bankReconciliations)
+      .where(sql`${schema.bankReconciliations.tenantId} = ${opts.tenantId}
+        AND ${schema.bankReconciliations.bankAccountId} = ${opts.bankAccountId}
+        AND ${schema.bankReconciliations.statementDate} = ${statementDate}`);
+    if (existing) throw conflict("A reconciliation for this statement date already exists.");
+
+    const [record] = await tx.insert(schema.bankReconciliations).values({
+      tenantId: opts.tenantId,
+      bankAccountId: opts.bankAccountId,
+      statementDate,
+      statementClosingBalance: worksheet.statementClosingBalance,
+      openingBalance: worksheet.openingBalance,
+      importedNetMovement: worksheet.importedNetMovement,
+      expectedBookBalance: worksheet.expectedBookBalance,
+      difference: worksheet.difference,
+      totalLines: worksheet.totalLines,
+      matchedLines: worksheet.matchedLines,
+      unreviewedLines: worksheet.unreviewedLines,
+      unreviewedNet: worksheet.unreviewedNet,
+      status: "PREPARED",
+      reconciliationStatus: worksheet.status,
+      notes: opts.notes || null,
+      preparedBy: opts.actorUserId,
+    }).returning();
+    await audit(tx, opts.tenantId, opts.actorUserId, "bank_reconciliation.prepared",
+      "bank_reconciliation", record.id, {
+        bankAccountId: opts.bankAccountId,
+        statementDate: opts.statementDate,
+        difference: record.difference,
+        unreviewedLines: record.unreviewedLines,
+        reconciliationStatus: record.reconciliationStatus,
+      });
+    return serializeBankReconciliation(record);
+  });
+}
+
+export async function approveBankReconciliation(opts: {
+  tenantId: string;
+  actorUserId: string;
+  reconciliationId: string;
+}) {
+  return db.transaction(async (tx) => {
+    const [record] = await tx.select().from(schema.bankReconciliations)
+      .where(sql`${schema.bankReconciliations.id} = ${opts.reconciliationId}
+        AND ${schema.bankReconciliations.tenantId} = ${opts.tenantId}`);
+    if (!record) throw notFound("Bank reconciliation not found");
+    if (record.status === "APPROVED") throw conflict("Bank reconciliation is already approved.");
+    if (record.reconciliationStatus !== "balanced" || record.difference !== "0.00" || record.unreviewedLines > 0) {
+      throw conflict("Only balanced reconciliations with no unreviewed bank lines can be approved.");
+    }
+
+    const [approved] = await tx.update(schema.bankReconciliations).set({
+      status: "APPROVED",
+      approvedBy: opts.actorUserId,
+      approvedAt: new Date(),
+    }).where(sql`${schema.bankReconciliations.id} = ${record.id}
+      AND ${schema.bankReconciliations.tenantId} = ${opts.tenantId}
+      AND ${schema.bankReconciliations.status} = 'PREPARED'`)
+      .returning();
+    if (!approved) throw conflict("Bank reconciliation could not be approved.");
+    await audit(tx, opts.tenantId, opts.actorUserId, "bank_reconciliation.approved",
+      "bank_reconciliation", approved.id, {
+        bankAccountId: approved.bankAccountId,
+        statementDate: approved.statementDate.toISOString().slice(0, 10),
+        difference: approved.difference,
+      });
+    return serializeBankReconciliation(approved);
+  });
 }
 
 export async function listBankInvoiceMatchCandidates(opts: {

@@ -96,6 +96,70 @@ describe("bank statement CSV imports", () => {
       .set(auth);
     expect(differenceWorksheet.status).toBe(200);
     expect(differenceWorksheet.body.difference).toBe("10.00");
+    const prepared = await request(app)
+      .post(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
+      .set(auth)
+      .send({ statementDate: "2026-07-31", statementClosingBalance: "80.00" });
+    expect(prepared.status).toBe(200);
+    expect(prepared.body).toMatchObject({
+      statementDate: "2026-07-31",
+      statementClosingBalance: "80.00",
+      expectedBookBalance: "80.00",
+      difference: "0.00",
+      unreviewedLines: 2,
+      status: "PREPARED",
+      reconciliationStatus: "needs_review",
+    });
+    const reports = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
+      .set(auth);
+    expect(reports.status).toBe(200);
+    expect(reports.body).toHaveLength(1);
+    expect(reports.body[0].id).toBe(prepared.body.id);
+    const saved = await db.select().from(schema.bankReconciliations)
+      .where(eq(schema.bankReconciliations.id, prepared.body.id));
+    expect(saved).toHaveLength(1);
+    const prepAudit = await db.select().from(schema.auditLogs)
+      .where(eq(schema.auditLogs.entityId, prepared.body.id));
+    expect(prepAudit.some((event) => event.action === "bank_reconciliation.prepared")).toBe(true);
+    const duplicateReport = await request(app)
+      .post(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
+      .set(auth)
+      .send({ statementDate: "2026-07-31", statementClosingBalance: "80.00" });
+    expect(duplicateReport.status).toBe(409);
+    const blockedApproval = await request(app)
+      .post(`/api/v1/bank-reconciliations/${prepared.body.id}/approve`)
+      .set(auth)
+      .send({});
+    expect(blockedApproval.status).toBe(409);
+    const cleanAccount = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Clean Reserve Account",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 9900",
+      currency: "USD",
+    });
+    expect(cleanAccount.status).toBe(200);
+    const cleanPrepared = await request(app)
+      .post(`/api/v1/bank-accounts/${cleanAccount.body.id}/reconciliations`)
+      .set(auth)
+      .send({ statementDate: "2026-07-31", statementClosingBalance: "0.00" });
+    expect(cleanPrepared.status).toBe(200);
+    expect(cleanPrepared.body).toMatchObject({
+      difference: "0.00",
+      unreviewedLines: 0,
+      status: "PREPARED",
+      reconciliationStatus: "balanced",
+    });
+    const approved = await request(app)
+      .post(`/api/v1/bank-reconciliations/${cleanPrepared.body.id}/approve`)
+      .set(auth)
+      .send({});
+    expect(approved.status).toBe(200);
+    expect(approved.body.status).toBe("APPROVED");
+    expect(approved.body.approvedAt).toEqual(expect.any(String));
+    const approveAudit = await db.select().from(schema.auditLogs)
+      .where(eq(schema.auditLogs.entityId, cleanPrepared.body.id));
+    expect(approveAudit.some((event) => event.action === "bank_reconciliation.approved")).toBe(true);
     const importedJournal = await db.select().from(schema.journalEntries)
       .where(eq(schema.journalEntries.sourceType, "bank_statement_import"));
     expect(importedJournal).toHaveLength(0);
@@ -112,6 +176,20 @@ describe("bank statement CSV imports", () => {
       .get(`/api/v1/bank-accounts/${account.body.id}/reconciliation-worksheet?statementDate=2026-07-31&statementClosingBalance=80.00`)
       .set({ Authorization: `Bearer ${other.token}` });
     expect(otherWorksheet.status).toBe(404);
+    const otherReports = await request(app)
+      .get(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
+      .set({ Authorization: `Bearer ${other.token}` });
+    expect(otherReports.status).toBe(404);
+    const otherPrepare = await request(app)
+      .post(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
+      .set({ Authorization: `Bearer ${other.token}` })
+      .send({ statementDate: "2026-08-31", statementClosingBalance: "80.00" });
+    expect(otherPrepare.status).toBe(404);
+    const otherApprove = await request(app)
+      .post(`/api/v1/bank-reconciliations/${prepared.body.id}/approve`)
+      .set({ Authorization: `Bearer ${other.token}` })
+      .send({});
+    expect(otherApprove.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)

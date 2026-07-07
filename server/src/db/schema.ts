@@ -366,6 +366,35 @@ export const bankTransactions = pgTable("bank_transactions", {
   uniqueIndex("banktx_account_source").on(t.bankAccountId, t.sourceKey),
 ]);
 
+export const bankReconciliations = pgTable("bank_reconciliations", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  bankAccountId: uuid("bank_account_id").notNull().references(() => bankAccounts.id),
+  statementDate: timestamp("statement_date", { withTimezone: true }).notNull(),
+  statementClosingBalance: money("statement_closing_balance").notNull(),
+  openingBalance: money("opening_balance").notNull(),
+  importedNetMovement: money("imported_net_movement").notNull(),
+  expectedBookBalance: money("expected_book_balance").notNull(),
+  difference: money("difference").notNull(),
+  totalLines: integer("total_lines").default(0).notNull(),
+  matchedLines: integer("matched_lines").default(0).notNull(),
+  unreviewedLines: integer("unreviewed_lines").default(0).notNull(),
+  unreviewedNet: money("unreviewed_net").notNull(),
+  status: text("status").default("PREPARED").notNull(), // PREPARED | APPROVED
+  reconciliationStatus: text("reconciliation_status").notNull(), // balanced | needs_review
+  notes: text("notes"),
+  preparedBy: uuid("prepared_by").references(() => users.id),
+  preparedAt: timestamp("prepared_at", { withTimezone: true }).defaultNow().notNull(),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("bankrec_tenant_account_statement").on(t.tenantId, t.bankAccountId, t.statementDate),
+  index("bankrec_tenant_time").on(t.tenantId, t.statementDate),
+  check("bankrec_status_check", sql`${t.status} IN ('PREPARED', 'APPROVED')`),
+  check("bankrec_reconciliation_status_check", sql`${t.reconciliationStatus} IN ('balanced', 'needs_review')`),
+]);
+
 // ---------------------------------------------------------------------------
 // INVENTORY — append-only stock ledger, synchronised with Accounting
 // ---------------------------------------------------------------------------
