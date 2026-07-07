@@ -13,6 +13,9 @@
 - **Opening stock imports:** Added warehouse-mapped opening quantities and unit
   costs with zero-balance enforcement, append-only movements, product costing,
   balanced opening-equity journals, explicit approval and atomic audit evidence.
+- **Bank statement imports:** Added masked tenant bank accounts and generic CSV
+  preview/import with exact signed amounts, date validation, deterministic
+  duplicate prevention and an explicitly unreviewed, non-posting bank feed.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

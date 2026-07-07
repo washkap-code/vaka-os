@@ -438,8 +438,10 @@ CSV preview, validation, duplicate detection, explicit approval and auditable
 transactional commit. See `CONTACT-CSV-IMPORT.md`. Product imports do not alter
 stock. Opening-stock imports separately map SKUs and warehouses, refuse
 pre-existing balances, append stock movements and post balanced Inventory /
-Opening Balance Equity journals atomically. Bank, document/OCR and other
-adapters build on the same batch foundation with domain-specific controls.
+Opening Balance Equity journals atomically. The generic bank CSV adapter creates
+a duplicate-resistant unreviewed feed and deliberately does not post accounting
+entries; bank-specific profiles, matching and reconciliation remain later work.
+Document/OCR and other adapters build on the same batch foundation.
 
 Mobile applications, WhatsApp, document capture/OCR, and Zimbabwean payment
 providers are shared platform capabilities. They must use named permissions,

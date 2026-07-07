@@ -356,10 +356,15 @@ export const bankTransactions = pgTable("bank_transactions", {
   date: timestamp("date", { withTimezone: true }).notNull(),
   description: text("description").notNull(),
   amount: money("amount").notNull(), // signed
+  reference: text("reference"),
+  sourceKey: text("source_key"),
   importedBatchId: text("imported_batch_id"),
   matchedJournalEntryId: uuid("matched_journal_entry_id"),
   createdAt: createdAt(),
-}, (t) => [index("banktx_account_date").on(t.bankAccountId, t.date)]);
+}, (t) => [
+  index("banktx_account_date").on(t.bankAccountId, t.date),
+  uniqueIndex("banktx_account_source").on(t.bankAccountId, t.sourceKey),
+]);
 
 // ---------------------------------------------------------------------------
 // INVENTORY — append-only stock ledger, synchronised with Accounting

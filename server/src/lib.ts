@@ -69,6 +69,8 @@ export const PERMISSIONS = [
   "users.manage",
   "settings.manage",
   "imports.create", "imports.approve",
+  "bank_accounts.read", "bank_accounts.configure",
+  "bank_statements.import", "bank_transactions.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

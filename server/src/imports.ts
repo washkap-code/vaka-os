@@ -1,4 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } from "./lib.js";
 import { postJournal, systemAccount } from "./accounting.js";
@@ -42,6 +43,15 @@ type OpeningStockImportData = {
   unitCost: string;
   productId: string;
   warehouseId: string;
+};
+
+type BankTransactionImportData = {
+  bankAccountId: string;
+  date: string;
+  description: string;
+  amount: string;
+  reference: string | null;
+  sourceKey: string;
 };
 
 const headerAliases: Record<string, keyof ContactImportData> = {
@@ -108,6 +118,23 @@ const openingStockHeaderAliases: Record<string, "sku" | "warehouse" | "quantity"
   cost_price: "unitCost",
 };
 
+type BankHeader = "date" | "description" | "amount" | "debit" | "credit" | "reference";
+const bankHeaderAliases: Record<string, BankHeader> = {
+  date: "date",
+  posted_date: "date",
+  transaction_date: "date",
+  description: "description",
+  narrative: "description",
+  details: "description",
+  amount: "amount",
+  debit: "debit",
+  withdrawal: "debit",
+  credit: "credit",
+  deposit: "credit",
+  reference: "reference",
+  transaction_reference: "reference",
+};
+
 function safeText(value: string, field: string, max: number): string | null {
   const clean = value.trim();
   if (!clean) return null;
@@ -146,6 +173,87 @@ function parseQuantity(value: string): string {
     throw new Error("Quantity must be greater than zero with no more than 3 decimal places");
   }
   return Number(clean).toFixed(3);
+}
+
+function parseSignedMoney(value: string, field: string, allowBlank = false): string | null {
+  const clean = value.trim().replace(/,/g, "");
+  if (!clean && allowBlank) return null;
+  if (!/^-?\d{1,12}(\.\d{1,2})?$/.test(clean)) {
+    throw new Error(`${field} must be a signed amount with no more than 2 decimal places`);
+  }
+  const cents = toCents(clean);
+  if (cents === 0n) throw new Error(`${field} cannot be zero`);
+  if (cents > MAX_MONEY_CENTS || cents < -MAX_MONEY_CENTS) {
+    throw new Error(`${field} exceeds the supported financial limit`);
+  }
+  return fromCents(cents);
+}
+
+function parseStatementColumnAmount(value: string, field: string): string | null {
+  const clean = value.trim().replace(/,/g, "");
+  if (!clean) return null;
+  if (!/^\d{1,12}(\.\d{1,2})?$/.test(clean) || toCents(clean) === 0n) {
+    throw new Error(`${field} must be a positive amount with no more than 2 decimal places`);
+  }
+  if (toCents(clean) > MAX_MONEY_CENTS) {
+    throw new Error(`${field} exceeds the supported financial limit`);
+  }
+  return fromCents(toCents(clean));
+}
+
+function parseStatementDate(value: string): string {
+  const clean = value.trim();
+  let year: number;
+  let month: number;
+  let day: number;
+  let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
+  if (match) {
+    [, year, month, day] = match.map(Number);
+  } else {
+    match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(clean);
+    if (!match) throw new Error("Date must use YYYY-MM-DD or DD/MM/YYYY");
+    day = Number(match[1]);
+    month = Number(match[2]);
+    year = Number(match[3]);
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    throw new Error("Date is invalid");
+  }
+  return date.toISOString();
+}
+
+function parseBankTransactionRow(
+  headers: Array<BankHeader | null>,
+  cells: string[],
+  bankAccountId: string,
+): BankTransactionImportData {
+  const source = new Map<BankHeader, string>();
+  headers.forEach((header, index) => {
+    if (header) source.set(header, cells[index] ?? "");
+  });
+  const date = parseStatementDate(source.get("date") ?? "");
+  const description = safeText(source.get("description") ?? "", "Description", 500);
+  if (!description) throw new Error("Description is required");
+  let amount: string;
+  if (source.has("amount")) {
+    amount = parseSignedMoney(source.get("amount") ?? "", "Amount")!;
+  } else {
+    const debit = parseStatementColumnAmount(source.get("debit") ?? "", "Debit");
+    const credit = parseStatementColumnAmount(source.get("credit") ?? "", "Credit");
+    if (debit && credit) throw new Error("A row cannot contain both debit and credit");
+    if (!debit && !credit) throw new Error("A row must contain a debit or credit amount");
+    amount = debit ? fromCents(-toCents(debit)) : credit!;
+  }
+  const reference = safeText(source.get("reference") ?? "", "Reference", 200);
+  const sourceKey = createHash("sha256").update([
+    bankAccountId,
+    date,
+    amount,
+    description.trim().toLowerCase(),
+    reference?.trim().toLowerCase() ?? "",
+  ].join("|")).digest("hex");
+  return { bankAccountId, date, description, amount, reference, sourceKey };
 }
 
 function parseCsv(csvText: string): string[][] {
@@ -706,6 +814,143 @@ export async function commitOpeningStockImport(opts: {
       currency: tenant.baseCurrency,
       journalEntryId,
     };
+  });
+}
+
+export async function previewBankStatementImport(opts: {
+  tenantId: string;
+  actorUserId: string;
+  bankAccountId: string;
+  csvText: string;
+}) {
+  const [account] = await db.select().from(schema.bankAccounts).where(and(
+    eq(schema.bankAccounts.id, opts.bankAccountId),
+    eq(schema.bankAccounts.tenantId, opts.tenantId),
+  ));
+  if (!account) throw badRequest("Bank account was not found");
+  const csvRows = parseCsv(opts.csvText.replace(/^\uFEFF/, ""));
+  const headers = csvRows[0].map(normalizeHeader)
+    .map((header) => bankHeaderAliases[header] ?? null);
+  if (!headers.includes("date") || !headers.includes("description")
+    || (!headers.includes("amount") && !headers.includes("debit") && !headers.includes("credit"))) {
+    throw badRequest("CSV must include date, description, and amount or debit/credit columns");
+  }
+  const existing = await db.select({ sourceKey: schema.bankTransactions.sourceKey })
+    .from(schema.bankTransactions)
+    .where(eq(schema.bankTransactions.bankAccountId, account.id));
+  const sourceKeys = new Set(existing.flatMap((row) => row.sourceKey ? [row.sourceKey] : []));
+  const fingerprintOccurrences = new Map<string, number>();
+  const staged = csvRows.slice(1).map((cells, index) => {
+    try {
+      const data = parseBankTransactionRow(headers, cells, account.id);
+      const fingerprint = data.sourceKey;
+      const occurrence = (fingerprintOccurrences.get(fingerprint) ?? 0) + 1;
+      fingerprintOccurrences.set(fingerprint, occurrence);
+      data.sourceKey = createHash("sha256").update(`${fingerprint}|occurrence:${occurrence}`).digest("hex");
+      const duplicate = sourceKeys.has(data.sourceKey);
+      sourceKeys.add(data.sourceKey);
+      return {
+        rowNumber: index + 2,
+        data,
+        status: duplicate ? "DUPLICATE" : "VALID",
+        error: duplicate ? "Possible duplicate bank transaction" : null,
+      };
+    } catch (error: unknown) {
+      return {
+        rowNumber: index + 2,
+        data: { source: cells },
+        status: "INVALID",
+        error: error instanceof Error ? error.message : "Invalid row",
+      };
+    }
+  });
+  const summary = {
+    totalRows: staged.length,
+    validRows: staged.filter((row) => row.status === "VALID").length,
+    invalidRows: staged.filter((row) => row.status === "INVALID").length,
+    duplicateRows: staged.filter((row) => row.status === "DUPLICATE").length,
+  };
+  return db.transaction(async (tx) => {
+    const [batch] = await tx.insert(schema.importBatches).values({
+      tenantId: opts.tenantId,
+      entityType: "bank_transactions",
+      status: "PREVIEW",
+      ...summary,
+      createdBy: opts.actorUserId,
+    }).returning();
+    await tx.insert(schema.importRows).values(staged.map((row) => ({
+      batchId: batch.id,
+      ...row,
+    })));
+    await audit(tx, opts.tenantId, opts.actorUserId,
+      "bank_statement.import_previewed", "import_batch", batch.id, {
+        ...summary, bankAccountId: account.id,
+      });
+    return { batch, rows: staged.slice(0, 100), account };
+  });
+}
+
+export async function commitBankStatementImport(opts: {
+  tenantId: string;
+  actorUserId: string;
+  batchId: string;
+}) {
+  return db.transaction(async (tx) => {
+    const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
+      eq(schema.importBatches.id, opts.batchId),
+      eq(schema.importBatches.tenantId, opts.tenantId),
+      eq(schema.importBatches.entityType, "bank_transactions"),
+      eq(schema.importBatches.status, "PREVIEW"),
+    )).returning();
+    if (!claimed) throw conflict("Import batch is unavailable or already processed");
+    const rows = await tx.select().from(schema.importRows).where(and(
+      eq(schema.importRows.batchId, claimed.id),
+      eq(schema.importRows.status, "VALID"),
+    )).orderBy(schema.importRows.rowNumber);
+    if (!rows.length) throw badRequest("Bank statement import has no valid rows");
+    const accountId = (rows[0].data as BankTransactionImportData).bankAccountId;
+    const [account] = await tx.select().from(schema.bankAccounts).where(and(
+      eq(schema.bankAccounts.id, accountId),
+      eq(schema.bankAccounts.tenantId, opts.tenantId),
+    ));
+    if (!account) throw conflict("The staged bank account is no longer available");
+    const created = await tx.insert(schema.bankTransactions).values(rows.map((row) => {
+      const data = row.data as BankTransactionImportData;
+      if (data.bankAccountId !== account.id) throw conflict("Import batch contains inconsistent bank accounts");
+      return {
+        bankAccountId: account.id,
+        date: new Date(data.date),
+        description: data.description,
+        amount: data.amount,
+        reference: data.reference,
+        sourceKey: data.sourceKey,
+        importedBatchId: claimed.id,
+      };
+    })).onConflictDoNothing({
+      target: [schema.bankTransactions.bankAccountId, schema.bankTransactions.sourceKey],
+    }).returning({ id: schema.bankTransactions.id, sourceKey: schema.bankTransactions.sourceKey });
+    const createdByKey = new Map(created.map((row) => [row.sourceKey, row.id]));
+    for (const row of rows) {
+      const data = row.data as BankTransactionImportData;
+      const createdId = createdByKey.get(data.sourceKey);
+      await tx.update(schema.importRows).set({
+        status: createdId ? "IMPORTED" : "DUPLICATE",
+        createdRecordId: createdId ?? null,
+        error: createdId ? null : "Duplicate detected during approval",
+      }).where(eq(schema.importRows.id, row.id));
+    }
+    const [completed] = await tx.update(schema.importBatches).set({
+      status: "COMPLETED",
+      completedAt: new Date(),
+    }).where(eq(schema.importBatches.id, claimed.id)).returning();
+    await audit(tx, opts.tenantId, opts.actorUserId,
+      "bank_statement.import_completed", "import_batch", claimed.id, {
+        bankAccountId: account.id,
+        importedRows: created.length,
+        skippedRows: claimed.totalRows - created.length,
+        postedToLedger: false,
+      });
+    return { batch: completed, importedRows: created.length, accountCurrency: account.currency };
   });
 }
 

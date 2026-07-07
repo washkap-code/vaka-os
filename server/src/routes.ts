@@ -20,7 +20,8 @@ import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getA
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
 import {
-  commitContactImport, commitOpeningStockImport, commitProductImport, listImportBatches,
+  commitBankStatementImport, commitContactImport, commitOpeningStockImport,
+  commitProductImport, listImportBatches, previewBankStatementImport,
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 
@@ -185,6 +186,69 @@ api.post("/imports/opening-stock/:id/commit",
     actorUserId: req.auth!.userId,
     batchId: routeParam(req, "id"),
   })));
+api.post("/imports/bank-statement/preview",
+  requirePermission("bank_statements.import"),
+  wrap(async (req) => {
+    const body = z.object({
+      bankAccountId: z.string().uuid(),
+      csvText: z.string().min(1).max(1_000_000),
+    }).parse(req.body);
+    return previewBankStatementImport({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      ...body,
+    });
+  }));
+api.post("/imports/bank-statement/:id/commit",
+  requirePermission("bank_statements.import"),
+  requirePermission("imports.approve"),
+  wrap(async (req) => commitBankStatementImport({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    batchId: routeParam(req, "id"),
+  })));
+
+// ---------------------------------------------------------------------------
+// Bank accounts and unreviewed statement feed
+// ---------------------------------------------------------------------------
+api.get("/bank-accounts", requirePermission("bank_accounts.read"), wrap(async (req) =>
+  db.select().from(schema.bankAccounts)
+    .where(eq(schema.bankAccounts.tenantId, tenantId(req)))
+    .orderBy(schema.bankAccounts.name)));
+api.post("/bank-accounts", requirePermission("bank_accounts.configure"), wrap(async (req) => {
+  const body = z.object({
+    name: z.string().trim().min(2).max(120),
+    bankName: z.string().trim().min(2).max(120),
+    accountNumber: z.string().trim().min(4).max(40)
+      .regex(/^[A-Za-z0-9 Xx*•-]+$/, "Use a masked account identifier only")
+      .refine((value) => /[Xx*•]/.test(value) || value.replace(/\D/g, "").length <= 4,
+        "Enter only a masked identifier or the last four digits"),
+    currency: z.enum(["USD", "ZWG"]),
+  }).parse(req.body);
+  const tid = tenantId(req);
+  const [account] = await db.insert(schema.bankAccounts).values({
+    ...body,
+    tenantId: tid,
+  }).returning();
+  await audit(db, tid, req.auth!.userId, "bank_account.created", "bank_account", account.id, {
+    bankName: account.bankName,
+    currency: account.currency,
+  });
+  return account;
+}));
+api.get("/bank-transactions", requirePermission("bank_transactions.read"), wrap(async (req) => {
+  const accountId = z.string().uuid().parse(req.query.bankAccountId);
+  const [account] = await db.select({ id: schema.bankAccounts.id })
+    .from(schema.bankAccounts).where(and(
+      eq(schema.bankAccounts.id, accountId),
+      eq(schema.bankAccounts.tenantId, tenantId(req)),
+    ));
+  if (!account) throw notFound("Bank account not found");
+  return db.select().from(schema.bankTransactions)
+    .where(eq(schema.bankTransactions.bankAccountId, account.id))
+    .orderBy(desc(schema.bankTransactions.date))
+    .limit(500);
+}));
 
 // ---------------------------------------------------------------------------
 // CRM

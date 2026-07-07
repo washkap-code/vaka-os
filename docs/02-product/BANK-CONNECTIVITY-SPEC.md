@@ -1,6 +1,6 @@
 # VAKA Zimbabwe Bank Connectivity Specification
 
-**Status:** Approved product direction; bank/provider onboarding pending
+**Status:** Generic CSV import foundation implemented; bank/provider onboarding pending
 **Owner:** Product, Finance, Engineering, Security, and Compliance
 **Last reviewed:** 2026-07-05
 
@@ -247,6 +247,13 @@ future outbound payments. Auditors remain read-only.
 9. Add aggregator/bank adapters only through the common contract.
 10. Consider outbound payment initiation only after read-only reconciliation is
     proven and separately approved.
+
+Steps 1 and the generic portion of step 2 now have an implemented foundation.
+It supports tenant-owned account registration with a masked identifier,
+date/description/signed-amount CSV preview, deterministic duplicate prevention,
+and import into an unreviewed feed. It does not yet preserve original files,
+validate statement opening/closing balances, provide bank-specific profiles,
+match transactions, reconcile, auto-post, connect to a bank, or move money.
 
 ## 12. Acceptance criteria
 
