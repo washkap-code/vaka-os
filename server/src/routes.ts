@@ -24,7 +24,10 @@ import {
   commitProductImport, listImportBatches, previewBankStatementImport,
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
-import { listBankInvoiceMatchCandidates, matchBankTransactionToInvoice } from "./bank-reconciliation.js";
+import {
+  listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
+  matchBankTransactionToInvoice, matchBankTransactionToInvoices,
+} from "./bank-reconciliation.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -267,6 +270,30 @@ api.post("/bank-transactions/:id/match-invoice",
       actorUserId: req.auth!.userId,
       bankTransactionId: routeParam(req, "id"),
       invoiceId: body.invoiceId,
+    });
+  }));
+api.get("/bank-transactions/:id/split-candidates",
+  requirePermission("bank_transactions.read"),
+  requirePermission("accounting.read"),
+  wrap(async (req) => listBankSplitMatchCandidates({
+    tenantId: tenantId(req),
+    bankTransactionId: routeParam(req, "id"),
+  })));
+api.post("/bank-transactions/:id/match-invoices",
+  requirePermission("bank_transactions.match"),
+  requirePermission("accounting.post"),
+  wrap(async (req) => {
+    const body = z.object({
+      allocations: z.array(z.object({
+        invoiceNumber: z.string().trim().min(1),
+        amount: z.string().trim().regex(/^\d{1,12}(\.\d{1,2})?$/, "Amount must be positive with no more than 2 decimal places"),
+      })).min(2),
+    }).parse(req.body);
+    return matchBankTransactionToInvoices({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      bankTransactionId: routeParam(req, "id"),
+      allocations: body.allocations,
     });
   }));
 

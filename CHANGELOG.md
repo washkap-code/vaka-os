@@ -17,10 +17,10 @@
   preview/import with exact signed amounts, date validation, deterministic
   duplicate prevention and an explicitly unreviewed, non-posting bank feed.
 - **Bank invoice matching:** Added reviewed matching from positive bank lines
-  to open invoices, including exact and one-invoice partial payments, with
-  permission checks, payment posting, journal linkage, tenant isolation and
-  audit evidence. Split, fee, transfer and many-to-one reconciliation remain
-  future work.
+  to open invoices, including exact, one-invoice partial payments, and reviewed
+  split allocation across multiple invoices, with permission checks, payment
+  posting, journal linkage, tenant isolation and audit evidence. Fee, transfer,
+  refund and full reconciliation reporting remain future work.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

@@ -472,6 +472,50 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     setBusy(false);
   };
 
+  const splitMatchBankTransaction = async (transaction: {
+    id: string; amount: string; reference: string | null; description: string;
+  }) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await api(`/bank-transactions/${transaction.id}/split-candidates`);
+      const candidates = result.candidates ?? [];
+      if (candidates.length < 2) {
+        setMessage(copy.noSplitMatch);
+        setBusy(false);
+        return;
+      }
+      const candidateLines = candidates.slice(0, 8)
+        .map((candidate: any) => `${candidate.number}: ${candidate.currency} ${candidate.outstanding} · ${candidate.contact_name}`)
+        .join("\n");
+      const input = window.prompt(copy.splitPrompt
+        .replace("{bankAmount}", `${selectedBankAccount?.currency ?? ""} ${transaction.amount}`)
+        .replace("{candidates}", candidateLines));
+      if (!input) {
+        setBusy(false);
+        return;
+      }
+      const allocations = input.split(",").map((part) => {
+        const [invoiceNumber, amount] = part.split("=").map((value) => value.trim());
+        return { invoiceNumber, amount };
+      }).filter((allocation) => allocation.invoiceNumber && allocation.amount);
+      if (allocations.length < 2) {
+        setMessage(copy.splitFormatHelp);
+        setBusy(false);
+        return;
+      }
+      await api(`/bank-transactions/${transaction.id}/match-invoices`, {
+        method: "POST",
+        body: { allocations },
+      });
+      setMessage(copy.splitMatched.replace("{count}", String(allocations.length)));
+      if (bankAccountId) await loadBankTransactions(bankAccountId);
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -668,8 +712,12 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
                 <td>{selectedBankAccount?.currency ?? ""} {transaction.amount}</td>
                 <td>{transaction.matchedJournalEntryId ? copy.reconciled : copy.unreviewed}</td>
                 <td>{!transaction.matchedJournalEntryId && Number(transaction.amount) > 0
-                  ? <button className="btn sm" disabled={busy || readonly}
-                    onClick={() => matchBankTransaction(transaction)}>{copy.findInvoiceMatch}</button>
+                  ? <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button className="btn sm" disabled={busy || readonly}
+                      onClick={() => matchBankTransaction(transaction)}>{copy.findInvoiceMatch}</button>
+                    <button className="btn sm" disabled={busy || readonly}
+                      onClick={() => splitMatchBankTransaction(transaction)}>{copy.splitInvoiceMatch}</button>
+                  </div>
                   : "—"}</td>
               </tr>
             ))}</tbody>
