@@ -311,6 +311,129 @@ export async function approveBankReconciliation(opts: {
   });
 }
 
+export async function getBankReconciliationReport(opts: {
+  tenantId: string;
+  actorUserId: string;
+  reconciliationId: string;
+}) {
+  const reportResult = await db.execute(sql`
+    SELECT
+      br.*,
+      t.company_name,
+      ba.name AS account_name,
+      ba.bank_name,
+      ba.account_number,
+      ba.currency,
+      prepared_user.full_name AS prepared_by_name,
+      approved_user.full_name AS approved_by_name
+    FROM bank_reconciliations br
+    JOIN tenants t ON t.id = br.tenant_id
+    JOIN bank_accounts ba ON ba.id = br.bank_account_id
+    LEFT JOIN users prepared_user ON prepared_user.id = br.prepared_by
+    LEFT JOIN users approved_user ON approved_user.id = br.approved_by
+    WHERE br.id = ${opts.reconciliationId} AND br.tenant_id = ${opts.tenantId}
+    LIMIT 1
+  `);
+  const report = (reportResult as unknown as { rows: Array<{
+    id: string;
+    tenant_id: string;
+    bank_account_id: string;
+    statement_date: Date | string;
+    statement_closing_balance: string;
+    opening_balance: string;
+    imported_net_movement: string;
+    expected_book_balance: string;
+    difference: string;
+    total_lines: number;
+    matched_lines: number;
+    unreviewed_lines: number;
+    unreviewed_net: string;
+    status: "PREPARED" | "APPROVED";
+    reconciliation_status: "balanced" | "needs_review";
+    notes: string | null;
+    prepared_at: Date | string;
+    approved_at: Date | string | null;
+    company_name: string;
+    account_name: string;
+    bank_name: string | null;
+    account_number: string | null;
+    currency: "USD" | "ZWG";
+    prepared_by_name: string | null;
+    approved_by_name: string | null;
+  }> }).rows[0] ?? null;
+  if (!report) throw notFound("Bank reconciliation not found");
+
+  const statementDate = new Date(report.statement_date);
+  const linesResult = await db.execute(sql`
+    SELECT
+      id,
+      date,
+      description,
+      amount::numeric(14,2)::text AS amount,
+      reference,
+      matched_journal_entry_id
+    FROM bank_transactions
+    WHERE bank_account_id = ${report.bank_account_id}
+      AND date < (${statementDate.toISOString().slice(0, 10)}::date + interval '1 day')
+    ORDER BY date ASC, created_at ASC
+    LIMIT 1000
+  `);
+  const lines = (linesResult as unknown as { rows: Array<{
+    id: string;
+    date: Date | string;
+    description: string;
+    amount: string;
+    reference: string | null;
+    matched_journal_entry_id: string | null;
+  }> }).rows.map((line) => ({
+    id: line.id,
+    date: new Date(line.date).toISOString().slice(0, 10),
+    description: line.description,
+    amount: line.amount,
+    reference: line.reference,
+    status: line.matched_journal_entry_id ? "matched" : "unreviewed",
+  }));
+
+  await audit(db, opts.tenantId, opts.actorUserId, "bank_reconciliation.report_generated",
+    "bank_reconciliation", report.id, {
+      bankAccountId: report.bank_account_id,
+      statementDate: statementDate.toISOString().slice(0, 10),
+    });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    companyName: report.company_name,
+    account: {
+      id: report.bank_account_id,
+      name: report.account_name,
+      bankName: report.bank_name,
+      accountNumber: report.account_number,
+      currency: report.currency,
+    },
+    reconciliation: {
+      id: report.id,
+      statementDate: statementDate.toISOString().slice(0, 10),
+      statementClosingBalance: report.statement_closing_balance,
+      openingBalance: report.opening_balance,
+      importedNetMovement: report.imported_net_movement,
+      expectedBookBalance: report.expected_book_balance,
+      difference: report.difference,
+      totalLines: Number(report.total_lines),
+      matchedLines: Number(report.matched_lines),
+      unreviewedLines: Number(report.unreviewed_lines),
+      unreviewedNet: report.unreviewed_net,
+      status: report.status,
+      reconciliationStatus: report.reconciliation_status,
+      notes: report.notes,
+      preparedByName: report.prepared_by_name,
+      preparedAt: new Date(report.prepared_at).toISOString(),
+      approvedByName: report.approved_by_name,
+      approvedAt: report.approved_at ? new Date(report.approved_at).toISOString() : null,
+    },
+    lines,
+  };
+}
+
 export async function listBankInvoiceMatchCandidates(opts: {
   tenantId: string;
   bankTransactionId: string;

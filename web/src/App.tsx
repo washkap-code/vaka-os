@@ -529,6 +529,59 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareRecon
     setBusy(false);
   };
 
+  const downloadBankReconciliationReport = async (reportId: string) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const report = await api(`/bank-reconciliations/${reportId}/report`);
+      const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+      const summaryRows = [
+        [copy.reportCompany, report.companyName],
+        [copy.bankAccount, `${report.account.bankName ?? ""} ${report.account.name}`.trim()],
+        [copy.maskedAccount, report.account.accountNumber ?? ""],
+        [copy.currency, report.account.currency],
+        [copy.statementDate, report.reconciliation.statementDate],
+        [copy.status, report.reconciliation.status],
+        [copy.worksheetStatus, report.reconciliation.reconciliationStatus],
+        [copy.openingBalance, report.reconciliation.openingBalance],
+        [copy.importedMovement, report.reconciliation.importedNetMovement],
+        [copy.expectedBookBalance, report.reconciliation.expectedBookBalance],
+        [copy.statementClosingBalance, report.reconciliation.statementClosingBalance],
+        [copy.difference, report.reconciliation.difference],
+        [copy.unreviewedLines, report.reconciliation.unreviewedLines],
+        [copy.preparedBy, report.reconciliation.preparedByName ?? ""],
+        [copy.preparedAt, report.reconciliation.preparedAt],
+        [copy.approvedBy, report.reconciliation.approvedByName ?? ""],
+        [copy.approvedAt, report.reconciliation.approvedAt ?? ""],
+        [copy.generatedAt, report.generatedAt],
+      ];
+      const lineRows = [
+        [copy.date, copy.description, copy.reference, copy.amount, copy.status],
+        ...report.lines.map((line: any) => [line.date, line.description, line.reference ?? "", line.amount, line.status]),
+      ];
+      const csv = [
+        copy.reconciliationReportTitle,
+        ...summaryRows.map((row) => row.map(escapeCsv).join(",")),
+        "",
+        copy.supportingBankLines,
+        ...lineRows.map((row) => row.map(escapeCsv).join(",")),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `vaka-bank-reconciliation-${report.reconciliation.statementDate}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setMessage(copy.reconciliationReportDownloaded);
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   useEffect(() => {
     if (kind === "bank-statement") void loadBankAccounts();
   }, [kind]);
@@ -905,11 +958,14 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareRecon
                 <td><span className={Number(report.difference) === 0 ? "ok-text" : "bad-text"}>
                   {fmt(report.difference, selectedBankAccount?.currency ?? "USD")}</span></td>
                 <td>{report.unreviewedLines}</td>
-                <td>{report.status === "PREPARED"
-                  ? <button className="btn sm" disabled={readonly || busy || !canApproveReconciliation
+                <td><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button className="btn sm" disabled={busy}
+                    onClick={() => downloadBankReconciliationReport(report.id)}>{copy.downloadReport}</button>
+                  {report.status === "PREPARED" && <button className="btn sm"
+                    disabled={readonly || busy || !canApproveReconciliation
                     || report.reconciliationStatus !== "balanced" || report.unreviewedLines > 0}
-                    onClick={() => approveBankReconciliation(report.id)}>{copy.approveReconciliation}</button>
-                  : "—"}</td>
+                    onClick={() => approveBankReconciliation(report.id)}>{copy.approveReconciliation}</button>}
+                </div></td>
               </tr>
             ))}</tbody>
           </table>

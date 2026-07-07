@@ -25,8 +25,8 @@ import {
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 import {
-  approveBankReconciliation, getBankReconciliationSummary, getBankReconciliationWorksheet,
-  listBankReconciliations, prepareBankReconciliation,
+  approveBankReconciliation, getBankReconciliationReport, getBankReconciliationSummary,
+  getBankReconciliationWorksheet, listBankReconciliations, prepareBankReconciliation,
   listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
   matchBankTransactionToInvoice, matchBankTransactionToInvoices,
 } from "./bank-reconciliation.js";
@@ -302,6 +302,13 @@ api.post("/bank-accounts/:id/reconciliations",
 api.post("/bank-reconciliations/:id/approve",
   requirePermission("bank_reconciliation.approve"),
   wrap(async (req) => approveBankReconciliation({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    reconciliationId: routeParam(req, "id"),
+  })));
+api.get("/bank-reconciliations/:id/report",
+  requirePermission("bank_transactions.read"),
+  wrap(async (req) => getBankReconciliationReport({
     tenantId: tenantId(req),
     actorUserId: req.auth!.userId,
     reconciliationId: routeParam(req, "id"),
