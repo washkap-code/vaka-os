@@ -270,8 +270,11 @@ audited CSV report with the saved worksheet totals, account details, sign-off
 evidence and supporting imported bank lines.
 
 It does not yet preserve original files, validate statement opening/closing
-balances, provide bank-specific profiles, match fees/transfers/refunds, produce
-PDF reconciliation packs, connect to a bank, or move money.
+balances, provide bank-specific profiles, match internal transfers/refunds,
+produce PDF reconciliation packs, connect to a bank, or move money. A narrow
+bank-fee posting path now exists for negative statement lines: authorised users
+can debit Bank Charges & IMTT, credit the selected bank account, link the bank
+line to the resulting journal entry and preserve audit evidence.
 
 ## 12. Acceptance criteria
 

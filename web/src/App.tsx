@@ -319,6 +319,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           canConfigureBanks={me.permissions.includes("bank_accounts.configure")}
           canPrepareReconciliation={me.permissions.includes("bank_reconciliation.prepare")}
           canApproveReconciliation={me.permissions.includes("bank_reconciliation.approve")}
+          canPostBankFees={me.permissions.includes("bank_transactions.match") && me.permissions.includes("accounting.post")}
         />}
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
@@ -368,12 +369,15 @@ type ImportPreview = {
   baseCurrency?: "USD" | "ZWG";
 };
 
-function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareReconciliation, canApproveReconciliation }: {
+function ImportCenter({
+  readonly, canApprove, canConfigureBanks, canPrepareReconciliation, canApproveReconciliation, canPostBankFees,
+}: {
   readonly: boolean;
   canApprove: boolean;
   canConfigureBanks: boolean;
   canPrepareReconciliation: boolean;
   canApproveReconciliation: boolean;
+  canPostBankFees: boolean;
 }) {
   type ImportKind = "contacts" | "products" | "opening-stock" | "bank-statement";
   const [kind, setKind] = useState<ImportKind>("contacts");
@@ -707,6 +711,29 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareRecon
     setBusy(false);
   };
 
+  const postBankFee = async (transaction: {
+    id: string; amount: string; reference: string | null; description: string;
+  }) => {
+    const confirmed = window.confirm(copy.bankFeeConfirm
+      .replace("{amount}", `${selectedBankAccount?.currency ?? ""} ${transaction.amount}`)
+      .replace("{description}", transaction.description));
+    if (!confirmed) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await api(`/bank-transactions/${transaction.id}/post-bank-fee`, { method: "POST", body: {} });
+      setMessage(copy.bankFeePosted);
+      if (bankAccountId) {
+        await loadBankTransactions(bankAccountId);
+        await loadBankSummary(bankAccountId);
+        setBankWorksheet(null);
+      }
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -1000,7 +1027,10 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks, canPrepareRecon
                     <button className="btn sm" disabled={busy || readonly}
                       onClick={() => splitMatchBankTransaction(transaction)}>{copy.splitInvoiceMatch}</button>
                   </div>
-                  : "—"}</td>
+                  : !transaction.matchedJournalEntryId && Number(transaction.amount) < 0
+                    ? <button className="btn sm" disabled={busy || readonly || !canPostBankFees}
+                      onClick={() => postBankFee(transaction)}>{copy.postBankFee}</button>
+                    : "—"}</td>
               </tr>
             ))}</tbody>
           </table>
