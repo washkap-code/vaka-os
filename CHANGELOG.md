@@ -32,6 +32,9 @@
   reports with prepared/approved states, permission checks, audit evidence and
   strict approval blocking unless the report is balanced with no unreviewed
   bank lines.
+- **Bank reconciliation report download:** Added audited CSV report generation
+  for saved bank reconciliations, including account details, saved worksheet
+  totals, sign-off evidence and supporting imported bank lines.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

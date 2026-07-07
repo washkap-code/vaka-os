@@ -116,12 +116,31 @@ describe("bank statement CSV imports", () => {
     expect(reports.status).toBe(200);
     expect(reports.body).toHaveLength(1);
     expect(reports.body[0].id).toBe(prepared.body.id);
+    const reportDownload = await request(app)
+      .get(`/api/v1/bank-reconciliations/${prepared.body.id}/report`)
+      .set(auth);
+    expect(reportDownload.status).toBe(200);
+    expect(reportDownload.body).toMatchObject({
+      companyName: tenant.tenant.companyName,
+      account: {
+        id: account.body.id,
+        currency: "USD",
+      },
+      reconciliation: {
+        id: prepared.body.id,
+        statementDate: "2026-07-31",
+        difference: "0.00",
+        unreviewedLines: 2,
+      },
+    });
+    expect(reportDownload.body.lines).toHaveLength(2);
     const saved = await db.select().from(schema.bankReconciliations)
       .where(eq(schema.bankReconciliations.id, prepared.body.id));
     expect(saved).toHaveLength(1);
     const prepAudit = await db.select().from(schema.auditLogs)
       .where(eq(schema.auditLogs.entityId, prepared.body.id));
     expect(prepAudit.some((event) => event.action === "bank_reconciliation.prepared")).toBe(true);
+    expect(prepAudit.some((event) => event.action === "bank_reconciliation.report_generated")).toBe(true);
     const duplicateReport = await request(app)
       .post(`/api/v1/bank-accounts/${account.body.id}/reconciliations`)
       .set(auth)
@@ -190,6 +209,10 @@ describe("bank statement CSV imports", () => {
       .set({ Authorization: `Bearer ${other.token}` })
       .send({});
     expect(otherApprove.status).toBe(404);
+    const otherReportDownload = await request(app)
+      .get(`/api/v1/bank-reconciliations/${prepared.body.id}/report`)
+      .set({ Authorization: `Bearer ${other.token}` });
+    expect(otherReportDownload.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)

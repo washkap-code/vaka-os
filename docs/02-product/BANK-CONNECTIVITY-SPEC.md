@@ -265,11 +265,13 @@ compares imported bank movement against the expected book balance and shows any
 difference without posting. A prepared reconciliation report can now preserve
 that worksheet snapshot for review. Approval is blocked unless the report is
 balanced and has no unreviewed bank lines, and preparation/approval actions are
-permissioned and audited.
+permissioned and audited. Saved reconciliations can be downloaded as an
+audited CSV report with the saved worksheet totals, account details, sign-off
+evidence and supporting imported bank lines.
 
 It does not yet preserve original files, validate statement opening/closing
 balances, provide bank-specific profiles, match fees/transfers/refunds, produce
-a downloadable reconciliation report, connect to a bank, or move money.
+PDF reconciliation packs, connect to a bank, or move money.
 
 ## 12. Acceptance criteria
 
