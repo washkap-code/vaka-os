@@ -76,7 +76,7 @@ export const appEnglish = {
     action: "Action",
     findInvoiceMatch: "Find invoice match",
     noInvoiceMatch: "No exact open invoice match was found for that bank line.",
-    matchConfirm: "Match this bank line to invoice {invoice} for {customer} ({amount})?",
+    matchConfirm: "Match this bank line of {bankAmount} to invoice {invoice} for {customer}? Invoice outstanding: {outstanding}.",
     matchedInvoice: "Bank line matched to invoice {invoice}.",
     previewNotice: "Only rows marked VALID will be imported. Duplicate and invalid rows remain in the audit batch and are skipped.",
     approve: "Approve and import valid rows",

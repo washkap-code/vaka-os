@@ -96,4 +96,61 @@ describe("bank invoice matching", () => {
       .set(auth).send({ invoiceId: issued.body.id });
     expect(replay.status).toBe(409);
   });
+
+  it("can match a positive bank line as a partial payment on one open invoice", async () => {
+    const tenant = await signup("partial");
+    const auth = { Authorization: `Bearer ${tenant.token}` };
+    const customer = await request(app).post("/api/v1/contacts").set(auth)
+      .send({ name: "Partial Payment Customer" });
+    expect(customer.status).toBe(200);
+    const draft = await request(app).post("/api/v1/invoices").set(auth).send({
+      contactId: customer.body.id,
+      currency: "USD",
+      lines: [{ description: "Implementation", quantity: "1", unitPrice: "250.00", taxRate: "0" }],
+    });
+    expect(draft.status).toBe(200);
+    const issued = await request(app).post(`/api/v1/invoices/${draft.body.id}/issue`).set(auth).send({});
+    expect(issued.status).toBe(200);
+
+    const account = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Operating Account",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 7788",
+      currency: "USD",
+    });
+    expect(account.status).toBe(200);
+    const csvText = [
+      "date,description,amount,reference",
+      `2026-07-04,Customer instalment,100.00,${issued.body.number}`,
+    ].join("\n");
+    const preview = await request(app).post("/api/v1/imports/bank-statement/preview")
+      .set(auth).send({ bankAccountId: account.body.id, csvText });
+    expect(preview.status).toBe(200);
+    const committed = await request(app)
+      .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)
+      .set(auth).send({});
+    expect(committed.status).toBe(200);
+
+    const [bankTransaction] = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.bankAccountId, account.body.id));
+    const candidates = await request(app)
+      .get(`/api/v1/bank-transactions/${bankTransaction.id}/match-candidates`)
+      .set(auth);
+    expect(candidates.status).toBe(200);
+    expect(candidates.body.candidates[0]).toMatchObject({
+      id: issued.body.id,
+      outstanding: "250.00",
+      reference_match: true,
+    });
+
+    const matched = await request(app)
+      .post(`/api/v1/bank-transactions/${bankTransaction.id}/match-invoice`)
+      .set(auth).send({ invoiceId: issued.body.id });
+    expect(matched.status).toBe(200);
+    expect(matched.body.invoice).toMatchObject({ status: "PARTIAL", amountPaid: "100.00" });
+
+    const payments = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, issued.body.id));
+    expect(payments).toHaveLength(1);
+    expect(payments[0]).toMatchObject({ amount: "100.00", bankAccountId: account.body.id });
+  });
 });
