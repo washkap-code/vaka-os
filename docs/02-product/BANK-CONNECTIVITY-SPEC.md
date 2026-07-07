@@ -262,12 +262,14 @@ matched/unreviewed counts, inflows, outflows, net movement, unreviewed net and
 date coverage for each registered bank account. Users can also preview a
 reconciliation worksheet by entering a statement date and closing balance; VAKA
 compares imported bank movement against the expected book balance and shows any
-difference without posting, approving or signing off the reconciliation.
+difference without posting. A prepared reconciliation report can now preserve
+that worksheet snapshot for review. Approval is blocked unless the report is
+balanced and has no unreviewed bank lines, and preparation/approval actions are
+permissioned and audited.
 
 It does not yet preserve original files, validate statement opening/closing
 balances, provide bank-specific profiles, match fees/transfers/refunds, produce
-a saved statement-balance reconciliation report with preparer/reviewer
-sign-off, connect to a bank, or move money.
+a downloadable reconciliation report, connect to a bank, or move money.
 
 ## 12. Acceptance criteria
 
