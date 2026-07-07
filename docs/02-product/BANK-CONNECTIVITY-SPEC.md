@@ -252,15 +252,16 @@ Steps 1, the generic portion of step 2, and a narrow part of step 5 now have an
 implemented foundation. VAKA supports tenant-owned account registration with a
 masked identifier, date/description/signed-amount CSV preview, deterministic
 duplicate prevention, import into an unreviewed feed, and reviewed matching
-from a positive bank line to a single open invoice. The invoice match can be
-exact or a partial payment where the bank amount is less than the invoice
-outstanding balance. Approved matches create the normal payment and journal
-evidence and link the bank line to that journal entry.
+from a positive bank line to one or more open invoices. A one-invoice match can
+be exact or partial where the bank amount is less than the invoice outstanding
+balance. A split match can allocate one bank line across multiple invoices when
+the allocation total equals the bank amount exactly. Approved matches create
+the normal payment and journal evidence and link the bank line to that journal
+entry.
 
 It does not yet preserve original files, validate statement opening/closing
-balances, provide bank-specific profiles, split one bank line across multiple
-invoices, match fees/transfers/refunds, produce a full reconciliation report,
-connect to a bank, or move money.
+balances, provide bank-specific profiles, match fees/transfers/refunds, produce
+a full reconciliation report, connect to a bank, or move money.
 
 ## 12. Acceptance criteria
 

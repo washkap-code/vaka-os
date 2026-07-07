@@ -52,12 +52,12 @@ supported. Bank-specific profiles require consented sample files and pilot
 validation.
 
 Positive imported bank lines can also be matched to open customer invoices when
-the currency matches and the bank amount does not exceed the outstanding
-invoice balance. Approval creates the normal invoice payment, posts the
-deterministic payment journal, links the bank line to that journal entry, and
-records audit evidence. This is a one-bank-line-to-one-invoice first release
-only; split payments across multiple invoices, bank fees, internal transfers,
-refunds and full reconciliation reports remain later adapters.
+the currency matches. A single line can be matched to one invoice as an exact
+or partial payment, or split across multiple invoices when the allocation total
+equals the bank line exactly. Approval creates normal invoice payments, posts
+deterministic payment journal evidence, links the bank line to that journal
+entry, and records audit evidence. Bank fees, internal transfers, refunds and
+full reconciliation reports remain later adapters.
 
 ## Controls
 

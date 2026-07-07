@@ -153,4 +153,94 @@ describe("bank invoice matching", () => {
     expect(payments).toHaveLength(1);
     expect(payments[0]).toMatchObject({ amount: "100.00", bankAccountId: account.body.id });
   });
+
+  it("can split one positive bank line across multiple open invoices", async () => {
+    const tenant = await signup("split");
+    const auth = { Authorization: `Bearer ${tenant.token}` };
+    const customer = await request(app).post("/api/v1/contacts").set(auth)
+      .send({ name: "Split Payment Customer" });
+    expect(customer.status).toBe(200);
+    const firstDraft = await request(app).post("/api/v1/invoices").set(auth).send({
+      contactId: customer.body.id,
+      currency: "USD",
+      lines: [{ description: "Support", quantity: "1", unitPrice: "100.00", taxRate: "0" }],
+    });
+    const secondDraft = await request(app).post("/api/v1/invoices").set(auth).send({
+      contactId: customer.body.id,
+      currency: "USD",
+      lines: [{ description: "Training", quantity: "1", unitPrice: "150.00", taxRate: "0" }],
+    });
+    expect(firstDraft.status).toBe(200);
+    expect(secondDraft.status).toBe(200);
+    const firstIssued = await request(app).post(`/api/v1/invoices/${firstDraft.body.id}/issue`).set(auth).send({});
+    const secondIssued = await request(app).post(`/api/v1/invoices/${secondDraft.body.id}/issue`).set(auth).send({});
+    expect(firstIssued.status).toBe(200);
+    expect(secondIssued.status).toBe(200);
+
+    const account = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Operating Account",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 5522",
+      currency: "USD",
+    });
+    expect(account.status).toBe(200);
+    const csvText = [
+      "date,description,amount,reference",
+      "2026-07-05,Bulk customer payment,250.00,BULK-001",
+    ].join("\n");
+    const preview = await request(app).post("/api/v1/imports/bank-statement/preview")
+      .set(auth).send({ bankAccountId: account.body.id, csvText });
+    expect(preview.status).toBe(200);
+    const committed = await request(app)
+      .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)
+      .set(auth).send({});
+    expect(committed.status).toBe(200);
+
+    const [bankTransaction] = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.bankAccountId, account.body.id));
+    const candidates = await request(app)
+      .get(`/api/v1/bank-transactions/${bankTransaction.id}/split-candidates`)
+      .set(auth);
+    expect(candidates.status).toBe(200);
+    expect(candidates.body.candidates.map((candidate: any) => candidate.number))
+      .toEqual(expect.arrayContaining([firstIssued.body.number, secondIssued.body.number]));
+
+    const mismatch = await request(app)
+      .post(`/api/v1/bank-transactions/${bankTransaction.id}/match-invoices`)
+      .set(auth).send({
+        allocations: [
+          { invoiceNumber: firstIssued.body.number, amount: "100.00" },
+          { invoiceNumber: secondIssued.body.number, amount: "140.00" },
+        ],
+      });
+    expect(mismatch.status).toBe(409);
+
+    const matched = await request(app)
+      .post(`/api/v1/bank-transactions/${bankTransaction.id}/match-invoices`)
+      .set(auth).send({
+        allocations: [
+          { invoiceNumber: firstIssued.body.number, amount: "100.00" },
+          { invoiceNumber: secondIssued.body.number, amount: "150.00" },
+        ],
+      });
+    expect(matched.status).toBe(200);
+    expect(matched.body.invoices).toHaveLength(2);
+
+    const [updatedBankTransaction] = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.id, bankTransaction.id));
+    expect(updatedBankTransaction.matchedJournalEntryId).toBe(matched.body.journalEntryId);
+    const [journal] = await db.select().from(schema.journalEntries)
+      .where(eq(schema.journalEntries.id, matched.body.journalEntryId));
+    expect(journal).toMatchObject({ sourceType: "bank_match", sourceId: bankTransaction.id });
+    const first = await request(app).get(`/api/v1/invoices/${firstIssued.body.id}`).set(auth);
+    const second = await request(app).get(`/api/v1/invoices/${secondIssued.body.id}`).set(auth);
+    expect(first.body).toMatchObject({ status: "PAID", amountPaid: "100.00" });
+    expect(second.body).toMatchObject({ status: "PAID", amountPaid: "150.00" });
+    const firstPayments = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, firstIssued.body.id));
+    const secondPayments = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, secondIssued.body.id));
+    expect(firstPayments).toHaveLength(1);
+    expect(secondPayments).toHaveLength(1);
+    expect(firstPayments[0]).toMatchObject({ amount: "100.00", bankAccountId: account.body.id });
+    expect(secondPayments[0]).toMatchObject({ amount: "150.00", bankAccountId: account.body.id });
+  });
 });
