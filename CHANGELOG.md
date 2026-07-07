@@ -16,10 +16,11 @@
 - **Bank statement imports:** Added masked tenant bank accounts and generic CSV
   preview/import with exact signed amounts, date validation, deterministic
   duplicate prevention and an explicitly unreviewed, non-posting bank feed.
-- **Bank invoice matching:** Added exact one-to-one matching from positive bank
-  lines to open invoices with permission checks, payment posting, journal
-  linkage, tenant isolation and audit evidence. Partial, split, fee, transfer
-  and many-to-one reconciliation remain future work.
+- **Bank invoice matching:** Added reviewed matching from positive bank lines
+  to open invoices, including exact and one-invoice partial payments, with
+  permission checks, payment posting, journal linkage, tenant isolation and
+  audit evidence. Split, fee, transfer and many-to-one reconciliation remain
+  future work.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

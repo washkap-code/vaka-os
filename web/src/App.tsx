@@ -454,7 +454,8 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       const confirmed = window.confirm(copy.matchConfirm
         .replace("{invoice}", candidate.number ?? candidate.id)
         .replace("{customer}", candidate.contact_name)
-        .replace("{amount}", `${candidate.currency} ${candidate.outstanding}`));
+        .replace("{bankAmount}", `${selectedBankAccount?.currency ?? candidate.currency} ${transaction.amount}`)
+        .replace("{outstanding}", `${candidate.currency} ${candidate.outstanding}`));
       if (!confirmed) {
         setBusy(false);
         return;

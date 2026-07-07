@@ -59,8 +59,12 @@ export async function listBankInvoiceMatchCandidates(opts: {
     WHERE i.tenant_id = ${opts.tenantId}
       AND i.status IN ('ISSUED', 'PARTIAL')
       AND i.currency = ${transaction.currency}
-      AND (i.total - i.amount_paid) = ${transaction.amount}::numeric
-    ORDER BY reference_match DESC, i.due_date NULLS LAST, i.created_at DESC
+      AND (i.total - i.amount_paid) >= ${transaction.amount}::numeric
+    ORDER BY
+      reference_match DESC,
+      ((i.total - i.amount_paid) = ${transaction.amount}::numeric) DESC,
+      i.due_date NULLS LAST,
+      i.created_at DESC
     LIMIT 10
   `);
   return { transaction, candidates: (result as unknown as { rows: unknown[] }).rows };
@@ -90,8 +94,8 @@ export async function matchBankTransactionToInvoice(opts: {
     }
 
     const outstanding = toCents(invoice.total) - toCents(invoice.amountPaid);
-    if (amountCents !== outstanding) {
-      throw conflict("Only exact one-to-one invoice matches are supported in this release");
+    if (amountCents > outstanding) {
+      throw conflict("Bank transaction exceeds the selected invoice outstanding balance");
     }
 
     await tx.insert(schema.payments).values({
