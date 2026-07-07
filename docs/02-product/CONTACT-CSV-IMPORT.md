@@ -58,8 +58,10 @@ equals the bank line exactly. Approval creates normal invoice payments, posts
 deterministic payment journal evidence, links the bank line to that journal
 entry, and records audit evidence. The bank account page also shows a read-only
 summary of imported lines, matched/unreviewed counts and signed movement
-totals. Bank fees, internal transfers, refunds and statement-balance
-reconciliation reports remain later adapters.
+totals, plus a worksheet preview that compares a user-entered statement date
+and closing balance against VAKA's imported bank movement. Bank fees, internal
+transfers, refunds and saved statement-balance reconciliation reports remain
+later adapters.
 
 ## Controls
 

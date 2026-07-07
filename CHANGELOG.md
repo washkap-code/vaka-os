@@ -25,6 +25,9 @@
   registered bank accounts, showing imported lines, matched/unreviewed counts,
   inflows, outflows, net movement, unreviewed net and date coverage before full
   statement-balance reconciliation is implemented.
+- **Bank reconciliation worksheet:** Added a read-only worksheet preview where
+  users can enter a statement date and closing balance to compare imported bank
+  movement against the expected book balance, with no posting or sign-off.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

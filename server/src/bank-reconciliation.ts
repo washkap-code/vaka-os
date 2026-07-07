@@ -96,6 +96,85 @@ export async function getBankReconciliationSummary(opts: {
   };
 }
 
+export async function getBankReconciliationWorksheet(opts: {
+  tenantId: string;
+  bankAccountId: string;
+  statementDate: string;
+  statementClosingBalance: string;
+}) {
+  const accountResult = await db.execute(sql`
+    SELECT id, name, bank_name, account_number, currency, opening_balance::numeric(14,2)::text AS opening_balance
+    FROM bank_accounts
+    WHERE id = ${opts.bankAccountId} AND tenant_id = ${opts.tenantId}
+    LIMIT 1
+  `);
+  const account = (accountResult as unknown as { rows: Array<{
+    id: string;
+    name: string;
+    bank_name: string | null;
+    account_number: string | null;
+    currency: "USD" | "ZWG";
+    opening_balance: string;
+  }> }).rows[0] ?? null;
+  if (!account) throw notFound("Bank account not found");
+
+  const worksheetResult = await db.execute(sql`
+    SELECT
+      count(*)::int AS total_lines,
+      count(*) FILTER (WHERE matched_journal_entry_id IS NOT NULL)::int AS matched_lines,
+      count(*) FILTER (WHERE matched_journal_entry_id IS NULL)::int AS unreviewed_lines,
+      COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0)::numeric(14,2)::text AS inflow,
+      COALESCE(SUM(CASE WHEN amount < 0 THEN -amount ELSE 0 END), 0)::numeric(14,2)::text AS outflow,
+      COALESCE(SUM(amount), 0)::numeric(14,2)::text AS imported_net_movement,
+      COALESCE(SUM(CASE WHEN matched_journal_entry_id IS NULL THEN amount ELSE 0 END), 0)::numeric(14,2)::text AS unreviewed_net,
+      MIN(date) AS first_transaction_date,
+      MAX(date) AS last_transaction_date
+    FROM bank_transactions
+    WHERE bank_account_id = ${account.id}
+      AND date < (${opts.statementDate}::date + interval '1 day')
+  `);
+  const row = (worksheetResult as unknown as { rows: Array<{
+    total_lines: number;
+    matched_lines: number;
+    unreviewed_lines: number;
+    inflow: string;
+    outflow: string;
+    imported_net_movement: string;
+    unreviewed_net: string;
+    first_transaction_date: Date | string | null;
+    last_transaction_date: Date | string | null;
+  }> }).rows[0];
+  const openingCents = toCents(account.opening_balance);
+  const movementCents = toCents(row.imported_net_movement);
+  const expectedBookBalanceCents = openingCents + movementCents;
+  const statementClosingCents = toCents(opts.statementClosingBalance);
+  const differenceCents = expectedBookBalanceCents - statementClosingCents;
+  return {
+    account: {
+      id: account.id,
+      name: account.name,
+      bankName: account.bank_name,
+      accountNumber: account.account_number,
+      currency: account.currency,
+    },
+    statementDate: opts.statementDate,
+    statementClosingBalance: fromCents(statementClosingCents),
+    openingBalance: account.opening_balance,
+    importedNetMovement: row.imported_net_movement,
+    expectedBookBalance: fromCents(expectedBookBalanceCents),
+    difference: fromCents(differenceCents),
+    totalLines: Number(row.total_lines),
+    matchedLines: Number(row.matched_lines),
+    unreviewedLines: Number(row.unreviewed_lines),
+    unreviewedNet: row.unreviewed_net,
+    inflow: row.inflow,
+    outflow: row.outflow,
+    firstTransactionDate: row.first_transaction_date ? new Date(row.first_transaction_date).toISOString() : null,
+    lastTransactionDate: row.last_transaction_date ? new Date(row.last_transaction_date).toISOString() : null,
+    status: differenceCents === 0n && Number(row.unreviewed_lines) === 0 ? "balanced" : "needs_review",
+  };
+}
+
 export async function listBankInvoiceMatchCandidates(opts: {
   tenantId: string;
   bankTransactionId: string;

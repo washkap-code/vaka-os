@@ -399,7 +399,29 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     lastTransactionDate: string | null;
     oldestUnreviewedDate: string | null;
   }>(null);
+  const [bankWorksheet, setBankWorksheet] = useState<null | {
+    account: { id: string; currency: "USD" | "ZWG" };
+    statementDate: string;
+    statementClosingBalance: string;
+    openingBalance: string;
+    importedNetMovement: string;
+    expectedBookBalance: string;
+    difference: string;
+    totalLines: number;
+    matchedLines: number;
+    unreviewedLines: number;
+    unreviewedNet: string;
+    inflow: string;
+    outflow: string;
+    firstTransactionDate: string | null;
+    lastTransactionDate: string | null;
+    status: "balanced" | "needs_review";
+  }>(null);
   const [bankAccountId, setBankAccountId] = useState("");
+  const [worksheetInput, setWorksheetInput] = useState({
+    statementDate: new Date().toISOString().slice(0, 10),
+    statementClosingBalance: "",
+  });
   const [newBank, setNewBank] = useState({
     name: "", bankName: "", accountNumber: "", currency: "USD" as "USD" | "ZWG",
   });
@@ -434,18 +456,36 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
     }
   };
 
+  const previewBankWorksheet = async () => {
+    if (!bankAccountId) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const query = new URLSearchParams({
+        statementDate: worksheetInput.statementDate,
+        statementClosingBalance: worksheetInput.statementClosingBalance,
+      });
+      setBankWorksheet(await api(`/bank-accounts/${bankAccountId}/reconciliation-worksheet?${query}`));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   useEffect(() => {
     if (kind === "bank-statement") void loadBankAccounts();
   }, [kind]);
 
   useEffect(() => {
     if (kind === "bank-statement" && bankAccountId) {
+      setBankWorksheet(null);
       void loadBankTransactions(bankAccountId);
       void loadBankSummary(bankAccountId);
     }
     if (kind !== "bank-statement") {
       setBankTransactions([]);
       setBankSummary(null);
+      setBankWorksheet(null);
     }
   }, [kind, bankAccountId]);
 
@@ -460,6 +500,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       setBankAccountId(account.id);
       setBankTransactions([]);
       setBankSummary(null);
+      setBankWorksheet(null);
       setNewBank({ name: "", bankName: "", accountNumber: "", currency: "USD" });
     } catch (error: any) {
       setMessage(error.message);
@@ -497,6 +538,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
+        setBankWorksheet(null);
       }
     } catch (error: any) {
       setMessage(error.message);
@@ -544,6 +586,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
+        setBankWorksheet(null);
       }
     } catch (error: any) {
       setMessage(error.message);
@@ -598,6 +641,7 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
       if (kind === "bank-statement" && bankAccountId) {
         void loadBankTransactions(bankAccountId);
         void loadBankSummary(bankAccountId);
+        setBankWorksheet(null);
       }
       setPreview(null);
       setFileName("");
@@ -745,6 +789,32 @@ function ImportCenter({ readonly, canApprove, canConfigureBanks }: {
           ? new Date(bankSummary.oldestUnreviewedDate).toLocaleDateString("en-ZW")
           : "—"}</b></span>
       </div>}
+      <div className="grid2" style={{ marginTop: 16 }}>
+        <div className="field">
+          <label>{copy.statementDate}</label>
+          <input type="date" value={worksheetInput.statementDate}
+            onChange={(event) => setWorksheetInput({ ...worksheetInput, statementDate: event.target.value })} />
+        </div>
+        <div className="field">
+          <label>{copy.statementClosingBalance}</label>
+          <input inputMode="decimal" placeholder="0.00" value={worksheetInput.statementClosingBalance}
+            onChange={(event) => setWorksheetInput({ ...worksheetInput, statementClosingBalance: event.target.value })} />
+        </div>
+      </div>
+      <button className="btn sm" disabled={busy || !worksheetInput.statementDate || !worksheetInput.statementClosingBalance}
+        onClick={previewBankWorksheet}>{copy.previewReconciliationWorksheet}</button>
+      {bankWorksheet && <div className="import-summary" style={{ marginTop: 16 }}>
+        <span>{copy.worksheetStatus}: <b>{bankWorksheet.status === "balanced" ? copy.balanced : copy.needsReview}</b></span>
+        <span>{copy.openingBalance}: <b>{fmt(bankWorksheet.openingBalance, bankWorksheet.account.currency)}</b></span>
+        <span>{copy.importedMovement}: <b>{fmt(bankWorksheet.importedNetMovement, bankWorksheet.account.currency)}</b></span>
+        <span>{copy.expectedBookBalance}: <b>{fmt(bankWorksheet.expectedBookBalance, bankWorksheet.account.currency)}</b></span>
+        <span>{copy.statementClosingBalance}: <b>{fmt(bankWorksheet.statementClosingBalance, bankWorksheet.account.currency)}</b></span>
+        <span>{copy.difference}: <b className={Number(bankWorksheet.difference) === 0 ? "ok-text" : "bad-text"}>
+          {fmt(bankWorksheet.difference, bankWorksheet.account.currency)}</b></span>
+        <span>{copy.unreviewedLines}: <b>{bankWorksheet.unreviewedLines}</b></span>
+        <span>{copy.unreviewedNet}: <b>{fmt(bankWorksheet.unreviewedNet, bankWorksheet.account.currency)}</b></span>
+      </div>}
+      {bankWorksheet && <p className="sub">{copy.reconciliationWorksheetNotice}</p>}
     </div>}
     {kind === "bank-statement" && bankAccountId && <div className="panel">
       <h2>{copy.recentBankFeedTitle}</h2>

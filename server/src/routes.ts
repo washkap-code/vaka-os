@@ -25,7 +25,8 @@ import {
   previewContactImport, previewOpeningStockImport, previewProductImport,
 } from "./imports.js";
 import {
-  getBankReconciliationSummary, listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
+  getBankReconciliationSummary, getBankReconciliationWorksheet,
+  listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
   matchBankTransactionToInvoice, matchBankTransactionToInvoices,
 } from "./bank-reconciliation.js";
 
@@ -37,6 +38,11 @@ const routeParam = (req: AuthedRequest, name: string): string => {
   if (typeof value !== "string") throw badRequest(`Invalid route parameter: ${name}`);
   return value;
 };
+const reconciliationWorksheetQuerySchema = z.object({
+  statementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Statement date must be YYYY-MM-DD"),
+  statementClosingBalance: z.string().trim()
+    .regex(/^-?\d{1,12}(\.\d{1,2})?$/, "Statement closing balance must be a money amount"),
+});
 
 // ---------------------------------------------------------------------------
 // Public: signup + login
@@ -259,6 +265,17 @@ api.get("/bank-accounts/:id/reconciliation-summary",
     tenantId: tenantId(req),
     bankAccountId: routeParam(req, "id"),
   })));
+api.get("/bank-accounts/:id/reconciliation-worksheet",
+  requirePermission("bank_transactions.read"),
+  wrap(async (req) => {
+    const query = reconciliationWorksheetQuerySchema.parse(req.query);
+    return getBankReconciliationWorksheet({
+      tenantId: tenantId(req),
+      bankAccountId: routeParam(req, "id"),
+      statementDate: query.statementDate,
+      statementClosingBalance: query.statementClosingBalance,
+    });
+  }));
 api.get("/bank-transactions/:id/match-candidates",
   requirePermission("bank_transactions.read"),
   requirePermission("accounting.read"),
