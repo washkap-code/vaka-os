@@ -156,6 +156,37 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
   await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, body);
   return updated;
 }));
+api.post("/settings/logo", requirePermission("settings.manage"), wrap(async (req) => {
+  const { dataUrl } = z.object({
+    dataUrl: z.string().trim().min(32).max(700_000),
+  }).parse(req.body);
+  const match = /^data:(image\/png|image\/jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!match) throw badRequest("Logo must be a PNG or JPEG image");
+  const mediaType = match[1];
+  const bytes = Buffer.from(match[2], "base64");
+  if (bytes.length === 0 || bytes.length > 512_000) throw badRequest("Logo must be 512 KB or smaller");
+  const validSignature = mediaType === "image/png"
+    ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+    : bytes.subarray(0, 3).equals(Buffer.from([255, 216, 255]));
+  if (!validSignature) throw badRequest("Logo file signature is invalid");
+  let width: number | undefined;
+  let height: number | undefined;
+  if (mediaType === "image/png") {
+    if (bytes.length < 24 || bytes.toString("ascii", 12, 16) !== "IHDR") throw badRequest("PNG logo dimensions are invalid");
+    width = bytes.readUInt32BE(16);
+    height = bytes.readUInt32BE(20);
+    if (!width || !height || width > 2048 || height > 2048) throw badRequest("Logo dimensions must not exceed 2048 by 2048 pixels");
+  }
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [updated] = await tx.update(schema.tenants).set({ logoUrl: dataUrl })
+      .where(eq(schema.tenants.id, tid)).returning();
+    await audit(tx, tid, req.auth!.userId, "settings.logo_uploaded", "tenant", tid, {
+      mediaType, bytes: bytes.length, width: width ?? null, height: height ?? null,
+    });
+    return { logoUrl: updated.logoUrl, mediaType, bytes: bytes.length };
+  });
+}));
 
 // ---------------------------------------------------------------------------
 // Self-service imports — staged preview before explicit approval

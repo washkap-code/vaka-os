@@ -7,12 +7,12 @@ import { db, schema } from "../src/lib.js";
 const app = createApp();
 const uniq = Date.now().toString(36);
 
-async function createSettingsTenant() {
+async function createSettingsTenant(suffix = "") {
   const response = await request(app).post("/api/v1/auth/signup").send({
     companyName: "Original Company",
-    subdomain: `settings${uniq}`,
+    subdomain: `settings${uniq}${suffix}`,
     baseCurrency: "USD",
-    ownerEmail: `settings-${uniq}@test.zw`,
+    ownerEmail: `settings-${uniq}${suffix}@test.zw`,
     ownerPassword: "Settings-Password-123!",
     ownerName: "Original Owner",
     planName: "Business",
@@ -72,5 +72,21 @@ describe("profile and company settings", () => {
       brandPrimaryColor: "not-a-colour",
     });
     expect(response.status).toBe(400);
+  });
+
+  it("accepts a tenant-scoped PNG logo upload with signature and size validation", async () => {
+    const account = await createSettingsTenant("upload");
+    const auth = { Authorization: `Bearer ${account.token}` };
+    const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+    const upload = await request(app).post("/api/v1/settings/logo").set(auth).send({ dataUrl: png });
+    expect(upload.status).toBe(200);
+    expect(upload.body).toMatchObject({ logoUrl: png, mediaType: "image/png", bytes: expect.any(Number) });
+    const me = await request(app).get("/api/v1/me").set(auth);
+    expect(me.body.tenant.logoUrl).toBe(png);
+    const events = await db.select().from(schema.auditLogs).where(and(
+      eq(schema.auditLogs.tenantId, account.tenant.id),
+      eq(schema.auditLogs.action, "settings.logo_uploaded"),
+    ));
+    expect(events).toHaveLength(1);
   });
 });
