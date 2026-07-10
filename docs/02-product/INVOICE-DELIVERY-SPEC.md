@@ -111,6 +111,8 @@ test one approach.
 - Sensitive documents are not exposed through permanent public URLs.
 - Generation failure does not change invoice or delivery status.
 - Downloads and material regeneration are auditable.
+- Validated uploaded PNG/JPEG data-URL logos are embedded in the PDF from the
+  immutable issue snapshot; external URLs are not fetched by the renderer.
 - A suspended tenant retains invoice download through the approved read/export
   policy.
 - English is the initial reviewed document language; Shona and Ndebele

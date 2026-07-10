@@ -11,12 +11,13 @@ const app = createApp();
 describe("finance kernel - invoice document snapshots", () => {
   it("captures immutable issuer, customer and invoice render inputs when issued", async () => {
     const tenant = await signupFinanceTenant("invoice-document");
+    const logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
     await db.update(schema.tenants).set({
       companyName: "Snapshot Trading (Private) Limited",
       physicalAddress: "12 Samora Machel Avenue, Harare",
       registrationNumber: "REG-100",
       vatNumber: "VAT-200",
-      logoUrl: "https://assets.example.test/vaka-logo.png",
+      logoUrl: logo,
     }).where(eq(schema.tenants.id, tenant.tenantId));
     const customer = await createContact(tenant, "Snapshot Customer", {
       address: "Bulawayo, Zimbabwe",
@@ -41,7 +42,7 @@ describe("finance kernel - invoice document snapshots", () => {
       issuer: {
         companyName: "Snapshot Trading (Private) Limited",
         physicalAddress: "12 Samora Machel Avenue, Harare",
-        logoUrl: "https://assets.example.test/vaka-logo.png",
+        logoUrl: logo,
       },
       customer: { name: "Snapshot Customer", address: "Bulawayo, Zimbabwe" },
       invoice: {
@@ -66,6 +67,8 @@ describe("finance kernel - invoice document snapshots", () => {
     expect(pdf.headers["content-type"]).toContain("application/pdf");
     expect(pdf.headers["cache-control"]).toBe("private, no-store");
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
+    expect(pdf.body.toString("latin1")).toContain("/Subtype /Image");
+    expect(pdf.body.toString("latin1")).toContain("/Im1 Do");
 
     const share = await request(app).post(`/api/v1/invoices/${issued.id}/share-links`).set(tenant.auth)
       .send({ expiresInDays: 7 });
