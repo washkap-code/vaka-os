@@ -85,10 +85,61 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
     const lines = await tx.select().from(schema.invoiceLineItems)
       .where(eq(schema.invoiceLineItems.invoiceId, inv.id));
     if (!lines.length) throw badRequest("Invoice has no line items");
+    const [issuer] = await tx.select().from(schema.tenants)
+      .where(eq(schema.tenants.id, opts.tenantId));
+    const [customer] = await tx.select().from(schema.contacts).where(and(
+      eq(schema.contacts.id, inv.contactId),
+      eq(schema.contacts.tenantId, opts.tenantId),
+    ));
+    if (!issuer || !customer) throw notFound("Invoice document party not found");
 
     // 1. immutable sequential number
     const number = await nextDocNumber(tx, opts.tenantId, "invoice", "INV");
     const issueDate = new Date();
+
+    await tx.insert(schema.invoiceDocumentSnapshots).values({
+      tenantId: opts.tenantId,
+      invoiceId: inv.id,
+      templateVersion: "invoice-document-v1",
+      document: {
+        issuedAt: issueDate.toISOString(),
+        issuer: {
+          companyName: issuer.companyName,
+          logoUrl: issuer.logoUrl,
+          brandPrimaryColor: issuer.brandPrimaryColor,
+          brandSecondaryColor: issuer.brandSecondaryColor,
+          physicalAddress: issuer.physicalAddress,
+          registrationNumber: issuer.registrationNumber,
+          taxNumber: issuer.taxNumber,
+          vatNumber: issuer.vatNumber,
+        },
+        customer: {
+          name: customer.name,
+          address: customer.address,
+          taxNumber: customer.taxNumber,
+        },
+        invoice: {
+          id: inv.id,
+          number,
+          status: "ISSUED",
+          currency: inv.currency,
+          rateToBase: inv.rateToBase,
+          issueDate: issueDate.toISOString(),
+          dueDate: inv.dueDate?.toISOString() ?? null,
+          subtotal: inv.subtotal,
+          taxTotal: inv.taxTotal,
+          total: inv.total,
+          notes: inv.notes,
+        },
+        lines: lines.map((line) => ({
+          description: line.description,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+          taxRate: line.taxRate,
+          lineTotal: line.lineTotal,
+        })),
+      },
+    });
 
     // 2. revenue entry in base currency (rate snapshot from the invoice)
     const ar = await systemAccount(tx, opts.tenantId, "AR");
