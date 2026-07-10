@@ -36,6 +36,12 @@ describe("opening stock CSV imports", () => {
     const mainWarehouse = (await request(app).get("/api/v1/warehouses").set(auth)).body[0];
     const branchWarehouse = (await request(app).post("/api/v1/warehouses").set(auth)
       .send({ name: "Bulawayo Branch" })).body;
+    const warehouseAudit = await db.select().from(schema.auditLogs).where(and(
+      eq(schema.auditLogs.entityId, branchWarehouse.id),
+      eq(schema.auditLogs.action, "warehouse.created"),
+    ));
+    expect(warehouseAudit).toHaveLength(1);
+    expect(warehouseAudit[0].metadata).toMatchObject({ name: "Bulawayo Branch" });
     const csvText = [
       "sku,warehouse,quantity,unit_cost",
       `MAIZE-10KG,${mainWarehouse.name},10,2.00`,
