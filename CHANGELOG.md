@@ -83,6 +83,10 @@
 - **Branded invoice PDFs:** Validated uploaded PNG/JPEG logos are now embedded
   in generated invoice PDFs from the immutable issued snapshot; arbitrary
   external logo URLs are not fetched.
+- **Owner session visibility:** Added hashed server-side session records,
+  idle/absolute expiry, last-seen presence, owner-only Users & Activity views,
+  material audit history, and audited session revocation. Refresh-token
+  rotation, MFA and explicit ownership transfer remain follow-on hardening.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

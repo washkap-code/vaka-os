@@ -13,6 +13,7 @@ import { appEnglish } from "./locales/app.en";
 
 type Me = {
   userId: string; permissions: string[]; accessLevel: string; mustChangePassword: boolean;
+  isTenantOwner: boolean; sessionId: string | null;
   user: { id: string; email: string; fullName: string };
   tenant: {
     id: string; companyName: string; subdomain: string; status: string;
@@ -81,7 +82,11 @@ export default function App() {
     document.title = me?.tenant ? `${me.tenant.companyName} — VAKA OS` : "VAKA OS";
   }, [me]);
 
-  const logout = () => { setToken(null); setMe(null); setGate("landing"); };
+  const logout = () => {
+    void api("/auth/logout", { method: "POST" }).finally(() => {
+      setToken(null); setMe(null); setGate("landing");
+    });
+  };
   const [gate, setGate] = useState<"landing" | "login" | "signup">("landing");
 
   if (!booted) return null;
@@ -275,7 +280,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 const NAV = [
   ["dashboard", "Dashboard"], ["contacts", "Contacts"], ["pipeline", "Sales Pipeline"],
   ["invoices", "Invoices"], ["products", "Products & Stock"], ["pos", "Purchase Orders"],
-  ["reports", "Reports"], ["imports", "Imports"], ["billing", "Billing & Plan"],
+  ["reports", "Reports"], ["imports", "Imports"], ["usersActivity", appEnglish.activity.nav], ["billing", "Billing & Plan"],
   ["upgrade", "Upgrade"], ["settings", "Settings"],
 ] as const;
 type Page = (typeof NAV)[number][0];
@@ -286,7 +291,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
   const visibleNav = NAV.filter(([key]) =>
-    key !== "imports" || me.permissions.includes("imports.create"));
+    (key !== "imports" || me.permissions.includes("imports.create"))
+    && (key !== "usersActivity" || me.isTenantOwner));
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
   return (
     <div className="shell">
@@ -317,6 +323,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "products" && <Products readonly={suspended} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
+        {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter
           readonly={suspended}
           canApprove={me.permissions.includes("imports.approve")}
@@ -1223,6 +1230,68 @@ const useLoad = (fn: () => Promise<any>, deps: any[] = []) => {
   useEffect(() => { fn().then(setData).catch(() => setData(null)); }, [...deps, tick]);
   return [data, () => setTick((x) => x + 1)] as const;
 };
+
+function UsersActivity() {
+  const [data, reload] = useLoad(() => api("/security/activity"));
+  const [busy, setBusy] = useState(false);
+  const copy = appEnglish.activity;
+  const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : "—";
+  const sessionState = (session: any) => {
+    if (session.revoked_at) return copy.revoked;
+    if (new Date(session.idle_expires_at).getTime() <= Date.now() || new Date(session.absolute_expires_at).getTime() <= Date.now()) return copy.expired;
+    if (new Date(session.last_seen_at).getTime() >= Date.now() - 5 * 60_000) return copy.activeNow;
+    return copy.signedIn;
+  };
+  const revoke = async (sessionId: string) => {
+    if (!window.confirm(copy.revokePrompt)) return;
+    setBusy(true);
+    try { await api(`/security/sessions/${sessionId}/revoke`, { method: "POST", body: { reason: "owner_revoked" } }); reload(); }
+    catch (error: any) { alert(error.message || copy.revokeFailed); }
+    finally { setBusy(false); }
+  };
+  if (!data) return <p className="sub">{appEnglish.dashboard.loading}</p>;
+  const summary = data.summary ?? {};
+  const users = data.users ?? [];
+  const sessions = data.sessions ?? [];
+  const events = data.events ?? [];
+  return (<>
+    <div className="row" style={{ justifyContent: "space-between" }}>
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      <span className="pill">{copy.ownerOnly}</span>
+    </div>
+    <div className="cards">
+      <div className="card"><div className="k">{copy.registeredUsers}</div><div className="v">{summary.registered_users ?? 0}</div></div>
+      <div className="card"><div className="k">{copy.activeUsers}</div><div className="v ok">{summary.active_now_users ?? 0}</div></div>
+      <div className="card"><div className="k">{copy.signedInUsers}</div><div className="v">{summary.signed_in_users ?? 0}</div></div>
+      <div className="card"><div className="k">{copy.validSessions}</div><div className="v">{summary.valid_sessions ?? 0}</div></div>
+    </div>
+    <div className="panel">
+      <h2>{copy.usersTitle}</h2>
+      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th></tr></thead>
+        <tbody>{users.map((user: any) => <tr key={user.id}>
+          <td><b>{user.full_name}</b></td><td>{user.email}</td><td>{user.status}</td><td>{user.valid_sessions ?? 0}</td>
+          <td>{formatDate(user.last_login_at)}</td><td>{formatDate(user.last_seen_at)}</td>
+        </tr>)}{!users.length && <tr><td colSpan={6}>{copy.noUsers}</td></tr>}</tbody>
+      </table></div>
+    </div>
+    <div className="panel">
+      <h2>{copy.sessionsTitle}</h2>
+      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.client}</th><th>{copy.device}</th><th>{copy.created}</th><th>{copy.lastSeen}</th><th>{copy.status}</th><th /></tr></thead>
+        <tbody>{sessions.map((session: any) => <tr key={session.id}>
+          <td><b>{session.full_name}</b><div className="sub">{session.email}</div></td><td>{session.client_type}{session.app_version ? ` · ${session.app_version}` : ""}</td>
+          <td>{session.device_description ?? "—"}</td><td>{formatDate(session.created_at)}</td><td>{formatDate(session.last_seen_at)}</td>
+          <td>{sessionState(session)}</td><td>{!session.revoked_at && sessionState(session) !== copy.expired && <button className="btn ghost sm" disabled={busy} onClick={() => revoke(session.id)}>{copy.revoke}</button>}</td>
+        </tr>)}{!sessions.length && <tr><td colSpan={7}>{copy.noSessions}</td></tr>}</tbody>
+      </table></div>
+    </div>
+    <div className="panel">
+      <h2>{copy.eventsTitle}</h2>
+      <div className="table-scroll"><table><thead><tr><th>{copy.time}</th><th>{copy.actor}</th><th>{copy.action}</th><th>{copy.evidence}</th></tr></thead>
+        <tbody>{events.map((event: any) => <tr key={event.id}><td>{formatDate(event.createdAt)}</td><td>{users.find((user: any) => user.id === event.userId)?.full_name ?? "—"}</td><td>{event.action}</td><td className="sub">{event.metadata ? JSON.stringify(event.metadata).slice(0, 280) : "—"}</td></tr>)}{!events.length && <tr><td colSpan={4}>{copy.noEvents}</td></tr>}</tbody>
+      </table></div>
+    </div>
+  </>);
+}
 
 // ---------------------------------------------------------------------------
 // Dashboard — cross-module live view

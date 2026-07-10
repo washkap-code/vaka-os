@@ -64,6 +64,31 @@ export const users = pgTable("users", {
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("users_tenant_email").on(t.tenantId, t.email)]);
 
+// Server-side presence and revocation record for an authenticated JWT. The
+// bearer token itself is never stored; token_hash is only used to invalidate
+// sessions and distinguish active devices without retaining credentials.
+export const userSessions = pgTable("user_sessions", {
+  id: id(),
+  tenantId: uuid("tenant_id").references(() => tenants.id),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  tokenHash: text("token_hash").notNull(),
+  clientType: text("client_type").default("web").notNull(),
+  appVersion: text("app_version"),
+  deviceDescription: text("device_description"),
+  ipHash: text("ip_hash"),
+  createdAt: createdAt(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+  idleExpiresAt: timestamp("idle_expires_at", { withTimezone: true }).notNull(),
+  absoluteExpiresAt: timestamp("absolute_expires_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  revokedBy: uuid("revoked_by").references(() => users.id),
+  revokedReason: text("revoked_reason"),
+}, (t) => [
+  uniqueIndex("user_sessions_token_hash").on(t.tokenHash),
+  index("user_sessions_tenant_activity").on(t.tenantId, t.lastSeenAt),
+  index("user_sessions_user_activity").on(t.userId, t.lastSeenAt),
+]);
+
 export const platformAuditLogs = pgTable("platform_audit_logs", {
   id: id(),
   userId: uuid("user_id").references(() => users.id),
