@@ -54,7 +54,7 @@ later add statements, payment status, and preferences.
 | Branded invoice template | Pending renderer |
 | PDF generation/download | Missing |
 | Invoice email delivery and delivery history | Missing |
-| Secure customer invoice link/portal | Missing |
+| Secure customer invoice link/portal | Expiring/revocable PDF link foundation implemented; fuller portal missing |
 
 ## 4. Invoice document requirements
 
@@ -197,7 +197,7 @@ At minimum:
 6. Add authorised preview and PDF-download controls.
 7. Add delivery records and transactional outbox.
 8. Integrate an approved email provider and confirmation UI.
-9. Add secure customer document links with expiry and revocation.
+9. Add secure customer document links with expiry and revocation. **Implemented foundation:** one-invoice PDF share links with opaque stored-hash tokens, 1–30 day expiry, revocation and audit evidence.
 10. Extend into the authenticated Customer Portal, statements, and reviewed
     multilingual templates.
 

@@ -23,6 +23,7 @@ import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getA
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
 import { getInvoicePdf } from "./invoice-documents.js";
+import { createInvoiceShareLink, openInvoiceShareLink, revokeInvoiceShareLink } from "./invoice-sharing.js";
 import {
   commitBankStatementImport, commitContactImport, commitOpeningStockImport,
   commitProductImport, listImportBatches, previewBankStatementImport,
@@ -82,6 +83,19 @@ api.post("/auth/login", wrap(async (req) => {
   }).parse(req.body);
   return login(email, password, subdomain);
 }));
+
+// Public customer document access. The opaque, expiry-bound share token is
+// validated server-side before any invoice information or PDF is returned.
+api.get("/public/invoices/:token/pdf", async (req, res, next) => {
+  try {
+    const token = z.string().regex(/^[A-Za-z0-9_-]{43}$/).parse(req.params.token);
+    const result = await openInvoiceShareLink(token);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="shared-invoice-${result.invoiceId}.pdf"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(result.pdf);
+  } catch (error) { next(error); }
+});
 
 // everything below requires auth + lifecycle gate
 api.use(authenticate as any, lifecycleGate as any);
@@ -675,6 +689,22 @@ api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, r
     res.send(result.pdf);
   } catch (error) { next(error); }
 });
+api.post("/invoices/:id/share-links", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = z.object({ expiresInDays: z.number().int().min(1).max(30).default(14) }).parse(req.body);
+  return createInvoiceShareLink({
+    tenantId: tenantId(req),
+    invoiceId: routeParam(req, "id"),
+    actorUserId: req.auth!.userId,
+    expiresInDays: body.expiresInDays,
+  });
+}));
+api.delete("/invoices/:id/share-links/:linkId", requirePermission("accounting.post"), wrap(async (req) =>
+  revokeInvoiceShareLink({
+    tenantId: tenantId(req),
+    invoiceId: routeParam(req, "id"),
+    shareLinkId: routeParam(req, "linkId"),
+    actorUserId: req.auth!.userId,
+  })));
 api.post("/invoices", requirePermission("accounting.post"), wrap(async (req) => {
   const body = invoiceSchema.parse(req.body);
   return createDraftInvoice({ ...body, tenantId: tenantId(req), createdBy: req.auth!.userId,
