@@ -16,7 +16,7 @@ import {
   toCents, fromCents, mulRate, audit, nextDocNumber,
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
-import { postJournal, systemAccount } from "./accounting.js";
+import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 
 export interface DraftLine {
@@ -212,7 +212,7 @@ export async function recordPayment(opts: {
       const [ba] = await tx.select().from(schema.bankAccounts).where(and(
         eq(schema.bankAccounts.id, opts.bankAccountId), eq(schema.bankAccounts.tenantId, opts.tenantId)));
       if (!ba) throw notFound("Bank account not found");
-      bankLedgerId = ba.ledgerAccountId ?? (await systemAccount(tx, opts.tenantId, "BANK")).id;
+      bankLedgerId = (await ensureBankLedgerAccount(tx, ba)).id;
     } else {
       bankLedgerId = (await systemAccount(tx, opts.tenantId, "BANK")).id;
     }

@@ -17,7 +17,7 @@ import {
 } from "./auth.js";
 import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
-import { postJournal } from "./accounting.js";
+import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
@@ -250,15 +250,23 @@ api.post("/bank-accounts", requirePermission("bank_accounts.configure"), wrap(as
     currency: z.enum(["USD", "ZWG"]),
   }).parse(req.body);
   const tid = tenantId(req);
-  const [account] = await db.insert(schema.bankAccounts).values({
-    ...body,
-    tenantId: tid,
-  }).returning();
-  await audit(db, tid, req.auth!.userId, "bank_account.created", "bank_account", account.id, {
-    bankName: account.bankName,
-    currency: account.currency,
+  return db.transaction(async (tx) => {
+    const [account] = await tx.insert(schema.bankAccounts).values({
+      ...body,
+      tenantId: tid,
+    }).returning();
+    const ledgerAccount = await ensureBankLedgerAccount(tx, account);
+    const [mappedAccount] = await tx.select().from(schema.bankAccounts).where(and(
+      eq(schema.bankAccounts.id, account.id),
+      eq(schema.bankAccounts.tenantId, tid),
+    ));
+    await audit(tx, tid, req.auth!.userId, "bank_account.created", "bank_account", account.id, {
+      bankName: account.bankName,
+      currency: account.currency,
+      ledgerAccountId: ledgerAccount.id,
+    });
+    return mappedAccount;
   });
-  return account;
 }));
 api.get("/bank-transactions", requirePermission("bank_transactions.read"), wrap(async (req) => {
   const accountId = z.string().uuid().parse(req.query.bankAccountId);

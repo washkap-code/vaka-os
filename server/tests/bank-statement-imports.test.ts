@@ -32,6 +32,14 @@ describe("bank statement CSV imports", () => {
       currency: "USD",
     });
     expect(account.status).toBe(200);
+    expect(account.body.ledgerAccountId).toEqual(expect.any(String));
+    const [ledgerAccount] = await db.select().from(schema.accounts)
+      .where(eq(schema.accounts.id, account.body.ledgerAccountId));
+    expect(ledgerAccount).toMatchObject({
+      tenantId: tenant.tenant.id,
+      type: "ASSET",
+      isActive: true,
+    });
     const csvText = [
       "date,description,amount,reference",
       "2026-07-01,Customer payment,100.00,INV-1001",
@@ -259,6 +267,12 @@ describe("bank statement CSV imports", () => {
     const [transferJournal] = await db.select().from(schema.journalEntries)
       .where(eq(schema.journalEntries.id, matchedTransfer.body.journalEntryId));
     expect(transferJournal.sourceType).toBe("bank_transfer");
+    expect(transferSource.body.ledgerAccountId).not.toBe(transferDestination.body.ledgerAccountId);
+    const transferJournalLines = await db.select().from(schema.journalLines)
+      .where(eq(schema.journalLines.journalEntryId, transferJournal.id));
+    expect(transferJournalLines.map((line) => line.accountId).sort()).toEqual(
+      [transferSource.body.ledgerAccountId, transferDestination.body.ledgerAccountId].sort(),
+    );
     const transferAudit = await db.select().from(schema.auditLogs)
       .where(eq(schema.auditLogs.entityId, transferOutLine.id));
     expect(transferAudit.some((event) => event.action === "bank_transaction.transfer_matched")).toBe(true);

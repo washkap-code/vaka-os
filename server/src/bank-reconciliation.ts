@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   audit, badRequest, conflict, db, DB, fromCents, mulRate, notFound, payloadFingerprint, schema, toCents,
 } from "./lib.js";
-import { postJournal, systemAccount } from "./accounting.js";
+import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accounting.js";
 
 type BankTransactionRow = {
   id: string;
@@ -457,7 +457,7 @@ export async function postBankTransactionFee(opts: {
         AND ${schema.accounts.code} = '6400'
         AND ${schema.accounts.type} = 'EXPENSE'`);
     if (!feeAccount) throw badRequest("Bank Charges & IMTT account 6400 is missing for this tenant.");
-    const bankLedgerId = bankAccount.ledgerAccountId ?? (await systemAccount(tx, opts.tenantId, "BANK")).id;
+    const bankLedgerId = (await ensureBankLedgerAccount(tx, bankAccount)).id;
     const amount = fromCents(feeCents);
 
     const journalEntryId = await postJournal(tx, {
@@ -575,9 +575,8 @@ export async function matchBankTransactionsAsTransfer(opts: {
       .where(sql`${schema.bankAccounts.id} = ${outgoing.bank_account_id}
         AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
     if (!incomingAccount || !outgoingAccount) throw notFound("Bank account not found");
-    const fallbackBankAccountId = (await systemAccount(tx, opts.tenantId, "BANK")).id;
-    const incomingLedgerId = incomingAccount.ledgerAccountId ?? fallbackBankAccountId;
-    const outgoingLedgerId = outgoingAccount.ledgerAccountId ?? fallbackBankAccountId;
+    const incomingLedgerId = (await ensureBankLedgerAccount(tx, incomingAccount)).id;
+    const outgoingLedgerId = (await ensureBankLedgerAccount(tx, outgoingAccount)).id;
 
     const journalEntryId = await postJournal(tx, {
       tenantId: opts.tenantId,
@@ -734,7 +733,7 @@ export async function matchBankTransactionToInvoice(opts: {
     const [bankAccount] = await tx.select().from(schema.bankAccounts)
       .where(sql`${schema.bankAccounts.id} = ${transaction.bank_account_id} AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
     if (!bankAccount) throw notFound("Bank account not found");
-    const bankLedgerId = bankAccount.ledgerAccountId ?? (await systemAccount(tx, opts.tenantId, "BANK")).id;
+    const bankLedgerId = (await ensureBankLedgerAccount(tx, bankAccount)).id;
     const baseAmount = fromCents(mulRate(amountCents, invoice.rateToBase));
     const journalEntryId = await postJournal(tx, {
       tenantId: opts.tenantId,
@@ -847,7 +846,7 @@ export async function matchBankTransactionToInvoices(opts: {
     const [bankAccount] = await tx.select().from(schema.bankAccounts)
       .where(sql`${schema.bankAccounts.id} = ${transaction.bank_account_id} AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
     if (!bankAccount) throw notFound("Bank account not found");
-    const bankLedgerId = bankAccount.ledgerAccountId ?? (await systemAccount(tx, opts.tenantId, "BANK")).id;
+    const bankLedgerId = (await ensureBankLedgerAccount(tx, bankAccount)).id;
     const invoiceResults: Array<{ id: string; number: string | null; amount: string; newStatus: string }> = [];
     let totalBaseCents = 0n;
 
