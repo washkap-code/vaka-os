@@ -159,15 +159,20 @@ function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: ()
 // ---------------------------------------------------------------------------
 function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
   const [tenants, setTenants] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [tab, setTab] = useState<"overview" | "tenants">("overview");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const load = () => api("/platform/tenants").then(setTenants).catch((e: any) => setMsg(e.message));
-  useEffect(() => { load(); }, []);
+  const copy = appEnglish.platformAdmin;
+  const load = () => Promise.all([api("/platform/tenants"), api("/platform/analytics")])
+    .then(([tenantRows, summary]) => { setTenants(tenantRows); setAnalytics(summary); })
+    .catch((e: any) => setMsg(e.message));
+  useEffect(() => { void load(); }, []);
   const runBilling = async () => {
     setBusy(true); setMsg("");
     try {
       const r = await api("/platform/billing/run", { method: "POST", body: {} });
-      setMsg(`Billing run complete: ${JSON.stringify(r)}`.slice(0, 400));
+      setMsg(copy.billingComplete.replace("{result}", JSON.stringify(r)).slice(0, 400));
       load();
     } catch (e: any) { setMsg(e.message); }
     setBusy(false);
@@ -175,37 +180,38 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="logo">VAKA OS<small>Platform Admin</small></div>
-        <nav><button className="active">Tenants</button></nav>
+        <div className="logo">VAKA OS<small>{copy.title}</small></div>
+        <nav><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button><button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button></nav>
         <div className="foot">
           Jonomi Digital Studio<br />
           <a style={{ color: "rgba(255,255,255,.7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
         </div>
       </aside>
       <main className="main">
-        <h1>Platform administration</h1>
-        <div className="sub">All client tenants running on VAKA OS.</div>
+        <h1>{copy.title}</h1>
+        <div className="sub">{copy.subtitle}</div>
         <div className="row" style={{ marginBottom: 14 }}>
-          <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? "Running…" : "Run monthly billing now"}</button>
+          <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>
         </div>
         {msg && <div className="banner warn">{msg}</div>}
-        <div className="panel">
-          <h2>Tenants ({tenants.length})</h2>
-          <table>
-            <thead><tr><th>Company</th><th>Subdomain</th><th>Status</th><th>Plan</th><th className="num">Users</th><th>Trial ends</th><th>Created</th></tr></thead>
-            <tbody>
-              {tenants.map((t: any) => (
-                <tr key={t.id}>
-                  <td>{t.company_name}</td><td>{t.subdomain}</td><td>{t.status}</td><td>{t.plan ?? "—"}</td>
-                  <td className="num">{t.user_count}</td>
-                  <td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td>
-                  <td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td>
-                </tr>
-              ))}
-              {!tenants.length && <tr><td colSpan={7} style={{ color: "var(--muted)" }}>No tenants yet — clients appear here when they sign up.</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        {tab === "overview" && analytics && <>
+          <div className="cards">
+            {[[copy.totalTenants, analytics.summary.total_tenants], [copy.trialTenants, analytics.summary.trial_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users], [copy.invoicesIssued, analytics.summary.invoices_issued], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding]].map(([label, value]) => <div className="card" key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
+          </div>
+          <div className="grid2">
+            <div className="panel"><h2>{copy.planMix}</h2><table><thead><tr><th>{copy.plan}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.planMix ?? []).map((row: any) => <tr key={row.plan}><td>{row.plan}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.planMix?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
+            <div className="panel"><h2>{copy.tenantGrowth}</h2><table><thead><tr><th>{copy.month}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.tenantGrowth ?? []).map((row: any) => <tr key={row.month}><td>{row.month}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.tenantGrowth?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
+          </div>
+          <div className="panel"><h2>{copy.billing}</h2><div className="table-scroll"><table><thead><tr><th>{copy.status}</th><th>{copy.currency}</th><th className="num">{copy.invoiceCount}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{(analytics.billing ?? []).map((row: any) => <tr key={`${row.status}-${row.currency}`}><td>{row.status}</td><td>{row.currency}</td><td className="num">{row.invoices}</td><td className="num">{fmt(row.amount, row.currency)}</td></tr>)}{!analytics.billing?.length && <tr><td colSpan={4}>{copy.noData}</td></tr>}</tbody></table></div></div>
+          <div className="panel"><h2>{copy.activity}</h2><div className="table-scroll"><table><thead><tr><th>{copy.action}</th><th className="num">{copy.events}</th></tr></thead><tbody>{(analytics.activity ?? []).map((row: any) => <tr key={row.action}><td>{row.action}</td><td className="num">{row.events}</td></tr>)}{!analytics.activity?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
+        </>}
+        {tab === "tenants" && <div className="panel">
+          <h2>{copy.tenantsHeading.replace("{count}", String(tenants.length))}</h2>
+          <div className="table-scroll"><table>
+            <thead><tr><th>{copy.company}</th><th>{copy.subdomain}</th><th>{copy.status}</th><th>{copy.plan}</th><th className="num">{copy.users}</th><th>{copy.trialEnds}</th><th>{copy.created}</th></tr></thead>
+            <tbody>{tenants.map((t: any) => <tr key={t.id}><td>{t.company_name}</td><td>{t.subdomain}</td><td>{t.status}</td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td></tr>)}{!tenants.length && <tr><td colSpan={7}>{copy.noTenants}</td></tr>}</tbody>
+          </table></div>
+        </div>}
       </main>
     </div>
   );

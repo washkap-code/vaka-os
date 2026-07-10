@@ -1008,6 +1008,45 @@ api.post("/billing/upgrade-interest", requirePermission("billing.manage"), wrap(
 // ---------------------------------------------------------------------------
 // Platform admin (Jonomi staff only)
 // ---------------------------------------------------------------------------
+api.get("/platform/analytics", requirePlatformAdmin as any, wrap(async () => {
+  const [summary] = (await db.execute(sql`
+    SELECT
+      COUNT(*)::int AS total_tenants,
+      COUNT(*) FILTER (WHERE status = 'TRIAL')::int AS trial_tenants,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE')::int AS active_tenants,
+      COUNT(*) FILTER (WHERE status = 'PAST_DUE')::int AS past_due_tenants,
+      COUNT(*) FILTER (WHERE status = 'SUSPENDED')::int AS suspended_tenants,
+      (SELECT COUNT(*)::int FROM users WHERE tenant_id IS NOT NULL) AS total_users,
+      (SELECT COUNT(DISTINCT s.user_id)::int FROM user_sessions s
+        WHERE s.tenant_id IS NOT NULL AND s.revoked_at IS NULL
+          AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW()) AS signed_in_users,
+      (SELECT COUNT(*)::int FROM invoices WHERE status IN ('ISSUED', 'PARTIAL', 'PAID')) AS invoices_issued,
+      (SELECT COUNT(*)::int FROM invoices WHERE status IN ('ISSUED', 'PARTIAL')) AS invoices_outstanding
+    FROM tenants`).then((result) => (result as any).rows)) as any;
+  const planMix = await db.execute(sql`
+    SELECT p.name AS plan, COUNT(*)::int AS tenants
+    FROM subscriptions s JOIN plans p ON p.id = s.plan_id
+    GROUP BY p.name ORDER BY tenants DESC, p.name ASC`);
+  const tenantGrowth = await db.execute(sql`
+    SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, COUNT(*)::int AS tenants
+    FROM tenants WHERE created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
+    GROUP BY DATE_TRUNC('month', created_at) ORDER BY month ASC`);
+  const billing = await db.execute(sql`
+    SELECT status, currency, COUNT(*)::int AS invoices,
+      COALESCE(SUM(amount), 0)::numeric(14,2)::text AS amount
+    FROM subscription_invoices GROUP BY status, currency ORDER BY status ASC, currency ASC`);
+  const activity = await db.execute(sql`
+    SELECT action, COUNT(*)::int AS events
+    FROM audit_logs WHERE created_at >= NOW() - INTERVAL '30 days'
+    GROUP BY action ORDER BY events DESC, action ASC LIMIT 25`);
+  return {
+    summary: summary ?? {},
+    planMix: (planMix as any).rows,
+    tenantGrowth: (tenantGrowth as any).rows,
+    billing: (billing as any).rows,
+    activity: (activity as any).rows,
+  };
+}));
 api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (req) => {
   const body = z.object({
     code: z.string().min(5).max(32),

@@ -9,6 +9,11 @@ last-seen/idle/absolute expiry data, and can be revoked by the tenant Owner
 through the Users & Activity view. Refresh-token rotation, MFA, explicit owner
 identity, and complete activity coverage remain open hardening work.
 
+The platform-admin console now also exposes aggregate tenant, plan, user,
+session, billing, growth and recent-audit metrics. The analytics endpoint is
+platform-admin-only and returns aggregates rather than routine tenant business
+records; the tenant table remains a separate operational view.
+
 **Audit date:** 2026-07-04
 **Scope:** Repository-level static review
 **Status:** Baseline audit; not a penetration test, compliance opinion, or production-readiness certification
