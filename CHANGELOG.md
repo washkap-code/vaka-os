@@ -87,6 +87,9 @@
   idle/absolute expiry, last-seen presence, owner-only Users & Activity views,
   material audit history, and audited session revocation. Refresh-token
   rotation, MFA and explicit ownership transfer remain follow-on hardening.
+- **Owner team access:** Owners can now create non-owner members with an
+  auditable one-time temporary password, choose a tenant role, and disable or
+  re-enable access; disabling a member revokes active sessions.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

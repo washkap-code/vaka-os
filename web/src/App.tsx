@@ -1234,6 +1234,9 @@ const useLoad = (fn: () => Promise<any>, deps: any[] = []) => {
 function UsersActivity() {
   const [data, reload] = useLoad(() => api("/security/activity"));
   const [busy, setBusy] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [createdPassword, setCreatedPassword] = useState("");
+  const [newUser, setNewUser] = useState({ fullName: "", email: "", roleId: "", initialPassword: "" });
   const copy = appEnglish.activity;
   const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : "—";
   const sessionState = (session: any) => {
@@ -1247,6 +1250,31 @@ function UsersActivity() {
     setBusy(true);
     try { await api(`/security/sessions/${sessionId}/revoke`, { method: "POST", body: { reason: "owner_revoked" } }); reload(); }
     catch (error: any) { alert(error.message || copy.revokeFailed); }
+    finally { setBusy(false); }
+  };
+  const openAdd = () => {
+    const defaultRole = (data?.roles ?? []).find((role: any) => role.name !== "Owner");
+    setCreatedPassword("");
+    setNewUser({ fullName: "", email: "", roleId: defaultRole?.id ?? "", initialPassword: "" });
+    setShowAdd(true);
+  };
+  const createUser = async () => {
+    setBusy(true);
+    try {
+      const result = await api("/security/users", { method: "POST", body: {
+        ...newUser, initialPassword: newUser.initialPassword || undefined,
+      } });
+      setCreatedPassword(result.temporaryPassword);
+      setNewUser({ fullName: "", email: "", roleId: "", initialPassword: "" });
+      reload();
+    } catch (error: any) { alert(error.message || copy.createUserFailed); }
+    finally { setBusy(false); }
+  };
+  const updateUserStatus = async (user: any) => {
+    if (!window.confirm(copy.statusUpdatePrompt)) return;
+    setBusy(true);
+    try { await api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST" }); reload(); }
+    catch (error: any) { alert(error.message || copy.statusUpdateFailed); }
     finally { setBusy(false); }
   };
   if (!data) return <p className="sub">{appEnglish.dashboard.loading}</p>;
@@ -1266,12 +1294,13 @@ function UsersActivity() {
       <div className="card"><div className="k">{copy.validSessions}</div><div className="v">{summary.valid_sessions ?? 0}</div></div>
     </div>
     <div className="panel">
-      <h2>{copy.usersTitle}</h2>
-      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th></tr></thead>
+      <div className="panel-heading"><h2>{copy.usersTitle}</h2><button className="btn sm" onClick={openAdd}>{copy.addUser}</button></div>
+      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.role}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th><th /></tr></thead>
         <tbody>{users.map((user: any) => <tr key={user.id}>
-          <td><b>{user.full_name}</b></td><td>{user.email}</td><td>{user.status}</td><td>{user.valid_sessions ?? 0}</td>
+          <td><b>{user.full_name}</b></td><td>{user.email}</td><td>{user.role_name ?? "—"}</td><td>{user.status}</td><td>{user.valid_sessions ?? 0}</td>
           <td>{formatDate(user.last_login_at)}</td><td>{formatDate(user.last_seen_at)}</td>
-        </tr>)}{!users.length && <tr><td colSpan={6}>{copy.noUsers}</td></tr>}</tbody>
+          <td>{user.role_name !== "Owner" && ["active", "disabled"].includes(user.status) && <button className="btn ghost sm" disabled={busy} onClick={() => updateUserStatus(user)}>{user.status === "disabled" ? copy.enable : copy.disable}</button>}</td>
+        </tr>)}{!users.length && <tr><td colSpan={8}>{copy.noUsers}</td></tr>}</tbody>
       </table></div>
     </div>
     <div className="panel">
@@ -1290,6 +1319,18 @@ function UsersActivity() {
         <tbody>{events.map((event: any) => <tr key={event.id}><td>{formatDate(event.createdAt)}</td><td>{users.find((user: any) => user.id === event.userId)?.full_name ?? "—"}</td><td>{event.action}</td><td className="sub">{event.metadata ? JSON.stringify(event.metadata).slice(0, 280) : "—"}</td></tr>)}{!events.length && <tr><td colSpan={4}>{copy.noEvents}</td></tr>}</tbody>
       </table></div>
     </div>
+    {showAdd && <div className="modalbg" onClick={() => setShowAdd(false)}><div className="modal" onClick={(event) => event.stopPropagation()}>
+      <h2>{copy.addUserTitle}</h2>
+      <p className="sub">{copy.addUserHelp}</p>
+      <div className="field"><label>{copy.fullName}</label><input value={newUser.fullName} onChange={(event) => setNewUser({ ...newUser, fullName: event.target.value })} /></div>
+      <div className="field"><label>{copy.email}</label><input type="email" value={newUser.email} onChange={(event) => setNewUser({ ...newUser, email: event.target.value })} /></div>
+      <div className="field"><label>{copy.role}</label><select value={newUser.roleId} onChange={(event) => setNewUser({ ...newUser, roleId: event.target.value })}>
+        <option value="">{copy.role}</option>{(data.roles ?? []).filter((role: any) => role.name !== "Owner").map((role: any) => <option key={role.id} value={role.id}>{role.name}</option>)}
+      </select></div>
+      <div className="field"><label>{copy.initialPassword}</label><input type="password" value={newUser.initialPassword} onChange={(event) => setNewUser({ ...newUser, initialPassword: event.target.value })} /><small>{copy.initialPasswordHelp}</small></div>
+      {createdPassword && <div className="banner warn">{copy.userCreated.replace("{password}", createdPassword)}</div>}
+      <div className="row end"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
+    </div></div>}
   </>);
 }
 

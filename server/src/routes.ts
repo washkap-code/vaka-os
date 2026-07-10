@@ -13,7 +13,7 @@ import {
 import {
   AuthedRequest, authenticate, lifecycleGate, requirePermission,
   requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
-  requireCompletedPasswordChange, requireTenantOwner, revokeSession,
+  requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
 } from "./auth.js";
 import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
@@ -165,13 +165,14 @@ api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
     LEFT JOIN user_sessions s ON s.user_id = u.id AND s.tenant_id = ${tid}
     WHERE u.tenant_id = ${tid}`);
   const users = await db.execute(sql`
-    SELECT u.id, u.full_name, u.email, u.status, u.last_login_at,
+    SELECT u.id, u.full_name, u.email, u.status, u.last_login_at, r.name AS role_name,
       COUNT(s.id) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW())::int AS valid_sessions,
       MAX(s.last_seen_at) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW()) AS last_seen_at
     FROM users u
     LEFT JOIN user_sessions s ON s.user_id = u.id AND s.tenant_id = ${tid}
+    LEFT JOIN roles r ON r.id = u.role_id AND r.tenant_id = ${tid}
     WHERE u.tenant_id = ${tid}
-    GROUP BY u.id
+    GROUP BY u.id, r.name
     ORDER BY u.full_name ASC`);
   const sessions = await db.execute(sql`
     SELECT s.id, s.user_id, u.full_name, u.email, s.client_type, s.app_version,
@@ -192,9 +193,27 @@ api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
   return {
     summary: (summary as any).rows[0] ?? {},
     users: (users as any).rows,
+    roles: (await db.select({ id: schema.roles.id, name: schema.roles.name }).from(schema.roles)
+      .where(eq(schema.roles.tenantId, tid)).orderBy(schema.roles.name)),
     sessions: (sessions as any).rows,
     events,
   };
+}));
+
+api.post("/security/users", requireTenantOwner as any, wrap(async (req) => {
+  const body = z.object({
+    email: z.string().email(), fullName: z.string().trim().min(2).max(100),
+    roleId: z.string().uuid(), initialPassword: z.string().min(12).max(256).optional(),
+  }).parse(req.body);
+  return createTenantUser({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...body });
+}));
+
+api.post("/security/users/:id/:status", requireTenantOwner as any, wrap(async (req) => {
+  const status = z.enum(["active", "disabled"]).parse(req.params.status);
+  return setTenantUserStatus({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    userId: routeParam(req, "id"), status,
+  });
 }));
 
 api.post("/security/sessions/:id/revoke", requireTenantOwner as any, wrap(async (req) => {

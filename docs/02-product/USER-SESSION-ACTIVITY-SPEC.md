@@ -46,6 +46,13 @@ explicit owner identity, MFA/step-up authentication, refresh-token rotation,
 bounded exports and richer activity filters remain required before this is
 considered a complete security centre.
 
+The same area now provides a controlled team-access foundation: an Owner can
+create a non-owner member with a one-time temporary password, select an
+existing tenant role, and disable or re-enable that member. Creation and status
+changes are audited; disabling a member revokes their active sessions. Until a
+provider-managed invitation channel is configured, the Owner is responsible
+for securely handing the one-time credential to the member.
+
 Therefore VAKA cannot currently state with confidence exactly who is signed in.
 
 ## 3. Accountable owner
