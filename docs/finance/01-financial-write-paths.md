@@ -35,7 +35,7 @@ A financial write path includes any operation that creates or changes invoices, 
 | 21 | `POST /invoices/:id/issue` | `issueInvoice` | `invoices`, `journal_entries`, `journal_lines`, `stock_movements`, `stock_levels`, optional `audit_logs` | Yes | Yes | Yes | No fiscal period/approval controls. |
 | 22 | `POST /invoices/:id/payments` | `recordPayment` | `payments`, `journal_entries`, `journal_lines`, `invoices`, `audit_logs` | Yes | Yes | Yes | Duplicate source events not explicitly prevented. |
 | 23 | `POST /invoices/:id/void` | `voidInvoice` | `journal_entries`, `journal_lines`, `stock_movements`, `stock_levels`, `invoices`, `audit_logs` | Yes when issued | Yes | Yes | Reversal relationship is not first-class. |
-| 24 | `POST /expenses` | route handler | `expenses`, `journal_entries`, `journal_lines`, `audit_logs` | Yes | Yes | Partial | Category account tenant validation needs explicit verification. |
+| 24 | `POST /expenses` | route handler | `expenses`, `journal_entries`, `journal_lines`, `audit_logs` | Yes | Yes | Yes | Requires an active tenant-owned EXPENSE account and, when supplied, a tenant-owned vendor contact before any financial write. |
 | 25 | `GET /bank-reconciliations/:id/report` | `getBankReconciliationReport` | `audit_logs` | No | Yes | Yes | Read report generation is audited; good evidence trail. |
 | 26 | Billing cycle/internal | `runBillingCycle`, `markSubscriptionInvoicePaid` | `subscription_invoices`, `subscriptions`, `dunning_events`, `audit_logs` | No tenant ledger | Yes/partial | Yes | Platform billing is separate from tenant accounting ledger. |
 | 27 | `GET /ai/read-models/business-summary` | `getBusinessSummary` | `audit_logs` | No | Yes | Yes | Read-only AI context; no action authority implemented. |
@@ -66,8 +66,7 @@ A financial write path includes any operation that creates or changes invoices, 
 
 ## Expense Write Paths
 
-- Expense creation inserts `expenses`, posts debit to submitted category account and credit to BANK, then audits.
-- Current risk: the category account is accepted from the request body and should be explicitly tenant-validated before enterprise migration.
+- Expense creation first proves the submitted category account is active, tenant-owned and typed EXPENSE, and proves any vendor contact is tenant-owned. It then inserts `expenses`, posts debit to the category account and credit to BANK, then audits.
 
 ## Inventory Write Paths
 

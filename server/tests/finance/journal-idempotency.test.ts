@@ -7,7 +7,7 @@ import { recordPayment } from "../../src/invoicing.js";
 import { adjustStock, receivePurchaseOrder } from "../../src/inventory.js";
 import { commitBankStatementImport, previewBankStatementImport } from "../../src/imports.js";
 import {
-  accountByCode, createIssuedServiceInvoice, createProduct, createPurchaseOrder,
+  accountByCode, createContact, createIssuedServiceInvoice, createProduct, createPurchaseOrder,
   defaultWarehouse, journalEntriesBySource, signupFinanceTenant,
 } from "./helpers.js";
 
@@ -135,6 +135,44 @@ describe("finance kernel - current source duplicate protections", () => {
     }));
     const movementsAfterDistinct = await db.select().from(schema.stockMovements).where(eq(schema.stockMovements.productId, product.id));
     expect(movementsAfterDistinct.filter((movement) => movement.reason === "ADJUSTMENT")).toHaveLength(2);
+  });
+
+  it("rejects expense accounts and vendor contacts that do not belong to the current tenant", async () => {
+    const tenant = await signupFinanceTenant("expense-tenant-boundary");
+    const otherTenant = await signupFinanceTenant("expense-tenant-other");
+    const otherExpenseAccount = await accountByCode(otherTenant.tenantId, "6900");
+    const otherVendor = await createContact(otherTenant, "Other tenant vendor", {
+      isVendor: true,
+      isCustomer: false,
+    });
+    const tenantExpenseAccount = await accountByCode(tenant.tenantId, "6900");
+    const baseExpense = {
+      amount: "5.00",
+      currency: "USD" as const,
+      rateToBase: "1",
+      date: "2026-07-03T00:00:00.000Z",
+      description: "Tenant boundary test",
+    };
+
+    const crossTenantAccount = await request(app).post("/api/v1/expenses")
+      .set(tenant.auth)
+      .set("Idempotency-Key", "expense-cross-tenant-account")
+      .send({ ...baseExpense, categoryAccountId: otherExpenseAccount.id });
+    expect(crossTenantAccount.status).toBe(404);
+
+    const crossTenantVendor = await request(app).post("/api/v1/expenses")
+      .set(tenant.auth)
+      .set("Idempotency-Key", "expense-cross-tenant-vendor")
+      .send({
+        ...baseExpense,
+        categoryAccountId: tenantExpenseAccount.id,
+        vendorContactId: otherVendor.id,
+      });
+    expect(crossTenantVendor.status).toBe(404);
+
+    const expenses = await db.select().from(schema.expenses)
+      .where(eq(schema.expenses.tenantId, tenant.tenantId));
+    expect(expenses).toHaveLength(0);
   });
 
   it("uses database uniqueness plus import state to prevent repeated bank transaction imports", async () => {
