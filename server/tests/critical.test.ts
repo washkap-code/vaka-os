@@ -92,8 +92,8 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
     const tb = await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token));
     const inv = tb.body.find((r: any) => r.code === "1200");
     const ap = tb.body.find((r: any) => r.code === "2000");
-    expect(inv.balance).toBeCloseTo(600, 2);   // 100 * 6.00 into Inventory
-    expect(ap.balance).toBeCloseTo(-600, 2);   // owed to vendor
+    expect(inv.balance).toBe("600.00");   // 100 * 6.00 into Inventory
+    expect(ap.balance).toBe("-600.00");   // owed to vendor
   });
 
   it("issues an invoice: number, revenue+VAT, COGS, stock decrement — atomically", async () => {
@@ -119,11 +119,11 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
     // ledger: AR 437, Sales 380, VAT Output 57, COGS 240 (40*6), Inventory 600-240=360
     const tb = (await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token))).body;
     const bal = (code: string) => tb.find((r: any) => r.code === code).balance;
-    expect(bal("1100")).toBeCloseTo(437, 2);
-    expect(bal("4000")).toBeCloseTo(-380, 2);
-    expect(bal("2100")).toBeCloseTo(-57, 2);
-    expect(bal("5000")).toBeCloseTo(240, 2);
-    expect(bal("1200")).toBeCloseTo(360, 2);
+    expect(bal("1100")).toBe("437.00");
+    expect(bal("4000")).toBe("-380.00");
+    expect(bal("2100")).toBe("-57.00");
+    expect(bal("5000")).toBe("240.00");
+    expect(bal("1200")).toBe("360.00");
   });
 
   it("refuses overselling and rolls back EVERYTHING (no number burned, no partial postings)", async () => {
@@ -160,18 +160,18 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
     expect(p2.body.status).toBe("PAID");
 
     const tb = (await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token))).body;
-    expect(tb.find((r: any) => r.code === "1100").balance).toBeCloseTo(0, 2); // AR cleared
-    expect(tb.find((r: any) => r.code === "1000").balance).toBeCloseTo(437, 2); // Bank up
+    expect(tb.find((r: any) => r.code === "1100").balance).toBe("0.00"); // AR cleared
+    expect(tb.find((r: any) => r.code === "1000").balance).toBe("437.00"); // Bank up
   });
 
   it("P&L and balance sheet agree and the balance sheet balances", async () => {
     const pl = (await request(app).get("/api/v1/reports/profit-loss").set(auth(A.token))).body;
-    expect(pl.totalIncome).toBeCloseTo(380, 2);
-    expect(pl.totalExpenses).toBeCloseTo(240, 2);
-    expect(pl.netProfit).toBeCloseTo(140, 2);
+    expect(pl.totalIncome).toBe("380.00");
+    expect(pl.totalExpenses).toBe("240.00");
+    expect(pl.netProfit).toBe("140.00");
     const bs = (await request(app).get("/api/v1/reports/balance-sheet").set(auth(A.token))).body;
     expect(bs.balances).toBe(true);
-    expect(bs.currentEarnings).toBeCloseTo(140, 2);
+    expect(bs.currentEarnings).toBe("140.00");
   });
 });
 
@@ -189,7 +189,7 @@ describe("multi-currency (ZWG invoice, USD base)", () => {
     await request(app).post(`/api/v1/invoices/${draft.body.id}/issue`).set(auth(A.token)).send({});
     const after = (await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token))).body
       .find((r: any) => r.code === "4000").balance;
-    expect(after - before).toBeCloseTo(-100, 1); // ~USD 100 more sales (credit)
+    expect(Number(after) - Number(before)).toBeCloseTo(-100, 1); // ~USD 100 more sales (credit)
 
     const usdDraft = await request(app).post("/api/v1/invoices").set(auth(A.token)).send({
       contactId: c.body.id, currency: "USD", dueDate,

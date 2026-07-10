@@ -1213,7 +1213,7 @@ function Dashboard({ ccy }: { ccy: string }) {
     <div className="cards">
       <div className="card"><div className="k">{copy.income}</div><div className="v ok">{fmt(d.monthToDate.income, ccy)}</div></div>
       <div className="card"><div className="k">{copy.expenses}</div><div className="v">{fmt(d.monthToDate.expenses, ccy)}</div></div>
-      <div className="card"><div className="k">{copy.netProfit}</div><div className={`v ${d.monthToDate.netProfit >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
+      <div className="card"><div className="k">{copy.netProfit}</div><div className={`v ${Number(d.monthToDate.netProfit) >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
     </div>
     <div className="panel">
       <div className="panel-heading">
@@ -1636,7 +1636,7 @@ function Reports({ ccy }: { ccy: string }) {
         <tr><td><b>Total income</b></td><td className="num"><b>{fmt(pl.totalIncome, ccy)}</b></td></tr>
         {pl.expenses.map((r: any) => <tr key={r.code}><td>{r.code} {r.name}</td><td className="num">({fmt(r.amount, ccy)})</td></tr>)}
         <tr><td><b>Total expenses</b></td><td className="num"><b>({fmt(pl.totalExpenses, ccy)})</b></td></tr>
-        <tr><td><b>Net profit</b></td><td className="num" style={{ color: pl.netProfit >= 0 ? "var(--ok)" : "var(--danger)" }}><b>{fmt(pl.netProfit, ccy)}</b></td></tr>
+        <tr><td><b>Net profit</b></td><td className="num" style={{ color: Number(pl.netProfit) >= 0 ? "var(--ok)" : "var(--danger)" }}><b>{fmt(pl.netProfit, ccy)}</b></td></tr>
       </tbody></table>
     </div>}
     {tab === "bs" && bs && <div className="panel">
@@ -1650,7 +1650,7 @@ function Reports({ ccy }: { ccy: string }) {
         <tr><td colSpan={2}><b>Equity</b></td></tr>
         {bs.equity.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
         <tr><td style={{ paddingLeft: 24 }}>Current earnings</td><td className="num">{fmt(bs.currentEarnings, ccy)}</td></tr>
-        <tr><td><b>Total liabilities &amp; equity</b></td><td className="num"><b>{fmt(bs.totalLiabilities + bs.totalEquity, ccy)}</b></td></tr>
+        <tr><td><b>Total liabilities &amp; equity</b></td><td className="num"><b>{fmt(bs.totalLiabilitiesAndEquity, ccy)}</b></td></tr>
       </tbody></table>
     </div>}
     {tab === "ar" && ar && <div className="panel">
