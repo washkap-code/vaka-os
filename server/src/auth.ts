@@ -101,6 +101,60 @@ type LoginContext = { clientType?: string; appVersion?: string; userAgent?: stri
 
 const hashSessionValue = (value: string) => createHash("sha256").update(`${JWT_SECRET}:${value}`).digest("hex");
 
+export async function createTenantUser(opts: {
+  tenantId: string; actorUserId: string; email: string; fullName: string; roleId: string; initialPassword?: string;
+}) {
+  const email = opts.email.toLowerCase().trim();
+  const temporaryPassword = opts.initialPassword?.trim() || randomUUID().replace(/-/g, "").slice(0, 20);
+  if (temporaryPassword.length < 12) throw badRequest("Temporary password must be at least 12 characters");
+  return db.transaction(async (tx) => {
+    const [role] = await tx.select({ id: schema.roles.id, name: schema.roles.name }).from(schema.roles).where(and(
+      eq(schema.roles.id, opts.roleId), eq(schema.roles.tenantId, opts.tenantId),
+    ));
+    if (!role || role.name === "Owner") throw badRequest("Select a non-owner tenant role");
+    const [existing] = await tx.select({ id: schema.users.id }).from(schema.users).where(and(
+      eq(schema.users.tenantId, opts.tenantId), eq(schema.users.email, email),
+    ));
+    if (existing) throw conflict("A user with that email already exists in this workspace");
+    const [user] = await tx.insert(schema.users).values({
+      tenantId: opts.tenantId,
+      email,
+      fullName: opts.fullName.trim(),
+      passwordHash: await bcrypt.hash(temporaryPassword, 12),
+      roleId: role.id,
+      mustChangePassword: true,
+      status: "active",
+    }).returning({ id: schema.users.id, email: schema.users.email, fullName: schema.users.fullName, roleId: schema.users.roleId });
+    await audit(tx, opts.tenantId, opts.actorUserId, "security.user_created", "user", user.id, {
+      role: role.name, temporaryPassword: true,
+    });
+    return { user, role: role.name, temporaryPassword };
+  });
+}
+
+export async function setTenantUserStatus(opts: {
+  tenantId: string; actorUserId: string; userId: string; status: "active" | "disabled";
+}) {
+  return db.transaction(async (tx) => {
+    const [target] = await tx.select({ id: schema.users.id, roleId: schema.users.roleId, status: schema.users.status })
+      .from(schema.users).where(and(eq(schema.users.id, opts.userId), eq(schema.users.tenantId, opts.tenantId)));
+    if (!target) throw notFound("User not found");
+    if (target.id === opts.actorUserId) throw badRequest("You cannot disable your own account");
+    if (target.roleId) {
+      const [role] = await tx.select({ name: schema.roles.name }).from(schema.roles).where(eq(schema.roles.id, target.roleId));
+      if (role?.name === "Owner") throw badRequest("The accountable Owner cannot be disabled");
+    }
+    const [updated] = await tx.update(schema.users).set({ status: opts.status }).where(eq(schema.users.id, target.id))
+      .returning({ id: schema.users.id, status: schema.users.status });
+    if (opts.status === "disabled") {
+      await tx.update(schema.userSessions).set({ revokedAt: new Date(), revokedBy: opts.actorUserId, revokedReason: "user_disabled" })
+        .where(and(eq(schema.userSessions.userId, target.id), isNull(schema.userSessions.revokedAt)));
+    }
+    await audit(tx, opts.tenantId, opts.actorUserId, `security.user_${opts.status}`, "user", target.id, { previousStatus: target.status });
+    return updated;
+  });
+}
+
 export async function login(email: string, password: string, subdomain?: string, context: LoginContext = {}) {
   let user;
   if (subdomain) {

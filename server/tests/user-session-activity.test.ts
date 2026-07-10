@@ -30,6 +30,21 @@ describe("owner session visibility", () => {
     expect(activity.body.sessions.some((session: any) => session.id === sessionIdFrom(first.token))).toBe(true);
     expect(activity.body.events.some((event: any) => event.action === "security.session_created")).toBe(true);
 
+    const stockRole = activity.body.roles.find((role: any) => role.name === "Stock Controller");
+    expect(stockRole).toBeTruthy();
+    const memberEmail = `session-member-${suffix}@test.zw`;
+    const created = await request(app).post("/api/v1/security/users").set(auth(first.token)).send({
+      email: memberEmail, fullName: "Session Member", roleId: stockRole.id,
+    });
+    expect(created.status).toBe(200);
+    expect(created.body.temporaryPassword).toHaveLength(20);
+    const memberLogin = await login(memberEmail, created.body.temporaryPassword, tenant.subdomain);
+    expect(memberLogin.user.mustChangePassword).toBe(true);
+    const disabled = await request(app).post(`/api/v1/security/users/${created.body.user.id}/disabled`)
+      .set(auth(first.token)).send({});
+    expect(disabled.status).toBe(200);
+    expect((await request(app).get("/api/v1/me").set(auth(memberLogin.token))).status).toBe(401);
+
     const secondId = sessionIdFrom(second.token);
     const revoke = await request(app).post(`/api/v1/security/sessions/${secondId}/revoke`)
       .set(auth(first.token)).send({ reason: "owner_device_review" });
