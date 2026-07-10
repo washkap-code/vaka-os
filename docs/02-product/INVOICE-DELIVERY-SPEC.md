@@ -125,6 +125,10 @@ fallback: an authorised user may generate one expiring invoice link and open
 their own email client or WhatsApp share screen with the link prefilled. This
 does not claim provider delivery, receipt, consent capture, or payment.
 
+Authorised users can review the invoice's share-link history in the workspace,
+see whether a link has been viewed or has expired, and revoke active links.
+The token itself is never returned by the management endpoint.
+
 Sending requires:
 
 - `accounting.post` or a future narrower `invoices.send` permission;

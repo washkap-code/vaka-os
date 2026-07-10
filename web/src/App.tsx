@@ -1406,6 +1406,9 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
   const [products] = useLoad(() => api("/products"));
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
+  const [linkInvoice, setLinkInvoice] = useState<{ id: string; number: string | null } | null>(null);
+  const [linkRows, setLinkRows] = useState<any[]>([]);
+  const [linkBusy, setLinkBusy] = useState(false);
   const empty = { description: "", quantity: "1", unitPrice: "0", taxRate: "15", productId: "" };
   const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
 
@@ -1456,6 +1459,29 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
       window.prompt(appEnglish.invoices.shareLinkPrompt, await getShareLink(invoice));
     } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
   };
+  const manageShareLinks = async (invoice: { id: string; number: string | null }) => {
+    setLinkInvoice(invoice);
+    setLinkBusy(true);
+    try {
+      setLinkRows(await api(`/invoices/${invoice.id}/share-links`));
+    } catch (error: any) {
+      setLinkInvoice(null);
+      alert(error.message || appEnglish.invoices.shareLinkFailed);
+    } finally { setLinkBusy(false); }
+  };
+  const revokeShareLink = async (linkId: string) => {
+    if (!linkInvoice || !window.confirm(appEnglish.invoices.revokeShareLinkPrompt)) return;
+    try {
+      await api(`/invoices/${linkInvoice.id}/share-links/${linkId}`, { method: "DELETE" });
+      setLinkRows(await api(`/invoices/${linkInvoice.id}/share-links`));
+    } catch (error: any) { alert(error.message || appEnglish.invoices.revokeShareLinkFailed); }
+  };
+  const formatLinkDate = (value: string | null) => value ? new Date(value).toLocaleDateString() : "—";
+  const linkState = (link: any) => {
+    if (link.revokedAt) return appEnglish.invoices.shareLinkRevoked;
+    if (new Date(link.expiresAt).getTime() <= Date.now()) return appEnglish.invoices.shareLinkExpired;
+    return appEnglish.invoices.shareLinkActive;
+  };
   const openEmailComposer = async (invoice: { id: string; number: string | null; contact_email: string | null }) => {
     if (!invoice.contact_email) { alert(appEnglish.invoices.emailUnavailable); return; }
     try {
@@ -1489,6 +1515,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
               {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
               {!readonly && <>
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openWhatsAppShare(i)}>{appEnglish.invoices.whatsappInvoice}</button>}
               {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
@@ -1505,6 +1532,23 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
         ))}</tbody></table>
       {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
+    {linkInvoice && <div className="modalbg" onClick={() => setLinkInvoice(null)}><div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <h2>{appEnglish.invoices.shareLinksTitle}</h2>
+        <button className="btn ghost sm" onClick={() => setLinkInvoice(null)}>{appEnglish.invoices.closeShareLinks}</button>
+      </div>
+      <p className="sub">{appEnglish.invoices.shareLinksDescription}</p>
+      {linkBusy ? <p className="sub">{appEnglish.dashboard.loading}</p> : linkRows.length === 0 ? <p className="sub">{appEnglish.invoices.noShareLinks}</p> : <div className="panel">
+        {linkRows.map((link) => <div className="row" key={link.id} style={{ justifyContent: "space-between", borderBottom: "1px solid var(--line)", padding: "10px 0" }}>
+          <div>
+            <b>{linkState(link)}</b>
+            <div className="sub">{appEnglish.invoices.shareLinkCreated}: {formatLinkDate(link.createdAt)} · {appEnglish.invoices.shareLinkExpires}: {formatLinkDate(link.expiresAt)}</div>
+            <div className="sub">{link.viewedAt ? `${appEnglish.invoices.shareLinkViewed}: ${formatLinkDate(link.viewedAt)}` : appEnglish.invoices.shareLinkNotViewed}</div>
+          </div>
+          {!readonly && !link.revokedAt && new Date(link.expiresAt).getTime() > Date.now() && <button className="btn ghost sm" onClick={() => revokeShareLink(link.id)}>{appEnglish.invoices.revokeShareLink}</button>}
+        </div>)}
+      </div>}
+    </div></div>}
     {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
       <h2>New invoice</h2>
       <div className="grid3">

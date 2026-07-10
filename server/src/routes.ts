@@ -23,7 +23,7 @@ import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getA
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
 import { getInvoicePdf } from "./invoice-documents.js";
-import { createInvoiceShareLink, openInvoiceShareLink, revokeInvoiceShareLink } from "./invoice-sharing.js";
+import { createInvoiceShareLink, listInvoiceShareLinks, openInvoiceShareLink, revokeInvoiceShareLink } from "./invoice-sharing.js";
 import {
   commitBankStatementImport, commitContactImport, commitOpeningStockImport,
   commitProductImport, listImportBatches, previewBankStatementImport,
@@ -698,6 +698,8 @@ api.post("/invoices/:id/share-links", requirePermission("accounting.post"), wrap
     expiresInDays: body.expiresInDays,
   });
 }));
+api.get("/invoices/:id/share-links", requirePermission("accounting.read"), wrap(async (req) =>
+  listInvoiceShareLinks({ tenantId: tenantId(req), invoiceId: routeParam(req, "id") })));
 api.delete("/invoices/:id/share-links/:linkId", requirePermission("accounting.post"), wrap(async (req) =>
   revokeInvoiceShareLink({
     tenantId: tenantId(req),
