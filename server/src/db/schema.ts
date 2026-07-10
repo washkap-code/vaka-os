@@ -292,9 +292,11 @@ export const payments = pgTable("payments", {
   currency: currency("currency").notNull(),
   date: timestamp("date", { withTimezone: true }).notNull(),
   reference: text("reference"),
+  idempotencyKey: text("idempotency_key"),
+  idempotencyFingerprint: text("idempotency_fingerprint"),
   createdBy: uuid("created_by"),
   createdAt: createdAt(),
-});
+}, (t) => [uniqueIndex("payments_tenant_idempotency").on(t.tenantId, t.idempotencyKey)]);
 
 export const journalEntries = pgTable("journal_entries", {
   id: id(),
@@ -314,7 +316,7 @@ export const journalEntries = pgTable("journal_entries", {
 // journal service inside the same DB transaction. Amounts in tenant base ccy.
 export const journalLines = pgTable("journal_lines", {
   id: id(),
-  journalEntryId: uuid("journal_entry_id").notNull().references(() => journalEntries.id, { onDelete: "cascade" }),
+  journalEntryId: uuid("journal_entry_id").notNull().references(() => journalEntries.id),
   accountId: uuid("account_id").notNull().references(() => accounts.id),
   debit: money("debit").default("0").notNull(),
   credit: money("credit").default("0").notNull(),
@@ -334,9 +336,11 @@ export const expenses = pgTable("expenses", {
   date: timestamp("date", { withTimezone: true }).notNull(),
   description: text("description").notNull(),
   receiptUrl: text("receipt_url"),
+  idempotencyKey: text("idempotency_key"),
+  idempotencyFingerprint: text("idempotency_fingerprint"),
   createdBy: uuid("created_by"),
   createdAt: createdAt(),
-});
+}, (t) => [uniqueIndex("expenses_tenant_idempotency").on(t.tenantId, t.idempotencyKey)]);
 
 export const bankAccounts = pgTable("bank_accounts", {
   id: id(),
@@ -442,10 +446,15 @@ export const stockMovements = pgTable("stock_movements", {
   reason: stockReason("reason").notNull(),
   sourceType: text("source_type"), // invoice | purchase_order | manual
   sourceId: text("source_id"),
+  idempotencyKey: text("idempotency_key"),
+  idempotencyFingerprint: text("idempotency_fingerprint"),
   note: text("note"),
   createdBy: uuid("created_by"),
   createdAt: createdAt(),
-}, (t) => [index("sm_tenant_product").on(t.tenantId, t.productId, t.warehouseId)]);
+}, (t) => [
+  index("sm_tenant_product").on(t.tenantId, t.productId, t.warehouseId),
+  uniqueIndex("stock_movements_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+]);
 
 export const purchaseOrders = pgTable("purchase_orders", {
   id: id(),

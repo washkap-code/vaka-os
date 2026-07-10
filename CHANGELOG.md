@@ -39,6 +39,14 @@
   lines as bank fees, debiting Bank Charges & IMTT, crediting the selected bank
   account, linking the bank line to the journal entry and recording audit
   evidence.
+- **Internal bank transfer matching:** Added controlled matching for equal and
+  opposite unreviewed bank lines across two registered tenant bank accounts,
+  posting one internal-transfer journal entry, linking both bank lines to that
+  journal and recording audit evidence.
+- **Finance integrity controls:** Added explicit idempotency requirements for
+  financial payment, expense and stock-adjustment writes, tenant account
+  validation for journal lines, append-only journal-line protection, and
+  finance-focused verification scripts/tests.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

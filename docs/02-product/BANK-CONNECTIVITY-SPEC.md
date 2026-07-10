@@ -257,7 +257,10 @@ be exact or partial where the bank amount is less than the invoice outstanding
 balance. A split match can allocate one bank line across multiple invoices when
 the allocation total equals the bank amount exactly. Approved matches create
 the normal payment and journal evidence and link the bank line to that journal
-entry. A read-only reconciliation summary also reports imported lines,
+entry. Authorised users can also match equal and opposite unreviewed bank lines
+between two registered tenant bank accounts when the currency matches, creating
+one internal-transfer journal entry, linking both bank lines and preserving
+audit evidence. A read-only reconciliation summary also reports imported lines,
 matched/unreviewed counts, inflows, outflows, net movement, unreviewed net and
 date coverage for each registered bank account. Users can also preview a
 reconciliation worksheet by entering a statement date and closing balance; VAKA
@@ -270,11 +273,12 @@ audited CSV report with the saved worksheet totals, account details, sign-off
 evidence and supporting imported bank lines.
 
 It does not yet preserve original files, validate statement opening/closing
-balances, provide bank-specific profiles, match internal transfers/refunds,
-produce PDF reconciliation packs, connect to a bank, or move money. A narrow
-bank-fee posting path now exists for negative statement lines: authorised users
-can debit Bank Charges & IMTT, credit the selected bank account, link the bank
-line to the resulting journal entry and preserve audit evidence.
+balances, provide bank-specific profiles, match refunds or reversals, produce
+PDF reconciliation packs, connect to a bank, support partial/FX transfer
+matching, or move money. A narrow bank-fee posting path now exists for negative
+statement lines: authorised users can debit Bank Charges & IMTT, credit the
+selected bank account, link the bank line to the resulting journal entry and
+preserve audit evidence.
 
 ## 12. Acceptance criteria
 

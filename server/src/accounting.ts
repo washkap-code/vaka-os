@@ -25,6 +25,18 @@ export async function postJournal(
   },
 ): Promise<string> {
   if (opts.lines.length < 2) throw badRequest("Journal entry needs at least 2 lines");
+  const accountIds = [...new Set(opts.lines.map((line) => line.accountId))];
+  const accounts = await tx.select({
+    id: schema.accounts.id,
+  }).from(schema.accounts).where(and(
+    eq(schema.accounts.tenantId, opts.tenantId),
+    eq(schema.accounts.isActive, true),
+  ));
+  const validAccountIds = new Set(accounts.map((account) => account.id));
+  if (accountIds.some((accountId) => !validAccountIds.has(accountId))) {
+    throw badRequest("Journal line account is invalid for this tenant");
+  }
+
   let d = 0n, c = 0n;
   for (const l of opts.lines) {
     const debit = toCents(l.debit ?? "0");
