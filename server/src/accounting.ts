@@ -43,6 +43,7 @@ export async function postJournal(
     const credit = toCents(l.credit ?? "0");
     if (debit < 0n || credit < 0n) throw badRequest("Journal amounts must be non-negative");
     if (debit > 0n && credit > 0n) throw badRequest("A journal line cannot be both debit and credit");
+    if (debit === 0n && credit === 0n) throw badRequest("A journal line must contain a debit or credit amount");
     d += debit; c += credit;
   }
   if (d !== c) throw badRequest(`Journal entry does not balance: debits ${fromCents(d)} vs credits ${fromCents(c)}`);

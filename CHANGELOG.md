@@ -54,6 +54,8 @@
 - **Expense tenant isolation:** Expense submissions now require an active,
   tenant-owned expense account and a tenant-owned vendor contact where one is
   supplied, before any financial record or journal can be created.
+- **Journal integrity:** Posted journals now reject zero-value lines, ensuring
+  each ledger line carries a real debit or credit amount.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

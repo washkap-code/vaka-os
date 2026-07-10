@@ -39,7 +39,7 @@ describe("finance kernel - invalid journal lines", () => {
       memo: "Zero value",
       sourceType: "manual_test",
       lines: [{ accountId: bank.id, debit: "0.00" }, { accountId: sales.id, credit: "0.00" }],
-    }))).rejects.toThrow(/zero value/);
+    }))).rejects.toThrow(/must contain a debit or credit/);
 
     await expect(db.transaction((tx) => postJournal(tx, {
       tenantId: tenant.tenantId,
@@ -50,13 +50,13 @@ describe("finance kernel - invalid journal lines", () => {
     }))).rejects.toThrow(/at least 2 lines/);
   });
 
-  it("currently allows a zero-value line inside an otherwise balanced journal", async () => {
+  it("rejects a zero-value line inside an otherwise balanced journal", async () => {
     const tenant = await signupFinanceTenant("zero-line");
     const bank = await accountByCode(tenant.tenantId, "1000");
     const sales = await accountByCode(tenant.tenantId, "4000");
     const expense = await accountByCode(tenant.tenantId, "6900");
 
-    const journalEntryId = await db.transaction((tx) => postJournal(tx, {
+    await expect(db.transaction((tx) => postJournal(tx, {
       tenantId: tenant.tenantId,
       date: new Date("2026-07-01T00:00:00.000Z"),
       memo: "Balanced with zero line",
@@ -66,8 +66,6 @@ describe("finance kernel - invalid journal lines", () => {
         { accountId: sales.id, credit: "10.00" },
         { accountId: expense.id, debit: "0.00", credit: "0.00" },
       ],
-    }));
-    expect(journalEntryId).toEqual(expect.any(String));
+    }))).rejects.toThrow(/must contain a debit or credit/);
   });
 });
-
