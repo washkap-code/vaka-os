@@ -51,6 +51,9 @@
   financial payment, expense and stock-adjustment writes, tenant account
   validation for journal lines, append-only journal-line protection, and
   finance-focused verification scripts/tests.
+- **Expense tenant isolation:** Expense submissions now require an active,
+  tenant-owned expense account and a tenant-owned vendor contact where one is
+  supplied, before any financial record or journal can be created.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

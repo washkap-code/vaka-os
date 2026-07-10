@@ -674,6 +674,21 @@ api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => 
       assertIdempotencyFingerprint(existing.idempotencyFingerprint, fingerprint, "expense");
       return existing;
     }
+    const [categoryAccount] = await tx.select({ id: schema.accounts.id })
+      .from(schema.accounts).where(and(
+        eq(schema.accounts.id, body.categoryAccountId),
+        eq(schema.accounts.tenantId, tid),
+        eq(schema.accounts.type, "EXPENSE"),
+        eq(schema.accounts.isActive, true),
+      ));
+    if (!categoryAccount) throw notFound("Expense category account not found");
+    if (body.vendorContactId) {
+      const [vendor] = await tx.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+        eq(schema.contacts.id, body.vendorContactId),
+        eq(schema.contacts.tenantId, tid),
+      ));
+      if (!vendor) throw notFound("Vendor contact not found");
+    }
     const [exp] = await tx.insert(schema.expenses).values({
       ...body,
       tenantId: tid,
