@@ -68,6 +68,9 @@
 - **Invoice PDF foundation:** Added an authorised, tenant-scoped PDF download
   endpoint rendered from the immutable issued invoice snapshot, with private
   cache headers and audited downloads.
+- **Managed company logos:** Added secure tenant-scoped PNG/JPEG logo uploads,
+  signature and dimension checks, workspace persistence, audit evidence, and a
+  settings upload control.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

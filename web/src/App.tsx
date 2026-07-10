@@ -1113,6 +1113,7 @@ function Settings({ me, readonly, onSaved }: {
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [logoData, setLogoData] = useState<string | null>(null);
   const canManageCompany = me.permissions.includes("settings.manage") && !readonly;
   const setCompanyField = (key: keyof typeof company) => (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -1124,7 +1125,17 @@ function Settings({ me, readonly, onSaved }: {
     try {
       await api("/profile", { method: "PATCH", body: { fullName: profileName } });
       if (canManageCompany) {
-        await api("/settings/branding", { method: "PATCH", body: company });
+        let logoUrl = company.logoUrl;
+        if (logoData) {
+          const uploaded = await api("/settings/logo", { method: "POST", body: { dataUrl: logoData } });
+          logoUrl = uploaded.logoUrl;
+          setLogoData(null);
+        }
+        const { logoUrl: storedLogo, ...branding } = company;
+        await api("/settings/branding", { method: "PATCH", body: {
+          ...branding,
+          ...(logoUrl && !logoUrl.startsWith("data:") ? { logoUrl } : {}),
+        } });
       }
       setMessage(appEnglish.settings.saved);
       onSaved();
@@ -1164,6 +1175,18 @@ function Settings({ me, readonly, onSaved }: {
             <input type="url" disabled={!canManageCompany} value={company.logoUrl}
               onChange={setCompanyField("logoUrl")} placeholder="https://example.com/logo.png" />
             <small>{appEnglish.settings.logoHelp}</small></div>
+          <div className="field"><label>{appEnglish.settings.logoUpload}</label>
+            <input type="file" accept="image/png,image/jpeg" disabled={!canManageCompany}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (file.size > 512_000) { setMessage(appEnglish.settings.logoUploadHelp); return; }
+                const reader = new FileReader();
+                reader.onload = () => setLogoData(typeof reader.result === "string" ? reader.result : null);
+                reader.readAsDataURL(file);
+              }} />
+            {logoData && <small>{appEnglish.settings.logoSelected}</small>}
+            <small>{appEnglish.settings.logoUploadHelp}</small></div>
           <div className="field"><label>{appEnglish.settings.primaryColour}</label>
             <input type="color" disabled={!canManageCompany} value={company.brandPrimaryColor}
               onChange={setCompanyField("brandPrimaryColor")} /></div>
