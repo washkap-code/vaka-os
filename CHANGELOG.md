@@ -60,6 +60,8 @@
   supplied, before any financial record or journal can be created.
 - **Journal integrity:** Posted journals now reject zero-value lines, ensuring
   each ledger line carries a real debit or credit amount.
+- **Warehouse auditability:** Warehouse creation now records an atomic,
+  tenant-scoped `warehouse.created` audit event with the location details.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

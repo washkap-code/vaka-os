@@ -500,8 +500,15 @@ api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));
 api.post("/warehouses", requirePermission("inventory.write"), wrap(async (req) => {
   const body = z.object({ name: z.string().min(1), address: z.string().optional().nullable() }).parse(req.body);
-  const [w] = await db.insert(schema.warehouses).values({ ...body, tenantId: tenantId(req) }).returning();
-  return w;
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [warehouse] = await tx.insert(schema.warehouses).values({ ...body, tenantId: tid }).returning();
+    await audit(tx, tid, req.auth!.userId, "warehouse.created", "warehouse", warehouse.id, {
+      name: warehouse.name,
+      address: warehouse.address,
+    });
+    return warehouse;
+  });
 }));
 api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req) => {
   const body = z.object({
