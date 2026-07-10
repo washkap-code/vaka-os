@@ -80,6 +80,9 @@
 - **Invoice link management:** The invoice workspace now lists link creation,
   expiry and view state, with tenant-scoped revocation controls and no token
   disclosure in the management response.
+- **Branded invoice PDFs:** Validated uploaded PNG/JPEG logos are now embedded
+  in generated invoice PDFs from the immutable issued snapshot; arbitrary
+  external logo URLs are not fetched.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download
