@@ -4,7 +4,7 @@
 // An entry that does not balance (Σdebits === Σcredits) throws and rolls back
 // the surrounding transaction. Amounts are in tenant base currency.
 // ============================================================================
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { DB, schema, badRequest, toCents, fromCents } from "./lib.js";
 
 export interface JournalLineInput {
@@ -72,6 +72,59 @@ export async function systemAccount(tx: DB, tenantId: string, key: string) {
     .where(and(eq(schema.accounts.tenantId, tenantId), eq(schema.accounts.systemKey, key)));
   if (!acc) throw badRequest(`System account ${key} missing for tenant — chart of accounts not seeded`);
   return acc;
+}
+
+/**
+ * Returns the tenant-owned asset ledger account for a registered bank account.
+ *
+ * Older bank-account rows may pre-date dedicated mappings. Creating the mapping
+ * here is safe because it does not alter any posted journal; it only ensures
+ * that future bank-derived postings identify the actual bank account involved.
+ */
+export async function ensureBankLedgerAccount(
+  tx: DB,
+  bankAccount: {
+    id: string;
+    tenantId: string;
+    name: string;
+    bankName: string | null;
+    currency: "USD" | "ZWG";
+    ledgerAccountId: string | null;
+  },
+) {
+  if (bankAccount.ledgerAccountId) {
+    const [ledgerAccount] = await tx.select().from(schema.accounts).where(and(
+      eq(schema.accounts.id, bankAccount.ledgerAccountId),
+      eq(schema.accounts.tenantId, bankAccount.tenantId),
+      eq(schema.accounts.type, "ASSET"),
+      eq(schema.accounts.isActive, true),
+    ));
+    if (!ledgerAccount) throw badRequest("Bank account ledger mapping is invalid for this tenant");
+    return ledgerAccount;
+  }
+
+  const code = `BANK-${bankAccount.id.replace(/-/g, "").slice(-10).toUpperCase()}`;
+  await tx.insert(schema.accounts).values({
+    tenantId: bankAccount.tenantId,
+    code,
+    name: `Bank — ${bankAccount.bankName ?? "Bank"} — ${bankAccount.name} (${bankAccount.currency})`,
+    type: "ASSET",
+  }).onConflictDoNothing();
+
+  const [ledgerAccount] = await tx.select().from(schema.accounts).where(and(
+    eq(schema.accounts.tenantId, bankAccount.tenantId),
+    eq(schema.accounts.code, code),
+    eq(schema.accounts.type, "ASSET"),
+    eq(schema.accounts.isActive, true),
+  ));
+  if (!ledgerAccount) throw badRequest("Could not create a ledger account for this bank account");
+
+  await tx.update(schema.bankAccounts).set({ ledgerAccountId: ledgerAccount.id }).where(and(
+    eq(schema.bankAccounts.id, bankAccount.id),
+    eq(schema.bankAccounts.tenantId, bankAccount.tenantId),
+    isNull(schema.bankAccounts.ledgerAccountId),
+  ));
+  return ledgerAccount;
 }
 
 // ---------------------------------------------------------------------------

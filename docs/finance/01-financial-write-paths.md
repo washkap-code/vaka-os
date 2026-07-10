@@ -14,7 +14,7 @@ A financial write path includes any operation that creates or changes invoices, 
 |---:|---|---|---|---:|---:|---:|---|
 | 1 | `POST /auth/signup` | `signupTenant` | `tenants`, `users`, `roles`, `accounts`, `warehouses`, `subscriptions` | No | Yes/partial | Yes | Tenant is also legal entity. |
 | 2 | `PATCH /settings/branding` | route handler | `tenants` | No | Yes | Yes | Tax/company fields live at tenant level. |
-| 3 | `POST /bank-accounts` | route handler | `bank_accounts` | No | Yes | Yes | Ledger account optional; fallback bank account may be too simple. |
+| 3 | `POST /bank-accounts` | route handler + `ensureBankLedgerAccount` | `bank_accounts`, `accounts` | No | Yes | Yes | Creates a dedicated tenant-owned asset ledger mapping atomically; legacy unmapped accounts are mapped before future bank-derived posting. |
 | 4 | `POST /imports/bank-statement/:id/commit` | `commitBankStatementImport` | `bank_transactions`, import tables | No | Yes | Yes | Import creates financial evidence but no reconciliation lock. |
 | 5 | `POST /bank-transactions/:id/post-bank-fee` | `postBankTransactionFee` | `journal_entries`, `journal_lines`, `bank_transactions`, `audit_logs` | Yes | Yes | Yes | Hard-coded expense account code `6400`; exchange rate fixed at `1`. |
 | 6 | `POST /bank-transactions/:id/match-transfer` | `matchBankTransactionsAsTransfer` | `journal_entries`, `journal_lines`, `bank_transactions`, `audit_logs` | Yes | Yes | Yes | Same-currency only; no explicit transfer object. |
@@ -79,7 +79,7 @@ A financial write path includes any operation that creates or changes invoices, 
 ## Bank Reconciliation Write Paths
 
 - Bank statement import stages and commits `bank_transactions` without ledger posting.
-- Matching to invoices, posting fees, and transfer matching create journals and mark bank transactions matched.
+- Matching to invoices, posting fees, and transfer matching create journals and mark bank transactions matched. Each path uses the selected bank account's tenant-owned asset ledger mapping; it does not fall back to the shared system BANK account.
 - Reconciliation preparation snapshots totals and status.
 - Reconciliation approval marks a prepared balanced reconciliation approved.
 

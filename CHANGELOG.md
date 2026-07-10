@@ -43,6 +43,10 @@
   opposite unreviewed bank lines across two registered tenant bank accounts,
   posting one internal-transfer journal entry, linking both bank lines to that
   journal and recording audit evidence.
+- **Dedicated bank ledgers:** Each newly registered bank account now receives
+  its own tenant-owned asset ledger account. Existing unmapped bank accounts
+  receive one safely before a future bank-derived posting, so fee, invoice-match
+  and internal-transfer journals identify the actual bank account involved.
 - **Finance integrity controls:** Added explicit idempotency requirements for
   financial payment, expense and stock-adjustment writes, tenant account
   validation for journal lines, append-only journal-line protection, and

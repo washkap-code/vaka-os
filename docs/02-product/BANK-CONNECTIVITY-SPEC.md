@@ -260,7 +260,10 @@ the normal payment and journal evidence and link the bank line to that journal
 entry. Authorised users can also match equal and opposite unreviewed bank lines
 between two registered tenant bank accounts when the currency matches, creating
 one internal-transfer journal entry, linking both bank lines and preserving
-audit evidence. A read-only reconciliation summary also reports imported lines,
+audit evidence. Each registered account receives a distinct tenant-owned asset
+ledger mapping when it is created. Legacy unmapped accounts receive a mapping
+before their next bank-derived posting; this does not alter posted history. A
+read-only reconciliation summary also reports imported lines,
 matched/unreviewed counts, inflows, outflows, net movement, unreviewed net and
 date coverage for each registered bank account. Users can also preview a
 reconciliation worksheet by entering a statement date and closing balance; VAKA
