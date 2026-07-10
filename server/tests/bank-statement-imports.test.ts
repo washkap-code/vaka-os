@@ -206,6 +206,62 @@ describe("bank statement CSV imports", () => {
     const approveAudit = await db.select().from(schema.auditLogs)
       .where(eq(schema.auditLogs.entityId, cleanPrepared.body.id));
     expect(approveAudit.some((event) => event.action === "bank_reconciliation.approved")).toBe(true);
+    const transferSource = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Transfer Source",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 1111",
+      currency: "USD",
+    });
+    expect(transferSource.status).toBe(200);
+    const transferDestination = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Transfer Destination",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 2222",
+      currency: "USD",
+    });
+    expect(transferDestination.status).toBe(200);
+    const transferOutPreview = await request(app).post("/api/v1/imports/bank-statement/preview")
+      .set(auth).send({
+        bankAccountId: transferSource.body.id,
+        csvText: ["date,description,amount,reference", "2026-07-10,Transfer to savings,-75.00,TRF-75"].join("\n"),
+      });
+    expect(transferOutPreview.status).toBe(200);
+    const transferInPreview = await request(app).post("/api/v1/imports/bank-statement/preview")
+      .set(auth).send({
+        bankAccountId: transferDestination.body.id,
+        csvText: ["date,description,amount,reference", "2026-07-10,Transfer from operating,75.00,TRF-75"].join("\n"),
+      });
+    expect(transferInPreview.status).toBe(200);
+    const transferOutCommit = await request(app)
+      .post(`/api/v1/imports/bank-statement/${transferOutPreview.body.batch.id}/commit`)
+      .set(auth).send({});
+    expect(transferOutCommit.status).toBe(200);
+    const transferInCommit = await request(app)
+      .post(`/api/v1/imports/bank-statement/${transferInPreview.body.batch.id}/commit`)
+      .set(auth).send({});
+    expect(transferInCommit.status).toBe(200);
+    const [transferOutLine] = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.bankAccountId, transferSource.body.id));
+    const candidates = await request(app)
+      .get(`/api/v1/bank-transactions/${transferOutLine.id}/transfer-candidates`)
+      .set(auth);
+    expect(candidates.status).toBe(200);
+    expect(candidates.body.candidates).toHaveLength(1);
+    const matchedTransfer = await request(app)
+      .post(`/api/v1/bank-transactions/${transferOutLine.id}/match-transfer`)
+      .set(auth)
+      .send({ counterpartyBankTransactionId: candidates.body.candidates[0].id });
+    expect(matchedTransfer.status).toBe(200);
+    expect(matchedTransfer.body).toMatchObject({ amount: "75.00", currency: "USD" });
+    const transferLines = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.matchedJournalEntryId, matchedTransfer.body.journalEntryId));
+    expect(transferLines).toHaveLength(2);
+    const [transferJournal] = await db.select().from(schema.journalEntries)
+      .where(eq(schema.journalEntries.id, matchedTransfer.body.journalEntryId));
+    expect(transferJournal.sourceType).toBe("bank_transfer");
+    const transferAudit = await db.select().from(schema.auditLogs)
+      .where(eq(schema.auditLogs.entityId, transferOutLine.id));
+    expect(transferAudit.some((event) => event.action === "bank_transaction.transfer_matched")).toBe(true);
     const importedJournal = await db.select().from(schema.journalEntries)
       .where(eq(schema.journalEntries.sourceType, "bank_statement_import"));
     expect(importedJournal).toHaveLength(0);
@@ -245,6 +301,11 @@ describe("bank statement CSV imports", () => {
       .set({ Authorization: `Bearer ${other.token}` })
       .send({});
     expect(otherFeePost.status).toBe(404);
+    const otherTransferMatch = await request(app)
+      .post(`/api/v1/bank-transactions/${transferOutLine.id}/match-transfer`)
+      .set({ Authorization: `Bearer ${other.token}` })
+      .send({ counterpartyBankTransactionId: candidates.body.candidates[0].id });
+    expect(otherTransferMatch.status).toBe(404);
 
     const retry = await request(app)
       .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)

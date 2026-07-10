@@ -5,6 +5,7 @@
 // ============================================================================
 import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import * as schema from "./db/schema.js";
 import { databaseUrl } from "./config.js";
@@ -30,6 +31,45 @@ export const unauthorized = (m = "Unauthorized") => new AppError(401, m, "UNAUTH
 export const forbidden = (m = "Forbidden") => new AppError(403, m, "FORBIDDEN");
 export const notFound = (m = "Not found") => new AppError(404, m, "NOT_FOUND");
 export const conflict = (m: string) => new AppError(409, m, "CONFLICT");
+
+// ---------------------------------------------------------------------------
+// Idempotency — stable fingerprints prevent same-key/different-payload replays.
+// ---------------------------------------------------------------------------
+const stableValue = (value: unknown): unknown => {
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === "object") {
+    return Object.keys(value as Record<string, unknown>).sort().reduce<Record<string, unknown>>((acc, key) => {
+      acc[key] = stableValue((value as Record<string, unknown>)[key]);
+      return acc;
+    }, {});
+  }
+  return value;
+};
+
+export const payloadFingerprint = (payload: Record<string, unknown>): string =>
+  createHash("sha256").update(JSON.stringify(stableValue(payload))).digest("hex");
+
+export const normalizeIdempotencyKey = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const key = value.trim();
+  return key.length ? key : null;
+};
+
+export const requireIdempotencyKey = (value: unknown): string => {
+  const key = normalizeIdempotencyKey(value);
+  if (!key) throw badRequest("Idempotency-Key is required for this financial action");
+  if (key.length < 8 || key.length > 120) throw badRequest("Idempotency-Key must be between 8 and 120 characters");
+  return key;
+};
+
+export const assertIdempotencyFingerprint = (
+  stored: string | null | undefined,
+  current: string,
+  action = "financial action",
+) => {
+  if (stored !== current) throw conflict(`Idempotency key was already used with different ${action} details`);
+};
 
 // ---------------------------------------------------------------------------
 // Money math — all monetary arithmetic in integer cents to avoid float drift.

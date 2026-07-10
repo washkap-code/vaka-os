@@ -14,6 +14,7 @@ import { and, eq } from "drizzle-orm";
 import {
   DB, db, schema, badRequest, conflict, notFound,
   toCents, fromCents, mulRate, audit, nextDocNumber,
+  assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
 import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
@@ -158,9 +159,32 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
  */
 export async function recordPayment(opts: {
   tenantId: string; invoiceId: string; amount: string;
-  bankAccountId?: string; date?: Date; reference?: string; createdBy?: string | null;
+  bankAccountId?: string; date?: Date; reference?: string; idempotencyKey: string; createdBy?: string | null;
 }) {
+  const idempotencyKey = requireIdempotencyKey(opts.idempotencyKey);
+  const fingerprint = payloadFingerprint({
+    action: "invoice_payment",
+    invoiceId: opts.invoiceId,
+    amount: opts.amount,
+    bankAccountId: opts.bankAccountId ?? null,
+    requestedDate: opts.date?.toISOString() ?? null,
+    reference: opts.reference ?? null,
+  });
   return db.transaction(async (tx) => {
+    const [existingPayment] = await tx.select().from(schema.payments).where(and(
+      eq(schema.payments.tenantId, opts.tenantId),
+      eq(schema.payments.idempotencyKey, idempotencyKey),
+    ));
+    if (existingPayment) {
+      assertIdempotencyFingerprint(existingPayment.idempotencyFingerprint, fingerprint, "payment");
+      const [existingInvoice] = await tx.select().from(schema.invoices).where(and(
+        eq(schema.invoices.id, existingPayment.invoiceId),
+        eq(schema.invoices.tenantId, opts.tenantId),
+      ));
+      if (!existingInvoice) throw notFound("Invoice not found");
+      return existingInvoice;
+    }
+
     const [inv] = await tx.select().from(schema.invoices).where(and(
       eq(schema.invoices.id, opts.invoiceId), eq(schema.invoices.tenantId, opts.tenantId)));
     if (!inv) throw notFound("Invoice not found");
@@ -177,6 +201,8 @@ export async function recordPayment(opts: {
     await tx.insert(schema.payments).values({
       tenantId: opts.tenantId, invoiceId: inv.id, bankAccountId: opts.bankAccountId ?? null,
       amount: opts.amount, currency: inv.currency, date, reference: opts.reference ?? null,
+      idempotencyKey,
+      idempotencyFingerprint: fingerprint,
       createdBy: opts.createdBy ?? null,
     });
 

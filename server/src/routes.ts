@@ -6,7 +6,10 @@
 import { Router, Response } from "express";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
-import { db, schema, badRequest, notFound, audit, nextDocNumber } from "./lib.js";
+import {
+  db, schema, badRequest, notFound, conflict, audit, nextDocNumber,
+  assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
+} from "./lib.js";
 import {
   AuthedRequest, authenticate, lifecycleGate, requirePermission,
   requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
@@ -27,8 +30,9 @@ import {
 import {
   approveBankReconciliation, getBankReconciliationReport, getBankReconciliationSummary,
   getBankReconciliationWorksheet, listBankReconciliations, prepareBankReconciliation,
-  listBankInvoiceMatchCandidates, listBankSplitMatchCandidates,
-  matchBankTransactionToInvoice, matchBankTransactionToInvoices, postBankTransactionFee,
+  listBankInvoiceMatchCandidates, listBankSplitMatchCandidates, listBankTransferMatchCandidates,
+  matchBankTransactionToInvoice, matchBankTransactionsAsTransfer, matchBankTransactionToInvoices,
+  postBankTransactionFee,
 } from "./bank-reconciliation.js";
 
 export const api = Router();
@@ -38,6 +42,12 @@ const routeParam = (req: AuthedRequest, name: string): string => {
   const value = req.params[name];
   if (typeof value !== "string") throw badRequest(`Invalid route parameter: ${name}`);
   return value;
+};
+const financialIdempotencyKey = (req: AuthedRequest, bodyKey?: string | null): string => {
+  const headerKey = req.header("Idempotency-Key")?.trim();
+  const fieldKey = bodyKey?.trim();
+  if (headerKey && fieldKey && headerKey !== fieldKey) throw conflict("Conflicting idempotency keys");
+  return requireIdempotencyKey(headerKey ?? fieldKey);
 };
 const reconciliationWorksheetQuerySchema = z.object({
   statementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Statement date must be YYYY-MM-DD"),
@@ -347,6 +357,25 @@ api.post("/bank-transactions/:id/post-bank-fee",
     actorUserId: req.auth!.userId,
     bankTransactionId: routeParam(req, "id"),
   })));
+api.get("/bank-transactions/:id/transfer-candidates",
+  requirePermission("bank_transactions.read"),
+  requirePermission("accounting.read"),
+  wrap(async (req) => listBankTransferMatchCandidates({
+    tenantId: tenantId(req),
+    bankTransactionId: routeParam(req, "id"),
+  })));
+api.post("/bank-transactions/:id/match-transfer",
+  requirePermission("bank_transactions.match"),
+  requirePermission("accounting.post"),
+  wrap(async (req) => {
+    const body = z.object({ counterpartyBankTransactionId: z.string().uuid() }).parse(req.body);
+    return matchBankTransactionsAsTransfer({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      bankTransactionId: routeParam(req, "id"),
+      counterpartyBankTransactionId: body.counterpartyBankTransactionId,
+    });
+  }));
 api.post("/bank-transactions/:id/match-invoices",
   requirePermission("bank_transactions.match"),
   requirePermission("accounting.post"),
@@ -469,9 +498,10 @@ api.post("/warehouses", requirePermission("inventory.write"), wrap(async (req) =
 api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req) => {
   const body = z.object({
     productId: z.string().uuid(), warehouseId: z.string().uuid(),
-    quantityDelta: z.string(), note: z.string().min(3),
+    quantityDelta: z.string(), note: z.string().min(3), idempotencyKey: z.string().trim().min(8).max(120).optional(),
   }).parse(req.body);
-  return db.transaction((tx) => adjustStock(tx, { ...body, tenantId: tenantId(req), createdBy: req.auth!.userId }));
+  const idempotencyKey = financialIdempotencyKey(req, body.idempotencyKey);
+  return db.transaction((tx) => adjustStock(tx, { ...body, idempotencyKey, tenantId: tenantId(req), createdBy: req.auth!.userId }));
 }));
 api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req) => {
   // Opening balances: stock in + Dr Inventory / Cr Opening Balance Equity
@@ -598,8 +628,10 @@ api.post("/invoices/:id/payments", requirePermission("accounting.post"), wrap(as
   const body = z.object({
     amount: z.string(), bankAccountId: z.string().uuid().optional(),
     date: z.coerce.date().optional(), reference: z.string().optional(),
+    idempotencyKey: z.string().trim().min(8).max(120).optional(),
   }).parse(req.body);
-  return recordPayment({ ...body, tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId });
+  const idempotencyKey = financialIdempotencyKey(req, body.idempotencyKey);
+  return recordPayment({ ...body, idempotencyKey, tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId });
 }));
 api.post("/invoices/:id/void", requirePermission("accounting.post"), wrap(async (req) => {
   const { reason } = z.object({ reason: z.string().min(3) }).parse(req.body);
@@ -611,10 +643,36 @@ api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => 
     categoryAccountId: z.string().uuid(), vendorContactId: z.string().uuid().optional().nullable(),
     amount: z.string(), currency: z.enum(["USD", "ZWG"]), rateToBase: z.string().default("1"),
     date: z.coerce.date(), description: z.string().min(1),
+    idempotencyKey: z.string().trim().min(8).max(120).optional(),
   }).parse(req.body);
   const tid = tenantId(req);
+  const idempotencyKey = financialIdempotencyKey(req, body.idempotencyKey);
+  const fingerprint = payloadFingerprint({
+    action: "expense",
+    categoryAccountId: body.categoryAccountId,
+    vendorContactId: body.vendorContactId ?? null,
+    amount: body.amount,
+    currency: body.currency,
+    rateToBase: body.rateToBase,
+    date: body.date.toISOString(),
+    description: body.description,
+  });
   return db.transaction(async (tx) => {
-    const [exp] = await tx.insert(schema.expenses).values({ ...body, tenantId: tid, createdBy: req.auth!.userId }).returning();
+    const [existing] = await tx.select().from(schema.expenses).where(and(
+      eq(schema.expenses.tenantId, tid),
+      eq(schema.expenses.idempotencyKey, idempotencyKey),
+    ));
+    if (existing) {
+      assertIdempotencyFingerprint(existing.idempotencyFingerprint, fingerprint, "expense");
+      return existing;
+    }
+    const [exp] = await tx.insert(schema.expenses).values({
+      ...body,
+      tenantId: tid,
+      idempotencyKey,
+      idempotencyFingerprint: fingerprint,
+      createdBy: req.auth!.userId,
+    }).returning();
     const { toCents, fromCents, mulRate } = await import("./lib.js");
     const { systemAccount, postJournal } = await import("./accounting.js");
     const bank = await systemAccount(tx, tid, "BANK");

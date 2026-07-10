@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm";
-import { audit, badRequest, conflict, db, DB, fromCents, mulRate, notFound, schema, toCents } from "./lib.js";
+import {
+  audit, badRequest, conflict, db, DB, fromCents, mulRate, notFound, payloadFingerprint, schema, toCents,
+} from "./lib.js";
 import { postJournal, systemAccount } from "./accounting.js";
 
 type BankTransactionRow = {
@@ -499,6 +501,144 @@ export async function postBankTransactionFee(opts: {
   });
 }
 
+export async function listBankTransferMatchCandidates(opts: {
+  tenantId: string;
+  bankTransactionId: string;
+}) {
+  const transaction = await loadTenantBankTransaction(db, opts.tenantId, opts.bankTransactionId);
+  if (!transaction) throw notFound("Bank transaction not found");
+  if (transaction.matched_journal_entry_id || toCents(transaction.amount) === 0n) {
+    return { transaction, candidates: [] };
+  }
+  const targetAmount = fromCents(-toCents(transaction.amount));
+  const result = await db.execute(sql`
+    SELECT
+      bt.id,
+      bt.date,
+      bt.description,
+      bt.amount::numeric(14,2)::text AS amount,
+      bt.reference,
+      ba.id AS bank_account_id,
+      ba.name AS bank_account_name,
+      ba.bank_name,
+      ba.account_number,
+      ba.currency
+    FROM bank_transactions bt
+    JOIN bank_accounts ba ON ba.id = bt.bank_account_id
+    WHERE ba.tenant_id = ${opts.tenantId}
+      AND ba.currency = ${transaction.currency}
+      AND bt.bank_account_id <> ${transaction.bank_account_id}
+      AND bt.matched_journal_entry_id IS NULL
+      AND bt.amount = ${targetAmount}::numeric
+      AND bt.date BETWEEN (${new Date(transaction.date).toISOString()}::timestamptz - interval '7 days')
+        AND (${new Date(transaction.date).toISOString()}::timestamptz + interval '7 days')
+    ORDER BY abs(extract(epoch from (bt.date - ${new Date(transaction.date).toISOString()}::timestamptz))) ASC,
+      bt.created_at ASC
+    LIMIT 10
+  `);
+  return { transaction, candidates: (result as unknown as { rows: unknown[] }).rows };
+}
+
+export async function matchBankTransactionsAsTransfer(opts: {
+  tenantId: string;
+  actorUserId: string;
+  bankTransactionId: string;
+  counterpartyBankTransactionId: string;
+}) {
+  return db.transaction(async (tx) => {
+    const primary = await loadTenantBankTransaction(tx, opts.tenantId, opts.bankTransactionId);
+    const counterparty = await loadTenantBankTransaction(tx, opts.tenantId, opts.counterpartyBankTransactionId);
+    if (!primary || !counterparty) throw notFound("Bank transaction not found");
+    if (primary.id === counterparty.id) throw badRequest("Choose two different bank lines.");
+    if (primary.bank_account_id === counterparty.bank_account_id) {
+      throw conflict("Internal transfers must be between two different registered bank accounts.");
+    }
+    if (primary.matched_journal_entry_id || counterparty.matched_journal_entry_id) {
+      throw conflict("Both bank lines must be unreviewed before they can be matched as a transfer.");
+    }
+    if (primary.currency !== counterparty.currency) {
+      throw conflict("Internal transfer bank lines must use the same currency.");
+    }
+    const primaryCents = toCents(primary.amount);
+    const counterpartyCents = toCents(counterparty.amount);
+    if (primaryCents === 0n || primaryCents + counterpartyCents !== 0n) {
+      throw conflict("Internal transfer bank lines must have equal and opposite amounts.");
+    }
+
+    const outgoing = primaryCents < 0n ? primary : counterparty;
+    const incoming = primaryCents > 0n ? primary : counterparty;
+    const amount = fromCents(toCents(incoming.amount));
+    const [incomingAccount] = await tx.select().from(schema.bankAccounts)
+      .where(sql`${schema.bankAccounts.id} = ${incoming.bank_account_id}
+        AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
+    const [outgoingAccount] = await tx.select().from(schema.bankAccounts)
+      .where(sql`${schema.bankAccounts.id} = ${outgoing.bank_account_id}
+        AND ${schema.bankAccounts.tenantId} = ${opts.tenantId}`);
+    if (!incomingAccount || !outgoingAccount) throw notFound("Bank account not found");
+    const fallbackBankAccountId = (await systemAccount(tx, opts.tenantId, "BANK")).id;
+    const incomingLedgerId = incomingAccount.ledgerAccountId ?? fallbackBankAccountId;
+    const outgoingLedgerId = outgoingAccount.ledgerAccountId ?? fallbackBankAccountId;
+
+    const journalEntryId = await postJournal(tx, {
+      tenantId: opts.tenantId,
+      date: new Date(incoming.date),
+      memo: `Internal bank transfer — ${outgoingAccount.name} to ${incomingAccount.name}`,
+      sourceType: "bank_transfer",
+      sourceId: outgoing.id,
+      createdBy: opts.actorUserId,
+      lines: [
+        {
+          accountId: incomingLedgerId,
+          debit: amount,
+          originalAmount: amount,
+          originalCurrency: incoming.currency,
+          exchangeRate: "1",
+        },
+        {
+          accountId: outgoingLedgerId,
+          credit: amount,
+          originalAmount: amount,
+          originalCurrency: outgoing.currency,
+          exchangeRate: "1",
+        },
+      ],
+    });
+    const matched = await tx.update(schema.bankTransactions)
+      .set({ matchedJournalEntryId: journalEntryId })
+      .where(sql`${schema.bankTransactions.id} IN (${incoming.id}, ${outgoing.id})
+        AND ${schema.bankTransactions.matchedJournalEntryId} IS NULL`)
+      .returning({ id: schema.bankTransactions.id });
+    if (matched.length !== 2) throw conflict("One of the bank lines was matched by another process");
+    await audit(tx, opts.tenantId, opts.actorUserId, "bank_transaction.transfer_matched",
+      "bank_transaction", incoming.id, {
+        journalEntryId,
+        amount,
+        currency: incoming.currency,
+        incomingBankTransactionId: incoming.id,
+        outgoingBankTransactionId: outgoing.id,
+        incomingBankAccountId: incoming.bank_account_id,
+        outgoingBankAccountId: outgoing.bank_account_id,
+      });
+    await audit(tx, opts.tenantId, opts.actorUserId, "bank_transaction.transfer_matched",
+      "bank_transaction", outgoing.id, {
+        journalEntryId,
+        amount,
+        currency: outgoing.currency,
+        incomingBankTransactionId: incoming.id,
+        outgoingBankTransactionId: outgoing.id,
+        incomingBankAccountId: incoming.bank_account_id,
+        outgoingBankAccountId: outgoing.bank_account_id,
+      });
+    return {
+      journalEntryId,
+      amount,
+      currency: incoming.currency,
+      incomingBankTransactionId: incoming.id,
+      outgoingBankTransactionId: outgoing.id,
+    };
+  });
+}
+
 export async function listBankInvoiceMatchCandidates(opts: {
   tenantId: string;
   bankTransactionId: string;
@@ -571,6 +711,7 @@ export async function matchBankTransactionToInvoice(opts: {
       throw conflict("Bank transaction exceeds the selected invoice outstanding balance");
     }
 
+    const idempotencyKey = `bank-match:${transaction.id}:invoice:${invoice.id}`;
     await tx.insert(schema.payments).values({
       tenantId: opts.tenantId,
       invoiceId: invoice.id,
@@ -579,6 +720,13 @@ export async function matchBankTransactionToInvoice(opts: {
       currency: invoice.currency,
       date: transaction.date,
       reference: transaction.reference ?? transaction.description,
+      idempotencyKey,
+      idempotencyFingerprint: payloadFingerprint({
+        action: "bank_invoice_match",
+        bankTransactionId: transaction.id,
+        invoiceId: invoice.id,
+        amount: transaction.amount,
+      }),
       createdBy: opts.actorUserId,
     });
 
@@ -727,6 +875,7 @@ export async function matchBankTransactionToInvoices(opts: {
       }
 
       const amount = fromCents(allocationCents);
+      const idempotencyKey = `bank-split-match:${transaction.id}:invoice:${invoice.id}`;
       await tx.insert(schema.payments).values({
         tenantId: opts.tenantId,
         invoiceId: invoice.id,
@@ -735,6 +884,13 @@ export async function matchBankTransactionToInvoices(opts: {
         currency: invoice.currency,
         date: transaction.date,
         reference: transaction.reference ?? transaction.description,
+        idempotencyKey,
+        idempotencyFingerprint: payloadFingerprint({
+          action: "bank_split_invoice_match",
+          bankTransactionId: transaction.id,
+          invoiceId: invoice.id,
+          amount,
+        }),
         createdBy: opts.actorUserId,
       });
 

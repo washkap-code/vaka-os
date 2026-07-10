@@ -8,7 +8,10 @@
 // Accounting can never disagree.
 // ============================================================================
 import { and, eq, sql } from "drizzle-orm";
-import { DB, schema, badRequest, conflict, toCents, fromCents, mulRate, audit, nextDocNumber } from "./lib.js";
+import {
+  DB, schema, badRequest, conflict, toCents, fromCents, mulRate, audit, nextDocNumber,
+  assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
+} from "./lib.js";
 import { postJournal, systemAccount } from "./accounting.js";
 
 export async function recordStockMovement(
@@ -18,7 +21,7 @@ export async function recordStockMovement(
     quantityDelta: string;         // "+5" in, "-3" out (decimal string)
     unitCost?: string;             // cost snapshot for COGS/valuation
     reason: "SALE" | "PURCHASE" | "ADJUSTMENT" | "TRANSFER_IN" | "TRANSFER_OUT" | "OPENING";
-    sourceType?: string; sourceId?: string; note?: string; createdBy?: string | null;
+    sourceType?: string; sourceId?: string; idempotencyKey?: string; idempotencyFingerprint?: string; note?: string; createdBy?: string | null;
     allowNegative?: boolean;       // default false — protects against overselling
     requireZeroCurrent?: boolean;  // opening balances must not be layered onto existing stock
     requireNoHistory?: boolean;    // opening balances are invalid after any prior movement
@@ -26,6 +29,22 @@ export async function recordStockMovement(
 ) {
   const delta = Number(opts.quantityDelta);
   if (!isFinite(delta) || delta === 0) throw badRequest("quantityDelta must be a non-zero number");
+  if (opts.idempotencyKey) {
+    const [existingMovement] = await tx.select().from(schema.stockMovements).where(and(
+      eq(schema.stockMovements.tenantId, opts.tenantId),
+      eq(schema.stockMovements.idempotencyKey, opts.idempotencyKey),
+    ));
+    if (existingMovement) {
+      if (opts.idempotencyFingerprint) {
+        assertIdempotencyFingerprint(existingMovement.idempotencyFingerprint, opts.idempotencyFingerprint, "stock adjustment");
+      }
+      const [level] = await tx.select().from(schema.stockLevels).where(and(
+        eq(schema.stockLevels.productId, existingMovement.productId),
+        eq(schema.stockLevels.warehouseId, existingMovement.warehouseId),
+      ));
+      return { movementId: existingMovement.id, quantityOnHand: Number(level?.quantityOnHand ?? 0) };
+    }
+  }
   const [product] = await tx.select({
     id: schema.products.id,
     trackStock: schema.products.trackStock,
@@ -78,6 +97,8 @@ export async function recordStockMovement(
     tenantId: opts.tenantId, productId: opts.productId, warehouseId: opts.warehouseId,
     quantityDelta: opts.quantityDelta, unitCost: opts.unitCost ?? null,
     reason: opts.reason, sourceType: opts.sourceType ?? null, sourceId: opts.sourceId ?? null,
+    idempotencyKey: opts.idempotencyKey ?? null,
+    idempotencyFingerprint: opts.idempotencyFingerprint ?? null,
     note: opts.note ?? null, createdBy: opts.createdBy ?? null,
   }).returning({ id: schema.stockMovements.id });
   return { movementId: movement.id, quantityOnHand: next };
@@ -91,9 +112,30 @@ export async function adjustStock(
   tx: DB,
   opts: {
     tenantId: string; productId: string; warehouseId: string;
-    quantityDelta: string; note: string; createdBy?: string | null;
+    quantityDelta: string; note: string; idempotencyKey: string; createdBy?: string | null;
   },
 ) {
+  const idempotencyKey = requireIdempotencyKey(opts.idempotencyKey);
+  const fingerprint = payloadFingerprint({
+    action: "stock_adjustment",
+    productId: opts.productId,
+    warehouseId: opts.warehouseId,
+    quantityDelta: opts.quantityDelta,
+    note: opts.note,
+  });
+  const [existingMovement] = await tx.select().from(schema.stockMovements).where(and(
+    eq(schema.stockMovements.tenantId, opts.tenantId),
+    eq(schema.stockMovements.idempotencyKey, idempotencyKey),
+  ));
+  if (existingMovement) {
+    assertIdempotencyFingerprint(existingMovement.idempotencyFingerprint, fingerprint, "stock adjustment");
+    const [level] = await tx.select().from(schema.stockLevels).where(and(
+      eq(schema.stockLevels.productId, existingMovement.productId),
+      eq(schema.stockLevels.warehouseId, existingMovement.warehouseId),
+    ));
+    return { movementId: existingMovement.id, quantityOnHand: Number(level?.quantityOnHand ?? 0) };
+  }
+
   const [product] = await tx.select().from(schema.products).where(and(
     eq(schema.products.id, opts.productId), eq(schema.products.tenantId, opts.tenantId)));
   if (!product) throw badRequest("Product not found");
@@ -101,7 +143,7 @@ export async function adjustStock(
 
   const res = await recordStockMovement(tx, {
     ...opts, unitCost: product.costPrice, reason: "ADJUSTMENT",
-    sourceType: "manual", allowNegative: false,
+    sourceType: "manual", idempotencyKey, idempotencyFingerprint: fingerprint, allowNegative: false,
   });
 
   // GL sync at cost, if the product carries a cost

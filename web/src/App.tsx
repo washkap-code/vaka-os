@@ -57,6 +57,10 @@ type DashboardReceivablesView = Pick<AgedReceivablesView, "asAt" | "currencies">
 const AGEING_BUCKET_LABELS = Object.entries(appEnglish.dashboard.buckets) as Array<
   [AgeingBucketKey, string]
 >;
+const idempotencyKey = (scope: string): string => {
+  const randomId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${scope}:${randomId}`;
+};
 
 export default function App() {
   const [me, setMe] = useState<Me | null>(null);
@@ -320,6 +324,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           canPrepareReconciliation={me.permissions.includes("bank_reconciliation.prepare")}
           canApproveReconciliation={me.permissions.includes("bank_reconciliation.approve")}
           canPostBankFees={me.permissions.includes("bank_transactions.match") && me.permissions.includes("accounting.post")}
+          canMatchBankTransfers={me.permissions.includes("bank_transactions.match") && me.permissions.includes("accounting.post")}
         />}
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
@@ -371,6 +376,7 @@ type ImportPreview = {
 
 function ImportCenter({
   readonly, canApprove, canConfigureBanks, canPrepareReconciliation, canApproveReconciliation, canPostBankFees,
+  canMatchBankTransfers,
 }: {
   readonly: boolean;
   canApprove: boolean;
@@ -378,6 +384,7 @@ function ImportCenter({
   canPrepareReconciliation: boolean;
   canApproveReconciliation: boolean;
   canPostBankFees: boolean;
+  canMatchBankTransfers: boolean;
 }) {
   type ImportKind = "contacts" | "products" | "opening-stock" | "bank-statement";
   const [kind, setKind] = useState<ImportKind>("contacts");
@@ -734,6 +741,47 @@ function ImportCenter({
     setBusy(false);
   };
 
+  const matchBankTransfer = async (transaction: {
+    id: string; amount: string; reference: string | null; description: string;
+  }) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await api(`/bank-transactions/${transaction.id}/transfer-candidates`);
+      const candidate = result.candidates?.[0];
+      if (!candidate) {
+        setMessage(copy.noTransferMatch);
+        setBusy(false);
+        return;
+      }
+      const confirmed = window.confirm(copy.transferConfirm
+        .replace("{amount}", `${candidate.currency} ${Math.abs(Number(transaction.amount)).toFixed(2)}`)
+        .replace("{from}", Number(transaction.amount) < 0
+          ? `${selectedBankAccount?.bankName ?? ""} ${selectedBankAccount?.name ?? ""}`.trim()
+          : `${candidate.bank_name ?? ""} ${candidate.bank_account_name ?? ""}`.trim())
+        .replace("{to}", Number(transaction.amount) > 0
+          ? `${selectedBankAccount?.bankName ?? ""} ${selectedBankAccount?.name ?? ""}`.trim()
+          : `${candidate.bank_name ?? ""} ${candidate.bank_account_name ?? ""}`.trim()));
+      if (!confirmed) {
+        setBusy(false);
+        return;
+      }
+      await api(`/bank-transactions/${transaction.id}/match-transfer`, {
+        method: "POST",
+        body: { counterpartyBankTransactionId: candidate.id },
+      });
+      setMessage(copy.transferMatched);
+      if (bankAccountId) {
+        await loadBankTransactions(bankAccountId);
+        await loadBankSummary(bankAccountId);
+        setBankWorksheet(null);
+      }
+    } catch (error: any) {
+      setMessage(error.message);
+    }
+    setBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -1026,10 +1074,16 @@ function ImportCenter({
                       onClick={() => matchBankTransaction(transaction)}>{copy.findInvoiceMatch}</button>
                     <button className="btn sm" disabled={busy || readonly}
                       onClick={() => splitMatchBankTransaction(transaction)}>{copy.splitInvoiceMatch}</button>
+                    <button className="btn sm" disabled={busy || readonly || !canMatchBankTransfers}
+                      onClick={() => matchBankTransfer(transaction)}>{copy.matchTransfer}</button>
                   </div>
                   : !transaction.matchedJournalEntryId && Number(transaction.amount) < 0
-                    ? <button className="btn sm" disabled={busy || readonly || !canPostBankFees}
-                      onClick={() => postBankFee(transaction)}>{copy.postBankFee}</button>
+                    ? <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <button className="btn sm" disabled={busy || readonly || !canPostBankFees}
+                        onClick={() => postBankFee(transaction)}>{copy.postBankFee}</button>
+                      <button className="btn sm" disabled={busy || readonly || !canMatchBankTransfers}
+                        onClick={() => matchBankTransfer(transaction)}>{copy.matchTransfer}</button>
+                    </div>
                     : "—"}</td>
               </tr>
             ))}</tbody>
@@ -1366,7 +1420,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
               {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
               {(i.status === "ISSUED" || i.status === "PARTIAL") && <button className="btn accent sm" onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));
-                if (amount) act(`/invoices/${i.id}/payments`, { amount });
+                if (amount) act(`/invoices/${i.id}/payments`, { amount, idempotencyKey: idempotencyKey(`payment:${i.id}`) });
               }}>Record payment</button>}
               {i.status !== "VOID" && i.status !== "PAID" && <button className="btn ghost sm" onClick={() => {
                 const reason = prompt("Reason for voiding:"); if (reason) act(`/invoices/${i.id}/void`, { reason });
@@ -1430,7 +1484,19 @@ function Products({ readonly }: { readonly: boolean }) {
   const adjust = async (p: any) => {
     const quantityDelta = prompt(`Adjustment for ${p.name} (e.g. -2 for damage, +5 for count correction):`); if (!quantityDelta) return;
     const note = prompt("Reason (mandatory, kept in the audit trail):"); if (!note) return;
-    try { await api("/stock/adjust", { method: "POST", body: { productId: p.id, warehouseId: warehouses[0].id, quantityDelta, note } }); reload(); }
+    try {
+      await api("/stock/adjust", {
+        method: "POST",
+        body: {
+          productId: p.id,
+          warehouseId: warehouses[0].id,
+          quantityDelta,
+          note,
+          idempotencyKey: idempotencyKey(`stock-adjustment:${p.id}`),
+        },
+      });
+      reload();
+    }
     catch (e: any) { alert(e.message); }
   };
   return (<>

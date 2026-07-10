@@ -145,14 +145,17 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
 
   it("records partial then final payment: PARTIAL -> PAID, AR cleared, overpay refused", async () => {
     const p1 = await request(app).post(`/api/v1/invoices/${invoiceId}/payments`).set(auth(A.token))
+      .set("Idempotency-Key", "critical-payment-partial-1")
       .send({ amount: "200.00", reference: "EcoCash 123" });
     expect(p1.body.status).toBe("PARTIAL");
 
     const over = await request(app).post(`/api/v1/invoices/${invoiceId}/payments`).set(auth(A.token))
+      .set("Idempotency-Key", "critical-payment-overpay-1")
       .send({ amount: "500.00" });
     expect(over.status).toBe(409);
 
     const p2 = await request(app).post(`/api/v1/invoices/${invoiceId}/payments`).set(auth(A.token))
+      .set("Idempotency-Key", "critical-payment-final-1")
       .send({ amount: "237.00", reference: "ZIPIT final" });
     expect(p2.body.status).toBe("PAID");
 

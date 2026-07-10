@@ -58,6 +58,80 @@ Every feature must be outcome-driven, not feature-driven. Before implementation,
 - Preserve suspend-then-escrow behavior: never delete client data for non-payment; retain allowed read, billing, and export access.
 - Treat trust, auditability, data protection, permissions, reliability, backup, and recovery as product features.
 
+## Authoritative Finance Rule
+
+The VAKA Finance & Accounting Intelligence Architecture is the authoritative source of truth for all accounting, ledger, tax, currency, reporting, AI finance, and compliance work.
+
+Do not create or modify accounting behaviour that conflicts with it.
+
+Preserve:
+
+- immutable ledger principles;
+- double-entry accounting;
+- tenant isolation;
+- future legal-entity isolation;
+- posting controls;
+- currency snapshots;
+- audit requirements;
+- AI authority boundaries; and
+- reversal-only corrections.
+
+## Critical Accounting Rules
+
+1. No posted financial transaction may be edited in place.
+2. Corrections must be made by reversal, credit note, debit note, correcting journal, or controlled adjustment.
+3. Every posted journal must balance: total debits must equal total credits.
+4. Operational modules must not write directly to ledger tables.
+5. All financial write paths must go through approved services.
+6. AI must not post directly to the ledger.
+7. Tax rates must not be hard-coded into product or invoice logic.
+8. Currency rules must not be hard-coded to USD or ZWG only.
+9. Every material financial action must produce an audit event.
+10. Tenant data must never leak across tenants.
+
+## Phase 0 Finance Rule
+
+During Phase 0 finance work, do not implement new accounting features unless explicitly requested.
+
+Phase 0 is an audit, mapping, and risk-identification phase.
+
+Allowed work:
+
+- inspect repository;
+- document current architecture;
+- identify financial write paths;
+- identify risks;
+- identify schema gaps;
+- add non-invasive tests where safe;
+- propose migration plans; and
+- document future implementation steps.
+
+Not allowed in Phase 0 unless explicitly approved:
+
+- rewriting journal posting;
+- changing tax calculations;
+- changing currency logic;
+- deleting existing accounting tables;
+- replacing the ledger;
+- introducing new financial behaviour;
+- changing production routes; and
+- changing existing financial balances.
+
+## Finance Readiness Questions
+
+No future VAKA Finance feature should be accepted unless it answers:
+
+1. What accounting event does this create?
+2. What journal does it produce?
+3. Which legal entity owns it?
+4. What currency treatment applies?
+5. What tax treatment applies?
+6. What audit event is recorded?
+7. Can it be reversed?
+8. Can it be explained?
+9. Can AI touch it?
+10. What permission is required?
+
 ## VAKA AI
 
 VAKA AI must sound **professional, calm, executive, well-spoken, concise, and business-focused**.

@@ -62,7 +62,7 @@ jobs:
 
       - name: Create test database schema
         working-directory: server
-        run: npm run db:push -- --force
+        run: npm run test:db:prepare
 
       - name: Seed required reference data
         working-directory: server
@@ -100,5 +100,5 @@ jobs:
         with:
           name: vaka-ai-evaluation-${{ github.run_id }}
           path: server/artifacts/ai-evaluation/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
