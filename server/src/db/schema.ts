@@ -283,6 +283,21 @@ export const invoiceLineItems = pgTable("invoice_line_items", {
   lineTotal: money("line_total").notNull(),
 });
 
+// Immutable render inputs captured when an invoice becomes issued. Future PDF,
+// email and customer-link adapters render from this evidence, never mutable
+// tenant/contact branding fields.
+export const invoiceDocumentSnapshots = pgTable("invoice_document_snapshots", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  invoiceId: uuid("invoice_id").notNull().references(() => invoices.id),
+  templateVersion: text("template_version").notNull(),
+  document: jsonb("document").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("invoice_document_snapshot_invoice").on(t.invoiceId),
+  index("invoice_document_snapshot_tenant").on(t.tenantId, t.createdAt),
+]);
+
 export const payments = pgTable("payments", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

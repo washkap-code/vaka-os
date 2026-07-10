@@ -1,6 +1,6 @@
 # VAKA Invoice Delivery and Receivables Specification
 
-**Status:** Approved product direction; implementation pending
+**Status:** Issued-document snapshot foundation implemented; rendering and delivery pending
 **Owner:** Product, Finance, and Engineering
 **Last reviewed:** 2026-07-05
 
@@ -50,7 +50,8 @@ later add statements, payment status, and preferences.
 | Currency-safe dashboard ageing analysis | Implemented foundation; pending release verification |
 | Company logo field and branding update API | Partial; URL only |
 | Managed logo upload | Missing |
-| Branded invoice template | Missing |
+| Immutable issued invoice-document snapshot | Implemented foundation |
+| Branded invoice template | Pending renderer |
 | PDF generation/download | Missing |
 | Invoice email delivery and delivery history | Missing |
 | Secure customer invoice link/portal | Missing |
@@ -190,9 +191,9 @@ At minimum:
 1. Correct the ageing read model for exact, currency-separated amounts and add
    regression tests.
 2. Add typed dashboard copy and render ageing buckets/priorities responsively.
-3. Define versioned invoice-document and branding snapshot contracts.
+3. Define versioned invoice-document and branding snapshot contracts. **Implemented:** issue-time snapshot v1.
 4. Add secure tenant-scoped logo storage behind an asset abstraction.
-5. Build and test the server-side branded PDF renderer.
+5. Build and test the server-side branded PDF renderer from the issue-time snapshot.
 6. Add authorised preview and PDF-download controls.
 7. Add delivery records and transactional outbox.
 8. Integrate an approved email provider and confirmation UI.

@@ -65,6 +65,10 @@
 - **Exact financial reporting:** Trial balance, profit and loss, balance sheet
   and dashboard financial totals now use exact minor-unit arithmetic and return
   precise decimal strings instead of floating-point calculations.
+- **Issued invoice evidence:** Issuing an invoice now captures an immutable,
+  tenant-scoped versioned document snapshot of company identity, customer,
+  amounts and line items. It is the foundation for future branded PDF download
+  and delivery; no PDF or email is claimed as live yet.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.
