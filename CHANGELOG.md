@@ -71,6 +71,9 @@
 - **Managed company logos:** Added secure tenant-scoped PNG/JPEG logo uploads,
   signature and dimension checks, workspace persistence, audit evidence, and a
   settings upload control.
+- **Secure invoice sharing:** Added expiring, revocable one-invoice PDF links
+  with opaque stored-hash tokens, public download isolation, and full create,
+  open and revoke audit evidence.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

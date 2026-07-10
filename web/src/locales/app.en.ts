@@ -170,6 +170,9 @@ export const appEnglish = {
   invoices: {
     downloadPdf: "Download PDF",
     pdfDownloadFailed: "Invoice PDF download failed.",
+    createShareLink: "Create share link",
+    shareLinkPrompt: "Copy this secure invoice link. It expires in 14 days and can be revoked later.",
+    shareLinkFailed: "Could not create the secure invoice link.",
   },
   settings: {
     title: "Settings",

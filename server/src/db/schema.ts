@@ -298,6 +298,23 @@ export const invoiceDocumentSnapshots = pgTable("invoice_document_snapshots", {
   index("invoice_document_snapshot_tenant").on(t.tenantId, t.createdAt),
 ]);
 
+// Opaque, revocable links for sharing one issued invoice document outside the
+// authenticated workspace. Only a SHA-256 hash of the bearer token is stored.
+export const invoiceShareLinks = pgTable("invoice_share_links", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  invoiceId: uuid("invoice_id").notNull().references(() => invoices.id),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("invoice_share_link_token_hash").on(t.tokenHash),
+  index("invoice_share_link_tenant_invoice").on(t.tenantId, t.invoiceId, t.createdAt),
+]);
+
 export const payments = pgTable("payments", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

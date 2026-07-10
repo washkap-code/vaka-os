@@ -1447,6 +1447,12 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
       URL.revokeObjectURL(url);
     } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
   };
+  const createShareLink = async (invoice: { id: string }) => {
+    try {
+      const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
+      window.prompt(appEnglish.invoices.shareLinkPrompt, new URL(result.publicPath, window.location.origin).toString());
+    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+  };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
       <div><h1>Invoices</h1><div className="sub">Issuing posts revenue &amp; VAT to the ledger and moves stock — in one step</div></div>
@@ -1462,6 +1468,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
             <td><div className="row">
               {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
               {!readonly && <>
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
               {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
               {(i.status === "ISSUED" || i.status === "PARTIAL") && <button className="btn accent sm" onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));
