@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { createHash, randomBytes } from "node:crypto";
 import { audit, conflict, db, notFound, schema } from "./lib.js";
 import { getInvoicePdf } from "./invoice-documents.js";
@@ -54,6 +54,24 @@ export async function revokeInvoiceShareLink(opts: { tenantId: string; invoiceId
     await audit(tx, opts.tenantId, opts.actorUserId, "invoice.share_link_revoked", "invoice", opts.invoiceId, { shareLinkId: link.id });
     return { id: link.id, revokedAt: link.revokedAt };
   });
+}
+
+export async function listInvoiceShareLinks(opts: { tenantId: string; invoiceId: string }) {
+  const [invoice] = await db.select({ id: schema.invoices.id }).from(schema.invoices).where(and(
+    eq(schema.invoices.id, opts.invoiceId),
+    eq(schema.invoices.tenantId, opts.tenantId),
+  ));
+  if (!invoice) throw notFound("Invoice not found");
+  return db.select({
+    id: schema.invoiceShareLinks.id,
+    expiresAt: schema.invoiceShareLinks.expiresAt,
+    revokedAt: schema.invoiceShareLinks.revokedAt,
+    viewedAt: schema.invoiceShareLinks.viewedAt,
+    createdAt: schema.invoiceShareLinks.createdAt,
+  }).from(schema.invoiceShareLinks).where(and(
+    eq(schema.invoiceShareLinks.invoiceId, opts.invoiceId),
+    eq(schema.invoiceShareLinks.tenantId, opts.tenantId),
+  )).orderBy(desc(schema.invoiceShareLinks.createdAt));
 }
 
 export async function openInvoiceShareLink(token: string) {

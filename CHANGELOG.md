@@ -77,6 +77,9 @@
 - **Manual invoice delivery:** Authorised users can now open their own email
   client or WhatsApp share screen with a fresh secure invoice link. This is a
   user-controlled fallback, not provider-managed delivery confirmation.
+- **Invoice link management:** The invoice workspace now lists link creation,
+  expiry and view state, with tenant-scoped revocation controls and no token
+  disclosure in the management response.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download
