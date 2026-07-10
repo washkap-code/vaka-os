@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import { db, schema } from "../../src/lib.js";
 import { createDraftInvoice, issueInvoice } from "../../src/invoicing.js";
 import { createContact, signupFinanceTenant } from "./helpers.js";
+import request from "supertest";
+import { createApp } from "../../src/app.js";
+
+const app = createApp();
 
 describe("finance kernel - invoice document snapshots", () => {
   it("captures immutable issuer, customer and invoice render inputs when issued", async () => {
@@ -56,5 +60,15 @@ describe("finance kernel - invoice document snapshots", () => {
       .where(eq(schema.invoiceDocumentSnapshots.id, snapshot.id));
     expect((preserved.document as { issuer: { companyName: string } }).issuer.companyName)
       .toBe("Snapshot Trading (Private) Limited");
+
+    const pdf = await request(app).get(`/api/v1/invoices/${issued.id}/pdf`).set(tenant.auth);
+    expect(pdf.status).toBe(200);
+    expect(pdf.headers["content-type"]).toContain("application/pdf");
+    expect(pdf.headers["cache-control"]).toBe("private, no-store");
+    expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
+
+    const other = await signupFinanceTenant("invoice-document-other");
+    const denied = await request(app).get(`/api/v1/invoices/${issued.id}/pdf`).set(other.auth);
+    expect(denied.status).toBe(404);
   });
 });
