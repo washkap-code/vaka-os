@@ -250,7 +250,7 @@ future outbound payments. Auditors remain read-only.
 
 Steps 1, the generic portion of step 2, and a narrow part of step 5 now have an
 implemented foundation. VAKA supports tenant-owned account registration with a
-masked identifier, date/description/signed-amount CSV preview, deterministic
+masked identifier, common date/description/debit-credit/reference CSV preview, deterministic
 duplicate prevention, import into an unreviewed feed, and reviewed matching
 from a positive bank line to one or more open invoices. A one-invoice match can
 be exact or partial where the bank amount is less than the invoice outstanding

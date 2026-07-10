@@ -333,4 +333,40 @@ describe("bank statement CSV imports", () => {
       totalRows: 3, validRows: 0, duplicateRows: 2, invalidRows: 1,
     });
   });
+
+  it("accepts common statement-column aliases while preserving a review-first import", async () => {
+    const tenant = await signup("aliases");
+    const auth = { Authorization: `Bearer ${tenant.token}` };
+    const account = await request(app).post("/api/v1/bank-accounts").set(auth).send({
+      name: "Alias Test Account",
+      bankName: "Example Zimbabwe Bank",
+      accountNumber: "**** 6754",
+      currency: "USD",
+    });
+    expect(account.status).toBe(200);
+    const preview = await request(app).post("/api/v1/imports/bank-statement/preview")
+      .set(auth).send({
+        bankAccountId: account.body.id,
+        csvText: [
+          "Value Date,Transaction Details,Debit Amount,Credit Amount,Reference No,Running Balance",
+          '2026/07/03,Customer settlement,,"1,250.00",REC-1250,"1,250.00"',
+          "04/07/2026,Supplier payment,45.00,,PAY-45,1205.00",
+        ].join("\n"),
+      });
+    expect(preview.status).toBe(200);
+    expect(preview.body.batch).toMatchObject({ totalRows: 2, validRows: 2, invalidRows: 0 });
+    expect(preview.body.rows.map((row: { data: { amount: string; reference: string } }) => row.data))
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ amount: "1250.00", reference: "REC-1250" }),
+        expect.objectContaining({ amount: "-45.00", reference: "PAY-45" }),
+      ]));
+    const committed = await request(app)
+      .post(`/api/v1/imports/bank-statement/${preview.body.batch.id}/commit`)
+      .set(auth).send({});
+    expect(committed.status).toBe(200);
+    const transactions = await db.select().from(schema.bankTransactions)
+      .where(eq(schema.bankTransactions.bankAccountId, account.body.id));
+    expect(transactions).toHaveLength(2);
+    expect(transactions.every((row) => row.matchedJournalEntryId === null)).toBe(true);
+  });
 });

@@ -39,7 +39,10 @@ positive quantity and unit cost in the workspace base currency. Approval:
 Owners and Administrators can also register a tenant-owned bank account using a
 masked identifier and import a generic bank CSV with date, description, signed
 amount and optional reference columns. Debit/credit column pairs are also
-supported. These imports:
+supported. The generic parser recognises common export labels such as
+value/posting date, transaction details, narration, debit/credit amount, DR/CR
+and reference number. This compatibility layer is not a bank-certified parser
+profile. These imports:
 
 - normalise exact signed amounts and supported statement dates;
 - derive a deterministic per-account duplicate key;
