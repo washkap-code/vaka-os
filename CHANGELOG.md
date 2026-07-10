@@ -62,6 +62,9 @@
   each ledger line carries a real debit or credit amount.
 - **Warehouse auditability:** Warehouse creation now records an atomic,
   tenant-scoped `warehouse.created` audit event with the location details.
+- **Exact financial reporting:** Trial balance, profit and loss, balance sheet
+  and dashboard financial totals now use exact minor-unit arithmetic and return
+  precise decimal strings instead of floating-point calculations.
 - **Arrears notifications:** Added server-derived due-soon, overdue, suspended
   and cleared billing states with exact currency amounts and a persistent red
   portal bar linking directly to Billing.

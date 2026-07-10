@@ -26,15 +26,16 @@ export type CurrencyAgeing = {
   buckets: Record<AgeingBucket, string>;
 };
 
-const MONEY_PATTERN = /^-?\d+\.\d{2}$/;
+const MONEY_PATTERN = /^-?\d+(?:\.\d{1,2})?$/;
 
-function toMinorUnits(value: string): bigint {
-  if (!MONEY_PATTERN.test(value)) {
+function toMinorUnits(value: string | number): bigint {
+  const exact = String(value).trim();
+  if (!MONEY_PATTERN.test(exact)) {
     throw new Error(`Expected exact two-decimal money value, received: ${value}`);
   }
-  const negative = value.startsWith("-");
-  const [whole, fraction] = value.replace("-", "").split(".");
-  const minor = BigInt(whole) * 100n + BigInt(fraction);
+  const negative = exact.startsWith("-");
+  const [whole, fraction = ""] = exact.replace("-", "").split(".");
+  const minor = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
   return negative ? -minor : minor;
 }
 
@@ -42,6 +43,12 @@ function fromMinorUnits(value: bigint): string {
   const negative = value < 0n;
   const absolute = negative ? -value : value;
   return `${negative ? "-" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}`;
+}
+
+function exactSum(values: Iterable<string | number>): bigint {
+  let total = 0n;
+  for (const value of values) total += toMinorUnits(value);
+  return total;
 }
 
 function ageingBucket(daysOverdue: number): AgeingBucket {
@@ -65,11 +72,16 @@ export async function trialBalance(tenantId: string, asAt: Date) {
     GROUP BY a.id, a.code, a.name, a.type
     ORDER BY a.code
   `);
-  return (rows as any).rows.map((r: any) => ({
-    accountId: r.id, code: r.code, name: r.name, type: r.type,
-    debit: Number(r.total_debit), credit: Number(r.total_credit),
-    balance: Number(r.total_debit) - Number(r.total_credit), // +ve = debit balance
-  }));
+  return (rows as any).rows.map((r: any) => {
+    const debit = toMinorUnits(r.total_debit);
+    const credit = toMinorUnits(r.total_credit);
+    return {
+      accountId: r.id, code: r.code, name: r.name, type: r.type,
+      debit: fromMinorUnits(debit),
+      credit: fromMinorUnits(credit),
+      balance: fromMinorUnits(debit - credit), // +ve = debit balance
+    };
+  });
 }
 
 /** Profit & Loss for a period. Income shown positive when credit-heavy. */
@@ -86,35 +98,44 @@ export async function profitAndLoss(tenantId: string, from: Date, to: Date) {
     GROUP BY a.code, a.name, a.type
     ORDER BY a.code
   `);
-  const income: any[] = [], expenses: any[] = [];
-  let totalIncome = 0, totalExpenses = 0;
+  const income: Array<{ code: string; name: string; amount: string }> = [];
+  const expenses: Array<{ code: string; name: string; amount: string }> = [];
+  let totalIncome = 0n, totalExpenses = 0n;
   for (const r of (rows as any).rows) {
-    const net = Number(r.net_credit);
-    if (r.type === "INCOME") { income.push({ code: r.code, name: r.name, amount: net }); totalIncome += net; }
-    else { expenses.push({ code: r.code, name: r.name, amount: -net }); totalExpenses += -net; }
+    const net = toMinorUnits(r.net_credit);
+    if (r.type === "INCOME") { income.push({ code: r.code, name: r.name, amount: fromMinorUnits(net) }); totalIncome += net; }
+    else { expenses.push({ code: r.code, name: r.name, amount: fromMinorUnits(-net) }); totalExpenses -= net; }
   }
-  return { income, expenses, totalIncome, totalExpenses, netProfit: totalIncome - totalExpenses };
+  return {
+    income, expenses,
+    totalIncome: fromMinorUnits(totalIncome),
+    totalExpenses: fromMinorUnits(totalExpenses),
+    netProfit: fromMinorUnits(totalIncome - totalExpenses),
+  };
 }
 
 /** Balance sheet as at a date, with retained earnings computed from P&L history. */
 export async function balanceSheet(tenantId: string, asAt: Date) {
   const tb = await trialBalance(tenantId, asAt);
-  const assets = tb.filter((r: any) => r.type === "ASSET" && r.balance !== 0)
+  const assets = tb.filter((r: any) => r.type === "ASSET" && toMinorUnits(r.balance) !== 0n)
     .map((r: any) => ({ code: r.code, name: r.name, amount: r.balance }));
-  const liabilities = tb.filter((r: any) => r.type === "LIABILITY" && r.balance !== 0)
-    .map((r: any) => ({ code: r.code, name: r.name, amount: -r.balance }));
-  const equity = tb.filter((r: any) => r.type === "EQUITY" && r.balance !== 0)
-    .map((r: any) => ({ code: r.code, name: r.name, amount: -r.balance }));
+  const liabilities = tb.filter((r: any) => r.type === "LIABILITY" && toMinorUnits(r.balance) !== 0n)
+    .map((r: any) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
+  const equity = tb.filter((r: any) => r.type === "EQUITY" && toMinorUnits(r.balance) !== 0n)
+    .map((r: any) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
   const pl = tb.filter((r: any) => r.type === "INCOME" || r.type === "EXPENSE")
-    .reduce((acc: number, r: any) => acc + (-r.balance), 0); // credit-positive
-  const totalAssets = assets.reduce((s: number, a: any) => s + a.amount, 0);
-  const totalLiabilities = liabilities.reduce((s: number, a: any) => s + a.amount, 0);
-  const totalEquity = equity.reduce((s: number, a: any) => s + a.amount, 0) + pl;
+    .reduce((total: bigint, r: any) => total - toMinorUnits(r.balance), 0n); // credit-positive
+  const totalAssets = exactSum(assets.map((account: { amount: string }) => account.amount));
+  const totalLiabilities = exactSum(liabilities.map((account: { amount: string }) => account.amount));
+  const totalEquity = exactSum(equity.map((account: { amount: string }) => account.amount)) + pl;
   return {
     assets, liabilities, equity,
-    currentEarnings: pl,
-    totalAssets, totalLiabilities, totalEquity,
-    balances: Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 0.01,
+    currentEarnings: fromMinorUnits(pl),
+    totalAssets: fromMinorUnits(totalAssets),
+    totalLiabilities: fromMinorUnits(totalLiabilities),
+    totalEquity: fromMinorUnits(totalEquity),
+    totalLiabilitiesAndEquity: fromMinorUnits(totalLiabilities + totalEquity),
+    balances: totalAssets === totalLiabilities + totalEquity,
   };
 }
 
