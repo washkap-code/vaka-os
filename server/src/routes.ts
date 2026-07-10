@@ -22,6 +22,7 @@ import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard }
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
+import { getInvoicePdf } from "./invoice-documents.js";
 import {
   commitBankStatementImport, commitContactImport, commitOpeningStockImport,
   commitProductImport, listImportBatches, previewBankStatementImport,
@@ -632,6 +633,17 @@ api.get("/invoices/:id", requirePermission("accounting.read"), wrap(async (req) 
   const pays = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, inv.id));
   return { ...inv, lines, payments: pays };
 }));
+api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, res, next) => {
+  try {
+    const result = await getInvoicePdf(tenantId(req as AuthedRequest), routeParam(req as AuthedRequest, "id"));
+    await audit(db, tenantId(req as AuthedRequest), (req as AuthedRequest).auth!.userId,
+      "invoice.downloaded", "invoice", result.invoiceId, { templateVersion: result.templateVersion });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="invoice-${result.invoiceId}.pdf"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(result.pdf);
+  } catch (error) { next(error); }
+});
 api.post("/invoices", requirePermission("accounting.post"), wrap(async (req) => {
   const body = invoiceSchema.parse(req.body);
   return createDraftInvoice({ ...body, tenantId: tenantId(req), createdBy: req.auth!.userId,

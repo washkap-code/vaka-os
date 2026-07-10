@@ -65,6 +65,9 @@
 - **Exact financial reporting:** Trial balance, profit and loss, balance sheet
   and dashboard financial totals now use exact minor-unit arithmetic and return
   precise decimal strings instead of floating-point calculations.
+- **Invoice PDF foundation:** Added an authorised, tenant-scoped PDF download
+  endpoint rendered from the immutable issued invoice snapshot, with private
+  cache headers and audited downloads.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download
