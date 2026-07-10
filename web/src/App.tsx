@@ -455,6 +455,7 @@ function ImportCenter({
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [logoData, setLogoData] = useState<string | null>(null);
   const copy = appEnglish.imports;
 
   const loadBankAccounts = async () => {
@@ -1427,6 +1428,25 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
   const act = async (path: string, body: any = {}) => {
     try { await api(path, { method: "POST", body }); reload(); } catch (e: any) { alert(e.message); }
   };
+  const downloadPdf = async (invoice: { id: string; number: string | null }) => {
+    try {
+      const response = await fetch(`/api/v1/invoices/${invoice.id}/pdf`, {
+        headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || appEnglish.invoices.pdfDownloadFailed);
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${invoice.number ?? invoice.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
+  };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
       <div><h1>Invoices</h1><div className="sub">Issuing posts revenue &amp; VAT to the ledger and moves stock — in one step</div></div>
@@ -1439,7 +1459,9 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
             <td><b>{i.number ?? "(draft)"}</b></td><td>{i.contact_name}</td>
             <td><span className={`pill ${i.status}`}>{i.status}</span></td>
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
-            <td>{!readonly && <div className="row">
+            <td><div className="row">
+              {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
+              {!readonly && <>
               {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
               {(i.status === "ISSUED" || i.status === "PARTIAL") && <button className="btn accent sm" onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));
@@ -1448,7 +1470,8 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
               {i.status !== "VOID" && i.status !== "PAID" && <button className="btn ghost sm" onClick={() => {
                 const reason = prompt("Reason for voiding:"); if (reason) act(`/invoices/${i.id}/void`, { reason });
               }}>Void</button>}
-            </div>}</td>
+              </>}
+            </div></td>
           </tr>
         ))}</tbody></table>
       {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
