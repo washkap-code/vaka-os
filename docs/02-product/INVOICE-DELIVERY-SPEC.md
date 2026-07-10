@@ -119,9 +119,11 @@ test one approach.
 
 ## 7. Sending and delivery
 
-The first delivery channel should be email through an approved provider
-adapter. WhatsApp and SMS links may follow only after consent, provider,
-template, and privacy review.
+The first provider-managed delivery channel should be email through an approved
+adapter. Until that provider is configured, VAKA supports a user-controlled
+fallback: an authorised user may generate one expiring invoice link and open
+their own email client or WhatsApp share screen with the link prefilled. This
+does not claim provider delivery, receipt, consent capture, or payment.
 
 Sending requires:
 

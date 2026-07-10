@@ -173,6 +173,12 @@ export const appEnglish = {
     createShareLink: "Create share link",
     shareLinkPrompt: "Copy this secure invoice link. It expires in 14 days and can be revoked later.",
     shareLinkFailed: "Could not create the secure invoice link.",
+    emailInvoice: "Email link",
+    whatsappInvoice: "WhatsApp link",
+    emailUnavailable: "This customer does not have an email address.",
+    emailSubject: "Invoice {number}",
+    emailBody: "Please find your invoice {number} here: {link}",
+    whatsappBody: "Your invoice {number}: {link}",
   },
   settings: {
     title: "Settings",

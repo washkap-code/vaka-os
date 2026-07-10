@@ -1447,10 +1447,30 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
       URL.revokeObjectURL(url);
     } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
   };
+  const getShareLink = async (invoice: { id: string }) => {
+    const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
+    return new URL(result.publicPath, window.location.origin).toString();
+  };
   const createShareLink = async (invoice: { id: string }) => {
     try {
-      const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
-      window.prompt(appEnglish.invoices.shareLinkPrompt, new URL(result.publicPath, window.location.origin).toString());
+      window.prompt(appEnglish.invoices.shareLinkPrompt, await getShareLink(invoice));
+    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+  };
+  const openEmailComposer = async (invoice: { id: string; number: string | null; contact_email: string | null }) => {
+    if (!invoice.contact_email) { alert(appEnglish.invoices.emailUnavailable); return; }
+    try {
+      const link = await getShareLink(invoice);
+      const number = invoice.number ?? "VAKA";
+      const subject = appEnglish.invoices.emailSubject.replace("{number}", number);
+      const body = appEnglish.invoices.emailBody.replace("{number}", number).replace("{link}", link);
+      window.location.href = `mailto:${encodeURIComponent(invoice.contact_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+  };
+  const openWhatsAppShare = async (invoice: { id: string; number: string | null }) => {
+    try {
+      const link = await getShareLink(invoice);
+      const text = appEnglish.invoices.whatsappBody.replace("{number}", invoice.number ?? "VAKA").replace("{link}", link);
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
   };
   return (<>
@@ -1469,6 +1489,8 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
               {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
               {!readonly && <>
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openWhatsAppShare(i)}>{appEnglish.invoices.whatsappInvoice}</button>}
               {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
               {(i.status === "ISSUED" || i.status === "PARTIAL") && <button className="btn accent sm" onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));

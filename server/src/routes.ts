@@ -664,7 +664,7 @@ const invoiceSchema = z.object({
 });
 api.get("/invoices", requirePermission("accounting.read"), wrap(async (req) => {
   const rows = await db.execute(sql`
-    SELECT i.*, c.name AS contact_name FROM invoices i
+    SELECT i.*, c.name AS contact_name, c.email AS contact_email, c.phone AS contact_phone FROM invoices i
     JOIN contacts c ON c.id = i.contact_id
     WHERE i.tenant_id = ${tenantId(req)} ORDER BY i.created_at DESC LIMIT 200`);
   return (rows as any).rows;
