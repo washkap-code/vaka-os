@@ -167,6 +167,10 @@ export const appEnglish = {
       d90plus: "90+ days",
     },
   },
+  invoices: {
+    downloadPdf: "Download PDF",
+    pdfDownloadFailed: "Invoice PDF download failed.",
+  },
   settings: {
     title: "Settings",
     subtitle: "Personalise your profile and company workspace.",
