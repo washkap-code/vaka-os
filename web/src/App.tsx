@@ -1114,6 +1114,7 @@ function Settings({ me, readonly, onSaved }: {
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [logoData, setLogoData] = useState<string | null>(null);
   const canManageCompany = me.permissions.includes("settings.manage") && !readonly;
   const setCompanyField = (key: keyof typeof company) => (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
