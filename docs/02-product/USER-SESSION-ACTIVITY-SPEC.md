@@ -1,6 +1,6 @@
 # VAKA User Sessions and Activity Specification
 
-**Status:** Approved product direction; implementation pending
+**Status:** Approved product direction; presence and owner activity foundation implemented; hardening remains
 **Owner:** Product, Security, Engineering, and Data Protection
 **Last reviewed:** 2026-07-05
 
@@ -25,19 +25,26 @@ or personal content.
 The current repository has:
 
 - tenant users with status and `lastLoginAt`;
-- JWT access tokens;
+- JWT access tokens with server-side hashed session records, idle/absolute
+  expiry, last-seen presence and owner-triggered revocation;
 - server-side user/role reload on authenticated requests; and
 - a tenant-scoped audit-log table used by selected workflows.
 
-It does not yet have:
+The current foundation still does not yet have:
 
-- server-side session records;
 - refresh-token rotation/revocation;
 - device inventory;
 - reliable current-presence state;
 - comprehensive authentication/activity audit coverage;
-- an owner-only activity interface; or
 - a durable tenant-owner identity separate from broad role permissions.
+
+The owner-only **Users & Activity** area is now available to the user holding
+the system `Owner` role. It reports tenant-scoped users, valid sessions,
+approximate active-now presence, material audit events and per-session
+revocation. The owner-role check is an incremental compatibility measure;
+explicit owner identity, MFA/step-up authentication, refresh-token rotation,
+bounded exports and richer activity filters remain required before this is
+considered a complete security centre.
 
 Therefore VAKA cannot currently state with confidence exactly who is signed in.
 

@@ -13,7 +13,7 @@ import {
 import {
   AuthedRequest, authenticate, lifecycleGate, requirePermission,
   requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
-  requireCompletedPasswordChange,
+  requireCompletedPasswordChange, requireTenantOwner, revokeSession,
 } from "./auth.js";
 import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
@@ -73,7 +73,12 @@ const signupSchema = z.object({
 api.post("/auth/signup", wrap(async (req) => {
   const body = signupSchema.parse(req.body);
   const { tenant, owner } = await signupTenant(body);
-  const session = await login(body.ownerEmail, body.ownerPassword, tenant.subdomain);
+  const session = await login(body.ownerEmail, body.ownerPassword, tenant.subdomain, {
+    clientType: req.header("X-Vaka-Client") ?? "web",
+    appVersion: req.header("X-Vaka-App-Version") ?? undefined,
+    userAgent: req.header("User-Agent") ?? undefined,
+    ip: req.ip,
+  });
   return { tenant: { id: tenant.id, subdomain: tenant.subdomain, companyName: tenant.companyName, trialEndsAt: tenant.trialEndsAt }, ...session };
 }));
 
@@ -81,7 +86,12 @@ api.post("/auth/login", wrap(async (req) => {
   const { email, password, subdomain } = z.object({
     email: z.string().email(), password: z.string(), subdomain: z.string().optional(),
   }).parse(req.body);
-  return login(email, password, subdomain);
+  return login(email, password, subdomain, {
+    clientType: req.header("X-Vaka-Client") ?? "web",
+    appVersion: req.header("X-Vaka-App-Version") ?? undefined,
+    userAgent: req.header("User-Agent") ?? undefined,
+    ip: req.ip,
+  });
 }));
 
 // Public customer document access. The opaque, expiry-bound share token is
@@ -128,7 +138,71 @@ api.post("/auth/change-password", wrap(async (req) => {
   return changePassword({ userId: req.auth!.userId, ...body });
 }));
 
+api.post("/auth/logout", wrap(async (req) => {
+  if (!req.auth!.sessionId) return { revoked: false };
+  return revokeSession({
+    tenantId: req.auth!.tenantId,
+    sessionId: req.auth!.sessionId,
+    actorUserId: req.auth!.userId,
+    reason: "user_sign_out",
+  });
+}));
+
 api.use(requireCompletedPasswordChange as any);
+
+api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
+  const tid = tenantId(req);
+  const summary = await db.execute(sql`
+    SELECT
+      COUNT(DISTINCT u.id)::int AS registered_users,
+      COUNT(DISTINCT u.id) FILTER (WHERE u.status = 'active')::int AS active_users,
+      COUNT(DISTINCT u.id) FILTER (WHERE u.status = 'invited')::int AS invited_users,
+      COUNT(DISTINCT u.id) FILTER (WHERE u.status = 'disabled')::int AS disabled_users,
+      COUNT(DISTINCT s.user_id) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW())::int AS signed_in_users,
+      COUNT(s.id) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW())::int AS valid_sessions,
+      COUNT(DISTINCT s.user_id) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW() AND s.last_seen_at >= NOW() - INTERVAL '5 minutes')::int AS active_now_users
+    FROM users u
+    LEFT JOIN user_sessions s ON s.user_id = u.id AND s.tenant_id = ${tid}
+    WHERE u.tenant_id = ${tid}`);
+  const users = await db.execute(sql`
+    SELECT u.id, u.full_name, u.email, u.status, u.last_login_at,
+      COUNT(s.id) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW())::int AS valid_sessions,
+      MAX(s.last_seen_at) FILTER (WHERE s.revoked_at IS NULL AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW()) AS last_seen_at
+    FROM users u
+    LEFT JOIN user_sessions s ON s.user_id = u.id AND s.tenant_id = ${tid}
+    WHERE u.tenant_id = ${tid}
+    GROUP BY u.id
+    ORDER BY u.full_name ASC`);
+  const sessions = await db.execute(sql`
+    SELECT s.id, s.user_id, u.full_name, u.email, s.client_type, s.app_version,
+      s.device_description, s.created_at, s.last_seen_at, s.idle_expires_at,
+      s.absolute_expires_at, s.revoked_at
+    FROM user_sessions s
+    JOIN users u ON u.id = s.user_id
+    WHERE s.tenant_id = ${tid}
+    ORDER BY COALESCE(s.last_seen_at, s.created_at) DESC
+    LIMIT 200`);
+  const events = await db.select({
+    id: schema.auditLogs.id, userId: schema.auditLogs.userId,
+    action: schema.auditLogs.action, entityType: schema.auditLogs.entityType,
+    entityId: schema.auditLogs.entityId, metadata: schema.auditLogs.metadata,
+    createdAt: schema.auditLogs.createdAt,
+  }).from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, tid))
+    .orderBy(desc(schema.auditLogs.createdAt)).limit(200);
+  return {
+    summary: (summary as any).rows[0] ?? {},
+    users: (users as any).rows,
+    sessions: (sessions as any).rows,
+    events,
+  };
+}));
+
+api.post("/security/sessions/:id/revoke", requireTenantOwner as any, wrap(async (req) => {
+  const sessionId = routeParam(req, "id");
+  if (sessionId === req.auth!.sessionId) throw badRequest("Use Sign out to end your current session");
+  const body = z.object({ reason: z.string().trim().min(3).max(200).default("owner_revoked") }).parse(req.body ?? {});
+  return revokeSession({ tenantId: tenantId(req), sessionId, actorUserId: req.auth!.userId, reason: body.reason });
+}));
 
 api.patch("/profile", wrap(async (req) => {
   const body = z.object({ fullName: z.string().trim().min(2).max(100) }).parse(req.body);

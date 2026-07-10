@@ -8,8 +8,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { and, eq } from "drizzle-orm";
-import { db, schema, unauthorized, forbidden, badRequest, conflict, DEFAULT_ROLES, audit, Permission } from "./lib.js";
+import { createHash, randomUUID } from "node:crypto";
+import { and, eq, gt, isNull } from "drizzle-orm";
+import { db, schema, unauthorized, forbidden, badRequest, conflict, notFound, DEFAULT_ROLES, audit, Permission } from "./lib.js";
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
@@ -21,6 +22,7 @@ const ACCESS_TTL = "1h";
 export interface AuthedRequest extends Request {
   auth?: {
     userId: string; tenantId: string | null; isPlatformAdmin: boolean;
+    isTenantOwner: boolean; sessionId: string | null;
     mustChangePassword: boolean;
     permissions: string[]; accessLevel: "full" | "readonly" | "export_only";
   };
@@ -95,7 +97,11 @@ export async function signupTenant(opts: {
   });
 }
 
-export async function login(email: string, password: string, subdomain?: string) {
+type LoginContext = { clientType?: string; appVersion?: string; userAgent?: string; ip?: string };
+
+const hashSessionValue = (value: string) => createHash("sha256").update(`${JWT_SECRET}:${value}`).digest("hex");
+
+export async function login(email: string, password: string, subdomain?: string, context: LoginContext = {}) {
   let user;
   if (subdomain) {
     const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.subdomain, subdomain.toLowerCase()));
@@ -110,10 +116,35 @@ export async function login(email: string, password: string, subdomain?: string)
   if (!ok) throw unauthorized("Invalid credentials");
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
 
+  const sessionId = randomUUID();
   const token = jwt.sign(
-    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin },
+    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId },
     JWT_SECRET, { expiresIn: ACCESS_TTL },
   );
+  const now = new Date();
+  const idleExpiresAt = new Date(now.getTime() + 30 * 86_400_000);
+  const absoluteExpiresAt = new Date(now.getTime() + 90 * 86_400_000);
+  await db.insert(schema.userSessions).values({
+    id: sessionId,
+    tenantId: user.tenantId,
+    userId: user.id,
+    tokenHash: hashSessionValue(token),
+    clientType: context.clientType?.trim().slice(0, 32) || "web",
+    appVersion: context.appVersion?.trim().slice(0, 80) || null,
+    deviceDescription: context.userAgent?.trim().slice(0, 160) || null,
+    ipHash: context.ip ? hashSessionValue(context.ip) : null,
+    createdAt: now,
+    lastSeenAt: now,
+    idleExpiresAt,
+    absoluteExpiresAt,
+  });
+  if (user.tenantId) {
+    await audit(db, user.tenantId, user.id, "security.session_created", "session", sessionId, {
+      clientType: context.clientType?.trim().slice(0, 32) || "web",
+    });
+  } else {
+    await db.insert(schema.platformAuditLogs).values({ userId: user.id, action: "platform_admin.session_created", metadata: { sessionId } });
+  }
   return { token, user: {
     id: user.id, email: user.email, fullName: user.fullName,
     tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
@@ -135,25 +166,69 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
     if (!user || user.status !== "active") throw unauthorized("User disabled");
 
     let permissions: string[] = [];
+    let isTenantOwner = false;
     let accessLevel: "full" | "readonly" | "export_only" = "full";
     if (user.tenantId) {
       if (user.roleId) {
         const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, user.roleId));
         permissions = role?.permissions ?? [];
+        isTenantOwner = role?.name === "Owner";
       }
       const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.id, user.tenantId));
       if (!tenant) throw unauthorized("Tenant not found");
       accessLevel = accessLevelFor(tenant.status);
       (req as any).tenant = tenant;
     }
+    const sessionId = typeof payload.sid === "string" ? payload.sid : null;
+    if (sessionId) {
+      const now = new Date();
+      const [session] = await db.select({ id: schema.userSessions.id, lastSeenAt: schema.userSessions.lastSeenAt })
+        .from(schema.userSessions).where(and(
+          eq(schema.userSessions.id, sessionId),
+          eq(schema.userSessions.userId, user.id),
+          eq(schema.userSessions.tokenHash, hashSessionValue(header.slice(7))),
+          isNull(schema.userSessions.revokedAt),
+          gt(schema.userSessions.idleExpiresAt, now),
+          gt(schema.userSessions.absoluteExpiresAt, now),
+        ));
+      if (!session) throw unauthorized("Session ended or expired");
+      if (now.getTime() - session.lastSeenAt.getTime() >= 60_000) {
+        await db.update(schema.userSessions).set({ lastSeenAt: now }).where(eq(schema.userSessions.id, session.id));
+      }
+    }
     req.auth = {
       userId: user.id, tenantId: user.tenantId,
       isPlatformAdmin: user.isPlatformAdmin,
+      isTenantOwner, sessionId,
       mustChangePassword: user.mustChangePassword,
       permissions, accessLevel,
     };
     next();
   } catch (e) { next(e); }
+}
+
+export async function revokeSession(opts: {
+  tenantId: string | null; sessionId: string; actorUserId: string; reason: string;
+}) {
+  const [session] = await db.update(schema.userSessions).set({
+    revokedAt: new Date(), revokedBy: opts.actorUserId, revokedReason: opts.reason,
+  }).where(and(
+    eq(schema.userSessions.id, opts.sessionId),
+    opts.tenantId ? eq(schema.userSessions.tenantId, opts.tenantId) : isNull(schema.userSessions.tenantId),
+    isNull(schema.userSessions.revokedAt),
+  )).returning({ id: schema.userSessions.id, userId: schema.userSessions.userId, tenantId: schema.userSessions.tenantId });
+  if (!session) throw notFound("Session not found");
+  if (opts.tenantId) {
+    await audit(db, opts.tenantId, opts.actorUserId, "security.session_revoked", "session", session.id, { reason: opts.reason, userId: session.userId });
+  } else {
+    await db.insert(schema.platformAuditLogs).values({ userId: opts.actorUserId, action: "platform_admin.session_revoked", metadata: { sessionId: session.id, reason: opts.reason } });
+  }
+  return { revoked: true, sessionId: session.id };
+}
+
+export function requireTenantOwner(req: AuthedRequest, _res: Response, next: NextFunction) {
+  if (req.auth?.tenantId && req.auth.isTenantOwner) return next();
+  next(forbidden("Tenant owner access required"));
 }
 
 export function requireCompletedPasswordChange(req: AuthedRequest, _res: Response, next: NextFunction) {
@@ -206,7 +281,7 @@ export function lifecycleGate(req: AuthedRequest, _res: Response, next: NextFunc
   if (!a.tenantId) return next(); // platform admin
   const write = !["GET", "HEAD", "OPTIONS"].includes(req.method);
   const path = req.path;
-  const billingOrExport = path.startsWith("/billing") || path.startsWith("/export");
+  const billingOrExport = path.startsWith("/billing") || path.startsWith("/export") || path.startsWith("/auth/logout");
   if (a.accessLevel === "full") return next();
   if (a.accessLevel === "readonly" && (!write || billingOrExport)) return next();
   if (a.accessLevel === "export_only" && billingOrExport) return next();

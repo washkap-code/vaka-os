@@ -1,5 +1,14 @@
 # VAKA OS Codebase Audit
 
+## Implementation addendum — 2026-07-10
+
+Since the original audit, VAKA has added immutable invoice document snapshots,
+secure expiring invoice links, branded PDF logo embedding, and a first
+server-side session foundation. New sessions store only a token hash, record
+last-seen/idle/absolute expiry data, and can be revoked by the tenant Owner
+through the Users & Activity view. Refresh-token rotation, MFA, explicit owner
+identity, and complete activity coverage remain open hardening work.
+
 **Audit date:** 2026-07-04
 **Scope:** Repository-level static review
 **Status:** Baseline audit; not a penetration test, compliance opinion, or production-readiness certification
