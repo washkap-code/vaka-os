@@ -122,17 +122,35 @@ type BankHeader = "date" | "description" | "amount" | "debit" | "credit" | "refe
 const bankHeaderAliases: Record<string, BankHeader> = {
   date: "date",
   posted_date: "date",
+  posting_date: "date",
   transaction_date: "date",
+  value_date: "date",
   description: "description",
   narrative: "description",
   details: "description",
+  transaction_description: "description",
+  transaction_details: "description",
+  narration: "description",
+  remarks: "description",
   amount: "amount",
   debit: "debit",
   withdrawal: "debit",
+  debit_amount: "debit",
+  debits: "debit",
+  dr: "debit",
   credit: "credit",
   deposit: "credit",
+  credit_amount: "credit",
+  credits: "credit",
+  cr: "credit",
   reference: "reference",
   transaction_reference: "reference",
+  reference_no: "reference",
+  reference_number: "reference",
+  transaction_id: "reference",
+  document_number: "reference",
+  cheque_number: "reference",
+  cheque_no: "reference",
 };
 
 function safeText(value: string, field: string, max: number): string | null {
@@ -206,12 +224,12 @@ function parseStatementDate(value: string): string {
   let year: number;
   let month: number;
   let day: number;
-  let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
+  let match = /^(\d{4})[-/](\d{2})[-/](\d{2})$/.exec(clean);
   if (match) {
     [, year, month, day] = match.map(Number);
   } else {
     match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(clean);
-    if (!match) throw new Error("Date must use YYYY-MM-DD or DD/MM/YYYY");
+    if (!match) throw new Error("Date must use YYYY-MM-DD, YYYY/MM/DD, or DD/MM/YYYY");
     day = Number(match[1]);
     month = Number(match[2]);
     year = Number(match[3]);

@@ -16,6 +16,10 @@
 - **Bank statement imports:** Added masked tenant bank accounts and generic CSV
   preview/import with exact signed amounts, date validation, deterministic
   duplicate prevention and an explicitly unreviewed, non-posting bank feed.
+- **Bank CSV compatibility:** The review-first bank-statement importer now
+  recognises common statement headers for value/posting dates, transaction
+  details, debit/credit amounts, DR/CR and reference numbers. It remains a
+  generic compatibility layer, not a certified bank integration.
 - **Bank invoice matching:** Added reviewed matching from positive bank lines
   to open invoices, including exact, one-invoice partial payments, and reviewed
   split allocation across multiple invoices, with permission checks, payment
