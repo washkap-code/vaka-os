@@ -74,6 +74,9 @@
 - **Secure invoice sharing:** Added expiring, revocable one-invoice PDF links
   with opaque stored-hash tokens, public download isolation, and full create,
   open and revoke audit evidence.
+- **Manual invoice delivery:** Authorised users can now open their own email
+  client or WhatsApp share screen with a fresh secure invoice link. This is a
+  user-controlled fallback, not provider-managed delivery confirmation.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download
