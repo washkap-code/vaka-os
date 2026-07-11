@@ -105,6 +105,10 @@
   images/PDFs, add an optional review note, and mark evidence reviewed or
   rejected. Decisions are tenant-scoped and audit logged; no OCR or business
   record is created automatically.
+- **Capture evidence protection:** New mobile captures are encrypted with
+  authenticated AES-256-GCM before database storage, while legacy plaintext
+  rows remain readable for controlled migration. Dedicated object storage,
+  malware scanning, and retention controls remain follow-on work.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

@@ -36,6 +36,7 @@ import {
   matchBankTransactionToInvoice, matchBankTransactionsAsTransfer, matchBankTransactionToInvoices,
   postBankTransactionFee,
 } from "./bank-reconciliation.js";
+import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -328,7 +329,7 @@ api.get("/captures/:id", requirePermission("imports.create"), wrap(async (req) =
     eq(schema.captureDocuments.tenantId, tenantId(req)),
   ));
   if (!capture) throw notFound("Capture not found");
-  return capture;
+  return { ...capture, dataUrl: revealCaptureDataUrl(capture.dataUrl) };
 }));
 api.post("/captures/:id/review", requirePermission("imports.approve"), wrap(async (req) => {
   const body = z.object({
@@ -370,7 +371,7 @@ api.post("/captures", requirePermission("imports.create"), wrap(async (req) => {
   const [capture] = await db.insert(schema.captureDocuments).values({
     tenantId: tid, createdBy: req.auth!.userId, documentType: body.documentType,
     fileName, mediaType: parsed.mediaType, byteSize: parsed.bytes.length,
-    dataUrl: body.dataUrl, status: "CAPTURED",
+    dataUrl: protectCaptureDataUrl(body.dataUrl), status: "CAPTURED",
   }).returning({
     id: schema.captureDocuments.id, documentType: schema.captureDocuments.documentType,
     fileName: schema.captureDocuments.fileName, mediaType: schema.captureDocuments.mediaType,
