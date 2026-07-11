@@ -39,6 +39,28 @@ every request.
 handler that never leaks internals, security headers, JSON body limits,
 parameterised queries throughout (no string-built SQL).
 
+**Transport hardening** (`server/src/security.ts`) — strict header set on every
+response (nosniff, DENY framing, HSTS, COOP/CORP same-origin, restrictive
+Permissions-Policy); production CORS is an explicit `ALLOWED_ORIGINS` allowlist
+(same-origin only when unset — no reflected origins in production); in-app
+rate limiting on credential endpoints (login 20/5min, signup 10/10min per IP)
+and public document links (60/min per IP) with `Retry-After` responses.
+Per-process windows: add an edge/CDN limiter when scaling horizontally.
+
+**Ransomware / data-hostage resistance** — the design assumptions that limit
+blast radius: append-only ledgers and immutable audit history (tampering is
+evident); encrypted capture payloads at rest with a dedicated key
+(`CAPTURE_ENCRYPTION_KEY`); secrets never committed (placeholder values are
+rejected at boot in production); off-site encrypted backups with documented
+restore drills (see `docs/03-backup-disaster-recovery.md`); tenant data export
+available in every account state, so recovery never depends on one system.
+
+**IP protection** — the platform's defensible assets are version-controlled:
+the constitution, ontology and knowledge system (`knowledge-system/`), the
+platform kernel contracts, and the audit/parity test suite. Repository access
+is private; contributor licensing is covered in `knowledge-system/LICENSE.md`;
+trademark/copyright registration steps are tracked in the roadmap.
+
 ## Client protection = Jonomi protection (the liability design)
 
 The features that protect the client's business are the same ones that protect
@@ -60,4 +82,9 @@ Jonomi from claims:
 - The default chart of accounts and 15% VAT default require professional review.
 - Dunning events are recorded but delivery (SMS/WhatsApp/email) needs a gateway
   integration — reminders that never arrive undermine the fairness of suspension.
-- Rate limiting and WAF are deployment-level (see deployment doc), not in-app.
+- In-app rate limiting now covers credential and public-link endpoints; a WAF
+  and shared (multi-instance) rate limiting remain deployment-level concerns
+  (see deployment doc).
+- Set `ALLOWED_ORIGINS` in every production environment; without it the API is
+  same-origin only, which is safe but will block legitimate cross-origin web
+  clients until configured.
