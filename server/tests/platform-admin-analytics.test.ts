@@ -21,6 +21,14 @@ describe("platform admin analytics", () => {
     expect(analytics.body).toHaveProperty("activity");
     expect(JSON.stringify(analytics.body)).not.toContain("passwordHash");
 
+    const controlCenter = await request(app).get("/api/v1/platform/control-center").set(adminAuth);
+    expect(controlCenter.status).toBe(200);
+    expect(controlCenter.body.architecture.status).toBe("ACTIVE");
+    expect(controlCenter.body.runtime.database.status).toBe("operational");
+    expect(controlCenter.body).toHaveProperty("signals");
+    expect(controlCenter.body).toHaveProperty("catalogue");
+    expect(JSON.stringify(controlCenter.body)).not.toContain("passwordHash");
+
     const tenant = await request(app).post("/api/v1/auth/signup").send({
       companyName: "Analytics Boundary Test",
       subdomain: `analytics${Date.now().toString(36)}`.slice(0, 31),
@@ -34,5 +42,8 @@ describe("platform admin analytics", () => {
     const denied = await request(app).get("/api/v1/platform/analytics")
       .set({ Authorization: `Bearer ${tenant.body.token}` });
     expect(denied.status).toBe(403);
+    const controlCenterDenied = await request(app).get("/api/v1/platform/control-center")
+      .set({ Authorization: `Bearer ${tenant.body.token}` });
+    expect(controlCenterDenied.status).toBe(403);
   });
 });

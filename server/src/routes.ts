@@ -37,6 +37,7 @@ import {
   postBankTransactionFee,
 } from "./bank-reconciliation.js";
 import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.js";
+import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1135,6 +1136,34 @@ api.get("/platform/analytics", requirePlatformAdmin as any, wrap(async () => {
     billing: (billing as any).rows,
     activity: (activity as any).rows,
   };
+}));
+api.get("/platform/control-center", requirePlatformAdmin as any, wrap(async () => {
+  type ControlCenterRow = {
+    database_observed_at: string;
+    active_sessions: number;
+    audit_events_24h: number;
+    past_due_tenants: number;
+    suspended_tenants: number;
+  };
+  const result = await db.execute(sql`
+    SELECT
+      TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS database_observed_at,
+      (SELECT COUNT(*)::int FROM user_sessions s
+        WHERE s.tenant_id IS NOT NULL AND s.revoked_at IS NULL
+          AND s.idle_expires_at > NOW() AND s.absolute_expires_at > NOW()) AS active_sessions,
+      (SELECT COUNT(*)::int FROM audit_logs a
+        WHERE a.created_at >= NOW() - INTERVAL '24 hours') AS audit_events_24h,
+      (SELECT COUNT(*)::int FROM tenants t WHERE t.status = 'PAST_DUE') AS past_due_tenants,
+      (SELECT COUNT(*)::int FROM tenants t WHERE t.status = 'SUSPENDED') AS suspended_tenants`);
+  const [row] = (result as unknown as { rows: ControlCenterRow[] }).rows;
+  if (!row) throw new Error("Control centre did not return an operational snapshot");
+  return buildControlCenterSnapshot({
+    databaseObservedAt: row.database_observed_at,
+    activeSessions: row.active_sessions,
+    auditEvents24h: row.audit_events_24h,
+    pastDueTenants: row.past_due_tenants,
+    suspendedTenants: row.suspended_tenants,
+  });
 }));
 api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (req) => {
   const body = z.object({

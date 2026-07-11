@@ -1,6 +1,6 @@
 # P1-003 — First call-site migration to kernel services
 
-**Status:** In progress
+**Status:** Implemented — verification partial
 **Programme:** 1 — Platform
 **Type:** Infrastructure (migration, zero behaviour change)
 **Depends on:** P1-002 (merged)
@@ -26,6 +26,10 @@ Scope is deliberately tiny: introduce a **kernel-backed audit facade** that othe
 
 - Typecheck + full suite pass; new facade test passes.
 - Zero production behaviour change.
+
+The full-suite criterion remains open until the database-backed suite runs in
+an approved test database. Focused platform verification has passed; see
+`COMPLETION.md` for the exact evidence and environment limitation.
 
 ## Rollback
 

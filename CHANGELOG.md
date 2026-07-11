@@ -4,6 +4,16 @@
 
 ### Added
 
+- **Super Admin control centre (OPS-010):** Added a platform-admin-only
+  Operations surface, Architecture Freeze status catalogue, privacy-minimised
+  runtime signals, explicit billing confirmation, tenant audit review and a
+  searchable in-product Super Admin User Guide. Focused and browser
+  verification passed; full server suite remains blocked by local database
+  environment setup and is not recorded as passed.
+- **VAKA Architecture Freeze and master blueprint:** Added the governed
+  24-book master programme blueprint, Architecture Freeze register,
+  programme-office registers, mission sequencing, ADRs, ontology/CIM/data
+  dictionary registers, consolidated Markdown source and verified PDF output.
 - **Country Pack engine (P2-001):** Declarative `CountryPack` contract
   (currencies with customer-facing labels, effective-dated VAT rates and
   treatments, statutory identifier fields, compliance calendar) under

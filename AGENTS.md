@@ -60,7 +60,7 @@ Every feature must be outcome-driven, not feature-driven. Before implementation,
 
 ## Authoritative Finance Rule
 
-The VAKA Finance & Accounting Intelligence Architecture is the authoritative source of truth for all accounting, ledger, tax, currency, reporting, AI finance, and compliance work.
+The [VAKA Finance & Accounting Intelligence Architecture](docs/06-master-programme-blueprint/books/08-finance-and-accounting/README.md) is the authoritative source of truth for all accounting, ledger, tax, currency, reporting, AI finance, and compliance work.
 
 Do not create or modify accounting behaviour that conflicts with it.
 
