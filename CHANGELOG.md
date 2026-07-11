@@ -90,6 +90,9 @@
 - **Owner team access:** Owners can now create non-owner members with an
   auditable one-time temporary password, choose a tenant role, and disable or
   re-enable access; disabling a member revokes active sessions.
+- **Platform analytics:** The platform-admin console now includes aggregate
+  tenant lifecycle, plan mix, user/session, growth, subscription billing and
+  recent activity metrics without exposing routine tenant business records.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download
