@@ -470,6 +470,8 @@ function ImportCenter({
   const [busy, setBusy] = useState(false);
   const [logoData, setLogoData] = useState<string | null>(null);
   const copy = appEnglish.imports;
+  const [captureType, setCaptureType] = useState<"INVOICE" | "RECEIPT" | "CONTACT" | "OTHER">("INVOICE");
+  const [captures, reloadCaptures] = useLoad(() => api("/captures"));
 
   const loadBankAccounts = async () => {
     try {
@@ -796,6 +798,46 @@ function ImportCenter({
     setBusy(false);
   };
 
+  const readCaptureData = (blob: Blob) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error(copy.captureFailed));
+    reader.readAsDataURL(blob);
+  });
+
+  const prepareCapture = async (file: File) => {
+    if (file.type.startsWith("image/") && file.size > 1_200_000 && "createImageBitmap" in window) {
+      const bitmap = await createImageBitmap(file);
+      const maxDimension = 1600;
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const compressed = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((value) => value ? resolve(value) : reject(new Error(copy.captureFailed)), "image/jpeg", 0.72);
+      });
+      return { dataUrl: await readCaptureData(compressed), fileName: `${file.name.replace(/\.[^.]+$/, "")}.jpg` };
+    }
+    return { dataUrl: await readCaptureData(file), fileName: file.name };
+  };
+
+  const captureFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const prepared = await prepareCapture(file);
+      await api("/captures", { method: "POST", body: { documentType: captureType, ...prepared } });
+      setMessage(copy.captureReady);
+      reloadCaptures();
+      event.target.value = "";
+    } catch (error: any) { setMessage(error.message || copy.captureFailed); }
+    setBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -856,6 +898,18 @@ function ImportCenter({
 
   return (<>
     <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
+    <div className="panel">
+      <h2>{copy.captureTitle}</h2>
+      <p className="sub">{copy.captureHelp}</p>
+      <div className="grid2">
+        <div className="field"><label htmlFor="capture-type">{copy.captureType}</label><select id="capture-type" value={captureType} disabled={busy || readonly} onChange={(event) => setCaptureType(event.target.value as typeof captureType)}>
+          <option value="INVOICE">{copy.captureInvoice}</option><option value="RECEIPT">{copy.captureReceipt}</option><option value="CONTACT">{copy.captureContact}</option><option value="OTHER">{copy.captureOther}</option>
+        </select></div>
+        <div className="field"><label htmlFor="capture-file">{copy.captureFile}</label><input id="capture-file" type="file" accept="image/*,application/pdf" capture="environment" disabled={busy || readonly} onChange={captureFile} /></div>
+      </div>
+      <h3>{copy.captureListTitle}</h3>
+      {!captures?.length ? <p className="sub">{copy.captureNone}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.captureType}</th><th>{copy.fileName}</th><th>{copy.status}</th><th>{copy.createdAt}</th><th className="num">{copy.captureBytes}</th></tr></thead><tbody>{captures.map((capture: any) => <tr key={capture.id}><td>{capture.documentType}</td><td>{capture.fileName}</td><td>{capture.status}</td><td>{new Date(capture.createdAt).toLocaleString()}</td><td className="num">{capture.byteSize}</td></tr>)}</tbody></table></div>}
+    </div>
     <div className="panel">
       <div className="field">
         <label htmlFor="import-type">{copy.importType}</label>

@@ -163,7 +163,7 @@ Never send secrets, unnecessary personal data, or cross-tenant information to an
 
 Inspection on 2026-07-04 found a TypeScript/Express/PostgreSQL backend and React/Vite frontend with tenant scoping, RBAC, audit logs, append-only ledgers, transactional business workflows, USD/ZWG support, white-label branding, and critical-path tests.
 
-It also found no complete English/Shona/Ndebele localisation framework, no implemented VAKA AI layer, and only partial evidence of mobile responsiveness. The repository now has a first server-side session/presence foundation and an owner-only Users & Activity view, but refresh-token rotation, MFA, explicit owner identity, and complete activity coverage remain incomplete. Treat planned capabilities as requiring design and implementation—not completed features. Validate repository state again before acting because the code may have changed.
+It also found no complete English/Shona/Ndebele localisation framework, no implemented VAKA AI layer, and only partial evidence of mobile responsiveness. The repository now has a PWA installability/static-shell foundation, a camera-friendly capture inbox, and server-side session/presence controls, but native apps, encrypted offline sync, OCR, refresh-token rotation, MFA, explicit owner identity, and complete activity coverage remain incomplete. Treat planned capabilities as requiring design and implementation—not completed features. Validate repository state again before acting because the code may have changed.
 
 ## Verification
 
