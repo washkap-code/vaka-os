@@ -22,6 +22,12 @@ describe("mobile document capture intake", () => {
     const detail = await request(app).get(`/api/v1/captures/${created.body.id}`).set(tenant.auth);
     expect(detail.status).toBe(200);
     expect(detail.body.dataUrl).toBe(png);
+    const reviewed = await request(app).post(`/api/v1/captures/${created.body.id}/review`).set(tenant.auth)
+      .send({ status: "REVIEWED", note: "Readable source evidence." });
+    expect(reviewed.status).toBe(200);
+    expect(reviewed.body.status).toBe("REVIEWED");
+    const reviewedList = await request(app).get("/api/v1/captures").set(tenant.auth);
+    expect(reviewedList.body[0]).toMatchObject({ status: "REVIEWED", reviewNote: "Readable source evidence." });
 
     const other = await signupFinanceTenant("capture-other");
     const otherList = await request(app).get("/api/v1/captures").set(other.auth);
@@ -31,5 +37,12 @@ describe("mobile document capture intake", () => {
       documentType: "OTHER", fileName: "unsafe.txt", dataUrl: "data:text/plain;base64,SGk=",
     });
     expect(invalid.status).toBe(400);
+    const second = await request(app).post("/api/v1/captures").set(tenant.auth).send({
+      documentType: "OTHER", fileName: "second.png", dataUrl: png,
+    });
+    expect(second.status).toBe(200);
+    const crossReview = await request(app).post(`/api/v1/captures/${second.body.id}/review`).set(other.auth)
+      .send({ status: "REJECTED" });
+    expect(crossReview.status).toBe(404);
   });
 });
