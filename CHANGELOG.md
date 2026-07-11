@@ -101,6 +101,10 @@
   tenant-scoped capture inbox for PNG, JPEG and PDF invoices, receipts and
   contact documents. Captures are validated, attributed and audited; OCR and
   business posting remain explicit future review steps.
+- **Mobile capture review:** Authorised import approvers can now open captured
+  images/PDFs, add an optional review note, and mark evidence reviewed or
+  rejected. Decisions are tenant-scoped and audit logged; no OCR or business
+  record is created automatically.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

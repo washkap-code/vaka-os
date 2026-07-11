@@ -133,6 +133,9 @@ export const captureDocuments = pgTable("capture_documents", {
   byteSize: integer("byte_size").notNull(),
   dataUrl: text("data_url").notNull(),
   status: text("status").default("CAPTURED").notNull(),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewNote: text("review_note"),
   createdAt: createdAt(),
 }, (t) => [
   index("capture_documents_tenant_time").on(t.tenantId, t.createdAt),

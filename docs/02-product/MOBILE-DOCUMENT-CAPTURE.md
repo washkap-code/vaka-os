@@ -1,6 +1,6 @@
 # VAKA Mobile Document Capture
 
-**Status:** Capture inbox foundation implemented; OCR and posting workflows remain planned.
+**Status:** Capture inbox and human review workflow implemented; OCR and posting workflows remain planned.
 
 ## Outcome
 
@@ -17,8 +17,13 @@ for later review.
   logged, and shown in a recent capture inbox.
 - The original data is retrievable only through an authenticated,
   tenant-scoped endpoint.
-- Captures remain `CAPTURED`; no OCR, AI extraction, invoice creation,
-  accounting posting, stock movement or contact creation is claimed.
+- An authorised reviewer can open the original image/PDF, add an optional
+  review note, and mark the evidence `REVIEWED` or `REJECTED`. Review decisions
+  record the reviewer, timestamp, note, and an audit event; tenant boundaries
+  are enforced on both the preview and review write.
+- No OCR, AI extraction, invoice creation, accounting posting, stock movement
+  or contact creation is claimed. Review is a human evidence-quality decision,
+  not business-record creation.
 
 ## Next controlled phases
 

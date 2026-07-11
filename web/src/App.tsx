@@ -472,6 +472,20 @@ function ImportCenter({
   const copy = appEnglish.imports;
   const [captureType, setCaptureType] = useState<"INVOICE" | "RECEIPT" | "CONTACT" | "OTHER">("INVOICE");
   const [captures, reloadCaptures] = useLoad(() => api("/captures"));
+  const [selectedCapture, setSelectedCapture] = useState<any>(null);
+  const [captureNote, setCaptureNote] = useState("");
+  const [captureReviewBusy, setCaptureReviewBusy] = useState(false);
+  const captureTypeLabel = (type: string) => ({
+    INVOICE: copy.captureInvoice,
+    RECEIPT: copy.captureReceipt,
+    CONTACT: copy.captureContact,
+    OTHER: copy.captureOther,
+  }[type] ?? type);
+  const captureStatusLabel = (status: string) => ({
+    CAPTURED: copy.captureCaptured,
+    REVIEWED: copy.captureStatusReviewed,
+    REJECTED: copy.captureStatusRejected,
+  }[status] ?? copy.captureStatusUnknown);
 
   const loadBankAccounts = async () => {
     try {
@@ -838,6 +852,28 @@ function ImportCenter({
     setBusy(false);
   };
 
+  const openCapture = async (captureId: string) => {
+    setCaptureReviewBusy(true);
+    try {
+      const detail = await api(`/captures/${captureId}`);
+      setSelectedCapture(detail);
+      setCaptureNote(detail.reviewNote ?? "");
+    } catch (error: any) { setMessage(error.message); }
+    setCaptureReviewBusy(false);
+  };
+
+  const reviewCapture = async (status: "REVIEWED" | "REJECTED") => {
+    if (!selectedCapture) return;
+    setCaptureReviewBusy(true);
+    try {
+      await api(`/captures/${selectedCapture.id}/review`, { method: "POST", body: { status, note: captureNote || undefined } });
+      setMessage(status === "REVIEWED" ? copy.captureReviewed : copy.captureRejected);
+      setSelectedCapture(null);
+      reloadCaptures();
+    } catch (error: any) { setMessage(error.message || copy.captureReviewFailed); }
+    setCaptureReviewBusy(false);
+  };
+
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
@@ -908,8 +944,15 @@ function ImportCenter({
         <div className="field"><label htmlFor="capture-file">{copy.captureFile}</label><input id="capture-file" type="file" accept="image/*,application/pdf" capture="environment" disabled={busy || readonly} onChange={captureFile} /></div>
       </div>
       <h3>{copy.captureListTitle}</h3>
-      {!captures?.length ? <p className="sub">{copy.captureNone}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.captureType}</th><th>{copy.fileName}</th><th>{copy.status}</th><th>{copy.createdAt}</th><th className="num">{copy.captureBytes}</th></tr></thead><tbody>{captures.map((capture: any) => <tr key={capture.id}><td>{capture.documentType}</td><td>{capture.fileName}</td><td>{capture.status}</td><td>{new Date(capture.createdAt).toLocaleString()}</td><td className="num">{capture.byteSize}</td></tr>)}</tbody></table></div>}
+      {!captures?.length ? <p className="sub">{copy.captureNone}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.captureType}</th><th>{copy.fileName}</th><th>{copy.status}</th><th>{copy.createdAt}</th><th className="num">{copy.captureBytes}</th><th /></tr></thead><tbody>{captures.map((capture: any) => <tr key={capture.id}><td>{captureTypeLabel(capture.documentType)}</td><td>{capture.fileName}</td><td>{captureStatusLabel(capture.status)}</td><td>{new Date(capture.createdAt).toLocaleString()}</td><td className="num">{capture.byteSize}</td><td><button type="button" className="btn ghost sm" disabled={captureReviewBusy} onClick={() => openCapture(capture.id)}>{copy.captureOpen}</button></td></tr>)}</tbody></table></div>}
     </div>
+    {selectedCapture && <div className="modalbg" role="presentation" onClick={() => setSelectedCapture(null)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="capture-review-title" onClick={(event) => event.stopPropagation()}>
+      <h2 id="capture-review-title">{copy.captureReviewTitle}</h2>
+      <p className="sub">{copy.captureReviewHelp}</p>
+      {selectedCapture.mediaType.startsWith("image/") ? <img src={selectedCapture.dataUrl} alt={selectedCapture.fileName} style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain" }} /> : <iframe src={selectedCapture.dataUrl} title={copy.capturePreviewTitle} style={{ width: "100%", height: 420, border: "1px solid var(--line)" }} />}
+      <div className="field"><label htmlFor="capture-review-note">{copy.captureReviewNote}</label><textarea id="capture-review-note" value={captureNote} onChange={(event) => setCaptureNote(event.target.value)} disabled={captureReviewBusy} /></div>
+      <div className="row end"><button className="btn ghost" onClick={() => setSelectedCapture(null)}>{copy.captureClose}</button>{selectedCapture.status === "CAPTURED" && canApprove && !readonly && <><button className="btn ghost" disabled={captureReviewBusy} onClick={() => reviewCapture("REJECTED")}>{copy.captureReject}</button><button className="btn accent" disabled={captureReviewBusy} onClick={() => reviewCapture("REVIEWED")}>{copy.captureReview}</button></>}</div>
+    </div></div>}
     <div className="panel">
       <div className="field">
         <label htmlFor="import-type">{copy.importType}</label>

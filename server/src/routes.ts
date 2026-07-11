@@ -317,7 +317,9 @@ api.get("/captures", requirePermission("imports.create"), wrap(async (req) =>
     id: schema.captureDocuments.id, documentType: schema.captureDocuments.documentType,
     fileName: schema.captureDocuments.fileName, mediaType: schema.captureDocuments.mediaType,
     byteSize: schema.captureDocuments.byteSize, status: schema.captureDocuments.status,
-    createdBy: schema.captureDocuments.createdBy, createdAt: schema.captureDocuments.createdAt,
+    createdBy: schema.captureDocuments.createdBy, reviewedBy: schema.captureDocuments.reviewedBy,
+    reviewedAt: schema.captureDocuments.reviewedAt, reviewNote: schema.captureDocuments.reviewNote,
+    createdAt: schema.captureDocuments.createdAt,
   }).from(schema.captureDocuments).where(eq(schema.captureDocuments.tenantId, tenantId(req)))
     .orderBy(desc(schema.captureDocuments.createdAt)).limit(50)));
 api.get("/captures/:id", requirePermission("imports.create"), wrap(async (req) => {
@@ -327,6 +329,34 @@ api.get("/captures/:id", requirePermission("imports.create"), wrap(async (req) =
   ));
   if (!capture) throw notFound("Capture not found");
   return capture;
+}));
+api.post("/captures/:id/review", requirePermission("imports.approve"), wrap(async (req) => {
+  const body = z.object({
+    status: z.enum(["REVIEWED", "REJECTED"]),
+    note: z.string().trim().max(1000).optional().nullable(),
+  }).parse(req.body ?? {});
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [capture] = await tx.update(schema.captureDocuments).set({
+      status: body.status,
+      reviewedBy: req.auth!.userId,
+      reviewedAt: new Date(),
+      reviewNote: body.note ?? null,
+    }).where(and(
+      eq(schema.captureDocuments.id, routeParam(req, "id")),
+      eq(schema.captureDocuments.tenantId, tid),
+      eq(schema.captureDocuments.status, "CAPTURED"),
+    )).returning({
+      id: schema.captureDocuments.id, status: schema.captureDocuments.status,
+      reviewedBy: schema.captureDocuments.reviewedBy, reviewedAt: schema.captureDocuments.reviewedAt,
+      reviewNote: schema.captureDocuments.reviewNote,
+    });
+    if (!capture) throw notFound("Capture not found or already reviewed");
+    await audit(tx, tid, req.auth!.userId, `capture.${body.status.toLowerCase()}`, "capture_document", capture.id, {
+      status: body.status, noteProvided: Boolean(body.note),
+    });
+    return capture;
+  });
 }));
 api.post("/captures", requirePermission("imports.create"), wrap(async (req) => {
   const body = z.object({
