@@ -18,6 +18,9 @@ import { AuditService } from "./platform/audit/service.js";
 import { createAuditSink, type AuditRowWriter } from "./platform/audit/adapters/audit-sink.js";
 import { IdentityService } from "./platform/identity/service.js";
 import { identityServiceForAuth, type AuthSnapshot } from "./platform/identity/adapters/auth-context.js";
+import { LocalisationService } from "./platform/localisation/service.js";
+import type { CountryPack } from "./platform/localisation/types.js";
+import { ZIMBABWE } from "./countries/zw.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -30,9 +33,17 @@ export const AUDIT_SERVICE: ServiceToken<AuditService> =
 export const IDENTITY_FACTORY: ServiceToken<RequestIdentityFactory> =
   createServiceToken("platform.identity.request-factory");
 
+export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
+  createServiceToken("platform.localisation.service");
+
+/** Country packs registered by default. Zimbabwe is the launch market. */
+export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
+
 export interface PlatformKernelOptions {
   /** Override the audit writer (tests). Defaults to the application database. */
   auditWriter?: AuditRowWriter;
+  /** Override the registered country packs (tests). Defaults to DEFAULT_COUNTRY_PACKS. */
+  countryPacks?: readonly CountryPack[];
 }
 
 /**
@@ -55,6 +66,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   kernel.container.registerValue<RequestIdentityFactory>(IDENTITY_FACTORY, {
     for: (auth) => identityServiceForAuth(auth),
   });
+
+  const countryPacks = options.countryPacks ?? DEFAULT_COUNTRY_PACKS;
+  kernel.container.registerFactory(LOCALISATION_SERVICE, () =>
+    new LocalisationService(countryPacks),
+  );
 
   return kernel;
 }

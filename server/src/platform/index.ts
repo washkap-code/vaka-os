@@ -8,6 +8,7 @@ export * as container from "./container/index.js";
 export * as documents from "./documents/index.js";
 export * as events from "./events/index.js";
 export * as identity from "./identity/index.js";
+export * as localisation from "./localisation/index.js";
 export * as metadata from "./metadata/index.js";
 export * as notifications from "./notifications/index.js";
 export * as search from "./search/index.js";
