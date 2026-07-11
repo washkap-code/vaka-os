@@ -24,6 +24,7 @@ rewrite and not a claim that every service is live in production.
 | `search` | tenant- and actor-scoped discovery | injected provider contract |
 | `metadata` | extensible typed entity metadata | injected provider contract |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
+| `types` | reusable type helpers and tenant-scope assertions | small contract utility |
 | `container` | explicit constructor dependency injection | memoised value/factory container |
 
 Every namespace contains `README.md`, `index.ts`, `interfaces.ts`, `types.ts`,

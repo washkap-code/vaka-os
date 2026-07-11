@@ -1,6 +1,6 @@
 import { ServiceContainer } from "./container/service.js";
 import type { ServiceContainerContract } from "./container/interfaces.js";
-import { PLATFORM_KERNEL_VERSION } from "./types.js";
+import { PLATFORM_KERNEL_VERSION } from "./kernel-types.js";
 import type { PlatformKernelContract } from "./interfaces.js";
 import type { PlatformKernelVersion } from "./platform-types.js";
 
