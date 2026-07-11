@@ -121,6 +121,24 @@ export const importRows = pgTable("import_rows", {
   createdRecordId: uuid("created_record_id"),
 }, (t) => [uniqueIndex("import_batch_row").on(t.batchId, t.rowNumber)]);
 
+// Mobile/PWA captures are immutable intake evidence. OCR, classification and
+// any financial or inventory posting happen later through reviewed workflows.
+export const captureDocuments = pgTable("capture_documents", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  documentType: text("document_type").notNull(), // INVOICE | RECEIPT | CONTACT | OTHER
+  fileName: text("file_name").notNull(),
+  mediaType: text("media_type").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  dataUrl: text("data_url").notNull(),
+  status: text("status").default("CAPTURED").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  index("capture_documents_tenant_time").on(t.tenantId, t.createdAt),
+  index("capture_documents_tenant_status").on(t.tenantId, t.status),
+]);
+
 export const roles = pgTable("roles", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

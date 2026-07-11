@@ -97,6 +97,10 @@
   manifest, install metadata, branded install artwork and a static-shell
   service worker. API and business writes remain network-authoritative until
   the native/offline sync layer is built.
+- **Mobile document capture:** Imports now provide a camera-friendly,
+  tenant-scoped capture inbox for PNG, JPEG and PDF invoices, receipts and
+  contact documents. Captures are validated, attributed and audited; OCR and
+  business posting remain explicit future review steps.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

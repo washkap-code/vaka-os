@@ -296,6 +296,64 @@ api.post("/settings/logo", requirePermission("settings.manage"), wrap(async (req
 }));
 
 // ---------------------------------------------------------------------------
+// Mobile/PWA document capture — intake evidence only; no OCR or posting.
+// ---------------------------------------------------------------------------
+const captureDocumentType = z.enum(["INVOICE", "RECEIPT", "CONTACT", "OTHER"]);
+const captureDataUrl = (value: string) => {
+  const match = /^data:(image\/png|image\/jpeg|application\/pdf);base64,([A-Za-z0-9+/=]+)$/.exec(value);
+  if (!match) throw badRequest("Capture must be a PNG, JPEG or PDF data URL");
+  const bytes = Buffer.from(match[2], "base64");
+  if (!bytes.length || bytes.length > 1_500_000) throw badRequest("Capture must be smaller than 1.5 MB");
+  const validSignature = match[1] === "image/png"
+    ? bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    : match[1] === "image/jpeg"
+      ? bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+      : bytes.subarray(0, 5).toString("ascii") === "%PDF-";
+  if (!validSignature) throw badRequest("Capture file signature is invalid");
+  return { mediaType: match[1], bytes };
+};
+api.get("/captures", requirePermission("imports.create"), wrap(async (req) =>
+  db.select({
+    id: schema.captureDocuments.id, documentType: schema.captureDocuments.documentType,
+    fileName: schema.captureDocuments.fileName, mediaType: schema.captureDocuments.mediaType,
+    byteSize: schema.captureDocuments.byteSize, status: schema.captureDocuments.status,
+    createdBy: schema.captureDocuments.createdBy, createdAt: schema.captureDocuments.createdAt,
+  }).from(schema.captureDocuments).where(eq(schema.captureDocuments.tenantId, tenantId(req)))
+    .orderBy(desc(schema.captureDocuments.createdAt)).limit(50)));
+api.get("/captures/:id", requirePermission("imports.create"), wrap(async (req) => {
+  const [capture] = await db.select().from(schema.captureDocuments).where(and(
+    eq(schema.captureDocuments.id, routeParam(req, "id")),
+    eq(schema.captureDocuments.tenantId, tenantId(req)),
+  ));
+  if (!capture) throw notFound("Capture not found");
+  return capture;
+}));
+api.post("/captures", requirePermission("imports.create"), wrap(async (req) => {
+  const body = z.object({
+    documentType: captureDocumentType,
+    fileName: z.string().trim().min(1).max(180),
+    dataUrl: z.string().max(2_000_000),
+  }).parse(req.body);
+  const parsed = captureDataUrl(body.dataUrl);
+  const tid = tenantId(req);
+  const fileName = body.fileName.replace(/[^a-zA-Z0-9._ -]/g, "_");
+  const [capture] = await db.insert(schema.captureDocuments).values({
+    tenantId: tid, createdBy: req.auth!.userId, documentType: body.documentType,
+    fileName, mediaType: parsed.mediaType, byteSize: parsed.bytes.length,
+    dataUrl: body.dataUrl, status: "CAPTURED",
+  }).returning({
+    id: schema.captureDocuments.id, documentType: schema.captureDocuments.documentType,
+    fileName: schema.captureDocuments.fileName, mediaType: schema.captureDocuments.mediaType,
+    byteSize: schema.captureDocuments.byteSize, status: schema.captureDocuments.status,
+    createdAt: schema.captureDocuments.createdAt,
+  });
+  await audit(db, tid, req.auth!.userId, "capture.created", "capture_document", capture.id, {
+    documentType: capture.documentType, mediaType: capture.mediaType, bytes: capture.byteSize,
+  });
+  return capture;
+}));
+
+// ---------------------------------------------------------------------------
 // Self-service imports — staged preview before explicit approval
 // ---------------------------------------------------------------------------
 api.get("/imports", requirePermission("imports.create"), wrap(async (req) =>
