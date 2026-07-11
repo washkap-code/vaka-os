@@ -4,6 +4,20 @@
 
 ### Added
 
+- **Identity & Audit adapters (P1-002):** Bridged the existing authentication
+  and audit implementations to the Platform Kernel contracts. Added
+  `identityContextFromAuth`/`identityServiceForAuth` (structural, no Express
+  dependency), `toAuditLogRow`/`createAuditSink` (field-for-field parity with
+  the legacy `audit()` helper, proven by test), and a composition root
+  (`server/src/platform-runtime.ts`) exposing `AUDIT_SERVICE` and
+  `IDENTITY_FACTORY` tokens. No call sites migrated; zero behaviour change.
+- **VAKA Knowledge System (Genesis 1):** Installed the version-controlled
+  knowledge base (`knowledge-system/`) — foundation, vision, constitution,
+  business ontology, canonical information model, data dictionary, product,
+  engineering, design, AI, country/industry packs, research, roadmaps,
+  templates and governance — plus the engineering mission-pack library at
+  `docs/engineering/mission-packs/`.
+
 - **Platform Kernel Foundation (P1-001):** Added an additive
   `server/src/platform/` namespace with typed contracts and focused tests for
   identity, audit, events, workflows, notifications, documents, search,
