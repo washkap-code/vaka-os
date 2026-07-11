@@ -326,3 +326,22 @@ Significant decisions require an ADR documenting:
 - consequences.
 
 Examples include service extraction, authentication redesign, offline sync, AI provider, country-pack framework, and event infrastructure.
+
+## 18. Platform kernel foundation (P1-001)
+
+The repository now contains an additive `server/src/platform/` namespace with
+contracts for identity, audit, events, workflows, notifications, documents,
+search, metadata, shared runtime helpers, and dependency injection. These
+contracts are deliberately not wired into existing routes or business modules
+yet. The current authentication, audit, finance, document, and database
+implementations remain authoritative.
+
+Each Platform namespace has its own interfaces, types, errors, service,
+README, and focused tests. Tenant and actor scope are explicit where data or
+actions are involved. The in-memory event/workflow adapters are test
+references only; durable production events require a transactional outbox,
+idempotent consumers, retries, and dead-letter handling.
+
+Future extraction must be incremental: introduce an adapter at a composition
+root, prove parity and tenant isolation, document migration/rollback, then
+remove duplicated module infrastructure only after production evidence.
