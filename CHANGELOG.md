@@ -4,6 +4,18 @@
 
 ### Added
 
+- **Country Pack engine (P2-001):** Declarative `CountryPack` contract
+  (currencies with customer-facing labels, effective-dated VAT rates and
+  treatments, statutory identifier fields, compliance calendar) under
+  `server/src/platform/localisation/`, with the Zimbabwe reference pack
+  (USD/ZiG, 15% VAT effective-dated, ZIMRA/NSSA calendar). Registered in the
+  kernel as `LOCALISATION_SERVICE`; adding a country is pure configuration.
+- **Audit facade (P1-003):** `recordAudit()` adoption seam that records through
+  the kernel `AUDIT_SERVICE`, letting modules migrate off the legacy `audit()`
+  helper incrementally with guaranteed identical row shape.
+- **Master Build Plan:** `knowledge-system/13-roadmaps/MASTER-BUILD-PLAN.md` —
+  the full mission catalogue (programmes P1–P10) to a Zimbabwe-complete launch.
+
 - **Identity & Audit adapters (P1-002):** Bridged the existing authentication
   and audit implementations to the Platform Kernel contracts. Added
   `identityContextFromAuth`/`identityServiceForAuth` (structural, no Express
