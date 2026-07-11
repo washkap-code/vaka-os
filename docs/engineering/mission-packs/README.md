@@ -22,6 +22,8 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 |----|-------|--------|
 | P1-001 | Platform Kernel Foundation | ✅ Complete (PR #44, #45) |
 | P1-002 | Identity & Audit Adapters | ✅ Complete |
+| P1-003 | First call-site migration to kernel services | Planned |
+| P2-001 | Country Pack Engine (Zimbabwe reference) | Approved — next after P1-003 |
 
 ## Standards
 
