@@ -187,6 +187,17 @@ Do not report backup or disaster-recovery readiness from a configured job alone.
 
 The Super Admin runtime card does not perform a restore test. Review the approved backup/DR evidence and scheduled drill results separately.
 
+The Operations evidence table lists the minimum launch gates that must be proved before backup/DR readiness can be claimed:
+
+- Backup policy and retention: approved retention, encryption, segregation and tenant-export rules.
+- Automated backup execution: observable jobs, failure reporting and signed backup manifests.
+- Restore test evidence: isolated restore, integrity checks, measured recovery time and accountable sign-off.
+- RPO/RTO acceptance: approved recovery targets that have been proved through drills.
+- Disaster recovery runbook: roles, escalation, rollback, communications and decision rights.
+- Operational launch sign-off: accountable approval only after the required evidence is present.
+
+A missing or review-required evidence gate is a blocker, not a cosmetic warning.
+
 ## 16. Finance, tax and currency controls
 
 Book Eight, VAKA Finance & Accounting Intelligence Architecture, is authoritative for accounting, ledger, tax, currency, reporting and finance AI.

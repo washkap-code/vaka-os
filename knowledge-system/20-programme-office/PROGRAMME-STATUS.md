@@ -17,6 +17,7 @@
 | P9 Security/operations | accepted / partial / local and CI foundations / internal | scans, pentest, DR evidence, SLO and operations gates remain |
 | P10 Zimbabwe launch | accepted / not complete / not passed / planned | pilot, professional, security, operations and commercial gates remain |
 | OPS-010 Super Admin control centre | accepted / implemented / focused and browser verification passed / internal admin | platform-admin control centre, frozen catalogue, guide, billing confirmation and tenant audit review delivered; full suite remains environment-blocked |
+| OPS-011 Operations evidence gates | accepted / implemented / focused verification passed / internal admin | backup, restore and disaster-recovery evidence gates are visible; actual backup jobs, restore drills and DR automation remain future missions |
 | Ecosystem/expansion | accepted boundaries / largely not implemented / not run / planned | product/country/industry missions require detailed packs and gates |
 
 No status in this table overrides a more specific Completion Report or release decision.

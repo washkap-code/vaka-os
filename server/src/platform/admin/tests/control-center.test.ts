@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildControlCenterSnapshot, CONTROL_CENTER_CATALOGUE } from "../control-center.js";
+import {
+  buildControlCenterSnapshot,
+  CONTROL_CENTER_CATALOGUE,
+  OPERATIONS_EVIDENCE_GATES,
+} from "../control-center.js";
 
 const FROZEN_PRODUCTS = [
   "VAKA OS",
@@ -74,5 +78,33 @@ describe("platform control centre", () => {
     expect(serialized).not.toContain("passwordhash");
     expect(serialized).not.toContain("accesstoken");
     expect(snapshot.limitations.some((item) => item.includes("not proof"))).toBe(true);
+  });
+
+  it("exposes backup and disaster-recovery gates without claiming unrecorded evidence", () => {
+    const gateNames = OPERATIONS_EVIDENCE_GATES.map((gate) => gate.name);
+
+    expect(gateNames).toEqual([
+      "Backup policy and retention",
+      "Automated backup execution",
+      "Restore test evidence",
+      "RPO/RTO acceptance",
+      "Disaster recovery runbook",
+      "Operational launch sign-off",
+    ]);
+    expect(OPERATIONS_EVIDENCE_GATES.some((gate) => gate.state === "recorded")).toBe(false);
+
+    const snapshot = buildControlCenterSnapshot({
+      databaseObservedAt: "2026-07-11T12:00:00.000Z",
+      activeSessions: 0,
+      auditEvents24h: 0,
+      pastDueTenants: 0,
+      suspendedTenants: 0,
+    });
+
+    expect(snapshot.operationsEvidence.summary).toEqual({
+      "not-recorded": 4,
+      recorded: 0,
+      "requires-review": 2,
+    });
   });
 });

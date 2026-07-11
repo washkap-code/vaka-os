@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Operations evidence gates (OPS-011):** Added backup, restore and
+  disaster-recovery evidence gates to the platform control centre and Super
+  Admin Operations tab. Missing evidence is explicitly shown as not recorded or
+  requiring review; this does not implement backup/restore automation or claim
+  launch readiness.
 - **Super Admin control centre (OPS-010):** Added a platform-admin-only
   Operations surface, Architecture Freeze status catalogue, privacy-minimised
   runtime signals, explicit billing confirmation, tenant audit review and a

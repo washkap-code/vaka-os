@@ -2,6 +2,7 @@ export type DefinitionState = "accepted" | "captured";
 export type ImplementationState = "not-implemented" | "partial" | "implemented";
 export type VerificationState = "not-run" | "blocked-or-failed" | "passed";
 export type AvailabilityState = "planned" | "internal" | "preview" | "pilot" | "GA";
+export type OperationsEvidenceState = "not-recorded" | "recorded" | "requires-review";
 
 export type PlatformCapabilityStatus = {
   id: string;
@@ -13,6 +14,16 @@ export type PlatformCapabilityStatus = {
   verificationScope: string;
   availability: AvailabilityState;
   currentEvidence: string;
+  nextGate: string;
+};
+
+export type OperationsEvidenceGate = {
+  id: string;
+  category: "Backup" | "Restore" | "Disaster recovery" | "Operations";
+  name: string;
+  state: OperationsEvidenceState;
+  evidence: string;
+  owner: string;
   nextGate: string;
 };
 
@@ -198,6 +209,63 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
   ),
 ];
 
+export const OPERATIONS_EVIDENCE_GATES: readonly OperationsEvidenceGate[] = [
+  {
+    id: "ops.backup-policy",
+    category: "Backup",
+    name: "Backup policy and retention",
+    state: "not-recorded",
+    evidence: "No approved backup policy, retention matrix or storage segregation evidence is recorded in this repository.",
+    owner: "Platform Operations",
+    nextGate: "Approve backup policy, retention schedule, encryption requirements and tenant export obligations.",
+  },
+  {
+    id: "ops.backup-execution",
+    category: "Backup",
+    name: "Automated backup execution",
+    state: "not-recorded",
+    evidence: "No scheduled backup job, backup manifest or success/failure event stream is wired into the control centre.",
+    owner: "Platform Engineering",
+    nextGate: "Implement observable backup jobs and record signed backup manifests.",
+  },
+  {
+    id: "ops.restore-test",
+    category: "Restore",
+    name: "Restore test evidence",
+    state: "not-recorded",
+    evidence: "No successful restore drill, sampled tenant recovery or checksum reconciliation is recorded.",
+    owner: "Platform Operations",
+    nextGate: "Run a controlled restore test and attach recovery time, integrity and approval evidence.",
+  },
+  {
+    id: "ops.rpo-rto",
+    category: "Disaster recovery",
+    name: "RPO/RTO acceptance",
+    state: "requires-review",
+    evidence: "Recovery point and recovery time objectives are programme requirements, not yet accepted production evidence.",
+    owner: "Executive Sponsor",
+    nextGate: "Approve market-appropriate RPO/RTO targets and prove them through restore drills.",
+  },
+  {
+    id: "ops.dr-runbook",
+    category: "Disaster recovery",
+    name: "Disaster recovery runbook",
+    state: "not-recorded",
+    evidence: "No operator-ready DR runbook, escalation tree or rollback/communications script is linked to a release gate.",
+    owner: "Platform Operations",
+    nextGate: "Publish a tested runbook with roles, decision rights, customer communications and rollback paths.",
+  },
+  {
+    id: "ops.launch-signoff",
+    category: "Operations",
+    name: "Operational launch sign-off",
+    state: "requires-review",
+    evidence: "OPS-010 gives visibility, but backup, restore, DR and incident gates remain open before launch readiness.",
+    owner: "Programme Office",
+    nextGate: "Collect evidence for every operations gate and record an accountable launch decision.",
+  },
+];
+
 export type ControlCenterSignals = {
   databaseObservedAt: string;
   activeSessions: number;
@@ -207,6 +275,15 @@ export type ControlCenterSignals = {
 };
 
 export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
+  const evidenceSummary = OPERATIONS_EVIDENCE_GATES.reduce((acc, gate) => {
+    acc[gate.state] += 1;
+    return acc;
+  }, {
+    "not-recorded": 0,
+    recorded: 0,
+    "requires-review": 0,
+  } as Record<OperationsEvidenceState, number>);
+
   return {
     generatedAt: new Date().toISOString(),
     architecture: {
@@ -226,6 +303,10 @@ export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
       suspendedTenants: signals.suspendedTenants,
     },
     catalogue: CONTROL_CENTER_CATALOGUE,
+    operationsEvidence: {
+      summary: evidenceSummary,
+      gates: OPERATIONS_EVIDENCE_GATES,
+    },
     limitations: [
       "Operational counts are signals, not proof that backup, recovery, security, performance or launch gates have passed.",
       "Entries marked planned or not implemented are unavailable and must not be sold or represented as live.",

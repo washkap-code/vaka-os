@@ -25,6 +25,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-003 | First kernel audit adoption seam | Implemented; focused verification passed; full suite environment-blocked |
 | P2-001 | Country Pack Engine (Zimbabwe reference) | Implemented; focused verification passed; professional review/full suite open |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |
+| OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; focused/browser verification passed; full suite environment-blocked |
 
 ## Standards
 

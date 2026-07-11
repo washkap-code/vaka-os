@@ -64,6 +64,15 @@ type PlatformCapabilityStatus = {
   currentEvidence: string;
   nextGate: string;
 };
+type OperationsEvidenceGate = {
+  id: string;
+  category: string;
+  name: string;
+  state: "not-recorded" | "recorded" | "requires-review";
+  evidence: string;
+  owner: string;
+  nextGate: string;
+};
 
 type PlatformControlCenter = {
   generatedAt: string;
@@ -74,6 +83,10 @@ type PlatformControlCenter = {
   };
   signals: { activeSessions: number; auditEvents24h: number; pastDueTenants: number; suspendedTenants: number };
   catalogue: PlatformCapabilityStatus[];
+  operationsEvidence: {
+    summary: Record<OperationsEvidenceGate["state"], number>;
+    gates: OperationsEvidenceGate[];
+  };
   limitations: string[];
 };
 
@@ -322,6 +335,20 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
             <div className="table-scroll"><table className="capability-table">
               <thead><tr><th>{copy.capability}</th><th>{copy.implementation}</th><th>{copy.verification}</th><th>{copy.availability}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
               <tbody>{visibleCapabilities.map((entry) => <tr key={entry.id}><td><strong>{entry.name}</strong><small>{entry.group}</small></td><td><span className={`status-chip state-${entry.implementation}`}>{entry.implementation}</span></td><td><span className={`status-chip state-${entry.verification}`}>{entry.verification}</span><small>{entry.verificationScope}</small></td><td><span className={`status-chip state-${entry.availability}`}>{entry.availability}</span></td><td>{entry.currentEvidence}</td><td>{entry.nextGate}</td></tr>)}</tbody>
+            </table></div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.operationsEvidence}</h2><div className="sub">{copy.operationsEvidenceHelp}</div></div>
+              <div className="evidence-summary" aria-label={copy.operationsEvidenceSummary}>
+                <span><b>{controlCenter.operationsEvidence.summary["not-recorded"]}</b>{copy.notRecorded}</span>
+                <span><b>{controlCenter.operationsEvidence.summary["requires-review"]}</b>{copy.requiresReview}</span>
+                <span><b>{controlCenter.operationsEvidence.summary.recorded}</b>{copy.recorded}</span>
+              </div>
+            </div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.gate}</th><th>{copy.status}</th><th>{copy.owner}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
+              <tbody>{controlCenter.operationsEvidence.gates.map((gate) => <tr key={gate.id}><td><strong>{gate.name}</strong><small>{gate.category}</small></td><td><span className={`status-chip state-${gate.state}`}>{gate.state}</span></td><td>{gate.owner}</td><td>{gate.evidence}</td><td>{gate.nextGate}</td></tr>)}</tbody>
             </table></div>
           </div>
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
