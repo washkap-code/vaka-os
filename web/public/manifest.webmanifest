@@ -1,0 +1,18 @@
+{
+  "name": "VAKA — The Operating System for African Business",
+  "short_name": "VAKA",
+  "description": "A connected business operating system built first for Zimbabwe.",
+  "lang": "en-ZW",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F6F6F3",
+  "theme_color": "#14171F",
+  "icons": [
+    { "src": "/icons/vaka-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Open VAKA", "short_name": "Open", "url": "/", "icons": [{ "src": "/icons/vaka-mark.svg", "sizes": "any", "type": "image/svg+xml" }] }
+  ]
+}

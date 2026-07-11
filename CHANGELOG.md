@@ -93,6 +93,10 @@
 - **Platform analytics:** The platform-admin console now includes aggregate
   tenant lifecycle, plan mix, user/session, growth, subscription billing and
   recent activity metrics without exposing routine tenant business records.
+- **Mobile installability:** The responsive web app now includes a PWA
+  manifest, install metadata, branded install artwork and a static-shell
+  service worker. API and business writes remain network-authoritative until
+  the native/offline sync layer is built.
 - **Issued invoice evidence:** Issuing an invoice now captures an immutable,
   tenant-scoped versioned document snapshot of company identity, customer,
   amounts and line items. It is the foundation for future branded PDF download

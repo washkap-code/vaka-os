@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">VAKA</title>
+  <rect width="512" height="512" rx="112" fill="#14171F"/>
+  <path d="M128 130h64l64 168 64-168h64L282 382h-52z" fill="#C9A227"/>
+  <path d="M114 408h284" stroke="#F6F6F3" stroke-width="18" stroke-linecap="round" opacity=".9"/>
+</svg>
