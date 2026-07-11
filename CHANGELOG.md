@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Platform Kernel Foundation (P1-001):** Added an additive
+  `server/src/platform/` namespace with typed contracts and focused tests for
+  identity, audit, events, workflows, notifications, documents, search,
+  metadata, shared runtime helpers, and dependency injection. Existing routes,
+  APIs, authentication, schema, and ERP behaviour are unchanged.
+
 - **Self-service imports:** Added tenant-scoped contact CSV preview, row
   validation, duplicate detection, explicit approval, idempotent transactional
   commit, audit batches and a responsive Imports interface.
