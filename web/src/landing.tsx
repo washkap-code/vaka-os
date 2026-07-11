@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { HOME_EN, type HomeCopy } from "./locales/home.en";
+import { VakaLogo } from "./design-system/Logo";
 
 type LandingProps = {
   onLogin: () => void;
@@ -229,7 +230,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
       <a className="v-skip" href="#main">{copy.accessibility.skip}</a>
       <header className="v-nav">
         <button className="v-logo" onClick={() => go("top")} aria-label={copy.meta.title}>
-          VAKA<span>OS</span>
+          <VakaLogo size={30} />
         </button>
         <nav className="v-nav-links" aria-label={copy.accessibility.primaryNavigation}>
           {navigation.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}
@@ -501,7 +502,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
 
       <footer className="v-footer">
         <div className="v-footer-brand">
-          <div className="v-logo">VAKA<span>OS</span></div>
+          <div className="v-logo"><VakaLogo size={30} /></div>
           <p>{copy.footer.position}</p>
           <label htmlFor="v-language">{copy.footer.language}</label>
           <select id="v-language" value={locale} onChange={(event) => { setLocale(event.target.value as Locale); track("language_change"); }}>

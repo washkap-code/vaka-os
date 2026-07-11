@@ -44,7 +44,7 @@
 }
 
 .v-logo {
-  align-items: baseline;
+  align-items: center;
   background: none;
   border: 0;
   color: inherit;
@@ -54,7 +54,11 @@
   letter-spacing: .06em;
   width: max-content;
 }
-.v-logo span { color: var(--v-gold-bright); font-size: .52em; margin-left: 5px; letter-spacing: .08em; }
+/* Approved lockup: ink tile mark + wordmark (design-system/Logo.tsx) */
+.vaka-logo { align-items: center; display: inline-flex; gap: 11px; }
+.vaka-logo svg { border-radius: 7px; box-shadow: 0 1px 5px rgba(0, 0, 0, .35); display: block; }
+.vaka-logo-word { font-size: 1.18rem; font-weight: 850; letter-spacing: .06em; line-height: 1; }
+.vaka-logo-os { color: var(--v-gold-bright); font-size: .55em; letter-spacing: .1em; margin-left: 5px; }
 .v-nav-links { display: flex; gap: 28px; }
 .v-nav-links button, .v-text-button {
   background: none;
