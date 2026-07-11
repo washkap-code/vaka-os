@@ -1,6 +1,6 @@
 # P1-002 — Identity & Audit Adapters
 
-**Status:** In progress
+**Status:** ✅ Complete (see COMPLETION.md)
 **Programme:** 1 — Platform
 **Type:** Infrastructure (adapters, zero behaviour change)
 **Branch:** `feature/p1-002-identity-audit-adapters`
