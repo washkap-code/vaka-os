@@ -1,6 +1,6 @@
 # VAKA Mobile Document Capture
 
-**Status:** Capture inbox and human review workflow implemented; OCR and posting workflows remain planned.
+**Status:** Capture inbox, encrypted payloads, and human review workflow implemented; object storage, OCR, and posting workflows remain planned.
 
 ## Outcome
 
@@ -13,6 +13,10 @@ for later review.
 - The Imports area accepts camera or file input on mobile browsers.
 - PNG, JPEG and PDF captures are validated by media type, file signature and a
   1.5 MB decoded-size limit.
+- Newly captured payloads are encrypted with authenticated AES-256-GCM before
+  they are written to the database. Legacy plaintext rows remain readable only
+  to support a controlled migration; production should configure a dedicated
+  `CAPTURE_ENCRYPTION_KEY` and plan key rotation before object-storage cutover.
 - Captures are tenant-scoped, attributed to the authenticated user, audit
   logged, and shown in a recent capture inbox.
 - The original data is retrievable only through an authenticated,
@@ -27,8 +31,8 @@ for later review.
 
 ## Next controlled phases
 
-1. Add encrypted object storage instead of keeping capture data in the initial
-   database intake record.
+1. Add tenant-scoped encrypted object storage instead of keeping capture data
+   in the database intake record.
 2. Add malware/content scanning and retention controls.
 3. Add OCR/classification as a reviewable, confidence-scored suggestion.
 4. Require explicit user confirmation before creating contacts, invoices or

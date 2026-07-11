@@ -54,6 +54,23 @@ export function jwtSecret(env: RuntimeEnvironment = process.env): string {
   return DEVELOPMENT_JWT_SECRET;
 }
 
+/**
+ * Dedicated capture encryption material is preferred. During the migration
+ * period, the JWT secret remains a compatibility fallback so existing
+ * deployments do not stop serving captured evidence when the new field is
+ * introduced. Production environments should set CAPTURE_ENCRYPTION_KEY and
+ * rotate it only through a planned decrypt-and-re-encrypt migration.
+ */
+export function captureEncryptionSecret(env: RuntimeEnvironment = process.env): string {
+  const configured = valueOf(env, "CAPTURE_ENCRYPTION_KEY");
+  if (configured) {
+    return isProduction(env)
+      ? assertSafeSecret("CAPTURE_ENCRYPTION_KEY", configured, 32)
+      : configured;
+  }
+  return jwtSecret(env);
+}
+
 export function platformAdminPassword(
   env: RuntimeEnvironment = process.env,
 ): string {
