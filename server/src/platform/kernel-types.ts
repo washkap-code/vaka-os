@@ -10,4 +10,5 @@ export type PlatformModuleName =
   | "search"
   | "metadata"
   | "shared"
+  | "types"
   | "container";
