@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Test DB preparation now seeds reference data.** `test:db:prepare` runs the
+  plan/platform-admin seed (`src/seed.ts`) as its final step, so a freshly
+  prepared test database no longer fails tenant-signup tests with
+  "Unknown plan: Growth". Full DB-backed suite verified green: 50 files / 156
+  tests pass (see `docs/engineering/verification/2026-07-12-full-db-suite-green.md`).
+
 ### Added
 
 - **Backup job adapter (OPS-014):** Added an injected backup job adapter

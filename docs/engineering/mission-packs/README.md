@@ -22,12 +22,12 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 |----|-------|--------|
 | P1-001 | Platform Kernel Foundation | ✅ Complete (PR #44, #45) |
 | P1-002 | Identity & Audit Adapters | ✅ Complete |
-| P1-003 | First kernel audit adoption seam | Implemented; focused verification passed; full suite environment-blocked |
-| P2-001 | Country Pack Engine (Zimbabwe reference) | Implemented; focused verification passed; professional review/full suite open |
+| P1-003 | First kernel audit adoption seam | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
+| P2-001 | Country Pack Engine (Zimbabwe reference) | ✅ Implemented; full DB-backed suite verified green; professional tax review still required before VAT go-live |
 | P1-004 | Notification service adapter (email + persisted in-app) | Approved — ready to build |
 | P1-005 | Event bus: emit domain events from existing write paths | Approved — ready to build |
-| P6-006 | Platform Admin Control Centre | Implemented; full database-backed verification blocked in current sandbox |
-| P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | Implemented foundation; full database-backed verification blocked in current sandbox |
+| P6-006 | Platform Admin Control Centre | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
+| P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-012 | Backup manifest contract foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
