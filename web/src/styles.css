@@ -99,6 +99,9 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .manifest-rules ul { color: var(--muted); line-height: 1.55; padding-left: 18px; }
 .manifest-rules li { margin-bottom: 6px; }
 .state-defined-not-implemented, .state-internal-evidence, .state-sensitive-reference, .state-public-evidence { background: #EEE; color: #555; }
+.state-succeeded { background: #E2F3E7; color: var(--ok); }
+.state-failed { background: #FBE4E5; color: var(--danger); }
+.state-partial { background: #FFF3D6; color: #8A6400; }
 .guide-toolbar { align-items: end; display: flex; gap: 24px; justify-content: space-between; }
 .guide-toolbar h2 { margin-bottom: 5px; }
 .guide-toolbar p { color: var(--muted); line-height: 1.5; }

@@ -206,6 +206,8 @@ The Backup manifest contract defines the evidence shape that future backup jobs 
 - Encryption references point to approved policy or key identifiers, never key material.
 - A manifest proves backup execution evidence only; restore testing and DR readiness remain separate gates.
 
+Recent Backup Manifests shows the latest recorded manifest evidence. Treat the empty state as "no evidence recorded." Treat a succeeded manifest as backup-execution evidence only, not proof that data can be restored. Failed and partial manifests require investigation, correction and a later superseding manifest.
+
 ## 16. Finance, tax and currency controls
 
 Book Eight, VAKA Finance & Accounting Intelligence Architecture, is authoritative for accounting, ledger, tax, currency, reporting and finance AI.

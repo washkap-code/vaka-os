@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Backup manifest registry (OPS-013):** Added a platform backup-manifest
+  table, migration, platform-admin recording/listing endpoints, validation for
+  unsafe references and failed/partial reasons, platform audit evidence and a
+  Recent Backup Manifests view in Super Admin. This records evidence inputs
+  only; it does not run backups or prove restore readiness.
 - **Backup manifest contract (OPS-012):** Added a defined-not-implemented
   backup manifest evidence contract to the platform control centre and Super
   Admin Operations tab. The contract lists required future backup evidence,

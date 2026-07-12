@@ -88,6 +88,23 @@ type BackupManifestContract = {
   fields: BackupManifestField[];
   acceptanceRules: string[];
 };
+type BackupManifestRecord = {
+  id: string;
+  manifestId: string;
+  contractVersion: string;
+  environment: string;
+  startedAt: string;
+  completedAt: string;
+  status: "succeeded" | "failed" | "partial";
+  databaseSnapshotRef: string;
+  objectSnapshotRef: string | null;
+  checksum: string;
+  encryptionRef: string;
+  retentionExpiresAt: string;
+  operator: string;
+  failureReason: string | null;
+  createdAt: string;
+};
 
 type PlatformControlCenter = {
   generatedAt: string;
@@ -235,6 +252,7 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
   const [tenants, setTenants] = useState<PlatformTenant[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
   const [controlCenter, setControlCenter] = useState<PlatformControlCenter | null>(null);
+  const [backupManifests, setBackupManifests] = useState<BackupManifestRecord[]>([]);
   const [tab, setTab] = useState<"overview" | "tenants" | "operations" | "guide">("overview");
   const [catalogueGroup, setCatalogueGroup] = useState<"all" | PlatformCapabilityStatus["group"]>("all");
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
@@ -246,11 +264,13 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
     api("/platform/tenants"),
     api("/platform/analytics"),
     api("/platform/control-center"),
+    api("/platform/backup-manifests"),
   ])
-    .then(([tenantRows, summary, control]) => {
+    .then(([tenantRows, summary, control, manifests]) => {
       setTenants(tenantRows as PlatformTenant[]);
       setAnalytics(summary);
       setControlCenter(control as PlatformControlCenter);
+      setBackupManifests(manifests as BackupManifestRecord[]);
     })
     .catch((e: any) => setMsg(e.message));
   useEffect(() => { void load(); }, []);
@@ -381,6 +401,16 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
               <div><h3>{copy.acceptanceRules}</h3><ul>{controlCenter.backupManifest.acceptanceRules.map((rule) => <li key={rule}>{rule}</li>)}</ul></div>
               <div><h3>{copy.forbiddenContent}</h3><ul>{controlCenter.backupManifest.forbiddenContent.map((item) => <li key={item}>{item}</li>)}</ul></div>
             </div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.recentBackupManifests}</h2><div className="sub">{copy.recentBackupManifestsHelp}</div></div>
+            </div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.manifest}</th><th>{copy.status}</th><th>{copy.environment}</th><th>{copy.completed}</th><th>{copy.retention}</th><th>{copy.operator}</th><th>{copy.snapshotReference}</th></tr></thead>
+              <tbody>{backupManifests.map((manifest) => <tr key={manifest.id}><td><strong>{manifest.manifestId}</strong><small>{manifest.contractVersion}</small></td><td><span className={`status-chip state-${manifest.status}`}>{manifest.status}</span>{manifest.failureReason && <small>{manifest.failureReason}</small>}</td><td>{manifest.environment}</td><td>{new Date(manifest.completedAt).toLocaleString()}</td><td>{new Date(manifest.retentionExpiresAt).toLocaleDateString()}</td><td>{manifest.operator}</td><td>{manifest.databaseSnapshotRef}</td></tr>)}
+              {!backupManifests.length && <tr><td colSpan={7}>{copy.noBackupManifests}</td></tr>}</tbody>
+            </table></div>
           </div>
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </>}

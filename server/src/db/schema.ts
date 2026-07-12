@@ -97,6 +97,30 @@ export const platformAuditLogs = pgTable("platform_audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("platform_audit_time").on(t.createdAt)]);
 
+export const platformBackupManifests = pgTable("platform_backup_manifests", {
+  id: id(),
+  manifestId: text("manifest_id").notNull(),
+  contractVersion: text("contract_version").notNull(),
+  environment: text("environment").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull(),
+  status: text("status").notNull(), // succeeded | failed | partial
+  databaseSnapshotRef: text("database_snapshot_ref").notNull(),
+  objectSnapshotRef: text("object_snapshot_ref"),
+  checksum: text("checksum").notNull(),
+  encryptionRef: text("encryption_ref").notNull(),
+  retentionExpiresAt: timestamp("retention_expires_at", { withTimezone: true }).notNull(),
+  operator: text("operator").notNull(),
+  failureReason: text("failure_reason"),
+  recordedBy: uuid("recorded_by").references(() => users.id),
+  metadata: jsonb("metadata"),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("platform_backup_manifest_id").on(t.manifestId),
+  index("platform_backup_manifest_time").on(t.completedAt),
+  index("platform_backup_manifest_status").on(t.status, t.completedAt),
+]);
+
 export const importBatches = pgTable("import_batches", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

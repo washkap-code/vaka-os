@@ -38,6 +38,7 @@ import {
 } from "./bank-reconciliation.js";
 import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.js";
 import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
+import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1163,6 +1164,53 @@ api.get("/platform/control-center", requirePlatformAdmin as any, wrap(async () =
     auditEvents24h: row.audit_events_24h,
     pastDueTenants: row.past_due_tenants,
     suspendedTenants: row.suspended_tenants,
+  });
+}));
+api.get("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async () =>
+  db.select({
+    id: schema.platformBackupManifests.id,
+    manifestId: schema.platformBackupManifests.manifestId,
+    contractVersion: schema.platformBackupManifests.contractVersion,
+    environment: schema.platformBackupManifests.environment,
+    startedAt: schema.platformBackupManifests.startedAt,
+    completedAt: schema.platformBackupManifests.completedAt,
+    status: schema.platformBackupManifests.status,
+    databaseSnapshotRef: schema.platformBackupManifests.databaseSnapshotRef,
+    objectSnapshotRef: schema.platformBackupManifests.objectSnapshotRef,
+    checksum: schema.platformBackupManifests.checksum,
+    encryptionRef: schema.platformBackupManifests.encryptionRef,
+    retentionExpiresAt: schema.platformBackupManifests.retentionExpiresAt,
+    operator: schema.platformBackupManifests.operator,
+    failureReason: schema.platformBackupManifests.failureReason,
+    createdAt: schema.platformBackupManifests.createdAt,
+  }).from(schema.platformBackupManifests)
+    .orderBy(desc(schema.platformBackupManifests.completedAt))
+    .limit(50)));
+api.post("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async (req) => {
+  const body = backupManifestInputSchema.parse(req.body);
+  return db.transaction(async (tx) => {
+    const [recorded] = await tx.insert(schema.platformBackupManifests).values({
+      ...body,
+      objectSnapshotRef: body.objectSnapshotRef ?? null,
+      failureReason: body.failureReason ?? null,
+      metadata: body.metadata ?? null,
+      recordedBy: req.auth!.userId,
+    }).returning({
+      id: schema.platformBackupManifests.id,
+      manifestId: schema.platformBackupManifests.manifestId,
+      status: schema.platformBackupManifests.status,
+      completedAt: schema.platformBackupManifests.completedAt,
+    });
+    await tx.insert(schema.platformAuditLogs).values({
+      userId: req.auth!.userId,
+      action: "platform.backup_manifest_recorded",
+      metadata: {
+        manifestId: recorded.manifestId,
+        status: recorded.status,
+        completedAt: recorded.completedAt.toISOString(),
+      },
+    });
+    return recorded;
   });
 }));
 api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (req) => {
