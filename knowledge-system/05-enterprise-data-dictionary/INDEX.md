@@ -1,3 +1,5 @@
-# Index - 05-enterprise-data-dictionary
+# Enterprise Data Dictionary index
 
-Documents will be indexed here.
+- [Dictionary standard](DICTIONARY-STANDARD.md)
+- [Detailed Enterprise Data Model](../../docs/06-master-programme-blueprint/books/06-enterprise-data-model/README.md)
+- Physical baseline: `server/src/db/schema.ts`

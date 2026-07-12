@@ -2,8 +2,45 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Test DB preparation now seeds reference data.** `test:db:prepare` runs the
+  plan/platform-admin seed (`src/seed.ts`) as its final step, so a freshly
+  prepared test database no longer fails tenant-signup tests with
+  "Unknown plan: Growth". Full DB-backed suite verified green: 50 files / 156
+  tests pass (see `docs/engineering/verification/2026-07-12-full-db-suite-green.md`).
+
 ### Added
 
+- **Backup job adapter (OPS-014):** Added an injected backup job adapter
+  boundary that transforms future executor output into validated manifests,
+  rejects unsafe executor evidence and exposes adapter-ready/no-scheduler
+  status in Super Admin. This does not schedule or run backups.
+- **Backup manifest registry (OPS-013):** Added a platform backup-manifest
+  table, migration, platform-admin recording/listing endpoints, validation for
+  unsafe references and failed/partial reasons, platform audit evidence and a
+  Recent Backup Manifests view in Super Admin. This records evidence inputs
+  only; it does not run backups or prove restore readiness.
+- **Backup manifest contract (OPS-012):** Added a defined-not-implemented
+  backup manifest evidence contract to the platform control centre and Super
+  Admin Operations tab. The contract lists required future backup evidence,
+  forbidden secret content and acceptance rules without claiming backup
+  automation or restore readiness.
+- **Operations evidence gates (OPS-011):** Added backup, restore and
+  disaster-recovery evidence gates to the platform control centre and Super
+  Admin Operations tab. Missing evidence is explicitly shown as not recorded or
+  requiring review; this does not implement backup/restore automation or claim
+  launch readiness.
+- **Super Admin control centre (OPS-010):** Added a platform-admin-only
+  Operations surface, Architecture Freeze status catalogue, privacy-minimised
+  runtime signals, explicit billing confirmation, tenant audit review and a
+  searchable in-product Super Admin User Guide. Focused and browser
+  verification passed; full server suite remains blocked by local database
+  environment setup and is not recorded as passed.
+- **VAKA Architecture Freeze and master blueprint:** Added the governed
+  24-book master programme blueprint, Architecture Freeze register,
+  programme-office registers, mission sequencing, ADRs, ontology/CIM/data
+  dictionary registers, consolidated Markdown source and verified PDF output.
 - **Country Pack engine (P2-001):** Declarative `CountryPack` contract
   (currencies with customer-facing labels, effective-dated VAT rates and
   treatments, statutory identifier fields, compliance calendar) under

@@ -1,6 +1,6 @@
 # P2-001 — Country Pack Engine (Zimbabwe reference implementation)
 
-**Status:** Approved — next after P1-003
+**Status:** Implemented — verification partial
 **Programme:** 2 — Finance & Localisation
 **Type:** Infrastructure (extraction, zero behaviour change)
 **Depends on:** P1-002 (merged)
@@ -31,6 +31,11 @@ Extract Zimbabwe-specific configuration out of core modules into a declarative c
 
 - Typecheck + full suite pass; parity tests prove identical VAT/currency behaviour.
 - `knowledge-system/10-country-packs/Zimbabwe/README.md` stays in sync.
+
+The full-suite criterion remains open until the database-backed suite runs in
+an approved test database. This mission provides configuration and composition
+only; it does not change finance calculations or constitute professional tax
+approval. See `COMPLETION.md`.
 
 ## Rollback
 

@@ -54,6 +54,13 @@ This directory is the canonical home for VAKA OS foundation, brand, product, tec
   - [AI Implementation Roadmap](05-ai/AI-IMPLEMENTATION-ROADMAP.md)
   - [Business Summary Read Model](05-ai/BUSINESS-SUMMARY-READ-MODEL.md)
   - [Evaluation Harness](05-ai/EVALUATION-HARNESS.md)
+- [06 — Master Programme Blueprint](06-master-programme-blueprint/)
+  - [Blueprint overview](06-master-programme-blueprint/README.md)
+  - [Generation manifest](06-master-programme-blueprint/MANIFEST.md)
+  - [Architecture Freeze Register](06-master-programme-blueprint/00-governance/ARCHITECTURE-FREEZE-REGISTER.md)
+  - [Complete Capability Catalogue](06-master-programme-blueprint/books/05-complete-capability-catalogue/README.md)
+  - [Finance & Accounting Intelligence Architecture](06-master-programme-blueprint/books/08-finance-and-accounting/README.md)
+  - [Engineering Mission Catalogue](06-master-programme-blueprint/books/24-engineering-mission-catalogue/README.md)
 
 ## Existing operational documents
 
@@ -61,6 +68,8 @@ This directory is the canonical home for VAKA OS foundation, brand, product, tec
 - [Security and compliance](02-security-compliance.md)
 - [Backup and disaster recovery](03-backup-disaster-recovery.md)
 - [Legal templates](legal-templates/) — skeletons for qualified counsel review
+- [Finance architecture and evidence](finance/)
+- [Engineering Mission Packs](engineering/mission-packs/)
 
 ## Maintenance
 

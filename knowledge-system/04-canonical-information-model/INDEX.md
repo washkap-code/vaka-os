@@ -1,3 +1,4 @@
-# Index - 04-canonical-information-model
+# Canonical Information Model index
 
-Documents will be indexed here.
+- [Canonical model register](CANONICAL-MODEL-REGISTER.md)
+- [Detailed Enterprise Data Model](../../docs/06-master-programme-blueprint/books/06-enterprise-data-model/README.md)

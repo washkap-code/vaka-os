@@ -3,6 +3,7 @@ import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
+import { PlatformAdminGuide } from "./platform-admin-guide";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -30,6 +31,106 @@ type ArrearsStatus = {
   oldestDueAt: string | null;
   daysOverdue: number;
   amounts: Array<{ currency: string; amount: string }>;
+};
+
+type PlatformTenant = {
+  id: string;
+  company_name: string;
+  subdomain: string;
+  status: string;
+  plan: string | null;
+  user_count: number;
+  trial_ends_at: string | null;
+  created_at: string | null;
+};
+
+type PlatformAuditEvent = {
+  id: string;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  createdAt: string;
+};
+
+type PlatformCapabilityStatus = {
+  id: string;
+  group: "Frozen product" | "Platform Kernel service";
+  name: string;
+  definition: string;
+  implementation: string;
+  verification: string;
+  verificationScope: string;
+  availability: string;
+  currentEvidence: string;
+  nextGate: string;
+};
+type OperationsEvidenceGate = {
+  id: string;
+  category: string;
+  name: string;
+  state: "not-recorded" | "recorded" | "requires-review";
+  evidence: string;
+  owner: string;
+  nextGate: string;
+};
+type BackupManifestField = {
+  key: string;
+  label: string;
+  required: boolean;
+  classification: string;
+  rule: string;
+};
+type BackupManifestContract = {
+  status: "defined-not-implemented";
+  version: string;
+  purpose: string;
+  forbiddenContent: string[];
+  fields: BackupManifestField[];
+  acceptanceRules: string[];
+};
+type BackupJobAdapterStatus = {
+  status: "adapter-ready-no-scheduler";
+  scheduler: "not-configured";
+  executor: "injected";
+  storage: "external-not-bound";
+  evidenceTarget: string;
+  currentBoundary: string;
+  nextGate: string;
+};
+type BackupManifestRecord = {
+  id: string;
+  manifestId: string;
+  contractVersion: string;
+  environment: string;
+  startedAt: string;
+  completedAt: string;
+  status: "succeeded" | "failed" | "partial";
+  databaseSnapshotRef: string;
+  objectSnapshotRef: string | null;
+  checksum: string;
+  encryptionRef: string;
+  retentionExpiresAt: string;
+  operator: string;
+  failureReason: string | null;
+  createdAt: string;
+};
+
+type PlatformControlCenter = {
+  generatedAt: string;
+  architecture: { status: "ACTIVE"; effectiveOn: string; blueprintEdition: string; changeControl: string };
+  runtime: {
+    api: { status: "operational"; scope: string };
+    database: { status: "operational"; observedAt: string };
+  };
+  signals: { activeSessions: number; auditEvents24h: number; pastDueTenants: number; suspendedTenants: number };
+  catalogue: PlatformCapabilityStatus[];
+  operationsEvidence: {
+    summary: Record<OperationsEvidenceGate["state"], number>;
+    gates: OperationsEvidenceGate[];
+  };
+  backupManifest: BackupManifestContract;
+  backupJobAdapter: BackupJobAdapterStatus;
+  limitations: string[];
 };
 
 type AgeingBucketKey = "current" | "d30" | "d60" | "d90" | "d90plus";
@@ -158,30 +259,65 @@ function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: ()
 // Platform admin (Jonomi staff — users with no tenant)
 // ---------------------------------------------------------------------------
 function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
-  const [tenants, setTenants] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<PlatformTenant[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [tab, setTab] = useState<"overview" | "tenants">("overview");
+  const [controlCenter, setControlCenter] = useState<PlatformControlCenter | null>(null);
+  const [backupManifests, setBackupManifests] = useState<BackupManifestRecord[]>([]);
+  const [tab, setTab] = useState<"overview" | "tenants" | "operations" | "guide">("overview");
+  const [catalogueGroup, setCatalogueGroup] = useState<"all" | PlatformCapabilityStatus["group"]>("all");
+  const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
+  const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
-  const load = () => Promise.all([api("/platform/tenants"), api("/platform/analytics")])
-    .then(([tenantRows, summary]) => { setTenants(tenantRows); setAnalytics(summary); })
+  const load = () => Promise.all([
+    api("/platform/tenants"),
+    api("/platform/analytics"),
+    api("/platform/control-center"),
+    api("/platform/backup-manifests"),
+  ])
+    .then(([tenantRows, summary, control, manifests]) => {
+      setTenants(tenantRows as PlatformTenant[]);
+      setAnalytics(summary);
+      setControlCenter(control as PlatformControlCenter);
+      setBackupManifests(manifests as BackupManifestRecord[]);
+    })
     .catch((e: any) => setMsg(e.message));
   useEffect(() => { void load(); }, []);
   const runBilling = async () => {
+    if (!window.confirm(copy.billingConfirm)) return;
     setBusy(true); setMsg("");
     try {
       const r = await api("/platform/billing/run", { method: "POST", body: {} });
       setMsg(copy.billingComplete.replace("{result}", JSON.stringify(r)).slice(0, 400));
-      load();
+      await load();
     } catch (e: any) { setMsg(e.message); }
     setBusy(false);
   };
+  const reviewTenant = async (tenant: PlatformTenant) => {
+    setSelectedTenant(tenant);
+    setTenantAudit(null);
+    setMsg("");
+    try {
+      const events = await api(`/platform/audit/${encodeURIComponent(tenant.id)}`);
+      setTenantAudit(events as PlatformAuditEvent[]);
+    } catch (e: any) {
+      setMsg(e.message);
+      setTenantAudit([]);
+    }
+  };
+  const visibleCapabilities = controlCenter?.catalogue.filter((entry) =>
+    catalogueGroup === "all" || entry.group === catalogueGroup) ?? [];
   return (
     <div className="shell">
       <aside className="side">
         <div className="logo">VAKA OS<small>{copy.title}</small></div>
-        <nav><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button><button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button></nav>
+        <nav>
+          <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button>
+          <button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button>
+          <button className={tab === "operations" ? "active" : ""} onClick={() => setTab("operations")}>{copy.operations}</button>
+          <button className={tab === "guide" ? "active" : ""} onClick={() => setTab("guide")}>{copy.userGuide}</button>
+        </nav>
         <div className="foot">
           Jonomi Digital Studio<br />
           <a style={{ color: "rgba(255,255,255,.7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
@@ -190,9 +326,9 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
       <main className="main">
         <h1>{copy.title}</h1>
         <div className="sub">{copy.subtitle}</div>
-        <div className="row" style={{ marginBottom: 14 }}>
+        {tab === "overview" && <div className="row" style={{ marginBottom: 14 }}>
           <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>
-        </div>
+        </div>}
         {msg && <div className="banner warn">{msg}</div>}
         {tab === "overview" && analytics && <>
           <div className="cards">
@@ -205,13 +341,104 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
           <div className="panel"><h2>{copy.billing}</h2><div className="table-scroll"><table><thead><tr><th>{copy.status}</th><th>{copy.currency}</th><th className="num">{copy.invoiceCount}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{(analytics.billing ?? []).map((row: any) => <tr key={`${row.status}-${row.currency}`}><td>{row.status}</td><td>{row.currency}</td><td className="num">{row.invoices}</td><td className="num">{fmt(row.amount, row.currency)}</td></tr>)}{!analytics.billing?.length && <tr><td colSpan={4}>{copy.noData}</td></tr>}</tbody></table></div></div>
           <div className="panel"><h2>{copy.activity}</h2><div className="table-scroll"><table><thead><tr><th>{copy.action}</th><th className="num">{copy.events}</th></tr></thead><tbody>{(analytics.activity ?? []).map((row: any) => <tr key={row.action}><td>{row.action}</td><td className="num">{row.events}</td></tr>)}{!analytics.activity?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
         </>}
-        {tab === "tenants" && <div className="panel">
+        {tab === "tenants" && <>
+        <div className="panel">
           <h2>{copy.tenantsHeading.replace("{count}", String(tenants.length))}</h2>
           <div className="table-scroll"><table>
-            <thead><tr><th>{copy.company}</th><th>{copy.subdomain}</th><th>{copy.status}</th><th>{copy.plan}</th><th className="num">{copy.users}</th><th>{copy.trialEnds}</th><th>{copy.created}</th></tr></thead>
-            <tbody>{tenants.map((t: any) => <tr key={t.id}><td>{t.company_name}</td><td>{t.subdomain}</td><td>{t.status}</td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td></tr>)}{!tenants.length && <tr><td colSpan={7}>{copy.noTenants}</td></tr>}</tbody>
+            <thead><tr><th>{copy.company}</th><th>{copy.subdomain}</th><th>{copy.status}</th><th>{copy.plan}</th><th className="num">{copy.users}</th><th>{copy.trialEnds}</th><th>{copy.created}</th><th>{copy.review}</th></tr></thead>
+            <tbody>{tenants.map((t) => <tr key={t.id}><td>{t.company_name}</td><td>{t.subdomain}</td><td><span className={`pill ${t.status}`}>{t.status}</span></td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td><td><button className="btn ghost sm" onClick={() => void reviewTenant(t)}>{copy.reviewAudit}</button></td></tr>)}{!tenants.length && <tr><td colSpan={8}>{copy.noTenants}</td></tr>}</tbody>
           </table></div>
+        </div>
+        {selectedTenant && <div className="panel">
+          <div className="panel-heading">
+            <div><h2>{copy.auditFor.replace("{company}", selectedTenant.company_name)}</h2><div className="sub">{selectedTenant.id}</div></div>
+            <button className="btn ghost sm" onClick={() => { setSelectedTenant(null); setTenantAudit(null); }}>{copy.close}</button>
+          </div>
+          {tenantAudit === null ? <p>{copy.loadingAudit}</p> : <div className="table-scroll"><table>
+            <thead><tr><th>{copy.action}</th><th>{copy.entity}</th><th>{copy.entityId}</th><th>{copy.time}</th></tr></thead>
+            <tbody>{tenantAudit.map((event) => <tr key={event.id}><td>{event.action}</td><td>{event.entityType ?? "—"}</td><td>{event.entityId ?? "—"}</td><td>{new Date(event.createdAt).toLocaleString()}</td></tr>)}{!tenantAudit.length && <tr><td colSpan={4}>{copy.noAudit}</td></tr>}</tbody>
+          </table></div>}
         </div>}
+        </>}
+        {tab === "operations" && controlCenter && <>
+          <div className="architecture-banner">
+            <div><span>{copy.architectureFreeze}</span><strong>{controlCenter.architecture.status}</strong></div>
+            <p>{copy.effective.replace("{date}", controlCenter.architecture.effectiveOn)} · {copy.blueprintEdition.replace("{edition}", controlCenter.architecture.blueprintEdition)}. {controlCenter.architecture.changeControl}</p>
+          </div>
+          <div className="cards">
+            <div className="card"><div className="k">{copy.apiObservation}</div><div className="v ok">{controlCenter.runtime.api.status}</div><small>{controlCenter.runtime.api.scope}</small></div>
+            <div className="card"><div className="k">{copy.databaseObservation}</div><div className="v ok">{controlCenter.runtime.database.status}</div><small>{new Date(controlCenter.runtime.database.observedAt).toLocaleString()}</small></div>
+            <div className="card"><div className="k">{copy.activeSessions}</div><div className="v">{controlCenter.signals.activeSessions}</div></div>
+            <div className="card"><div className="k">{copy.auditEvents24h}</div><div className="v">{controlCenter.signals.auditEvents24h}</div></div>
+            <div className="card"><div className="k">{copy.pastDueTenants}</div><div className="v">{controlCenter.signals.pastDueTenants}</div></div>
+            <div className="card"><div className="k">{copy.suspendedTenants}</div><div className="v">{controlCenter.signals.suspendedTenants}</div></div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.capabilityStatus}</h2><div className="sub">{copy.capabilityStatusHelp}</div></div>
+              <div className="field compact-field"><label htmlFor="capability-group">{copy.scope}</label><select id="capability-group" value={catalogueGroup} onChange={(event) => setCatalogueGroup(event.target.value as typeof catalogueGroup)}><option value="all">{copy.all}</option><option value="Frozen product">{copy.frozenProducts}</option><option value="Platform Kernel service">{copy.kernelServices}</option></select></div>
+            </div>
+            <div className="table-scroll"><table className="capability-table">
+              <thead><tr><th>{copy.capability}</th><th>{copy.implementation}</th><th>{copy.verification}</th><th>{copy.availability}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
+              <tbody>{visibleCapabilities.map((entry) => <tr key={entry.id}><td><strong>{entry.name}</strong><small>{entry.group}</small></td><td><span className={`status-chip state-${entry.implementation}`}>{entry.implementation}</span></td><td><span className={`status-chip state-${entry.verification}`}>{entry.verification}</span><small>{entry.verificationScope}</small></td><td><span className={`status-chip state-${entry.availability}`}>{entry.availability}</span></td><td>{entry.currentEvidence}</td><td>{entry.nextGate}</td></tr>)}</tbody>
+            </table></div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.operationsEvidence}</h2><div className="sub">{copy.operationsEvidenceHelp}</div></div>
+              <div className="evidence-summary" aria-label={copy.operationsEvidenceSummary}>
+                <span><b>{controlCenter.operationsEvidence.summary["not-recorded"]}</b>{copy.notRecorded}</span>
+                <span><b>{controlCenter.operationsEvidence.summary["requires-review"]}</b>{copy.requiresReview}</span>
+                <span><b>{controlCenter.operationsEvidence.summary.recorded}</b>{copy.recorded}</span>
+              </div>
+            </div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.gate}</th><th>{copy.status}</th><th>{copy.owner}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
+              <tbody>{controlCenter.operationsEvidence.gates.map((gate) => <tr key={gate.id}><td><strong>{gate.name}</strong><small>{gate.category}</small></td><td><span className={`status-chip state-${gate.state}`}>{gate.state}</span></td><td>{gate.owner}</td><td>{gate.evidence}</td><td>{gate.nextGate}</td></tr>)}</tbody>
+            </table></div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.backupManifest}</h2><div className="sub">{controlCenter.backupManifest.purpose}</div></div>
+              <span className={`status-chip state-${controlCenter.backupManifest.status}`}>{controlCenter.backupManifest.status}</span>
+            </div>
+            <div className="sub">{copy.contractVersion.replace("{version}", controlCenter.backupManifest.version)}</div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.field}</th><th>{copy.required}</th><th>{copy.classification}</th><th>{copy.rule}</th></tr></thead>
+              <tbody>{controlCenter.backupManifest.fields.map((field) => <tr key={field.key}><td><strong>{field.label}</strong><small>{field.key}</small></td><td>{field.required ? copy.yes : copy.no}</td><td><span className={`status-chip state-${field.classification}`}>{field.classification}</span></td><td>{field.rule}</td></tr>)}</tbody>
+            </table></div>
+            <div className="manifest-rules">
+              <div><h3>{copy.acceptanceRules}</h3><ul>{controlCenter.backupManifest.acceptanceRules.map((rule) => <li key={rule}>{rule}</li>)}</ul></div>
+              <div><h3>{copy.forbiddenContent}</h3><ul>{controlCenter.backupManifest.forbiddenContent.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.backupJobAdapter}</h2><div className="sub">{controlCenter.backupJobAdapter.currentBoundary}</div></div>
+              <span className={`status-chip state-${controlCenter.backupJobAdapter.status}`}>{controlCenter.backupJobAdapter.status}</span>
+            </div>
+            <div className="cards compact-cards">
+              <div className="card"><div className="k">{copy.scheduler}</div><div className="v">{controlCenter.backupJobAdapter.scheduler}</div></div>
+              <div className="card"><div className="k">{copy.executor}</div><div className="v">{controlCenter.backupJobAdapter.executor}</div></div>
+              <div className="card"><div className="k">{copy.storage}</div><div className="v">{controlCenter.backupJobAdapter.storage}</div></div>
+              <div className="card"><div className="k">{copy.evidenceTarget}</div><div className="v">{controlCenter.backupJobAdapter.evidenceTarget}</div></div>
+            </div>
+            <p className="operations-note">{controlCenter.backupJobAdapter.nextGate}</p>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.recentBackupManifests}</h2><div className="sub">{copy.recentBackupManifestsHelp}</div></div>
+            </div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.manifest}</th><th>{copy.status}</th><th>{copy.environment}</th><th>{copy.completed}</th><th>{copy.retention}</th><th>{copy.operator}</th><th>{copy.snapshotReference}</th></tr></thead>
+              <tbody>{backupManifests.map((manifest) => <tr key={manifest.id}><td><strong>{manifest.manifestId}</strong><small>{manifest.contractVersion}</small></td><td><span className={`status-chip state-${manifest.status}`}>{manifest.status}</span>{manifest.failureReason && <small>{manifest.failureReason}</small>}</td><td>{manifest.environment}</td><td>{new Date(manifest.completedAt).toLocaleString()}</td><td>{new Date(manifest.retentionExpiresAt).toLocaleDateString()}</td><td>{manifest.operator}</td><td>{manifest.databaseSnapshotRef}</td></tr>)}
+              {!backupManifests.length && <tr><td colSpan={7}>{copy.noBackupManifests}</td></tr>}</tbody>
+            </table></div>
+          </div>
+          <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
+        </>}
+        {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}
+        {tab === "guide" && <PlatformAdminGuide />}
       </main>
     </div>
   );
