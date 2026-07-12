@@ -20,6 +20,7 @@
 | OPS-011 Operations evidence gates | accepted / implemented / focused verification passed / internal admin | backup, restore and disaster-recovery evidence gates are visible; actual backup jobs, restore drills and DR automation remain future missions |
 | OPS-012 Backup manifest contract | accepted / implemented / focused and browser verification passed / internal admin | backup manifest evidence shape is defined and visible; actual scheduled backup execution remains a future mission |
 | OPS-013 Backup manifest registry | accepted / implemented / focused and browser verification passed / internal admin | backup manifests can be recorded as evidence inputs; actual scheduled execution and restore drills remain future missions |
+| OPS-014 Backup job adapter | accepted / implemented / focused and browser verification passed / internal admin | injected backup executor adapter exists and is visible; scheduler, storage binding and alerting remain future missions |
 | Ecosystem/expansion | accepted boundaries / largely not implemented / not run / planned | product/country/industry missions require detailed packs and gates |
 
 No status in this table overrides a more specific Completion Report or release decision.

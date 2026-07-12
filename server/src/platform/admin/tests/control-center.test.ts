@@ -127,5 +127,7 @@ describe("platform control centre", () => {
     expect(serialized).not.toContain("secret=");
     expect(serialized).not.toContain("password=");
     expect(serialized).not.toContain("privatekey=");
+    expect(snapshot.backupJobAdapter.status).toBe("adapter-ready-no-scheduler");
+    expect(snapshot.backupJobAdapter.scheduler).toBe("not-configured");
   });
 });

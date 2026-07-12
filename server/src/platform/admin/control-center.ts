@@ -44,6 +44,16 @@ export type BackupManifestContract = {
   acceptanceRules: string[];
 };
 
+export type BackupJobAdapterStatus = {
+  status: "adapter-ready-no-scheduler";
+  scheduler: "not-configured";
+  executor: "injected";
+  storage: "external-not-bound";
+  evidenceTarget: "platform_backup_manifests";
+  currentBoundary: string;
+  nextGate: string;
+};
+
 const product = (
   id: string,
   name: string,
@@ -388,6 +398,16 @@ export const BACKUP_MANIFEST_CONTRACT: BackupManifestContract = {
   ],
 };
 
+export const BACKUP_JOB_ADAPTER_STATUS: BackupJobAdapterStatus = {
+  status: "adapter-ready-no-scheduler",
+  scheduler: "not-configured",
+  executor: "injected",
+  storage: "external-not-bound",
+  evidenceTarget: "platform_backup_manifests",
+  currentBoundary: "The adapter can transform an injected snapshot result into a validated manifest, but no scheduler or storage provider is bound.",
+  nextGate: "Bind an approved backup executor, schedule, monitoring and failure alert path through a future mission.",
+};
+
 export type ControlCenterSignals = {
   databaseObservedAt: string;
   activeSessions: number;
@@ -430,6 +450,7 @@ export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
       gates: OPERATIONS_EVIDENCE_GATES,
     },
     backupManifest: BACKUP_MANIFEST_CONTRACT,
+    backupJobAdapter: BACKUP_JOB_ADAPTER_STATUS,
     limitations: [
       "Operational counts are signals, not proof that backup, recovery, security, performance or launch gates have passed.",
       "Entries marked planned or not implemented are unavailable and must not be sold or represented as live.",

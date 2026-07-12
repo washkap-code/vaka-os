@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Backup job adapter (OPS-014):** Added an injected backup job adapter
+  boundary that transforms future executor output into validated manifests,
+  rejects unsafe executor evidence and exposes adapter-ready/no-scheduler
+  status in Super Admin. This does not schedule or run backups.
 - **Backup manifest registry (OPS-013):** Added a platform backup-manifest
   table, migration, platform-admin recording/listing endpoints, validation for
   unsafe references and failed/partial reasons, platform audit evidence and a

@@ -28,6 +28,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-012 | Backup manifest contract foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-013 | Backup manifest registry and recording API | Implemented; focused/browser verification passed; full suite environment-blocked |
+| OPS-014 | Backup job adapter foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
 
 ## Standards
 

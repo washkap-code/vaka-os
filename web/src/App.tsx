@@ -88,6 +88,15 @@ type BackupManifestContract = {
   fields: BackupManifestField[];
   acceptanceRules: string[];
 };
+type BackupJobAdapterStatus = {
+  status: "adapter-ready-no-scheduler";
+  scheduler: "not-configured";
+  executor: "injected";
+  storage: "external-not-bound";
+  evidenceTarget: string;
+  currentBoundary: string;
+  nextGate: string;
+};
 type BackupManifestRecord = {
   id: string;
   manifestId: string;
@@ -120,6 +129,7 @@ type PlatformControlCenter = {
     gates: OperationsEvidenceGate[];
   };
   backupManifest: BackupManifestContract;
+  backupJobAdapter: BackupJobAdapterStatus;
   limitations: string[];
 };
 
@@ -401,6 +411,19 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
               <div><h3>{copy.acceptanceRules}</h3><ul>{controlCenter.backupManifest.acceptanceRules.map((rule) => <li key={rule}>{rule}</li>)}</ul></div>
               <div><h3>{copy.forbiddenContent}</h3><ul>{controlCenter.backupManifest.forbiddenContent.map((item) => <li key={item}>{item}</li>)}</ul></div>
             </div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.backupJobAdapter}</h2><div className="sub">{controlCenter.backupJobAdapter.currentBoundary}</div></div>
+              <span className={`status-chip state-${controlCenter.backupJobAdapter.status}`}>{controlCenter.backupJobAdapter.status}</span>
+            </div>
+            <div className="cards compact-cards">
+              <div className="card"><div className="k">{copy.scheduler}</div><div className="v">{controlCenter.backupJobAdapter.scheduler}</div></div>
+              <div className="card"><div className="k">{copy.executor}</div><div className="v">{controlCenter.backupJobAdapter.executor}</div></div>
+              <div className="card"><div className="k">{copy.storage}</div><div className="v">{controlCenter.backupJobAdapter.storage}</div></div>
+              <div className="card"><div className="k">{copy.evidenceTarget}</div><div className="v">{controlCenter.backupJobAdapter.evidenceTarget}</div></div>
+            </div>
+            <p className="operations-note">{controlCenter.backupJobAdapter.nextGate}</p>
           </div>
           <div className="panel">
             <div className="panel-heading">
