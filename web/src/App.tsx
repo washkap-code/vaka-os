@@ -73,6 +73,21 @@ type OperationsEvidenceGate = {
   owner: string;
   nextGate: string;
 };
+type BackupManifestField = {
+  key: string;
+  label: string;
+  required: boolean;
+  classification: string;
+  rule: string;
+};
+type BackupManifestContract = {
+  status: "defined-not-implemented";
+  version: string;
+  purpose: string;
+  forbiddenContent: string[];
+  fields: BackupManifestField[];
+  acceptanceRules: string[];
+};
 
 type PlatformControlCenter = {
   generatedAt: string;
@@ -87,6 +102,7 @@ type PlatformControlCenter = {
     summary: Record<OperationsEvidenceGate["state"], number>;
     gates: OperationsEvidenceGate[];
   };
+  backupManifest: BackupManifestContract;
   limitations: string[];
 };
 
@@ -350,6 +366,21 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
               <thead><tr><th>{copy.gate}</th><th>{copy.status}</th><th>{copy.owner}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
               <tbody>{controlCenter.operationsEvidence.gates.map((gate) => <tr key={gate.id}><td><strong>{gate.name}</strong><small>{gate.category}</small></td><td><span className={`status-chip state-${gate.state}`}>{gate.state}</span></td><td>{gate.owner}</td><td>{gate.evidence}</td><td>{gate.nextGate}</td></tr>)}</tbody>
             </table></div>
+          </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.backupManifest}</h2><div className="sub">{controlCenter.backupManifest.purpose}</div></div>
+              <span className={`status-chip state-${controlCenter.backupManifest.status}`}>{controlCenter.backupManifest.status}</span>
+            </div>
+            <div className="sub">{copy.contractVersion.replace("{version}", controlCenter.backupManifest.version)}</div>
+            <div className="table-scroll"><table className="evidence-table">
+              <thead><tr><th>{copy.field}</th><th>{copy.required}</th><th>{copy.classification}</th><th>{copy.rule}</th></tr></thead>
+              <tbody>{controlCenter.backupManifest.fields.map((field) => <tr key={field.key}><td><strong>{field.label}</strong><small>{field.key}</small></td><td>{field.required ? copy.yes : copy.no}</td><td><span className={`status-chip state-${field.classification}`}>{field.classification}</span></td><td>{field.rule}</td></tr>)}</tbody>
+            </table></div>
+            <div className="manifest-rules">
+              <div><h3>{copy.acceptanceRules}</h3><ul>{controlCenter.backupManifest.acceptanceRules.map((rule) => <li key={rule}>{rule}</li>)}</ul></div>
+              <div><h3>{copy.forbiddenContent}</h3><ul>{controlCenter.backupManifest.forbiddenContent.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            </div>
           </div>
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </>}

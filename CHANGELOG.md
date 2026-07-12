@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Backup manifest contract (OPS-012):** Added a defined-not-implemented
+  backup manifest evidence contract to the platform control centre and Super
+  Admin Operations tab. The contract lists required future backup evidence,
+  forbidden secret content and acceptance rules without claiming backup
+  automation or restore readiness.
 - **Operations evidence gates (OPS-011):** Added backup, restore and
   disaster-recovery evidence gates to the platform control centre and Super
   Admin Operations tab. Missing evidence is explicitly shown as not recorded or

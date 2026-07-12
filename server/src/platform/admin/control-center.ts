@@ -27,6 +27,23 @@ export type OperationsEvidenceGate = {
   nextGate: string;
 };
 
+export type BackupManifestField = {
+  key: string;
+  label: string;
+  required: boolean;
+  classification: "public-evidence" | "internal-evidence" | "sensitive-reference";
+  rule: string;
+};
+
+export type BackupManifestContract = {
+  status: "defined-not-implemented";
+  version: "2026-07-12.ops-012";
+  purpose: string;
+  forbiddenContent: string[];
+  fields: BackupManifestField[];
+  acceptanceRules: string[];
+};
+
 const product = (
   id: string,
   name: string,
@@ -266,6 +283,111 @@ export const OPERATIONS_EVIDENCE_GATES: readonly OperationsEvidenceGate[] = [
   },
 ];
 
+export const BACKUP_MANIFEST_CONTRACT: BackupManifestContract = {
+  status: "defined-not-implemented",
+  version: "2026-07-12.ops-012",
+  purpose: "Defines the evidence a future backup job must emit before VAKA can claim backup execution proof.",
+  forbiddenContent: [
+    "database passwords",
+    "access tokens",
+    "private keys",
+    "full storage URLs with credentials",
+    "tenant business payloads",
+  ],
+  fields: [
+    {
+      key: "manifestId",
+      label: "Manifest ID",
+      required: true,
+      classification: "public-evidence",
+      rule: "Stable unique identifier for one backup attempt.",
+    },
+    {
+      key: "environment",
+      label: "Environment",
+      required: true,
+      classification: "internal-evidence",
+      rule: "Controlled environment label such as staging or production; never a secret endpoint.",
+    },
+    {
+      key: "startedAt",
+      label: "Started at",
+      required: true,
+      classification: "public-evidence",
+      rule: "UTC timestamp when backup execution started.",
+    },
+    {
+      key: "completedAt",
+      label: "Completed at",
+      required: true,
+      classification: "public-evidence",
+      rule: "UTC timestamp when backup execution ended; must be after startedAt.",
+    },
+    {
+      key: "status",
+      label: "Status",
+      required: true,
+      classification: "public-evidence",
+      rule: "One of succeeded, failed or partial. Partial is not launch-ready evidence.",
+    },
+    {
+      key: "databaseSnapshotRef",
+      label: "Database snapshot reference",
+      required: true,
+      classification: "sensitive-reference",
+      rule: "Opaque non-secret reference to the database snapshot or backup set.",
+    },
+    {
+      key: "objectSnapshotRef",
+      label: "Object snapshot reference",
+      required: false,
+      classification: "sensitive-reference",
+      rule: "Opaque non-secret reference to document/object evidence where applicable.",
+    },
+    {
+      key: "checksum",
+      label: "Checksum",
+      required: true,
+      classification: "internal-evidence",
+      rule: "Algorithm and digest used for integrity verification; must not include payload contents.",
+    },
+    {
+      key: "encryptionRef",
+      label: "Encryption reference",
+      required: true,
+      classification: "sensitive-reference",
+      rule: "Opaque reference to the approved encryption key or policy; never the key material.",
+    },
+    {
+      key: "retentionExpiresAt",
+      label: "Retention expires at",
+      required: true,
+      classification: "internal-evidence",
+      rule: "UTC timestamp aligned to the approved retention policy.",
+    },
+    {
+      key: "operator",
+      label: "Operator",
+      required: true,
+      classification: "internal-evidence",
+      rule: "Service identity or authorised operator that initiated the backup.",
+    },
+    {
+      key: "failureReason",
+      label: "Failure reason",
+      required: false,
+      classification: "internal-evidence",
+      rule: "Required when status is failed or partial; must be safe for platform-admin review.",
+    },
+  ],
+  acceptanceRules: [
+    "A manifest proves only that a backup job reported evidence; restore testing remains separate.",
+    "Successful backup evidence requires status succeeded, complete required fields and no forbidden content.",
+    "Backup manifests must be immutable after recording; corrections require a superseding manifest.",
+    "Launch readiness requires backup manifests plus restore drill evidence and accountable sign-off.",
+  ],
+};
+
 export type ControlCenterSignals = {
   databaseObservedAt: string;
   activeSessions: number;
@@ -307,6 +429,7 @@ export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
       summary: evidenceSummary,
       gates: OPERATIONS_EVIDENCE_GATES,
     },
+    backupManifest: BACKUP_MANIFEST_CONTRACT,
     limitations: [
       "Operational counts are signals, not proof that backup, recovery, security, performance or launch gates have passed.",
       "Entries marked planned or not implemented are unavailable and must not be sold or represented as live.",

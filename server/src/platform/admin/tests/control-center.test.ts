@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildControlCenterSnapshot,
+  BACKUP_MANIFEST_CONTRACT,
   CONTROL_CENTER_CATALOGUE,
   OPERATIONS_EVIDENCE_GATES,
 } from "../control-center.js";
@@ -106,5 +107,25 @@ describe("platform control centre", () => {
       recorded: 0,
       "requires-review": 2,
     });
+  });
+
+  it("defines a backup manifest contract without exposing secret material or claiming implementation", () => {
+    expect(BACKUP_MANIFEST_CONTRACT.status).toBe("defined-not-implemented");
+    expect(BACKUP_MANIFEST_CONTRACT.fields.filter((field) => field.required).length).toBeGreaterThan(8);
+    expect(BACKUP_MANIFEST_CONTRACT.acceptanceRules.some((rule) => rule.includes("restore testing remains separate"))).toBe(true);
+
+    const snapshot = buildControlCenterSnapshot({
+      databaseObservedAt: "2026-07-11T12:00:00.000Z",
+      activeSessions: 0,
+      auditEvents24h: 0,
+      pastDueTenants: 0,
+      suspendedTenants: 0,
+    });
+    const serialized = JSON.stringify(snapshot.backupManifest).toLowerCase();
+
+    expect(snapshot.backupManifest.status).toBe("defined-not-implemented");
+    expect(serialized).not.toContain("secret=");
+    expect(serialized).not.toContain("password=");
+    expect(serialized).not.toContain("privatekey=");
   });
 });

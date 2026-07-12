@@ -94,6 +94,11 @@ body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background
 .evidence-table td:first-child { min-width: 210px; }
 .evidence-table td:nth-child(4), .evidence-table td:nth-child(5) { min-width: 280px; }
 .evidence-table small { color: var(--muted); display: block; font-size: 11px; margin-top: 5px; }
+.manifest-rules { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+.manifest-rules h3 { font-size: 13px; margin-bottom: 8px; }
+.manifest-rules ul { color: var(--muted); line-height: 1.55; padding-left: 18px; }
+.manifest-rules li { margin-bottom: 6px; }
+.state-defined-not-implemented, .state-internal-evidence, .state-sensitive-reference, .state-public-evidence { background: #EEE; color: #555; }
 .guide-toolbar { align-items: end; display: flex; gap: 24px; justify-content: space-between; }
 .guide-toolbar h2 { margin-bottom: 5px; }
 .guide-toolbar p { color: var(--muted); line-height: 1.5; }
@@ -165,6 +170,7 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
   .guide-layout { grid-template-columns: 1fr; }
   .guide-toc { max-height: 240px; position: static; }
   .guide-document { padding: 22px 18px; }
+  .manifest-rules { grid-template-columns: 1fr; }
 }
 
 @media print {

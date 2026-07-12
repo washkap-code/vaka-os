@@ -198,6 +198,14 @@ The Operations evidence table lists the minimum launch gates that must be proved
 
 A missing or review-required evidence gate is a blocker, not a cosmetic warning.
 
+The Backup manifest contract defines the evidence shape that future backup jobs must emit. It is intentionally marked defined-not-implemented until a real backup job records immutable manifests.
+
+- Manifest IDs identify one backup attempt.
+- Snapshot references are opaque non-secret references, not credentials or signed URLs.
+- Checksums support integrity review without exposing backup payloads.
+- Encryption references point to approved policy or key identifiers, never key material.
+- A manifest proves backup execution evidence only; restore testing and DR readiness remain separate gates.
+
 ## 16. Finance, tax and currency controls
 
 Book Eight, VAKA Finance & Accounting Intelligence Architecture, is authoritative for accounting, ledger, tax, currency, reporting and finance AI.
