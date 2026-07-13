@@ -303,6 +303,11 @@ export const appEnglish = {
     },
   },
   invoices: {
+    taxTreatment: "VAT treatment",
+    taxTreatmentStandard: "Standard-rated",
+    taxTreatmentZeroRated: "Zero-rated",
+    taxTreatmentExempt: "Exempt",
+    taxTreatmentHelp: "The statutory rate is resolved from your country settings on the invoice tax date.",
     downloadPdf: "Download PDF",
     pdfDownloadFailed: "Invoice PDF download failed.",
     createShareLink: "Create share link",

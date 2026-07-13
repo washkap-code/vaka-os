@@ -1849,14 +1849,19 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
   const [linkInvoice, setLinkInvoice] = useState<{ id: string; number: string | null } | null>(null);
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
-  const empty = { description: "", quantity: "1", unitPrice: "0", taxRate: "15", productId: "" };
+  const empty = { description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard", productId: "" };
   const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
 
   const setLine = (i: number, k: string, v: string) => {
     const lines = [...f.lines]; lines[i] = { ...lines[i], [k]: v };
     if (k === "productId" && v) {
       const p = (products ?? []).find((x: any) => x.id === v);
-      if (p) lines[i] = { ...lines[i], description: p.name, unitPrice: p.salePrice, taxRate: p.taxRate };
+      if (p) lines[i] = {
+        ...lines[i],
+        description: p.name,
+        unitPrice: p.salePrice,
+        taxTreatment: p.tax_treatment ?? p.taxTreatment ?? "standard",
+      };
     }
     setF({ ...f, lines });
   };
@@ -2008,9 +2013,19 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
           <input style={{ flex: 3 }} placeholder="Description" value={l.description} onChange={(e) => setLine(i, "description", e.target.value)} />
           <input style={{ flex: 1 }} placeholder="Qty" value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
           <input style={{ flex: 1 }} placeholder="Price" value={l.unitPrice} onChange={(e) => setLine(i, "unitPrice", e.target.value)} />
-          <input style={{ flex: 1 }} placeholder="VAT %" value={l.taxRate} onChange={(e) => setLine(i, "taxRate", e.target.value)} />
+          <select
+            style={{ flex: 1 }}
+            aria-label={appEnglish.invoices.taxTreatment}
+            value={l.taxTreatment}
+            onChange={(e) => setLine(i, "taxTreatment", e.target.value)}
+          >
+            <option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option>
+            <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
+            <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
+          </select>
         </div>
       ))}
+      <p className="sub">{appEnglish.invoices.taxTreatmentHelp}</p>
       <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...empty }] })}>+ Add line</button>
       {err && <div className="err-text">{err}</div>}
       <div className="row end" style={{ marginTop: 14 }}>
@@ -2028,7 +2043,7 @@ function Products({ readonly }: { readonly: boolean }) {
   const [rows, reload] = useLoad(() => api("/products"));
   const [warehouses] = useLoad(() => api("/warehouses"));
   const [show, setShow] = useState(false);
-  const [f, setF] = useState<any>({ currency: "USD", taxRate: "15", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
+  const [f, setF] = useState<any>({ currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
   const [err, setErr] = useState("");
   const save = async () => {
     try { await api("/products", { method: "POST", body: { ...f, reorderLevel: Number(f.reorderLevel) } }); setShow(false); reload(); }
@@ -2087,7 +2102,11 @@ function Products({ readonly }: { readonly: boolean }) {
         <div className="field"><label>Cost price</label><input value={f.costPrice} onChange={(e) => setF({ ...f, costPrice: e.target.value })} /></div>
         <div className="field"><label>Sale price</label><input value={f.salePrice} onChange={(e) => setF({ ...f, salePrice: e.target.value })} /></div>
         <div className="field"><label>Currency</label><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></div>
-        <div className="field"><label>VAT rate %</label><input value={f.taxRate} onChange={(e) => setF({ ...f, taxRate: e.target.value })} /></div>
+        <div className="field"><label>{appEnglish.invoices.taxTreatment}</label><select value={f.taxTreatment} onChange={(e) => setF({ ...f, taxTreatment: e.target.value })}>
+          <option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option>
+          <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
+          <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
+        </select></div>
         <div className="field"><label>Reorder level</label><input type="number" value={f.reorderLevel} onChange={(e) => setF({ ...f, reorderLevel: e.target.value })} /></div>
         <div className="field"><label>Track stock?</label><select value={String(f.trackStock)} onChange={(e) => setF({ ...f, trackStock: e.target.value === "true" })}>
           <option value="true">Yes — physical stock</option><option value="false">No — service item</option></select></div>

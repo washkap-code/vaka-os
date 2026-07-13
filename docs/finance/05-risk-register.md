@@ -25,7 +25,7 @@ Track accounting, compliance, engineering, and AI risks discovered during reposi
 | ID | Risk | Area | Severity | Evidence | Mitigation | Status |
 |---|---|---|---|---|---|---|
 | RISK-001 | Currency enum too restrictive | Currency | High | `currency` enum only allows `USD`, `ZWG` | Introduce currency master and compatibility adapters. | Open |
-| RISK-002 | Product/invoice-line tax rates are authoritative in current flows | Tax | High | `products.taxRate`, `invoice_line_items.taxRate`, invoice line input | Add effective-dated tax engine before changing behavior. | Open |
+| RISK-002 | Product/invoice-line tax rates were authoritative in baseline flows | Tax | High | P2-002 now derives supported treatments/rates from tenant jurisdiction + tax date and snapshots evidence; historical rows remain nullable/unclassified. | Obtain qualified Zimbabwe tax approval, add remaining tax types/evidence and preserve parity tests. | Mitigating |
 | RISK-003 | Tenant equals legal entity | Entity model | Critical | `tenants` contains base currency and tax/company registration fields | Add groups/legal entities/org units additively. | Open |
 | RISK-004 | Journal header too simple | Ledger | Critical | `journal_entries` lacks status, approval, fiscal period, legal entity, idempotency key, reversal link | Expand journal model after Phase 0 review. | Open |
 | RISK-005 | Money precision below target | Precision | High | `money` helper is `NUMERIC(14,2)`; target is `NUMERIC(24,8)` | Plan precision migration and decimal-safe runtime calculations. | Open |
@@ -55,9 +55,13 @@ Mitigation: introduce currency master.
 
 ### RISK-002 - Product-Level Tax Rate
 
-Current product model contains tax rate.
+Current product and invoice-line models retain rate snapshots, but P2-002 makes
+the country pack authoritative for new supported treatment flows. Historical
+rows are not assigned invented classifications. Professional review and the
+remaining tax models are open.
 
-Mitigation: move authoritative tax logic to effective-dated tax engine.
+Mitigation: keep authority in the effective-dated country pack, complete
+professional approval and extend governed determination to future tax types.
 
 ### RISK-003 - Tenant Equals Legal Entity
 

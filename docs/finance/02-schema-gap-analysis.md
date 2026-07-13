@@ -95,11 +95,16 @@ Journal lifecycle, status, period, approval, legal entity support, idempotency k
 
 ### Current
 
-Products have `taxRate`; invoice line items store `taxRate`. Invoice totals and VAT postings are calculated from line input.
+Products and invoice lines store rate snapshots. P2-002 adds tenant jurisdiction,
+tax date, standard/zero-rated/exempt line treatment, effective-rate-window and
+line-tax evidence, plus a document treatment. New supported flows resolve rates
+from the country pack; supplied rates are compatibility assertions only.
 
 ### Target
 
-Effective-dated tax rules, tax jurisdictions, tax codes, tax rates, customer/product treatment, exemption evidence, and professional review.
+Legal-entity/registration-aware determination, tax codes, customer rules,
+exemption-document evidence, additional market treatments, VAT reporting,
+fiscalisation and professional review.
 
 ## Inventory
 

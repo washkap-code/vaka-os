@@ -22,8 +22,8 @@ Implemented in the live product (tenant base currency, dual-currency workflows, 
 
 | Item | Value | Status |
 |---|---|---|
-| VAT standard rate | 15% (effective-dated, configurable — never hard-coded) | Live as ledger accounts; accountant sign-off pending |
-| VAT treatments | Standard, zero-rated, exempt | Framework required |
+| VAT standard rate | 15% (effective-dated country-pack configuration — never a core/invoice default) | Technically implemented; accountant sign-off pending |
+| VAT treatments | Standard, zero-rated, exempt; mixed at document level | Technically implemented in invoice evidence; accountant sign-off pending |
 | Tax authority | ZIMRA | Fiscalisation integration is Phase 3 |
 | Company identifiers | BP number, VAT number | Fields live on tenant + customers |
 
@@ -63,4 +63,4 @@ ZIMRA · POTRAZ · RBZ · NSSA · PRAZ · Registrar of Companies · local author
 
 ## 8. Expansion rule
 
-Any Zimbabwe-specific behaviour found hard-coded in core modules is a defect against this pack. Raise a mission to move it into configuration. Mission **P2-001** defines the extraction of the country-pack engine.
+Any Zimbabwe-specific behaviour found hard-coded in core modules is a defect against this pack. Raise a mission to move it into configuration. Mission **P2-001** defines the country-pack engine; **P2-002** consumes it for invoice VAT treatment. Neither mission constitutes professional tax approval.

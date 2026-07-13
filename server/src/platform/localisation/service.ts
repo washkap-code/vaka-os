@@ -1,5 +1,7 @@
-import { NoEffectiveTaxRateError, UnknownCountryError } from "./errors.js";
-import type { CountryCode, CountryPack, CurrencyDefinition, TaxRate } from "./types.js";
+import { NoEffectiveTaxRateError, UnknownCountryError, UnsupportedTaxTreatmentError } from "./errors.js";
+import type {
+  CountryCode, CountryPack, CurrencyDefinition, TaxRate, TaxResolution, TaxTreatment,
+} from "./types.js";
 
 /** Immutable registry + accessor for country packs. Resolved from the kernel. */
 export class LocalisationService {
@@ -44,5 +46,23 @@ export class LocalisationService {
   /** Convenience: the standard VAT percentage effective on a date. */
   standardVatPercent(code: CountryCode, onDate?: string): number {
     return this.vatRateOn(code, onDate).percent;
+  }
+
+  /** Resolve a governed treatment into the exact rate evidence stored on a transaction. */
+  resolveTax(code: CountryCode, treatment: TaxTreatment, onDate: string): TaxResolution {
+    const pack = this.pack(code);
+    if (!pack.taxTreatments.includes(treatment)) {
+      throw new UnsupportedTaxTreatmentError(code, treatment);
+    }
+    if (treatment !== "standard") {
+      return { treatment, percent: 0, effectiveFrom: null, effectiveTo: null };
+    }
+    const rate = this.vatRateOn(code, onDate);
+    return {
+      treatment,
+      percent: rate.percent,
+      effectiveFrom: rate.effectiveFrom,
+      effectiveTo: rate.effectiveTo,
+    };
   }
 }

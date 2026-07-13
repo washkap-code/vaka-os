@@ -22,8 +22,8 @@ A financial write path includes any operation that creates or changes invoices, 
 | 8 | `POST /bank-transactions/:id/match-invoices` | `matchBankTransactionToInvoices` | `payments`, `journal_entries`, `journal_lines`, `invoices`, `bank_transactions`, `audit_logs` | Yes | Yes | Yes | Split posting source is bank transaction; per-invoice source idempotency is indirect. |
 | 9 | `POST /bank-accounts/:id/reconciliations` | `prepareBankReconciliation` | `bank_reconciliations`, `audit_logs` | No | Yes | Yes | Prepared snapshot is mutable until approval; period locks absent. |
 | 10 | `POST /bank-reconciliations/:id/approve` | `approveBankReconciliation` | `bank_reconciliations`, `audit_logs` | No | Yes | Yes | Approval does not lock underlying bank lines. |
-| 11 | `POST /products` | route handler | `products`, `audit_logs` | No | Yes | Yes | Product contains default tax rate and cost. |
-| 12 | `POST /imports/products/:id/commit` | `commitProductImport` | `products`, import tables | No | Yes | Yes | Imported tax/cost are product-level defaults. |
+| 11 | `POST /products` | route handler | `products`, `audit_logs` | No | Yes | Yes | Treatment is validated and rate resolved from the tenant country pack; cost remains product configuration. |
+| 12 | `POST /imports/products/:id/commit` | `commitProductImport` | `products`, import tables | No | Yes | Yes | Preview resolves treatment/rate from the tenant country pack; import still needs broader catalogue-governance review. |
 | 13 | `POST /warehouses` | route handler | `warehouses` | No | No | Yes | No audit event found for warehouse creation. |
 | 14 | `POST /stock/adjust` | `adjustStock` | `stock_movements`, `stock_levels`, `journal_entries`, `journal_lines`, `audit_logs` | Yes | Yes | Yes | Service-level append-only; no DB trigger shown. |
 | 15 | `POST /stock/opening` | route handler plus inventory/accounting services | `stock_movements`, `stock_levels`, `journal_entries`, `journal_lines` | Yes | Via stock? no explicit opening audit observed | Yes | Duplicate route logic overlaps import path. |
@@ -31,7 +31,7 @@ A financial write path includes any operation that creates or changes invoices, 
 | 17 | `POST /purchase-orders` | route handler | `purchase_orders`, `purchase_order_line_items`, `audit_logs` | No | Yes | Yes | Vendor contact and line product tenant checks need continued validation. |
 | 18 | `POST /purchase-orders/:id/receive` | `receivePurchaseOrder` | `stock_movements`, `stock_levels`, `products`, `journal_entries`, `journal_lines`, `purchase_orders`, `audit_logs` | Yes | Yes | Yes | Simple latest-cost valuation; no tax/landed cost/AP subledger. |
 | 19 | `POST /exchange-rates` | route handler | `exchange_rates`, `audit_logs` | No | Yes | Yes | USD/ZWG enum; no approval/rate type/legal entity. |
-| 20 | `POST /invoices` | `createDraftInvoice` | `invoices`, `invoice_line_items`, optional `deals`, `audit_logs` | No | Yes | Yes | Draft line tax rate is direct input. |
+| 20 | `POST /invoices` | `createDraftInvoice` | `invoices`, `invoice_line_items`, optional `deals`, `audit_logs` | No | Yes | Yes | Tenant jurisdiction, tax date, treatment, effective rate window and exact tax are snapshotted; professional approval remains open. |
 | 21 | `POST /invoices/:id/issue` | `issueInvoice` | `invoices`, `invoice_document_snapshots`, `journal_entries`, `journal_lines`, `stock_movements`, `stock_levels`, `audit_logs` | Yes | Yes | Yes | Captures immutable invoice-document inputs; fiscal period/approval controls remain future work. |
 | 22 | `POST /invoices/:id/payments` | `recordPayment` | `payments`, `journal_entries`, `journal_lines`, `invoices`, `audit_logs` | Yes | Yes | Yes | Duplicate source events not explicitly prevented. |
 | 23 | `POST /invoices/:id/void` | `voidInvoice` | `journal_entries`, `journal_lines`, `stock_movements`, `stock_levels`, `invoices`, `audit_logs` | Yes when issued | Yes | Yes | Reversal relationship is not first-class. |
@@ -53,7 +53,7 @@ A financial write path includes any operation that creates or changes invoices, 
 
 ## Invoice Write Paths
 
-- Draft invoice creation validates tenant-scoped contact, computes totals, inserts invoice and lines, optionally links a deal, and audits `invoice.drafted`.
+- Draft invoice creation validates the tenant-scoped contact, derives jurisdiction from the tenant, resolves each treatment against the effective-dated country pack, computes exact totals, inserts document/line tax evidence, optionally links a deal, and audits `invoice.drafted`.
 - Invoice issue requires `DRAFT`, assigns immutable number, posts AR/Sales/VAT, posts COGS for stock-tracked lines, records stock movements, sets `ISSUED`, and audits `invoice.issued`.
 - Payment allocation inserts payment, posts Bank/AR, updates `amountPaid` and status, and audits payment recording.
 - Voiding blocks paid invoices, requires a reason, reverses invoice journals with new journals, offsets stock movements, marks `VOID`, and audits.
@@ -92,7 +92,7 @@ A financial write path includes any operation that creates or changes invoices, 
 ### High
 
 - Currency enum is limited to USD and ZWG.
-- Tax authority is product/line rate, not effective-dated tax rules.
+- P2-002 resolves supported invoice/product treatment through the effective-dated country pack; professional approval and broader tax types/reporting remain open.
 - Source idempotency is indexed but not enforced as a unique posting contract.
 
 ### Medium

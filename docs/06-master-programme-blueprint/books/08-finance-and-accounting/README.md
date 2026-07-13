@@ -64,6 +64,13 @@ Tax determination is effective-dated by jurisdiction, registration, party, produ
 
 Zimbabwe VAT, PAYE, NSSA, fiscalisation and statutory reporting require qualified local review and approved test fixtures before availability.
 
+P2-002 implements a bounded technical slice for invoices: tenant-derived
+jurisdiction, effective-dated standard-rate resolution, distinct standard,
+zero-rated and exempt line evidence, mixed document evidence and immutable
+snapshots. It does not implement VAT returns, fiscalisation, registration-aware
+determination or professional approval, and must not be presented as compliant
+market availability until those gates pass.
+
 ## 8. Currency
 
 Transactions preserve original currency, functional currency, exchange-rate snapshot, source, timestamp, precision and rounding. Realized and unrealized gains/losses are explicit accounting events. Reports state currency and translation method. No core rule assumes only USD or ZWG.

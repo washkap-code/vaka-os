@@ -22,12 +22,23 @@ export interface CurrencyDefinition {
 
 export type TaxTreatment = "standard" | "zero-rated" | "exempt";
 
+export type DocumentTaxTreatment = TaxTreatment | "mixed";
+
 export interface TaxRate {
   /** Rate as a percentage, e.g. 15 for 15%. */
   percent: number;
   /** Inclusive-from date (ISO yyyy-mm-dd). */
   effectiveFrom: string;
   /** Exclusive-to date (ISO yyyy-mm-dd) or null for the currently-effective rate. */
+  effectiveTo: string | null;
+}
+
+export interface TaxResolution {
+  treatment: TaxTreatment;
+  /** Percentage snapshotted on the transaction. Zero-rated and exempt both resolve to 0. */
+  percent: number;
+  /** Effective standard-rate window; null for non-standard treatments. */
+  effectiveFrom: string | null;
   effectiveTo: string | null;
 }
 

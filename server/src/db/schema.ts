@@ -5,7 +5,7 @@
 // flow through two append-only ledgers: journal_lines and stock_movements.
 // =============================================================================
 import {
-  pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb,
+  pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb, date,
   pgEnum, uniqueIndex, index, check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -40,6 +40,7 @@ export const tenants = pgTable("tenants", {
   brandPrimaryColor: text("brand_primary_color").default("#14171F").notNull(),
   brandSecondaryColor: text("brand_secondary_color").default("#C9A227").notNull(),
   baseCurrency: currency("base_currency").default("USD").notNull(),
+  countryCode: text("country_code").default("ZW").notNull(),
   status: tenantStatus("status").default("TRIAL").notNull(),
   trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
   // ZIMRA / registration details for compliant invoices
@@ -351,6 +352,9 @@ export const invoices = pgTable("invoices", {
   status: invoiceStatus("status").default("DRAFT").notNull(),
   issueDate: timestamp("issue_date", { withTimezone: true }),
   dueDate: timestamp("due_date", { withTimezone: true }),
+  taxJurisdiction: text("tax_jurisdiction"),
+  taxDate: date("tax_date"),
+  taxTreatment: text("tax_treatment"),
   subtotal: money("subtotal").default("0").notNull(),
   taxTotal: money("tax_total").default("0").notNull(),
   total: money("total").default("0").notNull(),
@@ -361,6 +365,7 @@ export const invoices = pgTable("invoices", {
 }, (t) => [
   uniqueIndex("invoices_tenant_number").on(t.tenantId, t.number),
   index("invoices_tenant_status").on(t.tenantId, t.status),
+  check("invoices_tax_treatment_check", sql`${t.taxTreatment} IS NULL OR ${t.taxTreatment} IN ('standard', 'zero-rated', 'exempt', 'mixed')`),
 ]);
 
 export const invoiceLineItems = pgTable("invoice_line_items", {
@@ -372,8 +377,14 @@ export const invoiceLineItems = pgTable("invoice_line_items", {
   quantity: qty("quantity").notNull(),
   unitPrice: money("unit_price").notNull(),
   taxRate: numeric("tax_rate", { precision: 5, scale: 2 }).default("0").notNull(),
+  taxTreatment: text("tax_treatment"),
+  taxAmount: money("tax_amount"),
+  taxRateEffectiveFrom: date("tax_rate_effective_from"),
+  taxRateEffectiveTo: date("tax_rate_effective_to"),
   lineTotal: money("line_total").notNull(),
-});
+}, (t) => [
+  check("invoice_lines_tax_treatment_check", sql`${t.taxTreatment} IS NULL OR ${t.taxTreatment} IN ('standard', 'zero-rated', 'exempt')`),
+]);
 
 // Immutable render inputs captured when an invoice becomes issued. Future PDF,
 // email and customer-link adapters render from this evidence, never mutable
@@ -536,12 +547,16 @@ export const products = pgTable("products", {
   costPrice: money("cost_price").default("0").notNull(),
   salePrice: money("sale_price").default("0").notNull(),
   currency: currency("currency").default("USD").notNull(),
-  taxRate: numeric("tax_rate", { precision: 5, scale: 2 }).default("15").notNull(),
+  taxRate: numeric("tax_rate", { precision: 5, scale: 2 }).notNull(),
+  taxTreatment: text("tax_treatment"),
   reorderLevel: integer("reorder_level").default(0).notNull(),
   trackStock: boolean("track_stock").default(true).notNull(), // false => service item
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("products_tenant_sku").on(t.tenantId, t.sku)]);
+}, (t) => [
+  uniqueIndex("products_tenant_sku").on(t.tenantId, t.sku),
+  check("products_tax_treatment_check", sql`${t.taxTreatment} IS NULL OR ${t.taxTreatment} IN ('standard', 'zero-rated', 'exempt')`),
+]);
 
 export const warehouses = pgTable("warehouses", {
   id: id(),
