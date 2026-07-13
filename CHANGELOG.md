@@ -12,6 +12,18 @@
 
 ### Added
 
+- **Statutory report pack technical preview (P2-006):** Added one authorised,
+  tenant-scoped posted-ledger pack for trial balance, P&L, balance sheet, aged
+  receivables and supported-source aged payables, with exact tie-outs,
+  formula-safe CSV, multi-page PDF and minimised export audits. Corrected the
+  trial-balance as-at cutoff so later journals cannot leak into a selected
+  position. AP control entries without a supported PO receipt source remain
+  visible as unallocated reconciliation exceptions. The Reports workspace now
+  includes labelled period/as-at controls and typed English preview copy. This
+  remains explicitly not filing-ready: legal-entity scope, complete AP open-
+  item accounting and qualified accountant approval are gated. No migration
+  was added.
+
 - **Finance document notification delivery (P7-001):** Added explicit,
   idempotent and audited invoice, customer-statement summary and overdue payment-
   reminder email commands through the P1-004 notification service, with
