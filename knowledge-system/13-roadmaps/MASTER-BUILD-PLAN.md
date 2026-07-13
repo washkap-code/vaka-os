@@ -2,7 +2,7 @@
 
 **Status:** Authoritative execution catalogue
 **Owner:** VAKA Architecture Office
-**Last reviewed:** 2026-07-11
+**Last reviewed:** 2026-07-13
 **Supersedes for sequencing:** none — complements `docs/04-execution/IMPLEMENTATION-ROADMAP.md` (stages) by turning each stage into concrete, reviewable **missions**.
 
 ## 0. How to read this document
@@ -24,7 +24,7 @@ This is the single ordered list of engineering **missions** that takes VAKA OS f
 
 | Programme | Theme | Status |
 |---|---|---|
-| **P1** | Platform kernel & shared services | In progress (P1-001/002 implemented; P1-003 implemented with partial verification) |
+| **P1** | Platform kernel & shared services | In progress (P1-001→004 implemented; P1-005 next) |
 | **P2** | Finance, tax & localisation (Zimbabwe) | Foundation live; hardening |
 | **P3** | CRM & sales | Foundation live; completion |
 | **P4** | Procurement & suppliers | Partial |
@@ -47,8 +47,8 @@ Goal: every module consumes shared contracts; no duplicated infrastructure.
 |---|---|---|---|
 | P1-001 | Platform Kernel foundation (contracts, DI container, namespaces) | — | ✅ Done |
 | P1-002 | Identity & Audit adapters behind kernel contracts (parity + isolation tests) | P1-001 | ✅ Done |
-| P1-003 | Establish the first callable kernel audit adoption seam with row-parity and fail-closed tests | P1-002 | Implemented; full-suite verification open |
-| P1-004 | Notification service adapter → real email/SMS/WhatsApp providers behind one contract; internal notifications persisted | P1-002 | Planned |
+| P1-003 | Establish the first callable kernel audit adoption seam with row-parity and fail-closed tests | P1-002 | ✅ Implemented; full-suite verified 2026-07-12 |
+| P1-004 | Notification service adapter → email + persisted in-app behind one contract; SMS/WhatsApp placeholders | P1-002 | ✅ Implemented; provider/product adoption gated |
 | P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | Planned |
 | P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | Planned |
 | P1-007 | Document service adapter unifying invoice PDFs + capture storage behind one contract | P1-002 | Planned |
@@ -204,7 +204,8 @@ P9-002…007                                (hardening, continuous)
 P10-001 → P10-002 → P10-003               (launch)
 ```
 
-P1-003 and P2-001 are implemented foundations with open full-suite evidence.
-The next dependency missions are **P1-004** and **P2-002**; each requires an
-approved Mission Pack before implementation. Cross-cutting operations work is
-tracked independently in the permanent `OPS-*` namespace.
+P1-003 and P2-001 are implemented foundations with green full-suite evidence;
+professional review remains open where stated. P1-004 is implemented and
+verified as an internal adapter foundation. The next dependency missions are
+**P1-005** and **P2-002**; cross-cutting operations work remains tracked in the
+permanent `OPS-*` namespace.

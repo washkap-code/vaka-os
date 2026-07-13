@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, IDENTITY_FACTORY, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, IDENTITY_FACTORY, NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 
@@ -37,5 +37,40 @@ describe("platform runtime composition (P1-002)", () => {
     expect(one).not.toBe(two);
     expect(() => one.container.registerValue(AUDIT_SERVICE, {} as never))
       .toThrow(DuplicateServiceError);
+  });
+
+  it("resolves the notification service with injected delivery, persistence and audit adapters", async () => {
+    const persisted: string[] = [];
+    const audited: string[] = [];
+    const kernel = buildPlatformKernel({
+      auditWriter: () => {},
+      emailTransport: async () => ({ providerMessageId: "provider-1" }),
+      notificationWriter: async (request, result) => {
+        persisted.push(`${request.tenantId}:${request.channel}:${result.status}`);
+        return {
+          requestId: request.id,
+          channel: request.channel,
+          status: result.status,
+          transmitted: result.transmitted,
+          providerMessageId: result.providerMessageId,
+          acceptedAt: new Date("2026-07-13T00:00:00Z"),
+        };
+      },
+      notificationDedupeLookup: async () => null,
+      notificationAuditRecorder: async (_request, delivery) => { audited.push(delivery.requestId); },
+    });
+    const service = kernel.container.get(NOTIFICATION_SERVICE);
+    await expect(service.send({
+      id: "notice-1",
+      tenantId: "tenant-1",
+      actorUserId: "user-1",
+      recipient: "owner@example.com",
+      channel: "EMAIL",
+      template: "security.notice",
+      locale: "en-ZW",
+      variables: { event: "New sign-in" },
+    })).resolves.toMatchObject({ requestId: "notice-1", transmitted: true });
+    expect(persisted).toEqual(["tenant-1:EMAIL:sent"]);
+    expect(audited).toEqual(["notice-1"]);
   });
 });

@@ -185,6 +185,28 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
 
+// Tenant-scoped notification intent and delivery evidence. Records are never
+// deleted through the notification service; only delivery status may advance.
+export const notifications = pgTable("notifications", {
+  id: text("id").primaryKey(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  recipient: text("recipient").notNull(),
+  channel: text("channel").notNull(),
+  template: text("template").notNull(),
+  locale: text("locale").notNull(),
+  variables: jsonb("variables").notNull(),
+  status: text("status").notNull(),
+  transmitted: boolean("transmitted").default(false).notNull(),
+  providerMessageId: text("provider_message_id"),
+  dedupeKey: text("dedupe_key"),
+  createdAt: createdAt(),
+}, (t) => [
+  index("notifications_tenant_time").on(t.tenantId, t.createdAt),
+  uniqueIndex("notifications_tenant_dedupe").on(t.tenantId, t.dedupeKey),
+  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'WHATSAPP')`),
+  check("notifications_status_check", sql`${t.status} IN ('accepted', 'sent', 'failed')`),
+]);
+
 // Platform-level acquisition records. Referral attribution never grants access
 // to the referred tenant and is intentionally separate from client permissions.
 export const referralCodes = pgTable("referral_codes", {

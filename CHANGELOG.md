@@ -12,6 +12,13 @@
 
 ### Added
 
+- **Notification service adapter (P1-004):** Added the kernel-composed
+  notification service, provider-neutral HTTPS email transport, persisted
+  in-app records, tenant-scoped dedupe/read helpers, delivery audit evidence
+  and non-transmitting SMS/WhatsApp placeholders. No existing product workflow
+  sends through this service yet; provider configuration and P7-001 adoption
+  remain release gates. Added additive migration `0014_notifications.sql`.
+
 - **Backup job adapter (OPS-014):** Added an injected backup job adapter
   boundary that transforms future executor output into validated manifests,
   rejects unsafe executor evidence and exposes adapter-ready/no-scheduler
