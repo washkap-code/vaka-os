@@ -67,9 +67,12 @@ Zimbabwe VAT, PAYE, NSSA, fiscalisation and statutory reporting require qualifie
 P2-002 implements a bounded technical slice for invoices: tenant-derived
 jurisdiction, effective-dated standard-rate resolution, distinct standard,
 zero-rated and exempt line evidence, mixed document evidence and immutable
-snapshots. It does not implement VAT returns, fiscalisation, registration-aware
-determination or professional approval, and must not be presented as compliant
-market availability until those gates pass.
+snapshots. P2-003 adds a read-only, tenant-scoped technical report over posted
+`VAT_OUTPUT` and `VAT_INPUT` ledger evidence, with exact period totals and
+audited CSV/PDF exports. It is not a filed VAT return: supplier input-VAT,
+filing workflow, fiscalisation, registration-aware determination, legal-entity
+isolation and professional approval remain open. Neither mission may be
+presented as compliant market availability until those gates pass.
 
 ## 8. Currency
 

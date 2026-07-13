@@ -4,6 +4,17 @@
 
 This document maps the current VAKA OS repository before any enterprise finance migration. It records observed behavior only; target architecture items are not claimed as implemented.
 
+## Additive implementation note — 2026-07-13
+
+The Phase 0 observations below remain historical evidence of the repository at
+the time inspected. Subsequent approved missions added effective-dated country
+configuration (P2-001), immutable invoice VAT treatment evidence (P2-002), and
+a read-only posted-ledger VAT technical report (P2-003). P2-003 calculates
+output/input/net VAT in exact cents for a selected period and exports
+reconcilable CSV/PDF evidence. It remains explicitly not filing-ready because
+supplier input-VAT, filing workflow, legal-entity isolation, fiscalisation and
+qualified Zimbabwean tax/accounting approval are incomplete.
+
 ## Repository Summary
 
 - Repository: `washkap-code/vaka-os`

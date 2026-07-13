@@ -33,6 +33,18 @@ type ArrearsStatus = {
   amounts: Array<{ currency: string; amount: string }>;
 };
 
+type VatTechnicalReportView = {
+  filingReady: false;
+  period: { from: string; to: string };
+  currency: "USD" | "ZWG";
+  totals: { outputVat: string; inputVat: string; netVat: string; position: "payable" | "credit" | "nil" };
+  evidence: Array<{
+    journalLineId: string; date: string; account: "VAT_OUTPUT" | "VAT_INPUT";
+    sourceType: string; sourceId: string | null; debit: string; credit: string; impact: string; memo: string;
+    invoice: null | { number: string | null; taxTreatment: string | null };
+  }>;
+};
+
 type PlatformTenant = {
   id: string;
   company_name: string;
@@ -2193,17 +2205,58 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
 // Reports
 // ---------------------------------------------------------------------------
 function Reports({ ccy }: { ccy: string }) {
-  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal">("pl");
+  const today = new Date();
+  const localDate = (value: Date) => new Date(value.getTime() - value.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const defaultTo = localDate(today);
+  const defaultFrom = localDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "vat">("pl");
   const [pl] = useLoad(() => api("/reports/profit-loss"), [tab]);
   const [bs] = useLoad(() => api("/reports/balance-sheet"), [tab]);
   const [ar] = useLoad(() => api("/reports/aged-receivables"), [tab]);
   const [journal] = useLoad(() => api("/journal"), [tab]);
+  const [vatPeriod, setVatPeriod] = useState({ from: defaultFrom, to: defaultTo });
+  const [vatApplied, setVatApplied] = useState(vatPeriod);
+  const [vat, setVat] = useState<VatTechnicalReportView | null>(null);
+  const [vatLoading, setVatLoading] = useState(false);
+  const [vatError, setVatError] = useState("");
+  const copy = appEnglish.reports.vat;
+  useEffect(() => {
+    if (tab !== "vat") return;
+    let active = true;
+    setVatLoading(true);
+    setVatError("");
+    api(`/reports/vat?from=${encodeURIComponent(vatApplied.from)}&to=${encodeURIComponent(vatApplied.to)}`)
+      .then((result) => { if (active) setVat(result as VatTechnicalReportView); })
+      .catch((error: Error) => { if (active) { setVat(null); setVatError(error.message); } })
+      .finally(() => { if (active) setVatLoading(false); });
+    return () => { active = false; };
+  }, [tab, vatApplied]);
+  const downloadVat = async (format: "csv" | "pdf") => {
+    setVatError("");
+    try {
+      const response = await fetch(`/api/v1/reports/vat.${format}?from=${encodeURIComponent(vatApplied.from)}&to=${encodeURIComponent(vatApplied.to)}`, {
+        headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || copy.downloadFailed);
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `vat-technical-preview-${vatApplied.from}-${vatApplied.to}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) { setVatError(error instanceof Error ? error.message : copy.downloadFailed); }
+  };
   return (<>
     <h1>Reports</h1><div className="sub">Every figure computed live from the double-entry ledger — in {ccy}</div>
     <div className="row" style={{ marginBottom: 16 }}>
-      {(["pl", "bs", "ar", "journal"] as const).map((t) => (
+      {(["pl", "bs", "ar", "journal", "vat"] as const).map((t) => (
         <button key={t} className={`btn ${tab === t ? "" : "ghost"} sm`} onClick={() => setTab(t)}>
-          {{ pl: "Profit & Loss", bs: "Balance Sheet", ar: "Aged Receivables", journal: "Journal" }[t]}
+          {{ pl: "Profit & Loss", bs: "Balance Sheet", ar: "Aged Receivables", journal: "Journal", vat: copy.tab }[t]}
         </button>
       ))}
     </div>
@@ -2260,6 +2313,38 @@ function Reports({ ccy }: { ccy: string }) {
           ))}</tbody></table>
         </div>
       ))}
+    </div>}
+    {tab === "vat" && <div className="panel">
+      <h2>{copy.title}</h2>
+      <div className="banner warn">{copy.notFilingReady}</div>
+      <div className="grid3" style={{ marginTop: 14 }}>
+        <div className="field"><label htmlFor="vat-from">{copy.from}</label><input id="vat-from" type="date" value={vatPeriod.from}
+          onChange={(event) => setVatPeriod({ ...vatPeriod, from: event.target.value })} /></div>
+        <div className="field"><label htmlFor="vat-to">{copy.to}</label><input id="vat-to" type="date" value={vatPeriod.to}
+          onChange={(event) => setVatPeriod({ ...vatPeriod, to: event.target.value })} /></div>
+        <div className="field"><label>{copy.actions}</label><div className="row">
+          <button className="btn sm" onClick={() => setVatApplied(vatPeriod)}>{copy.apply}</button>
+          <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("csv")}>{copy.csv}</button>
+          <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("pdf")}>{copy.pdf}</button>
+        </div></div>
+      </div>
+      {vatLoading && <p className="sub">{copy.loading}</p>}
+      {vatError && <div className="err-text">{vatError}</div>}
+      {vat && !vatLoading && <>
+        <div className="cards">
+          <div className="card"><div className="k">{copy.outputVat}</div><div className="v">{fmt(vat.totals.outputVat, vat.currency)}</div></div>
+          <div className="card"><div className="k">{copy.inputVat}</div><div className="v">{fmt(vat.totals.inputVat, vat.currency)}</div></div>
+          <div className="card"><div className="k">{copy.netVat}</div><div className="v">{fmt(vat.totals.netVat, vat.currency)}</div><div className="sub">{copy.positions[vat.totals.position]}</div></div>
+        </div>
+        <p className="sub">{copy.inputCoverage}</p>
+        {vat.evidence.length === 0 ? <p className="sub">{copy.empty}</p> : <div style={{ overflowX: "auto" }}>
+          <table><thead><tr><th>{copy.date}</th><th>{copy.account}</th><th>{copy.source}</th><th className="num">{copy.debit}</th><th className="num">{copy.credit}</th><th className="num">{copy.impact}</th></tr></thead>
+            <tbody>{vat.evidence.map((row) => <tr key={row.journalLineId}>
+              <td>{new Date(row.date).toLocaleDateString()}</td><td>{row.account}</td><td>{row.invoice?.number ?? row.sourceType}</td>
+              <td className="num">{fmt(row.debit, vat.currency)}</td><td className="num">{fmt(row.credit, vat.currency)}</td><td className="num">{fmt(row.impact, vat.currency)}</td>
+            </tr>)}</tbody></table>
+        </div>}
+      </>}
     </div>}
   </>);
 }
