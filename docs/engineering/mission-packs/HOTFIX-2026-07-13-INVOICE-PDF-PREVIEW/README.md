@@ -26,13 +26,18 @@ able to preview the exact same immutable document before downloading it.
 6. Revoke preview object URLs on close, replacement and component unmount.
 7. Preserve the existing server permission, tenant, immutable snapshot, audit,
    cache and finance boundaries.
+8. Add a restrained footer to every currently generated VAKA PDF page:
+   `Powered by VAKA OS · www.vakaos.com`. It must remain subordinate to tenant
+   identity and report content while being legible and consistently positioned.
 
 ## Scope and safety
 
 - Frontend PDF fetch/validation helper, focused unit tests, invoice-list preview
   and reliable download lifecycle.
 - Typed English copy and responsive modal styling.
-- Optional response hardening headers that do not change document bytes.
+- Optional response hardening headers that do not change financial content.
+- Shared footer treatment across invoice, VAT technical-preview and statutory
+  report-pack renderers; future document renderers inherit this standard.
 
 No invoice totals, ledger entries, issue lifecycle, tax, stock, snapshot content,
 share links, communications, permissions, schema or production data may change.
@@ -43,6 +48,8 @@ share links, communications, permissions, schema or production data may change.
 - Valid `%PDF-` bytes preview and download with an `.pdf` filename.
 - Download object URLs are not revoked synchronously.
 - Preview cleanup is deterministic and the document remains tenant-authorised.
+- Invoice and every report page contain the VAKA OS website footer without
+  covering tenant branding, totals, evidence rows or page numbering.
 - Focused tests, web/server typechecks, web build, token conformance and existing
   invoice-document tests pass in an available DB environment.
 
