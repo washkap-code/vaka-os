@@ -115,7 +115,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 
 | ID | Outcome | Depends on | Status |
 |---|---|---|---|
-| P6-001 | Design-system tokens consumed app-wide (colour/type/space/motion/component) | — | Partial (tokens exist) |
+| P6-001 | Design-system tokens consumed app-wide (colour/type/space/motion/component) | — | ✅ Compatibility adoption verified; final design approval/WCAG pass remain open |
 | P6-002 | Responsive, permission-aware app shell (nav, command bar, notifications, user menu) | P6-001 | Planned |
 | P6-003 | Role-aware **Universal Workbench** home (approvals, cash, receivables, alerts widgets) | P6-002, P1-005 | Planned |
 | P6-004 | Universal search UI (command palette) over search service | P1-006 | Planned |

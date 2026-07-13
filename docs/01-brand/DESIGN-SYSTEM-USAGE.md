@@ -2,7 +2,7 @@
 
 **Status:** Implemented foundation; staged adoption
 **Owner:** Brand, Design, and Frontend Engineering
-**Last reviewed:** 2026-07-04
+**Last reviewed:** 2026-07-13
 
 ## 1. Purpose
 
@@ -12,13 +12,21 @@ The implementation lives in `web/src/design-system/`.
 
 ## 2. Compatibility decision
 
-Three styling scopes currently coexist:
+Three styling scopes continue to coexist for selector and runtime compatibility,
+but P6-001 places their foundational values under one governed token source:
 
-1. The authenticated application continues to use tenant-controlled `--brand` and `--accent` variables.
-2. The public homepage continues to use its isolated `--v-*` working variables.
+1. The authenticated application continues to expose tenant-controlled
+   `--brand` and `--accent` variables. Their defaults and all other workspace
+   semantic/component roles resolve through `--vaka-workspace-*` tokens.
+2. The public homepage continues to expose isolated `--v-*` compatibility
+   aliases, now resolved through `--vaka-home-*` tokens.
 3. New design-system work uses `--vaka-*` tokens and `vds-` component classes.
 
-Do not alias or remove the first two scopes until a separate, tested migration is approved. This separation protects tenant white-label behaviour and limits visual regression risk.
+Do not remove the first two compatibility scopes until their selectors are
+migrated through separately tested component tasks. Runtime tenant values may
+override only `--brand` and `--accent`; functional status roles remain governed.
+`--vaka-home-tone-*` values are a visual-parity bridge for existing decorative
+homepage selectors, not a naming pattern for new components.
 
 ## 3. Token categories
 
@@ -146,9 +154,11 @@ The preview is a development-only page and includes light/dark switching, contro
 1. Approve the working tokens and run formal contrast checks.
 2. Add component-level interaction and accessibility tests.
 3. Add visual regression baselines for light, dark, mobile, and increased-contrast states.
-4. Select one low-risk public or authentication surface as the first migration.
-5. Map legacy aliases to semantic tokens gradually.
-6. Migrate module surfaces only through scoped tasks with screenshots, rollback, localisation, and regression evidence.
+4. P6-001 completed compatibility adoption across the public, authentication
+   and authenticated surfaces with automated conformance and visual parity.
+5. Migrate legacy selectors to shared React primitives gradually.
+6. Migrate module DOM/components only through scoped tasks with screenshots,
+   rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.
 
@@ -159,4 +169,22 @@ Do not replace legacy components in bulk. Preserve behaviour first, then migrate
 - The repository does not yet include frontend unit, accessibility, or visual-regression test infrastructure.
 - Dropdown uses native `details`; advanced menu focus management may be needed for complex actions.
 - Dialog support depends on modern browser native `dialog` behaviour.
-- The existing product and homepage have not yet been migrated to these tokens or primitives.
+- The existing product and homepage consume compatibility tokens, but their
+  legacy selectors/DOM have not yet migrated to the shared React primitives.
+- P6-001 recorded pre-existing 200%-zoom horizontal overflow on representative
+  mobile homepage, auth and workspace surfaces. Exact before/after equality
+  proves token adoption did not introduce it; P6-005 owns remediation.
+
+## 11. Automated conformance
+
+Run from `web/`:
+
+```bash
+npm run test:design-tokens
+```
+
+The check covers live CSS and TSX surfaces. It rejects raw colour literals,
+literal font stacks, literal CSS motion durations, undefined `--vaka-*`
+references, loss of the tenant-brand compatibility seam and workspace use of
+private homepage tone tokens. Its built-in negative fixture proves the scanner
+fails representative drift. CI runs the same command before the web build.
