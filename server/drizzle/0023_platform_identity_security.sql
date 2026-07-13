@@ -29,6 +29,7 @@ WHERE "tenant_id" IS NULL AND "is_platform_admin" = true AND "platform_role_key"
 
 CREATE UNIQUE INDEX IF NOT EXISTS "platform_users_email_unique"
   ON "users" ("email") WHERE "tenant_id" IS NULL;
+CREATE INDEX IF NOT EXISTS "users_platform_role" ON "users" ("platform_role_key");
 
 CREATE TABLE IF NOT EXISTS "password_reset_requests" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS "password_reset_requests" (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "password_reset_requests_token_hash" ON "password_reset_requests" ("token_hash");
 CREATE INDEX IF NOT EXISTS "password_reset_requests_user_time" ON "password_reset_requests" ("user_id", "created_at");
+CREATE INDEX IF NOT EXISTS "password_reset_requests_tenant" ON "password_reset_requests" ("tenant_id");
 
 CREATE TABLE IF NOT EXISTS "user_mfa_factors" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

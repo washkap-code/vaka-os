@@ -75,6 +75,7 @@ export const users = pgTable("users", {
 }, (t) => [
   uniqueIndex("users_tenant_email").on(t.tenantId, t.email),
   uniqueIndex("platform_users_email_unique").on(t.email).where(sql`${t.tenantId} IS NULL`),
+  index("users_platform_role").on(t.platformRoleKey),
 ]);
 
 export const passwordResetRequests = pgTable("password_reset_requests", {
@@ -89,6 +90,7 @@ export const passwordResetRequests = pgTable("password_reset_requests", {
 }, (t) => [
   uniqueIndex("password_reset_requests_token_hash").on(t.tokenHash),
   index("password_reset_requests_user_time").on(t.userId, t.createdAt),
+  index("password_reset_requests_tenant").on(t.tenantId),
   check("password_reset_requests_delivery_check", sql`${t.deliveryStatus} IN ('PENDING', 'SENT', 'FAILED')`),
 ]);
 
