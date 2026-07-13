@@ -41,7 +41,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P6-005 | Core-flow Accessibility and Reflow Foundation | ✅ Released (PR #67); full remote quality gate and production deployment passed |
 | P6-007 | Operational Record Accessibility and Reflow | ✅ Released (PR #68); full remote quality gate and production deployment passed |
 | P6-008 | Settings and Access Administration Accessibility | ✅ Released (PR #71); full remote quality gate, production deployment and live bundle verification passed |
-| P6-009 | Financial Reporting and Billing Accessibility | Approved for implementation |
+| P6-009 | Financial Reporting and Billing Accessibility | Implemented; local frontend and browser verification passed; remote release pending |
 | P6-013 | Modern Platform Administration | ✅ Released (PR #69); user-requested interface refinement released and live (PR #72) |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
