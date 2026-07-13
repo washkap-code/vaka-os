@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
@@ -7,6 +7,7 @@ import { PlatformAdminGuide } from "./platform-admin-guide";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
 import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
+import type { WorkspaceSearchTarget } from "./shell/command-search-model";
 import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 
@@ -894,25 +895,34 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 // ---------------------------------------------------------------------------
 function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => void }) {
   const [requestedPage, setRequestedPage] = useState<WorkspacePage>("dashboard");
+  const [searchTarget, setSearchTarget] = useState<WorkspaceSearchTarget | null>(null);
   const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
   const visibleNav = useMemo(() => visibleWorkspaceNavigation(me.permissions, me.isTenantOwner),
     [me.permissions, me.isTenantOwner]);
   const page = resolveWorkspacePage(requestedPage, visibleNav);
+  const selectSearchTarget = useCallback((target: WorkspaceSearchTarget) => {
+    setSearchTarget(target);
+    setRequestedPage(target.page);
+  }, []);
+  const consumeSearchTarget = useCallback(() => setSearchTarget(null), []);
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
   return (
     <WorkspaceShell tenant={t} user={me.user} navigation={visibleNav} currentPage={page}
-      onNavigate={setRequestedPage} onLogout={onLogout}>
+      onNavigate={setRequestedPage} onSearchSelect={selectSearchTarget} onLogout={onLogout}>
         {arrears && arrears.stage !== "CLEAR" && (
           <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setRequestedPage("billing")} />
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} navigation={visibleNav} onNavigate={setRequestedPage} />}
-        {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner} />}
+        {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner}
+          searchTarget={searchTarget?.entityType === "customer" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
-        {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")} />}
-        {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")} />}
+        {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")}
+          searchTarget={searchTarget?.entityType === "invoice" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
+        {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")}
+          searchTarget={searchTarget?.entityType === "product" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
@@ -2091,7 +2101,10 @@ function contactPayload(form: any) {
   };
 }
 
-function Contacts({ readonly, canWrite, isTenantOwner }: { readonly: boolean; canWrite: boolean; isTenantOwner: boolean }) {
+function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTargetConsumed }: {
+  readonly: boolean; canWrite: boolean; isTenantOwner: boolean;
+  searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
+}) {
   const [loadedRows, reload] = useLoad(() => api("/contacts"));
   const [loadedRequests, reloadRequests] = useLoad(() => api("/contacts/deletion-requests"));
   const rows = (loadedRows ?? []) as ContactSummary[];
@@ -2103,6 +2116,12 @@ function Contacts({ readonly, canWrite, isTenantOwner }: { readonly: boolean; ca
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.contacts;
+  useEffect(() => {
+    if (!searchTarget || !loadedRows) return;
+    const contact = rows.find((row) => row.id === searchTarget.recordId);
+    if (contact) setSelected(contact);
+    onSearchTargetConsumed();
+  }, [loadedRows, onSearchTargetConsumed, searchTarget]);
   const save = async () => {
     setBusy(true); setErr("");
     try {
@@ -2374,7 +2393,10 @@ function Pipeline({ readonly }: { readonly: boolean }) {
 // ---------------------------------------------------------------------------
 // Invoices
 // ---------------------------------------------------------------------------
-function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: string; canPost: boolean }) {
+function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetConsumed }: {
+  readonly: boolean; baseCcy: string; canPost: boolean;
+  searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
+}) {
   const [loadedRows, reload] = useLoad(() => api("/invoices"));
   const rows = (loadedRows ?? []) as any[];
   const selection = useListSelection(rows);
@@ -2386,6 +2408,11 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!searchTarget) return;
+    setSelectedInvoiceId(searchTarget.recordId);
+    onSearchTargetConsumed();
+  }, [onSearchTargetConsumed, searchTarget]);
   const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
   const [pdfPreview, setPdfPreview] = useState<{
     url: string;
@@ -2719,7 +2746,10 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
 // ---------------------------------------------------------------------------
 // Products & stock
 // ---------------------------------------------------------------------------
-function Products({ readonly, canWrite }: { readonly: boolean; canWrite: boolean }) {
+function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: {
+  readonly: boolean; canWrite: boolean;
+  searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
+}) {
   const [rows, reload] = useLoad(() => api("/products"));
   const [warehouses] = useLoad(() => api("/warehouses"));
   const [show, setShow] = useState(false);
@@ -2729,6 +2759,20 @@ function Products({ readonly, canWrite }: { readonly: boolean; canWrite: boolean
   const [ruleError, setRuleError] = useState("");
   const [f, setF] = useState<any>({ currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
   const [err, setErr] = useState("");
+  const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!searchTarget || !rows) return;
+    setHighlightedProductId(searchTarget.recordId);
+    window.requestAnimationFrame(() => {
+      const row = document.getElementById(`product-record-${searchTarget.recordId}`);
+      row?.focus({ preventScroll: true });
+      row?.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    });
+    onSearchTargetConsumed();
+  }, [onSearchTargetConsumed, rows, searchTarget]);
   const save = async () => {
     try { await api("/products", { method: "POST", body: { ...f, reorderLevel: Number(f.reorderLevel) } }); setShow(false); reload(); }
     catch (e: any) { setErr(e.message); }
@@ -2788,7 +2832,8 @@ function Products({ readonly, canWrite }: { readonly: boolean; canWrite: boolean
       <div className="table-scroll">
       <table><thead><tr><th>SKU</th><th>Name</th><th className="num">Cost</th><th className="num">Sale price</th><th className="num">VAT %</th><th className="num">On hand</th><th>{appEnglish.lowStockAlerts.column}</th><th>Actions</th></tr></thead>
         <tbody>{(rows ?? []).map((p: any) => (
-          <tr key={p.id}>
+          <tr key={p.id} id={`product-record-${p.id}`} tabIndex={-1}
+            className={highlightedProductId === p.id ? "search-target-row" : undefined}>
             <td>{p.sku}</td><td><b>{p.name}</b></td>
             <td className="num">{fmt(p.cost_price, p.currency)}</td><td className="num">{fmt(p.sale_price, p.currency)}</td>
             <td className="num">{Number(p.tax_rate)}%</td>

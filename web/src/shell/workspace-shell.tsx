@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { appEnglish } from "../locales/app.en";
 import type { WorkspaceNavigationItem, WorkspacePage } from "./navigation";
+import type { WorkspaceSearchTarget } from "./command-search-model";
+import { CommandPalette } from "./command-palette";
 import { NotificationMenu } from "./notification-menu";
 import { UserMenu } from "./user-menu";
 
@@ -10,12 +12,13 @@ type WorkspaceTenant = {
   logoUrl: string | null;
 };
 
-export function WorkspaceShell({ tenant, user, navigation, currentPage, onNavigate, onLogout, children }: {
+export function WorkspaceShell({ tenant, user, navigation, currentPage, onNavigate, onSearchSelect, onLogout, children }: {
   tenant: WorkspaceTenant;
   user: { fullName: string; email: string };
   navigation: readonly WorkspaceNavigationItem[];
   currentPage: WorkspacePage;
   onNavigate: (page: WorkspacePage) => void;
+  onSearchSelect: (target: WorkspaceSearchTarget) => void;
   onLogout: () => void;
   children: ReactNode;
 }) {
@@ -59,6 +62,7 @@ export function WorkspaceShell({ tenant, user, navigation, currentPage, onNaviga
     </nav>
     <div className="workspace-foot">{copy.workspace.replace("{subdomain}", tenant.subdomain)}<br />{copy.poweredBy}</div>
   </>;
+  const searchAvailable = navigation.some((item) => ["contacts", "invoices", "products"].includes(item.key));
 
   return <div className="shell">
     <a className="skip-link" href="#workspace-main">{copy.skipToContent}</a>
@@ -67,7 +71,7 @@ export function WorkspaceShell({ tenant, user, navigation, currentPage, onNaviga
       <button ref={menuButtonRef} className="shell-icon-button mobile-menu-button" type="button"
         aria-label={copy.openMenu} aria-expanded={drawerOpen} aria-controls="workspace-mobile-drawer"
         onClick={() => setDrawerOpen(true)}><span aria-hidden="true">☰</span></button>
-      <div id="vaka-command-bar-mount" className="command-bar-mount" aria-hidden="true" />
+      {searchAvailable && <CommandPalette onSelect={onSearchSelect} />}
       <div className="workspace-header-actions"><NotificationMenu />
         <UserMenu fullName={user.fullName} email={user.email}
           onSettings={() => navigate("settings")} onLogout={onLogout} />

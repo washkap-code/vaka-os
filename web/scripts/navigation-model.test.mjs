@@ -3,6 +3,7 @@ import test from "node:test";
 import { resolveWorkspacePage, visibleWorkspaceNavigation } from "../src/shell/navigation.ts";
 import { notificationCopy } from "../src/shell/notification-copy.ts";
 import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "../src/shell/workbench-model.ts";
+import { parseWorkspaceSearchResponse, workspaceSearchTarget } from "../src/shell/command-search-model.ts";
 
 const notificationCatalogue = {
   lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
@@ -64,4 +65,28 @@ test("unknown notifications never expose arbitrary persisted variables", () => {
     variables: { bearerToken: "private-value", personalData: "private-name" },
   }, notificationCatalogue);
   assert.deepEqual(formatted, { title: "Workspace update", detail: "Generic safe detail" });
+});
+
+test("workspace search accepts only governed minimal result documents", () => {
+  const [result] = parseWorkspaceSearchResponse({ results: [{
+    id: "customer-one", entityType: "customer", title: "Mbare Traders",
+    document: { id: "customer-one", entityType: "customer", name: "Mbare Traders", contactType: "COMPANY", secret: "excluded" },
+    object: { key: "customer", fallbackLabel: "Customer", navigation: { section: "crm", recordView: "customer" } },
+  }, {
+    id: "broken", entityType: "invoice", title: "Broken",
+    document: { id: "another-record", entityType: "invoice" },
+    object: { key: "invoice", fallbackLabel: "Invoice", navigation: { section: "accounting", recordView: "invoice" } },
+  }] });
+  assert.equal(result.id, "customer-one");
+  assert.equal(JSON.stringify(result).includes("excluded"), false);
+});
+
+test("workspace search maps only the governed object and destination pair", () => {
+  const [result] = parseWorkspaceSearchResponse({ results: [{
+    id: "invoice-one", entityType: "invoice", title: "INV-00001",
+    document: { id: "invoice-one", entityType: "invoice", number: "INV-00001", status: "ISSUED", currency: "USD", total: "125.00", customerName: "Acme" },
+    object: { key: "invoice", fallbackLabel: "Invoice", navigation: { section: "accounting", recordView: "invoice" } },
+  }] });
+  assert.deepEqual(workspaceSearchTarget(result), { page: "invoices", entityType: "invoice", recordId: "invoice-one" });
+  assert.equal(workspaceSearchTarget({ ...result, object: { ...result.object, navigation: { section: "crm", recordView: "invoice" } } }), null);
 });
