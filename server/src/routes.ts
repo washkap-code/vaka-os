@@ -845,6 +845,35 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
     return p;
   }));
 }));
+api.patch("/products/:id/reorder-rule", requirePermission("inventory.write"), wrap(async (req) => {
+  const { reorderLevel } = z.object({
+    reorderLevel: z.number().int().min(0).max(1_000_000),
+  }).strict().parse(req.body);
+  const tid = tenantId(req);
+  const productId = z.string().uuid().parse(routeParam(req, "id"));
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [existing] = await tx.select().from(schema.products).where(and(
+      eq(schema.products.id, productId), eq(schema.products.tenantId, tid),
+    ));
+    if (!existing) throw notFound("Product not found");
+    const [product] = await tx.update(schema.products).set({ reorderLevel }).where(and(
+      eq(schema.products.id, existing.id), eq(schema.products.tenantId, tid),
+    )).returning();
+    await audit(tx, tid, req.auth!.userId, "inventory.reorder_rule_changed", "product", product.id, {
+      previousReorderLevel: existing.reorderLevel,
+      reorderLevel: product.reorderLevel,
+      alertsEnabled: product.reorderLevel > 0 && product.trackStock && product.isActive,
+    });
+    queue({
+      id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${product.id}:updated:${product.reorderLevel}`,
+      type: DOMAIN_EVENTS.PRODUCT_CHANGED,
+      tenantId: tid,
+      actorUserId: req.auth!.userId,
+      payload: { productId: product.id, change: "updated" },
+    });
+    return product;
+  }));
+}));
 api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));
 api.post("/warehouses", requirePermission("inventory.write"), wrap(async (req) => {

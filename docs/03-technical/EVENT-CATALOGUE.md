@@ -27,7 +27,7 @@ originating request or prevent sibling subscribers from receiving the event.
 | `stock.adjusted` | Manual stock adjustment | `movementId`, `productId`, `warehouseId`, `quantityDelta` |
 | `tenant.lifecycle_changed` | Billing lifecycle transition | `tenantId`, `from`, `to` |
 | `customer.changed` | Customer create/update and committed contact import | `customerId`, `change` |
-| `product.changed` | Product create and committed product import | `productId`, `change` |
+| `product.changed` | Product create/import and reorder-rule update | `productId`, `change` |
 | `invoice.changed` | Invoice draft creation | `invoiceId`, `change` |
 | `activity.recorded` | Manual CRM activity creation | `activityId`, `customerId` |
 

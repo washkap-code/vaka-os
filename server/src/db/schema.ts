@@ -611,6 +611,27 @@ export const stockLevels = pgTable("stock_levels", {
   quantityOnHand: qty("quantity_on_hand").default("0").notNull(),
 }, (t) => [uniqueIndex("stock_product_wh").on(t.productId, t.warehouseId)]);
 
+// Operational transition/delivery state only. The stock ledger and stock_levels
+// remain inventory authority; this row can be rebuilt from canonical balances.
+export const lowStockAlertStates = pgTable("low_stock_alert_states", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  state: text("state").default("HEALTHY").notNull(),
+  lastObservedQuantity: qty("last_observed_quantity").default("0").notNull(),
+  threshold: integer("threshold").default(0).notNull(),
+  breachSequence: integer("breach_sequence").default(0).notNull(),
+  notificationPending: boolean("notification_pending").default(false).notNull(),
+  lastTransitionAt: timestamp("last_transition_at", { withTimezone: true }).defaultNow().notNull(),
+  lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("low_stock_alert_tenant_product").on(t.tenantId, t.productId),
+  index("low_stock_alert_pending").on(t.tenantId, t.notificationPending),
+  check("low_stock_alert_state_check", sql`${t.state} IN ('HEALTHY', 'LOW')`),
+  check("low_stock_alert_sequence_check", sql`${t.breachSequence} >= 0`),
+]);
+
 // Append-only. Never mutate history — corrections are offsetting entries.
 export const stockMovements = pgTable("stock_movements", {
   id: id(),

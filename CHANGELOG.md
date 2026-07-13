@@ -12,6 +12,16 @@
 
 ### Added
 
+- **Reorder rules and low-stock alerts (P5-004):** Added an audited,
+  tenant-scoped product reorder-rule workflow and exact aggregate stock
+  threshold evaluator. P1-005 stock/product subscribers persist serialized
+  breach/re-arm state and deliver deterministic, deduplicated in-app alerts to
+  active inventory writers through the P1-004 notification service. Zero
+  disables alerts; remaining low does not repeat; replenishment re-arms the
+  next breach. Added responsive Product rule controls and additive migration
+  `0018_low_stock_alert_state.sql`. Push/email/SMS/WhatsApp delivery, durable
+  event retry and automatic replenishment remain gated.
+
 - **Customer activity and communication timeline (P3-003):** Added a
   tenant-scoped, rebuildable customer chronology over canonical manual CRM
   activities, issued/voided invoices and payments. P1-005 subscribers refresh

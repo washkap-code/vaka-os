@@ -1,6 +1,6 @@
 # P5-004 — Reorder Rules and Low-stock Alerts
 
-**Status:** Ready for implementation; durable delivery and notification-centre UI gated
+**Status:** Technically verified; durable delivery and notification-centre UI gated
 **Programme:** 5 — Inventory and warehousing
 **Type:** Product reorder-rule workflow, stock-event subscriber and in-app notification adoption
 **Depends on:** P1-004 notification service; P1-005 event bus; append-only stock ledger
