@@ -167,8 +167,11 @@ step-up remain separately gated.
 **Current evidence (2026-07-13):** P6-001 completed governed token adoption and
 P6-002 completed the responsive, permission-aware tenant shell, current-user
 recent notification menu, mobile account access and inert command-bar mount.
-Universal Workbench, visible command/search UI, route/deep-link migration and
-the full WCAG core-flow pass remain separately gated work.
+P6-003 implements the Universal Workbench presentation over the existing live
+dashboard read model with accessible performance/ageing/pipeline visuals,
+priority summaries and permission-filtered module actions. Visible
+command/search UI, route/deep-link migration, product-wide visual modernisation
+and the full WCAG core-flow pass remain separately gated work.
 
 **Objective:** Build a responsive, accessible, permission-aware frame for every module.
 

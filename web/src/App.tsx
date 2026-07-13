@@ -6,6 +6,7 @@ import { appEnglish } from "./locales/app.en";
 import { PlatformAdminGuide } from "./platform-admin-guide";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
+import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
 import { useListSelection } from "./records/use-list-selection";
 
 // ============================================================================
@@ -237,9 +238,6 @@ type AgedReceivablesView = {
   asAt: string;
   currencies: CurrencyAgeingView[];
   items: AgedReceivableView[];
-};
-type DashboardReceivablesView = Pick<AgedReceivablesView, "asAt" | "currencies"> & {
-  attentionItems: AgedReceivableView[];
 };
 const AGEING_BUCKET_LABELS = Object.entries(appEnglish.dashboard.buckets) as Array<
   [AgeingBucketKey, string]
@@ -909,7 +907,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setRequestedPage("billing")} />
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
-        {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
+        {page === "dashboard" && <Dashboard ccy={t.baseCurrency} navigation={visibleNav} onNavigate={setRequestedPage} />}
         {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")} />}
@@ -2028,75 +2026,15 @@ function UsersActivity() {
 // ---------------------------------------------------------------------------
 // Dashboard — cross-module live view
 // ---------------------------------------------------------------------------
-function Dashboard({ ccy }: { ccy: string }) {
+function Dashboard({ ccy, navigation, onNavigate }: {
+  ccy: string;
+  navigation: ReturnType<typeof visibleWorkspaceNavigation>;
+  onNavigate: (page: WorkspacePage) => void;
+}) {
   const [d] = useLoad(() => api("/reports/dashboard"));
   const copy = appEnglish.dashboard;
   if (!d) return <p className="sub">{copy.loading}</p>;
-  const receivables = d.receivables as DashboardReceivablesView;
-  return (<>
-    <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
-    <div className="cards">
-      <div className="card"><div className="k">{copy.income}</div><div className="v ok">{fmt(d.monthToDate.income, ccy)}</div></div>
-      <div className="card"><div className="k">{copy.expenses}</div><div className="v">{fmt(d.monthToDate.expenses, ccy)}</div></div>
-      <div className="card"><div className="k">{copy.netProfit}</div><div className={`v ${Number(d.monthToDate.netProfit) >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
-    </div>
-    <div className="panel">
-      <div className="panel-heading">
-        <h2>{copy.receivablesTitle}</h2>
-        <span className="sub">{copy.receivablesAsAt} {new Date(receivables.asAt).toLocaleDateString("en-ZW")}</span>
-      </div>
-      {receivables.currencies.length === 0 ? <p className="sub">{copy.noReceivables}</p> : (
-        <div className="receivables-currencies">
-          {receivables.currencies.map((currency) => (
-            <section className="receivables-currency" key={currency.currency} aria-labelledby={`ageing-${currency.currency}`}>
-              <div className="row receivables-summary">
-                <h3 id={`ageing-${currency.currency}`}>{currency.currency}</h3>
-                <span>{copy.outstanding}: <b>{fmt(currency.outstanding, currency.currency)}</b></span>
-                <span>{copy.overdue}: <b className={Number(currency.overdue) > 0 ? "bad-text" : "ok-text"}>{fmt(currency.overdue, currency.currency)}</b></span>
-              </div>
-              <div className="ageing-grid">
-                {AGEING_BUCKET_LABELS.map(([key, label]) => (
-                  <div className="ageing-bucket" key={key}>
-                    <span>{label}</span>
-                    <b>{fmt(currency.buckets[key], currency.currency)}</b>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-      <h3 className="attention-heading">{copy.attentionTitle}</h3>
-      {receivables.attentionItems.length === 0 ? <p className="sub">{copy.noAttention}</p> : (
-        <div className="table-scroll">
-          <table><thead><tr><th>{copy.invoice}</th><th>{copy.customer}</th><th className="num">{copy.amount}</th><th className="num">{copy.daysOverdue}</th></tr></thead>
-            <tbody>{receivables.attentionItems.map((item) => (
-              <tr key={item.invoiceId}>
-                <td><b>{item.number}</b></td>
-                <td>{item.contact}</td>
-                <td className="num">{fmt(item.outstanding, item.currency)}</td>
-                <td className="num bad-text">{item.daysOverdue}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      )}
-    </div>
-    <div className="panel"><h2>Low / out-of-stock items</h2>
-      {d.lowStock.length === 0 ? <p className="sub">All stock above reorder levels.</p> :
-        <table><thead><tr><th>SKU</th><th>Product</th><th className="num">On hand</th><th className="num">Reorder level</th></tr></thead>
-          <tbody>{d.lowStock.map((r: any) => (
-            <tr key={r.id}><td>{r.sku}</td><td>{r.name}</td><td className="num" style={{ color: "var(--danger)", fontWeight: 700 }}>{Number(r.on_hand)}</td><td className="num">{r.reorder_level}</td></tr>
-          ))}</tbody></table>}
-    </div>
-    <div className="panel"><h2>Open pipeline</h2>
-      {d.pipeline.length === 0 ? <p className="sub">No open deals.</p> :
-        <table><thead><tr><th>Stage</th><th className="num">Deals</th><th className="num">Value</th></tr></thead>
-          <tbody>{d.pipeline.map((r: any) => (
-            <tr key={r.stage}><td><span className={`pill ${r.stage}`}>{r.stage}</span></td><td className="num">{r.n}</td><td className="num">{fmt(r.value, ccy)}</td></tr>
-          ))}</tbody></table>}
-    </div>
-  </>);
+  return <UniversalWorkbench data={d as WorkbenchData} currency={ccy} navigation={navigation} onNavigate={onNavigate} />;
 }
 
 // ---------------------------------------------------------------------------
