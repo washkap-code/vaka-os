@@ -1,6 +1,6 @@
 # P7-001 — Finance Document Notification Delivery
 
-**Status:** Approved for bounded implementation
+**Status:** Technically verified bounded explicit-send foundation; production provider operations gated
 **Programme:** 7 — Business communications and document delivery
 **Type:** Consent-gated commands, templates and notification-service adoption
 **Depends on:** P1-004 notifications; P1-007 documents; issued invoice snapshots
