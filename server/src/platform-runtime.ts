@@ -38,6 +38,7 @@ import { MetadataService } from "./platform/metadata/service.js";
 import type { MetadataProvider } from "./platform/metadata/interfaces.js";
 import { CanonicalMetadataProvider } from "./metadata.js";
 import { CustomerTimelineProjector, subscribeCustomerTimeline, type CustomerTimelineProjectorContract } from "./customer-timeline.js";
+import { LowStockAlertCoordinator, subscribeLowStockAlerts, type LowStockAlertCoordinatorContract } from "./low-stock-alerts.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -82,6 +83,7 @@ export interface PlatformKernelOptions {
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
   customerTimelineProjector?: CustomerTimelineProjectorContract;
+  lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
 }
 
 /**
@@ -155,6 +157,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
   subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
   subscribeCustomerTimeline(kernel.container.get(EVENT_BUS), options.customerTimelineProjector ?? new CustomerTimelineProjector());
+  subscribeLowStockAlerts(
+    kernel.container.get(EVENT_BUS),
+    options.lowStockAlertCoordinator ?? new LowStockAlertCoordinator(kernel.container.get(NOTIFICATION_SERVICE)),
+  );
 
   return kernel;
 }

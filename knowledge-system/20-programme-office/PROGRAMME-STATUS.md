@@ -10,7 +10,7 @@
 | P2 Finance and Zimbabwe | accepted / partial / P2-003 full suite passed / internal pending professional approval | effective-dated country configuration, invoice VAT treatment evidence and a not-filing-ready posted-ledger VAT technical report exist; supplier input VAT, filing workflow, fiscalisation, legal entities and qualified Zimbabwe tax approval remain |
 | P3 CRM and sales | accepted / partial / P3-003 full suite passed / internal customer timeline | manual CRM activity and invoice/payment milestones are unified; provider-backed communications, complete lead-to-cash, portal and analytics gaps remain |
 | P4 Procurement | accepted / partial / not fully assessed / existing PO foundation | source-to-pay, match and supplier controls remain |
-| P5 Inventory | accepted / partial / invariant foundations documented / existing foundation | advanced WMS and full reconciliation remain |
+| P5 Inventory | accepted / partial / P5-004 full suite passed / internal in-app alerts | product-level reorder thresholds and deduplicated breach/re-arm alerts exist; durable/external delivery, advanced WMS and full reconciliation remain |
 | P6 Experience/shell/localisation | accepted / partial / web build passes / existing foundation | app-wide responsive/a11y/localisation/E2E gates remain |
 | P7 Communications | accepted / partial / not fully assessed / limited delivery | VAKA Mail and unified provider platform remain |
 | P8 Intelligence | accepted / foundation / evaluation foundations only / disabled as live AI | provider/tool/context and use-case gates remain |

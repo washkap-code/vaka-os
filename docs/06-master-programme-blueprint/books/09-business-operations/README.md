@@ -30,6 +30,12 @@ Scope: products/SKUs/categories/units; warehouses/locations/bins; append-only re
 
 Stock movement is the authoritative history. Balance is a reconciled read model. The system refuses overselling under the approved policy and rolls back the linked sale/journal/audit when any invariant fails. Adjustments require reason, permission and audit; historical movement is never edited.
 
+Current implementation includes product-level integer reorder thresholds and
+persisted in-app alerts for exact aggregate-stock healthy-to-low transitions.
+The alert state is derived and rebuildable; it never replaces the stock ledger.
+Per-warehouse rules, lead time/safety stock, durable delivery, external push and
+automatic purchase-order replenishment remain planned.
+
 ## 5. Human capital and payroll
 
 Scope: worker/employee identity; organisation/position; recruitment/onboarding/offboarding; contracts; leave; attendance/time; payroll; benefits; performance; learning; documents; employee/manager self-service; privacy; and approved AI HR.

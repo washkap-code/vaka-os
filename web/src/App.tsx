@@ -579,7 +579,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} />}
-        {page === "products" && <Products readonly={suspended} />}
+        {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
@@ -2179,10 +2179,14 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
 // ---------------------------------------------------------------------------
 // Products & stock
 // ---------------------------------------------------------------------------
-function Products({ readonly }: { readonly: boolean }) {
+function Products({ readonly, canWrite }: { readonly: boolean; canWrite: boolean }) {
   const [rows, reload] = useLoad(() => api("/products"));
   const [warehouses] = useLoad(() => api("/warehouses"));
   const [show, setShow] = useState(false);
+  const [ruleProduct, setRuleProduct] = useState<{ id: string; name: string; reorder_level: number } | null>(null);
+  const [ruleLevel, setRuleLevel] = useState("0");
+  const [ruleBusy, setRuleBusy] = useState(false);
+  const [ruleError, setRuleError] = useState("");
   const [f, setF] = useState<any>({ currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
   const [err, setErr] = useState("");
   const save = async () => {
@@ -2213,25 +2217,51 @@ function Products({ readonly }: { readonly: boolean }) {
     }
     catch (e: any) { alert(e.message); }
   };
+  const openRule = (product: { id: string; name: string; reorder_level: number }) => {
+    setRuleProduct(product);
+    setRuleLevel(String(product.reorder_level));
+    setRuleError("");
+  };
+  const saveRule = async () => {
+    if (!ruleProduct) return;
+    setRuleBusy(true);
+    setRuleError("");
+    try {
+      await api(`/products/${ruleProduct.id}/reorder-rule`, {
+        method: "PATCH",
+        body: { reorderLevel: Number(ruleLevel) },
+      });
+      setRuleProduct(null);
+      reload();
+    } catch (error: unknown) {
+      setRuleError(error instanceof Error ? error.message : appEnglish.lowStockAlerts.saveError);
+    } finally {
+      setRuleBusy(false);
+    }
+  };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
       <div><h1>Products &amp; Stock</h1><div className="sub">Stock only moves through the ledger — sales, purchases and audited adjustments</div></div>
-      {!readonly && <button className="btn" onClick={() => setShow(true)}>+ New product</button>}
+      {!readonly && canWrite && <button className="btn" onClick={() => setShow(true)}>+ New product</button>}
     </div>
     <div className="panel">
-      <table><thead><tr><th>SKU</th><th>Name</th><th className="num">Cost</th><th className="num">Sale price</th><th className="num">VAT %</th><th className="num">On hand</th><th>Actions</th></tr></thead>
+      <div className="table-scroll">
+      <table><thead><tr><th>SKU</th><th>Name</th><th className="num">Cost</th><th className="num">Sale price</th><th className="num">VAT %</th><th className="num">On hand</th><th>{appEnglish.lowStockAlerts.column}</th><th>Actions</th></tr></thead>
         <tbody>{(rows ?? []).map((p: any) => (
           <tr key={p.id}>
             <td>{p.sku}</td><td><b>{p.name}</b></td>
             <td className="num">{fmt(p.cost_price, p.currency)}</td><td className="num">{fmt(p.sale_price, p.currency)}</td>
             <td className="num">{Number(p.tax_rate)}%</td>
-            <td className="num" style={Number(p.on_hand) <= p.reorder_level ? { color: "var(--danger)", fontWeight: 700 } : {}}>{Number(p.on_hand)}</td>
-            <td>{!readonly && <div className="row">
+            <td className="num" style={p.reorder_level > 0 && Number(p.on_hand) <= p.reorder_level ? { color: "var(--danger)", fontWeight: 700 } : {}}>{Number(p.on_hand)}</td>
+            <td>{p.reorder_level > 0 ? `${appEnglish.lowStockAlerts.enabled} · ≤ ${p.reorder_level}` : appEnglish.lowStockAlerts.disabled}</td>
+            <td>{!readonly && canWrite && <div className="row">
               <button className="btn ghost sm" onClick={() => opening(p)}>Opening stock</button>
               <button className="btn ghost sm" onClick={() => adjust(p)}>Adjust</button>
+              <button className="btn ghost sm" onClick={() => openRule(p)}>{appEnglish.lowStockAlerts.rule}</button>
             </div>}</td>
           </tr>
         ))}</tbody></table>
+      </div>
       {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No products yet.</p>}
     </div>
     {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -2253,6 +2283,13 @@ function Products({ readonly }: { readonly: boolean }) {
       </div>
       {err && <div className="err-text">{err}</div>}
       <div className="row end"><button className="btn ghost" onClick={() => setShow(false)}>Cancel</button><button className="btn" onClick={save}>Save product</button></div>
+    </div></div>}
+    {ruleProduct && <div className="modalbg" onClick={() => setRuleProduct(null)}><div className="modal reorder-rule-modal" role="dialog" aria-modal="true" aria-labelledby="reorder-rule-title" tabIndex={-1} onKeyDown={(event) => { if (event.key === "Escape") setRuleProduct(null); }} onClick={(event) => event.stopPropagation()}>
+      <h2 id="reorder-rule-title">{appEnglish.lowStockAlerts.ruleFor.replace("{name}", ruleProduct.name)}</h2>
+      <div className="field"><label htmlFor="reorder-rule-threshold">{appEnglish.lowStockAlerts.threshold}</label><input autoFocus id="reorder-rule-threshold" type="number" min="0" max="1000000" step="1" value={ruleLevel} onChange={(event) => setRuleLevel(event.target.value)} /></div>
+      <p className="sub">{appEnglish.lowStockAlerts.thresholdHelp}</p>
+      {ruleError && <div className="err-text" role="alert">{ruleError}</div>}
+      <div className="row end"><button className="btn ghost" onClick={() => setRuleProduct(null)}>{appEnglish.lowStockAlerts.cancel}</button><button className="btn" disabled={ruleBusy || !/^\d+$/.test(ruleLevel) || Number(ruleLevel) > 1_000_000} onClick={saveRule}>{ruleBusy ? appEnglish.lowStockAlerts.saving : appEnglish.lowStockAlerts.save}</button></div>
     </div></div>}
   </>);
 }

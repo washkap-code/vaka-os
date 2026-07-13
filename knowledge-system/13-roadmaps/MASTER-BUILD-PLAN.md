@@ -28,7 +28,7 @@ This is the single ordered list of engineering **missions** that takes VAKA OS f
 | **P2** | Finance, tax & localisation (Zimbabwe) | Foundation live; hardening |
 | **P3** | CRM & sales | Foundation live; P3-003 technically verified |
 | **P4** | Procurement & suppliers | Partial |
-| **P5** | Inventory & warehousing | Foundation live; completion |
+| **P5** | Inventory & warehousing | Foundation live; P5-004 technically verified |
 | **P6** | Application shell, navigation & workbench | Partial |
 | **P7** | VAKA Mail & Communications | Planned |
 | **P8** | VAKA Intelligence (AI) | Read-model foundation |
@@ -106,7 +106,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 | P5-001 | Product/SKU/category with multi-warehouse quantities | — | Foundation exists |
 | P5-002 | Auditable stock movements (receipt/issue/transfer/adjustment), append-only | — | Foundation exists |
 | P5-003 | Valuation layer (weighted-average) feeding COGS journals | P2-001 | Partial |
-| P5-004 | Reorder rules + low-stock alerts via notification service | P1-004 | Planned |
+| P5-004 | Reorder rules + low-stock alerts via notification service | P1-004 | ✅ Technically verified for persisted in-app alerts; durable/external delivery gated |
 | P5-005 | Barcode/QR capture (mobile) into movements | P1-007 | Planned |
 
 ---
@@ -213,6 +213,9 @@ a bounded internal keyword-search adapter. P1-008 is implemented and
 full-suite verified as a read-only canonical metadata registry; it does not
 enable AI value access. P3-003 is implemented and full-suite verified for
 manual CRM activity plus VAKA-recorded invoice/payment milestones; it does not
-claim provider-backed omnichannel history. The next ordered mission is **P5-004**;
+claim provider-backed omnichannel history. P5-004 is implemented and
+full-suite verified for persisted in-app low-stock breach alerts; it does not
+claim external or guaranteed delivery or automatic replenishment. The supplied
+P2-003 → P1-006 → P1-008 → P3-003 → P5-004 sequence is complete;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.

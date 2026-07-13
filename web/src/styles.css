@@ -229,9 +229,11 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .timeline-item-heading time, .customer-timeline-list small { color: var(--muted); font-size: 12px; }
 .customer-timeline-list p { margin: 5px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .timeline-more { width: 100%; }
+.reorder-rule-modal { width: 480px; }
 @media (max-width: 760px) {
   .customer-timeline-modal { width: 100%; max-width: 100%; max-height: 94vh; align-self: end; border-radius: 12px 12px 0 0; padding: 20px 16px; }
   .timeline-heading, .timeline-item-heading { align-items: flex-start; flex-direction: column; }
   .timeline-heading .btn { align-self: flex-end; order: -1; }
   .timeline-activity-form .grid2 { grid-template-columns: 1fr; gap: 0; }
+  .reorder-rule-modal { width: 100%; max-width: 100%; align-self: end; border-radius: 12px 12px 0 0; }
 }
