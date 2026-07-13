@@ -183,6 +183,13 @@ the full WCAG core-flow pass remain separately gated work.
 
 ## 8. Stage 6 — Core CRM
 
+**Current evidence (2026-07-13):** P3-003 provides the tenant-scoped customer
+timeline. P3-004 adds structured customer profile maintenance, bounded atomic
+bulk classification/tag actions, active-record soft removal and an audited
+principal-owner deletion approval workflow. Physical privacy erasure,
+owner-transfer policy, customer merge/deduplication and applying reusable bulk
+controls to modules beyond Contacts and Invoices remain separately gated.
+
 **Objective:** Deliver reliable customer, contact, opportunity, activity, and follow-up workflows.
 
 **Dependencies:** Stages 1, 4, 5; API contracts; tenant/permission model.
@@ -202,6 +209,11 @@ the full WCAG core-flow pass remain separately gated work.
 **Rollback requirements:** Additive schema changes; import rollback; feature flags for new workflow surfaces.
 
 ## 9. Stage 7 — Finance and accounting
+
+**Current evidence (2026-07-13):** P2-007 exposes existing invoice detail and a
+transactional amendment path for unposted drafts only. Issued/paid/void history,
+numbers, document snapshots and ledger evidence remain immutable; bulk posting,
+payments, voiding and deletion are not enabled.
 
 **Objective:** Harden the existing financial core and complete essential Zimbabwean SME workflows.
 

@@ -82,6 +82,13 @@ Reports, AI answers, migrations, and integrations record source lineage sufficie
 
 Retention is policy- and jurisdiction-driven. Customer deletion requests cannot destroy records that must be preserved for financial, legal, security, dispute, or audit reasons; access may be restricted or identifiers lawfully minimized. Suspend-then-escrow preserves client data. Tenant exports are complete, scoped, understandable, and auditable.
 
+P3-004 implements the first bounded customer-removal control: ordinary users
+submit exact tenant-owned requests, the principal tenant owner approves or
+rejects them, and approval removes the customer from active workflows using
+audited soft-removal evidence. Referenced CRM and financial history is retained.
+This is not physical privacy erasure; lawful minimisation/purge remains subject
+to the retention policy and professional privacy/legal review.
+
 ## 8. Migration controls
 
 Schema changes use expand/migrate/contract, versioned migrations, representative tests, backup impact, restartable tenant-safe backfills, reconciliation, and rollback/forward-fix plans. Posted financial and stock records are never “migrated” by destructive rewrite without approved, reconciled, auditable transformation.

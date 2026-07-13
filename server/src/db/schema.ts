@@ -300,13 +300,55 @@ export const contacts = pgTable("contacts", {
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
+  addressLine1: text("address_line_1"),
+  addressLine2: text("address_line_2"),
+  city: text("city"),
+  region: text("region"),
+  postalCode: text("postal_code"),
+  countryCode: text("country_code"),
+  website: text("website"),
+  industry: text("industry"),
+  registrationNumber: text("registration_number"),
+  notes: text("notes"),
   taxNumber: text("tax_number"), // customer's ZIMRA BP/VAT number
   tags: text("tags").array().default(sql`'{}'`).notNull(),
   isCustomer: boolean("is_customer").default(true).notNull(),
   isVendor: boolean("is_vendor").default(false).notNull(),
   ownerUserId: uuid("owner_user_id"),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: uuid("deleted_by").references(() => users.id),
   createdAt: createdAt(),
-}, (t) => [index("contacts_tenant_name").on(t.tenantId, t.name)]);
+}, (t) => [
+  index("contacts_tenant_name").on(t.tenantId, t.name),
+  index("contacts_tenant_active_name").on(t.tenantId, t.deletedAt, t.name),
+  index("contacts_deleted_by").on(t.deletedBy),
+]);
+
+// Consequential record removal is owner-controlled. Requests preserve exact
+// scope and decision evidence; approval performs a reversible soft removal,
+// never destructive erasure of referenced CRM or financial history.
+export const recordDeletionRequests = pgTable("record_deletion_requests", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id").notNull(),
+  requestedBy: uuid("requested_by").notNull().references(() => users.id),
+  reason: text("reason").notNull(),
+  status: text("status").default("PENDING").notNull(),
+  decidedBy: uuid("decided_by").references(() => users.id),
+  decisionReason: text("decision_reason"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  check("record_deletion_entity_type_check", sql`${t.entityType} IN ('contact')`),
+  check("record_deletion_status_check", sql`${t.status} IN ('PENDING', 'APPROVED', 'REJECTED')`),
+  uniqueIndex("record_deletion_one_pending")
+    .on(t.tenantId, t.entityType, t.entityId)
+    .where(sql`${t.status} = 'PENDING'`),
+  index("record_deletion_tenant_status_time").on(t.tenantId, t.status, t.createdAt),
+  index("record_deletion_requester_time").on(t.requestedBy, t.createdAt),
+  index("record_deletion_decider").on(t.decidedBy),
+]);
 
 export const deals = pgTable("deals", {
   id: id(),

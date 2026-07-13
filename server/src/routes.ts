@@ -6,7 +6,7 @@
 import { Router, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { and, eq, desc, sql } from "drizzle-orm";
+import { and, eq, desc, isNull, sql } from "drizzle-orm";
 import {
   db, schema, badRequest, notFound, conflict, forbidden, audit, nextDocNumber,
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
@@ -16,7 +16,7 @@ import {
   requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
 } from "./auth.js";
-import { createDraftInvoice, issueInvoice, recordPayment, voidInvoice } from "./invoicing.js";
+import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
@@ -57,6 +57,10 @@ import { latestEmailPreference, recordEmailPreference } from "./communication-pr
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
 import { sendFinanceDocument } from "./finance-document-delivery.js";
 import { listNotifications } from "./notifications.js";
+import {
+  bulkUpdateContacts, decideContactDeletionRequest, deleteOrRequestContacts,
+  listContactDeletionRequests,
+} from "./contact-records.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -728,13 +732,26 @@ api.post("/bank-transactions/:id/match-invoices",
 // ---------------------------------------------------------------------------
 const contactSchema = z.object({
   type: z.enum(["INDIVIDUAL", "COMPANY"]).default("COMPANY"),
-  name: z.string().min(1), email: z.string().email().optional().nullable(),
-  phone: z.string().optional().nullable(), address: z.string().optional().nullable(),
-  taxNumber: z.string().optional().nullable(), tags: z.array(z.string()).default([]),
+  name: z.string().trim().min(1).max(200), email: z.string().trim().email().max(254).optional().nullable(),
+  phone: z.string().trim().max(50).optional().nullable(), address: z.string().trim().max(500).optional().nullable(),
+  addressLine1: z.string().trim().max(200).optional().nullable(),
+  addressLine2: z.string().trim().max(200).optional().nullable(),
+  city: z.string().trim().max(100).optional().nullable(),
+  region: z.string().trim().max(100).optional().nullable(),
+  postalCode: z.string().trim().max(30).optional().nullable(),
+  countryCode: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/).optional().nullable(),
+  website: z.string().trim().url().max(500).optional().nullable(),
+  industry: z.string().trim().max(100).optional().nullable(),
+  registrationNumber: z.string().trim().max(100).optional().nullable(),
+  notes: z.string().trim().max(5000).optional().nullable(),
+  taxNumber: z.string().trim().max(100).optional().nullable(),
+  tags: z.array(z.string().trim().min(1).max(50)).max(50).default([]),
   isCustomer: z.boolean().default(true), isVendor: z.boolean().default(false),
-});
+}).strict();
 api.get("/contacts", requirePermission("crm.read"), wrap(async (req) =>
-  db.select().from(schema.contacts).where(eq(schema.contacts.tenantId, tenantId(req))).orderBy(schema.contacts.name)));
+  db.select().from(schema.contacts).where(and(
+    eq(schema.contacts.tenantId, tenantId(req)), isNull(schema.contacts.deletedAt),
+  )).orderBy(schema.contacts.name)));
 api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.parse(req.body);
   const tid = tenantId(req);
@@ -751,7 +768,8 @@ api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
   const tid = tenantId(req);
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [c] = await tx.update(schema.contacts).set(body)
-      .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid))).returning();
+      .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid),
+        isNull(schema.contacts.deletedAt))).returning();
     if (!c) throw notFound("Contact not found");
     await audit(tx, tid, req.auth!.userId, "contact.updated", "contact", c.id);
     queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${c.id}:updated`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
@@ -759,11 +777,48 @@ api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
     return c;
   }));
 }));
+const contactIdsSchema = z.array(z.string().uuid()).min(1).max(100);
+api.post("/contacts/bulk", requirePermission("crm.write"), wrap(async (req) => {
+  const body = z.object({
+    ids: contactIdsSchema,
+    operation: z.discriminatedUnion("action", [
+      z.object({ action: z.literal("ADD_TAG"), tag: z.string() }),
+      z.object({ action: z.literal("REMOVE_TAG"), tag: z.string() }),
+      z.object({ action: z.literal("MARK_CUSTOMER") }),
+      z.object({ action: z.literal("MARK_VENDOR") }),
+    ]),
+  }).strict().parse(req.body);
+  return bulkUpdateContacts({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId, ids: body.ids, operation: body.operation,
+  });
+}));
+api.post("/contacts/deletions", requirePermission("crm.write"), wrap(async (req) => {
+  const body = z.object({ ids: contactIdsSchema, reason: z.string().trim().min(3).max(500) }).strict().parse(req.body);
+  return deleteOrRequestContacts({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    isTenantOwner: req.auth!.isTenantOwner, ids: body.ids, reason: body.reason,
+  });
+}));
+api.get("/contacts/deletion-requests", requirePermission("crm.read"), wrap(async (req) =>
+  listContactDeletionRequests({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId, isTenantOwner: req.auth!.isTenantOwner,
+  })));
+api.post("/contacts/deletion-requests/:requestId/decision",
+  requirePermission("crm.write"), requireTenantOwner, wrap(async (req) => {
+    const body = z.object({
+      decision: z.enum(["APPROVE", "REJECT"]),
+      reason: z.string().trim().min(3).max(500),
+    }).strict().parse(req.body);
+    return decideContactDeletionRequest({
+      tenantId: tenantId(req), actorUserId: req.auth!.userId, isTenantOwner: req.auth!.isTenantOwner,
+      requestId: routeParam(req, "requestId"), ...body,
+    });
+  }));
 api.get("/contacts/:id/communication-preferences/email", requirePermission("crm.read"), wrap(async (req) => {
   const tid = tenantId(req);
   const [contact] = await db.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
     eq(schema.contacts.id, routeParam(req, "id")),
-    eq(schema.contacts.tenantId, tid),
+    eq(schema.contacts.tenantId, tid), isNull(schema.contacts.deletedAt),
   ));
   if (!contact) throw notFound("Contact not found");
   return latestEmailPreference(tid, contact.id);
@@ -793,7 +848,8 @@ api.post("/contacts/:id/statements/send", requirePermission("accounting.post"), 
 api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
   const tid = tenantId(req);
   const [contact] = await db.select().from(schema.contacts)
-    .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid)));
+    .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid),
+      isNull(schema.contacts.deletedAt)));
   if (!contact) throw notFound("Contact not found");
   const dealRows = await db.select().from(schema.deals)
     .where(and(eq(schema.deals.contactId, contact.id), eq(schema.deals.tenantId, tid)));
@@ -811,6 +867,7 @@ api.get("/contacts/:id/timeline", requirePermission("crm.read"), wrap(async (req
   const query = timelineQuerySchema.parse(req.query);
   const [contact] = await db.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
     eq(schema.contacts.id, contactId), eq(schema.contacts.tenantId, tid), eq(schema.contacts.isCustomer, true),
+    isNull(schema.contacts.deletedAt),
   ));
   if (!contact) throw notFound("Customer not found");
   await new CustomerTimelineProjector().reconcileCustomer(tid, contactId);
@@ -1103,7 +1160,12 @@ api.get("/invoices/:id", requirePermission("accounting.read"), wrap(async (req) 
   if (!inv) throw notFound("Invoice not found");
   const lines = await db.select().from(schema.invoiceLineItems).where(eq(schema.invoiceLineItems.invoiceId, inv.id));
   const pays = await db.select().from(schema.payments).where(eq(schema.payments.invoiceId, inv.id));
-  return { ...inv, lines, payments: pays };
+  const [contact] = await db.select({
+    id: schema.contacts.id, name: schema.contacts.name, email: schema.contacts.email, phone: schema.contacts.phone,
+  }).from(schema.contacts).where(and(
+    eq(schema.contacts.id, inv.contactId), eq(schema.contacts.tenantId, tid),
+  ));
+  return { ...inv, contact: contact ?? null, lines, payments: pays };
 }));
 api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, res, next) => {
   try {
@@ -1164,6 +1226,17 @@ api.post("/invoices", requirePermission("accounting.post"), wrap(async (req) => 
   const body = invoiceSchema.parse(req.body);
   return createDraftInvoice({ ...body, tenantId: tenantId(req), createdBy: req.auth!.userId,
     dueDate: body.dueDate ?? undefined, notes: body.notes ?? undefined });
+}));
+api.patch("/invoices/:id", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = invoiceSchema.omit({ dealId: true }).parse(req.body);
+  return updateDraftInvoice({
+    ...body,
+    tenantId: tenantId(req),
+    invoiceId: routeParam(req, "id"),
+    updatedBy: req.auth!.userId,
+    dueDate: body.dueDate ?? null,
+    notes: body.notes ?? null,
+  });
 }));
 api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) =>
   issueInvoice({ tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId })));
