@@ -1,9 +1,19 @@
 import { InvalidMetadataError } from "./errors.js";
 import type { MetadataProvider, MetadataServiceContract } from "./interfaces.js";
-import type { MetadataDefinition, MetadataRecord, MetadataValue } from "./types.js";
+import type { MetadataDefinition, MetadataObjectDefinition, MetadataRecord, MetadataValue } from "./types.js";
 
 export class MetadataService implements MetadataServiceContract {
   constructor(private readonly provider: MetadataProvider) {}
+
+  objects(tenantId: string): Promise<readonly MetadataObjectDefinition[]> {
+    if (!tenantId.trim()) throw new InvalidMetadataError("tenantId is required");
+    return this.provider.objects(tenantId);
+  }
+
+  object(entityType: string, tenantId: string): Promise<MetadataObjectDefinition | null> {
+    if (!entityType.trim() || !tenantId.trim()) throw new InvalidMetadataError("entityType and tenantId are required");
+    return this.provider.object(entityType, tenantId);
+  }
 
   definitions(entityType: string, tenantId: string): Promise<readonly MetadataDefinition[]> {
     if (!entityType.trim() || !tenantId.trim()) throw new InvalidMetadataError("entityType and tenantId are required");

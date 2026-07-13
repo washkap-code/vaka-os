@@ -45,8 +45,9 @@ import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-repor
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
+import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -164,6 +165,17 @@ api.get("/search", wrap(async (req, res) => {
   }
   res.setHeader("Cache-Control", "private, no-store");
   return result;
+}));
+
+api.get("/metadata/objects", wrap(async (req, res) => {
+  const query = metadataQuerySchema.parse(req.query);
+  const definitions = await platformKernel().container.get(METADATA_SERVICE).objects(tenantId(req));
+  const requested: ReadonlySet<string> | null = query.keys ? new Set(query.keys) : null;
+  const permitted = definitions.filter((definition) =>
+    (!requested || requested.has(definition.key))
+    && (!definition.readPermission || req.auth!.permissions.includes(definition.readPermission)));
+  res.setHeader("Cache-Control", "private, no-store");
+  return { registryVersion: METADATA_REGISTRY_VERSION, objects: permitted };
 }));
 
 api.post("/auth/change-password", wrap(async (req) => {

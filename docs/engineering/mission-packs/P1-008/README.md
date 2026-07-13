@@ -1,6 +1,6 @@
 # P1-008 — Canonical Metadata Registry
 
-**Status:** Approved for implementation
+**Status:** Technically verified read-only registry; dynamic metadata and AI context gated
 **Programme:** 1 — Platform Kernel and shared services
 **Type:** Read-only governed object/field registry and kernel adapter
 **Depends on:** P1-001 metadata contract; P1-002 identity; P1-005 events; P1-006 search adapter
@@ -44,7 +44,7 @@ the target Organisation/LegalEntity/Party model.
    - `product` — canonical Product/SKU projection from `products`.
 4. Every object records stable key/version, canonical name, source table,
    ownership/surrogate note, title field, lifecycle field, read/write
-   permissions, localisation keys, route template, search eligibility and
+   permissions, localisation keys, navigation target, search eligibility and
    future AI-context posture.
 5. Every governed field records source field, value type, classification,
    localisation key, search/result eligibility and AI exposure (`allowed` or
@@ -59,7 +59,7 @@ the target Organisation/LegalEntity/Party model.
    object descriptors from the metadata registry. Canonical query/mapping code
    remains explicit—metadata cannot select arbitrary tables or execute code.
 9. Include stable object descriptors in search results so future UI/navigation
-   can use governed labels and routes.
+   can use governed labels and navigation targets.
 10. Keep future AI consumption read-only, permission-bound and disabled: the
     registry states eligible fields but does not fetch values or call a model.
 
@@ -102,7 +102,7 @@ the target Organisation/LegalEntity/Party model.
   APIs and search still perform their own authorization.
 - Stable localisation keys are stored separately from English fallback labels.
   This mission does not claim Shona/Ndebele translations are complete.
-- Duplicate object/field keys, invalid routes, ungoverned search permissions or
+- Duplicate object/field keys, invalid navigation targets, ungoverned search permissions or
   unsafe AI exposure fail during registry construction.
 - Metadata record writes remain unsupported and fail closed; no write endpoint
   is added.
@@ -142,7 +142,7 @@ the target Organisation/LegalEntity/Party model.
   and private/no-store.
 - P1-006 consumes registry permissions/descriptors without weakening its own
   tenant/result authorization.
-- Search results carry stable metadata labels/routes and retain tenant,
+- Search results carry stable metadata labels/navigation targets and retain tenant,
   permission, ranking and cursor behaviour.
 - No migration or duplicate canonical table is added.
 - Full guarded DB suite, server/web typechecks and web build pass.

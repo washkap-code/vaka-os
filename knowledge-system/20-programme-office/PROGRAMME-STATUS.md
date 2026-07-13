@@ -6,7 +6,7 @@
 | Programme | Status | Evidence and next gate |
 |---|---|---|
 | P0 Engineering Foundation | accepted / partial / partial / internal | Knowledge System and CI foundations; placeholder replacement, scans, E2E, migration pipeline and hosted evidence remain |
-| P1 Platform Foundation | accepted / partial / P1-006 full suite passed / internal | Kernel, identity/audit/localisation, notification, post-commit event and bounded Customer/Invoice/Product search adapters exist; durable event/search operations, scale evidence, metadata adoption and broader consumption migration remain |
+| P1 Platform Foundation | accepted / partial / P1-008 full suite passed / internal | Kernel, identity/audit/localisation, notification, post-commit event, bounded search and read-only canonical metadata adapters exist; durable event/search operations, scale evidence, dynamic metadata, AI context/value access and broader consumption migration remain |
 | P2 Finance and Zimbabwe | accepted / partial / P2-003 full suite passed / internal pending professional approval | effective-dated country configuration, invoice VAT treatment evidence and a not-filing-ready posted-ledger VAT technical report exist; supplier input VAT, filing workflow, fiscalisation, legal entities and qualified Zimbabwe tax approval remain |
 | P3 CRM and sales | accepted / partial / critical-path tests documented / existing foundation | complete lead-to-cash and portal/analytics gaps remain |
 | P4 Procurement | accepted / partial / not fully assessed / existing PO foundation | source-to-pay, match and supplier controls remain |

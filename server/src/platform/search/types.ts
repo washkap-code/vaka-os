@@ -17,6 +17,13 @@ export interface SearchResult<TDocument = unknown> {
   title: string;
   document: TDocument;
   score?: number;
+  object?: {
+    key: string;
+    version: string;
+    labelKey: string;
+    fallbackLabel: string;
+    navigation: { section: string; recordView: string | null };
+  };
 }
 
 export interface SearchResponse<TDocument = unknown> {

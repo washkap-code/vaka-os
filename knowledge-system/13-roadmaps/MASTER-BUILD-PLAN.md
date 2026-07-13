@@ -52,7 +52,7 @@ Goal: every module consumes shared contracts; no duplicated infrastructure.
 | P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | ✅ Implemented; durable delivery gated |
 | P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | ✅ Technically verified internal adapter; durable/scale operations gated |
 | P1-007 | Document service adapter unifying invoice PDFs + capture storage behind one contract | P1-002 | Planned |
-| P1-008 | Metadata registry seeded with canonical objects (Company, Customer, Invoice…) powering search + AI context | P1-005 | Planned |
+| P1-008 | Metadata registry seeded with canonical objects (Company, Customer, Invoice…) powering search + AI context | P1-005 | ✅ Technically verified read-only registry; AI context/value access gated |
 
 Acceptance for P1 overall: a new module can be built using only kernel services; a lint/architecture check flags any module importing `db`/`audit()` directly once migrated.
 
@@ -209,7 +209,8 @@ evidence; professional review remains open where stated. P2-003 is implemented
 as an internal, full-suite-verified, not-filing-ready technical report pending
 qualified review. P1-004 and P1-005 are implemented and verified as
 internal adapter foundations. P1-006 is implemented and full-suite verified as
-a bounded internal keyword-search adapter. The next dependency mission is
-**P1-008**;
+a bounded internal keyword-search adapter. P1-008 is implemented and
+full-suite verified as a read-only canonical metadata registry; it does not
+enable AI value access. The next ordered mission is **P3-003**;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.

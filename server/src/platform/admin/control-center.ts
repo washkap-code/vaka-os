@@ -159,10 +159,10 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
     "kernel.metadata",
     "Metadata",
     "partial",
-    "Typed registry contract and in-process foundation exist; it does not yet drive all product behaviour.",
-    "Seed canonical objects and prove authorised runtime consumption.",
+    "P1-008 composes a read-only canonical Company, Customer, Invoice and Product registry; search consumes its permissions and descriptors. Dynamic metadata and broad adoption are not complete.",
+    "Extend the governed registry incrementally, implement the target Party/Organisation/LegalEntity model and add a separately approved permission-aware AI context builder.",
     "passed",
-    "Focused Platform Kernel metadata tests passed.",
+    "P1-008 focused registry/search tests and the full database-backed suite passed; no AI value access is enabled.",
   ),
   kernel(
     "kernel.workflow",

@@ -12,6 +12,17 @@
 
 ### Added
 
+- **Canonical metadata registry (P1-008):** Composed a read-only kernel registry
+  for Company, Customer, Invoice and Product with versioned physical lineage,
+  permissions, localisation/navigation descriptors, search/result fields and
+  explicit future-AI exposure boundaries. Search now consumes registry
+  permissions, searchable fields and object descriptors. The authenticated
+  definitions API returns permission-filtered descriptors only—never record
+  values. Restricted fields and internal identifiers are AI-excluded; custom
+  metadata writes fail closed. No AI provider or context/value access is
+  enabled, and the tenant-backed Company projection remains explicitly not a
+  LegalEntity.
+
 - **Tenant-scoped search adapter (P1-006):** Composed the kernel search service
   with a rebuildable PostgreSQL index for canonical Customers, Invoices and
   Products. Added verified-JWT tenant/permission filtering, deterministic
