@@ -22,6 +22,20 @@ const required = [
   ["invoice_line_items", "tax_amount"],
   ["invoice_line_items", "tax_rate_effective_from"],
   ["invoice_line_items", "tax_rate_effective_to"],
+  ["contacts", "address_line_1"],
+  ["contacts", "address_line_2"],
+  ["contacts", "city"],
+  ["contacts", "region"],
+  ["contacts", "postal_code"],
+  ["contacts", "country_code"],
+  ["contacts", "website"],
+  ["contacts", "industry"],
+  ["contacts", "registration_number"],
+  ["contacts", "notes"],
+  ["contacts", "deleted_at"],
+  ["contacts", "deleted_by"],
+  ["record_deletion_requests", "id"],
+  ["record_deletion_requests", "status"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

@@ -6,6 +6,7 @@ import { appEnglish } from "./locales/app.en";
 import { PlatformAdminGuide } from "./platform-admin-guide";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
+import { useListSelection } from "./records/use-list-selection";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -68,7 +69,39 @@ type CustomerTimelineItem = {
     | { type: "payment"; amountCents: string; currency: "USD" | "ZWG"; reference: string | null; invoiceId: string; invoiceNumber: string | null };
 };
 
-type ContactSummary = { id: string; name: string };
+type ContactSummary = {
+  id: string; name: string; type: "INDIVIDUAL" | "COMPANY";
+  email: string | null; phone: string | null; address: string | null;
+  addressLine1: string | null; addressLine2: string | null; city: string | null;
+  region: string | null; postalCode: string | null; countryCode: string | null;
+  website: string | null; industry: string | null; registrationNumber: string | null;
+  notes: string | null; taxNumber: string | null; tags: string[];
+  isCustomer: boolean; isVendor: boolean;
+};
+
+type ContactDeletionRequest = {
+  id: string; entityId: string; contactName: string; requestedBy: string;
+  requesterName: string; reason: string; status: "PENDING" | "APPROVED" | "REJECTED";
+  decisionReason: string | null; createdAt: string; decidedAt: string | null;
+};
+
+type InvoiceLineView = {
+  id: string; productId: string | null; warehouseId: string | null;
+  description: string; quantity: string; unitPrice: string; taxRate: string;
+  taxTreatment: "standard" | "zero-rated" | "exempt" | null;
+  taxAmount: string | null; lineTotal: string;
+};
+
+type InvoiceDetailView = {
+  id: string; contactId: string; number: string | null; currency: "USD" | "ZWG";
+  rateToBase: string; status: "DRAFT" | "ISSUED" | "PARTIAL" | "PAID" | "VOID";
+  issueDate: string | null; dueDate: string | null; taxDate: string | null;
+  taxJurisdiction: string | null; taxTreatment: string | null; subtotal: string;
+  taxTotal: string; total: string; amountPaid: string; notes: string | null;
+  contact: { id: string; name: string; email: string | null; phone: string | null } | null;
+  lines: InvoiceLineView[];
+  payments: Array<{ id: string; amount: string; date: string; reference: string | null }>;
+};
 
 type PlatformTenant = {
   id: string;
@@ -572,9 +605,9 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
-        {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} />}
+        {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
-        {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} />}
+        {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")} />}
         {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
@@ -1762,49 +1795,139 @@ function Dashboard({ ccy }: { ccy: string }) {
 // ---------------------------------------------------------------------------
 // Contacts
 // ---------------------------------------------------------------------------
-function Contacts({ readonly, canWrite }: { readonly: boolean; canWrite: boolean }) {
-  const [rows, reload] = useLoad(() => api("/contacts"));
+const emptyContact = { type: "COMPANY", isCustomer: true, isVendor: false, tags: [] as string[] };
+const nullableText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : null;
+
+function ContactFields({ value, onChange, disabled = false }: {
+  value: any; onChange: (next: any) => void; disabled?: boolean;
+}) {
+  const copy = appEnglish.contacts;
+  const set = (key: string) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    onChange({ ...value, [key]: event.target.value });
+  return <>
+    <div className="grid2 record-form-grid">
+      <div className="field"><label>{copy.name}</label><input disabled={disabled} value={value.name ?? ""} onChange={set("name")} /></div>
+      <div className="field"><label>{copy.type}</label><select disabled={disabled} value={value.type ?? "COMPANY"} onChange={set("type")}><option value="COMPANY">{copy.company}</option><option value="INDIVIDUAL">{copy.individual}</option></select></div>
+      <div className="field"><label>{copy.email}</label><input disabled={disabled} type="email" value={value.email ?? ""} onChange={set("email")} /></div>
+      <div className="field"><label>{copy.phone}</label><input disabled={disabled} value={value.phone ?? ""} onChange={set("phone")} /></div>
+      <div className="field"><label>{copy.website}</label><input disabled={disabled} type="url" placeholder="https://" value={value.website ?? ""} onChange={set("website")} /></div>
+      <div className="field"><label>{copy.industry}</label><input disabled={disabled} value={value.industry ?? ""} onChange={set("industry")} /></div>
+      <div className="field"><label>{copy.registrationNumber}</label><input disabled={disabled} value={value.registrationNumber ?? ""} onChange={set("registrationNumber")} /></div>
+      <div className="field"><label>{copy.taxNumber}</label><input disabled={disabled} value={value.taxNumber ?? ""} onChange={set("taxNumber")} /></div>
+      <div className="field"><label>{copy.addressLine1}</label><input disabled={disabled} value={value.addressLine1 ?? value.address ?? ""} onChange={set("addressLine1")} /></div>
+      <div className="field"><label>{copy.addressLine2}</label><input disabled={disabled} value={value.addressLine2 ?? ""} onChange={set("addressLine2")} /></div>
+      <div className="field"><label>{copy.city}</label><input disabled={disabled} value={value.city ?? ""} onChange={set("city")} /></div>
+      <div className="field"><label>{copy.region}</label><input disabled={disabled} value={value.region ?? ""} onChange={set("region")} /></div>
+      <div className="field"><label>{copy.postalCode}</label><input disabled={disabled} value={value.postalCode ?? ""} onChange={set("postalCode")} /></div>
+      <div className="field"><label>{copy.countryCode}</label><input disabled={disabled} maxLength={2} placeholder="ZW" value={value.countryCode ?? ""} onChange={set("countryCode")} /></div>
+      <div className="field"><label>{copy.tags}</label><input disabled={disabled} value={Array.isArray(value.tags) ? value.tags.join(", ") : value.tags ?? ""} onChange={(event) => onChange({ ...value, tags: event.target.value })} /></div>
+      <div className="field"><label>{copy.roles}</label><div className="row record-role-options">
+        <label><input disabled={disabled} type="checkbox" checked={!!value.isCustomer} onChange={(event) => onChange({ ...value, isCustomer: event.target.checked })} />{copy.customer}</label>
+        <label><input disabled={disabled} type="checkbox" checked={!!value.isVendor} onChange={(event) => onChange({ ...value, isVendor: event.target.checked })} />{copy.vendor}</label>
+      </div></div>
+    </div>
+    <div className="field"><label>{copy.notes}</label><textarea disabled={disabled} rows={4} value={value.notes ?? ""} onChange={set("notes")} /></div>
+  </>;
+}
+
+function contactPayload(form: any) {
+  const tags = Array.isArray(form.tags) ? form.tags : String(form.tags ?? "").split(",");
+  return {
+    type: form.type ?? "COMPANY",
+    name: String(form.name ?? "").trim(),
+    email: nullableText(form.email), phone: nullableText(form.phone), website: nullableText(form.website),
+    industry: nullableText(form.industry), registrationNumber: nullableText(form.registrationNumber),
+    taxNumber: nullableText(form.taxNumber), addressLine1: nullableText(form.addressLine1),
+    addressLine2: nullableText(form.addressLine2), city: nullableText(form.city), region: nullableText(form.region),
+    postalCode: nullableText(form.postalCode), countryCode: nullableText(form.countryCode)?.toUpperCase() ?? null,
+    notes: nullableText(form.notes), tags: [...new Set(tags.map((tag: string) => tag.trim()).filter(Boolean))],
+    isCustomer: !!form.isCustomer, isVendor: !!form.isVendor,
+  };
+}
+
+function Contacts({ readonly, canWrite, isTenantOwner }: { readonly: boolean; canWrite: boolean; isTenantOwner: boolean }) {
+  const [loadedRows, reload] = useLoad(() => api("/contacts"));
+  const [loadedRequests, reloadRequests] = useLoad(() => api("/contacts/deletion-requests"));
+  const rows = (loadedRows ?? []) as ContactSummary[];
+  const requests = (loadedRequests ?? []) as ContactDeletionRequest[];
+  const selection = useListSelection(rows);
   const [show, setShow] = useState(false);
   const [selected, setSelected] = useState<ContactSummary | null>(null);
-  const [f, setF] = useState<any>({ type: "COMPANY", isCustomer: true, isVendor: false });
+  const [f, setF] = useState<any>({ ...emptyContact });
   const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const copy = appEnglish.contacts;
   const save = async () => {
-    try { await api("/contacts", { method: "POST", body: f }); setShow(false); setF({ type: "COMPANY", isCustomer: true, isVendor: false }); reload(); }
-    catch (e: any) { setErr(e.message); }
+    setBusy(true); setErr("");
+    try {
+      await api("/contacts", { method: "POST", body: contactPayload(f) });
+      setShow(false); setF({ ...emptyContact }); reload();
+    } catch (error: any) { setErr(error.message); }
+    finally { setBusy(false); }
   };
+  const refresh = () => { selection.clear(); reload(); reloadRequests(); };
+  const bulk = async (operation: any) => {
+    setBusy(true);
+    try { await api("/contacts/bulk", { method: "POST", body: { ids: [...selection.selectedIds], operation } }); refresh(); }
+    catch (error: any) { alert(error.message); }
+    finally { setBusy(false); }
+  };
+  const remove = async (ids: string[]) => {
+    const reason = window.prompt(isTenantOwner ? copy.deleteReasonOwner : copy.deleteReasonRequest);
+    if (!reason) return;
+    setBusy(true);
+    try {
+      const result = await api("/contacts/deletions", { method: "POST", body: { ids, reason } });
+      alert(result.outcome === "REMOVED" ? copy.deleted : copy.requestSubmitted);
+      setSelected(null); refresh();
+    } catch (error: any) { alert(error.message); }
+    finally { setBusy(false); }
+  };
+  const decide = async (requestId: string, decision: "APPROVE" | "REJECT") => {
+    const reason = window.prompt(decision === "APPROVE" ? copy.approvalReason : copy.rejectionReason);
+    if (!reason) return;
+    setBusy(true);
+    try { await api(`/contacts/deletion-requests/${requestId}/decision`, { method: "POST", body: { decision, reason } }); refresh(); }
+    catch (error: any) { alert(error.message); }
+    finally { setBusy(false); }
+  };
+  const selectedIds = [...selection.selectedIds];
   return (<>
-    <div className="row" style={{ justifyContent: "space-between" }}>
-      <div><h1>Contacts</h1><div className="sub">Customers and vendors — shared by CRM, invoicing and purchasing</div></div>
-      {!readonly && canWrite && <button className="btn" onClick={() => setShow(true)}>+ New contact</button>}
+    <div className="row page-heading">
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      {!readonly && canWrite && <button className="btn" onClick={() => setShow(true)}>{copy.newContact}</button>}
     </div>
-    <div className="panel">
-      <table><thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Phone</th><th>Tax / BP No.</th><th>Roles</th></tr></thead>
-        <tbody>{(rows ?? []).map((c: any) => (
-          <tr key={c.id}><td><button className="link-button" onClick={() => setSelected(c)} aria-label={`${appEnglish.customerTimeline.open}: ${c.name}`}><b>{c.name}</b></button></td><td>{c.type}</td><td>{c.email ?? "—"}</td><td>{c.phone ?? "—"}</td><td>{c.taxNumber ?? "—"}</td>
-            <td>{[c.isCustomer && "Customer", c.isVendor && "Vendor"].filter(Boolean).join(", ")}</td></tr>
+    {selection.selectedCount > 0 && <div className="bulk-action-bar" role="region" aria-label={copy.bulkActions}>
+      <b>{copy.selected.replace("{count}", String(selection.selectedCount))}</b>
+      {!readonly && canWrite && <>
+        <button className="btn ghost sm" disabled={busy} onClick={() => bulk({ action: "MARK_CUSTOMER" })}>{copy.markCustomer}</button>
+        <button className="btn ghost sm" disabled={busy} onClick={() => bulk({ action: "MARK_VENDOR" })}>{copy.markVendor}</button>
+        <button className="btn ghost sm" disabled={busy} onClick={() => { const tag = window.prompt(copy.tagPrompt); if (tag) void bulk({ action: "ADD_TAG", tag }); }}>{copy.addTag}</button>
+        <button className="btn ghost sm" disabled={busy} onClick={() => { const tag = window.prompt(copy.removeTagPrompt); if (tag) void bulk({ action: "REMOVE_TAG", tag }); }}>{copy.removeTag}</button>
+        <button className="btn danger sm" disabled={busy} onClick={() => remove(selectedIds)}>{isTenantOwner ? copy.deleteSelected : copy.requestDeleteSelected}</button>
+      </>}
+      <button className="btn ghost sm" onClick={selection.clear}>{copy.clearSelection}</button>
+    </div>}
+    <div className="panel table-scroll">
+      <table><thead><tr><th className="select-column"><input type="checkbox" aria-label={copy.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>{copy.name}</th><th>{copy.type}</th><th>{copy.email}</th><th>{copy.phone}</th><th>{copy.location}</th><th>{copy.roles}</th></tr></thead>
+        <tbody>{rows.map((contact) => (
+          <tr key={contact.id}><td><input type="checkbox" aria-label={copy.selectContact.replace("{name}", contact.name)} checked={selection.selectedIds.has(contact.id)} onChange={() => selection.toggle(contact.id)} /></td><td><button className="link-button" onClick={() => setSelected(contact)} aria-label={`${appEnglish.customerTimeline.open}: ${contact.name}`}><b>{contact.name}</b></button></td><td>{contact.type}</td><td>{contact.email ?? "—"}</td><td>{contact.phone ?? "—"}</td><td>{[contact.city, contact.countryCode].filter(Boolean).join(", ") || "—"}</td>
+            <td>{[contact.isCustomer && copy.customer, contact.isVendor && copy.vendor].filter(Boolean).join(", ")}</td></tr>
         ))}</tbody></table>
-      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No contacts yet — add your first customer or vendor.</p>}
+      {loadedRows && rows.length === 0 && <p className="sub record-empty">{copy.empty}</p>}
     </div>
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
-      <h2>New contact</h2>
-      <div className="grid2">
-        <div className="field"><label>Name</label><input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-        <div className="field"><label>Type</label><select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option>COMPANY</option><option>INDIVIDUAL</option></select></div>
-        <div className="field"><label>Email</label><input value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value || null })} /></div>
-        <div className="field"><label>Phone</label><input value={f.phone ?? ""} onChange={(e) => setF({ ...f, phone: e.target.value || null })} /></div>
-        <div className="field"><label>ZIMRA BP / VAT number</label><input value={f.taxNumber ?? ""} onChange={(e) => setF({ ...f, taxNumber: e.target.value || null })} /></div>
-        <div className="field"><label>Roles</label><div className="row" style={{ paddingTop: 8 }}>
-          <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" style={{ width: "auto" }} checked={!!f.isCustomer} onChange={(e) => setF({ ...f, isCustomer: e.target.checked })} />Customer</label>
-          <label style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" style={{ width: "auto" }} checked={!!f.isVendor} onChange={(e) => setF({ ...f, isVendor: e.target.checked })} />Vendor</label>
-        </div></div>
-      </div>
-      {err && <div className="err-text">{err}</div>}
-      <div className="row end" style={{ marginTop: 14 }}>
-        <button className="btn ghost" onClick={() => setShow(false)}>Cancel</button>
-        <button className="btn" onClick={save}>Save contact</button>
-      </div>
+    {requests.length > 0 && <div className="panel">
+      <h2>{isTenantOwner ? copy.pendingApprovals : copy.deletionRequests}</h2>
+      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.requestedBy}</th><th>{copy.reason}</th><th>{copy.status}</th><th>{copy.actions}</th></tr></thead><tbody>
+        {requests.map((request) => <tr key={request.id}><td>{request.contactName}</td><td>{request.requesterName}</td><td>{request.reason}</td><td><span className={`pill ${request.status}`}>{request.status}</span></td><td>{isTenantOwner && request.status === "PENDING" && <div className="row"><button className="btn sm" disabled={busy} onClick={() => decide(request.id, "APPROVE")}>{copy.approve}</button><button className="btn ghost sm" disabled={busy} onClick={() => decide(request.id, "REJECT")}>{copy.reject}</button></div>}</td></tr>)}
+      </tbody></table></div>
+    </div>}
+    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal record-modal" role="dialog" aria-modal="true" aria-labelledby="new-contact-title" onClick={(event) => event.stopPropagation()}>
+      <h2 id="new-contact-title">{copy.newContactTitle}</h2><ContactFields value={f} onChange={setF} />
+      {err && <div className="err-text" role="alert">{err}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShow(false)}>{copy.cancel}</button><button className="btn" disabled={busy || !String(f.name ?? "").trim()} onClick={save}>{busy ? copy.saving : copy.saveContact}</button></div>
     </div></div>}
-    {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onClose={() => setSelected(null)} />}
+    {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onDelete={() => remove([selected.id])} onSaved={(contact) => { setSelected(contact); reload(); }} onClose={() => setSelected(null)} />}
   </>);
 }
 
@@ -1815,7 +1938,10 @@ function centsToMoney(cents: string): string {
   return `${negative ? "-" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}`;
 }
 
-function CustomerTimeline({ contact, canWrite, onClose }: { contact: ContactSummary; canWrite: boolean; onClose: () => void }) {
+function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
+  contact: ContactSummary; canWrite: boolean; onDelete: () => void;
+  onSaved: (contact: ContactSummary) => void; onClose: () => void;
+}) {
   const copy = appEnglish.customerTimeline;
   const dialogRef = useRef<HTMLElement>(null);
   const [items, setItems] = useState<CustomerTimelineItem[]>([]);
@@ -1827,6 +1953,13 @@ function CustomerTimeline({ contact, canWrite, onClose }: { contact: ContactSumm
   const [saving, setSaving] = useState(false);
   const [activityError, setActivityError] = useState("");
   const [activity, setActivity] = useState({ type: "note", body: "", dueAt: "" });
+  const [profile, setProfile] = useState<any>(contact);
+  const [profileError, setProfileError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  useEffect(() => {
+    api(`/contacts/${contact.id}`).then((record) => setProfile(record.contact)).catch(() => setProfile(contact));
+  }, [contact.id]);
 
   const load = async (nextCursor?: string, append = false) => {
     append ? setLoadingMore(true) : setLoading(true);
@@ -1877,6 +2010,16 @@ function CustomerTimeline({ contact, canWrite, onClose }: { contact: ContactSumm
     }
   };
 
+  const saveProfile = async () => {
+    setProfileSaving(true); setProfileError("");
+    try {
+      const updated = await api(`/contacts/${contact.id}`, { method: "PATCH", body: contactPayload(profile) });
+      setProfile(updated); onSaved(updated as ContactSummary);
+    } catch (requestError: unknown) {
+      setProfileError(requestError instanceof Error ? requestError.message : copy.loadError);
+    } finally { setProfileSaving(false); }
+  };
+
   const eventTitle = (item: CustomerTimelineItem): string => {
     if (item.kind === "invoice.issued") return copy.invoiceIssued;
     if (item.kind === "invoice.voided") return copy.invoiceVoided;
@@ -1887,9 +2030,19 @@ function CustomerTimeline({ contact, canWrite, onClose }: { contact: ContactSumm
   return <div className="modalbg" onClick={onClose} role="presentation">
     <section ref={dialogRef} tabIndex={-1} className="modal customer-timeline-modal" role="dialog" aria-modal="true" aria-labelledby="customer-timeline-title" onClick={(event) => event.stopPropagation()}>
       <div className="timeline-heading">
-        <div><h2 id="customer-timeline-title">{contact.name} · {copy.title}</h2><p className="sub">{copy.subtitle}</p></div>
+        <div><h2 id="customer-timeline-title">{profile.name ?? contact.name} · {copy.title}</h2><p className="sub">{copy.subtitle}</p></div>
         <button className="btn ghost sm" onClick={onClose}>{copy.close}</button>
       </div>
+      <section className="record-profile-section" aria-labelledby="customer-profile-title">
+        <h3 id="customer-profile-title">{appEnglish.contacts.profile}</h3>
+        <ContactFields value={profile} onChange={setProfile} disabled={!canWrite} />
+        {profileError && <div className="err-text" role="alert">{profileError}</div>}
+        {canWrite && <div className="row end modal-actions">
+          <button className="btn danger" disabled={profileSaving} onClick={onDelete}>{appEnglish.contacts.deleteContact}</button>
+          <button className="btn" disabled={profileSaving || !String(profile.name ?? "").trim()} onClick={saveProfile}>{profileSaving ? appEnglish.contacts.saving : appEnglish.contacts.saveChanges}</button>
+        </div>}
+      </section>
+      <h3>{copy.activityHeading}</h3>
       {canWrite && <div className="timeline-actions">
         <button className="btn" onClick={() => setShowActivity((value) => !value)}>{copy.addActivity}</button>
       </div>}
@@ -1975,8 +2128,10 @@ function Pipeline({ readonly }: { readonly: boolean }) {
 // ---------------------------------------------------------------------------
 // Invoices
 // ---------------------------------------------------------------------------
-function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string }) {
-  const [rows, reload] = useLoad(() => api("/invoices"));
+function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: string; canPost: boolean }) {
+  const [loadedRows, reload] = useLoad(() => api("/invoices"));
+  const rows = (loadedRows ?? []) as any[];
+  const selection = useListSelection(rows);
   const [contacts] = useLoad(() => api("/contacts"));
   const [products] = useLoad(() => api("/products"));
   const [show, setShow] = useState(false);
@@ -1984,6 +2139,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
   const [linkInvoice, setLinkInvoice] = useState<{ id: string; number: string | null } | null>(null);
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const empty = { description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard", productId: "" };
   const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
 
@@ -2079,21 +2235,39 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
   };
+  const exportSelected = () => {
+    const selected = rows.filter((invoice) => selection.selectedIds.has(invoice.id));
+    const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const csv = [
+      ["Number", "Customer", "Status", "Currency", "Total", "Paid"],
+      ...selected.map((invoice) => [invoice.number ?? "Draft", invoice.contact_name, invoice.status, invoice.currency, invoice.total, invoice.amount_paid]),
+    ].map((line) => line.map(escape).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = "vaka-selected-invoices.csv";
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  };
   return (<>
-    <div className="row" style={{ justifyContent: "space-between" }}>
+    <div className="row page-heading">
       <div><h1>Invoices</h1><div className="sub">Issuing posts revenue &amp; VAT to the ledger and moves stock — in one step</div></div>
-      {!readonly && <button className="btn" onClick={() => setShow(true)}>+ New invoice</button>}
+      {!readonly && canPost && <button className="btn" onClick={() => setShow(true)}>+ New invoice</button>}
     </div>
-    <div className="panel">
-      <table><thead><tr><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>Actions</th></tr></thead>
-        <tbody>{(rows ?? []).map((i: any) => (
+    {selection.selectedCount > 0 && <div className="bulk-action-bar" role="region" aria-label={appEnglish.invoices.bulkActions}>
+      <b>{appEnglish.invoices.selected.replace("{count}", String(selection.selectedCount))}</b>
+      <button className="btn ghost sm" onClick={exportSelected}>{appEnglish.invoices.exportSelected}</button>
+      <button className="btn ghost sm" onClick={selection.clear}>{appEnglish.invoices.clearSelection}</button>
+      <span className="sub">{appEnglish.invoices.bulkSafety}</span>
+    </div>}
+    <div className="panel table-scroll">
+      <table><thead><tr><th className="select-column"><input type="checkbox" aria-label={appEnglish.invoices.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>Actions</th></tr></thead>
+        <tbody>{rows.map((i: any) => (
           <tr key={i.id}>
-            <td><b>{i.number ?? "(draft)"}</b></td><td>{i.contact_name}</td>
+            <td><input type="checkbox" aria-label={appEnglish.invoices.selectInvoice.replace("{number}", i.number ?? appEnglish.invoices.draft)} checked={selection.selectedIds.has(i.id)} onChange={() => selection.toggle(i.id)} /></td>
+            <td><button className="link-button" onClick={() => setSelectedInvoiceId(i.id)}><b>{i.number ?? `(${appEnglish.invoices.draft})`}</b></button></td><td>{i.contact_name}</td>
             <td><span className={`pill ${i.status}`}>{i.status}</span></td>
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
             <td><div className="row">
               {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
-              {!readonly && <>
+              {!readonly && canPost && <>
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
@@ -2110,7 +2284,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
             </div></td>
           </tr>
         ))}</tbody></table>
-      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
+      {loadedRows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
     {linkInvoice && <div className="modalbg" onClick={() => setLinkInvoice(null)}><div className="modal" onClick={(e) => e.stopPropagation()}>
       <div className="row" style={{ justifyContent: "space-between" }}>
@@ -2129,6 +2303,7 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
         </div>)}
       </div>}
     </div></div>}
+    {selectedInvoiceId && <InvoiceRecordDialog invoiceId={selectedInvoiceId} contacts={(contacts ?? []) as ContactSummary[]} products={products ?? []} baseCcy={baseCcy} canEdit={!readonly && canPost} onSaved={() => reload()} onClose={() => setSelectedInvoiceId(null)} />}
     {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
       <h2>New invoice</h2>
       <div className="grid3">
@@ -2169,6 +2344,104 @@ function Invoices({ readonly, baseCcy }: { readonly: boolean; baseCcy: string })
       </div>
     </div></div>}
   </>);
+}
+
+function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, onSaved, onClose }: {
+  invoiceId: string; contacts: ContactSummary[]; products: any[]; baseCcy: string;
+  canEdit: boolean; onSaved: () => void; onClose: () => void;
+}) {
+  const [invoice, setInvoice] = useState<InvoiceDetailView | null>(null);
+  const [form, setForm] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const copy = appEnglish.invoices;
+  const load = async () => {
+    setLoading(true); setError("");
+    try {
+      const record = await api(`/invoices/${invoiceId}`) as InvoiceDetailView;
+      setInvoice(record);
+      setForm({
+        contactId: record.contactId, currency: record.currency, rateToBase: record.rateToBase,
+        dueDate: record.dueDate?.slice(0, 10) ?? "", notes: record.notes ?? "",
+        taxDate: record.taxDate ?? "",
+        lines: record.lines.map((line) => ({
+          productId: line.productId ?? "", warehouseId: line.warehouseId ?? "",
+          description: line.description, quantity: line.quantity, unitPrice: line.unitPrice,
+          taxTreatment: line.taxTreatment ?? "standard",
+        })),
+      });
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : copy.detailLoadFailed);
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, [invoiceId]);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close);
+  }, [invoiceId]);
+  const editable = canEdit && invoice?.status === "DRAFT";
+  const setLine = (index: number, key: string, value: string) => {
+    const lines = [...form.lines]; lines[index] = { ...lines[index], [key]: value };
+    if (key === "productId" && value) {
+      const product = products.find((item) => item.id === value);
+      if (product) lines[index] = {
+        ...lines[index], description: product.name,
+        unitPrice: product.salePrice ?? product.sale_price ?? "0",
+        taxTreatment: product.taxTreatment ?? product.tax_treatment ?? "standard",
+      };
+    }
+    setForm({ ...form, lines });
+  };
+  const save = async () => {
+    setSaving(true); setError("");
+    try {
+      await api(`/invoices/${invoiceId}`, { method: "PATCH", body: {
+        contactId: form.contactId, currency: form.currency, rateToBase: form.rateToBase,
+        dueDate: form.dueDate || null, notes: nullableText(form.notes), taxDate: form.taxDate || undefined,
+        lines: form.lines.map((line: any) => ({
+          productId: line.productId || undefined, warehouseId: line.warehouseId || undefined,
+          description: line.description, quantity: line.quantity, unitPrice: line.unitPrice,
+          taxTreatment: line.taxTreatment,
+        })),
+      } });
+      await load(); onSaved();
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : copy.updateFailed);
+    } finally { setSaving(false); }
+  };
+  return <div className="modalbg" onClick={onClose} role="presentation"><section className="modal record-modal invoice-record-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-record-title" onClick={(event) => event.stopPropagation()}>
+    <div className="timeline-heading"><div><h2 id="invoice-record-title">{invoice?.number ?? copy.draftInvoice}</h2>{invoice && <p className="sub">{invoice.contact?.name ?? "—"} · <span className={`pill ${invoice.status}`}>{invoice.status}</span></p>}</div><button className="btn ghost sm" onClick={onClose}>{copy.close}</button></div>
+    {loading ? <p className="sub" role="status">{copy.loadingDetail}</p> : error && !form ? <div className="err-text" role="alert">{error}</div> : invoice && form && <>
+      {invoice.status !== "DRAFT" && <div className="banner warn">{copy.historicalLocked}</div>}
+      {invoice.status === "DRAFT" && !canEdit && <div className="banner warn">{copy.draftReadOnly}</div>}
+      <div className="grid3 record-form-grid">
+        <div className="field"><label>{copy.customer}</label>{editable ? <select value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })}><option value="">{copy.selectCustomer}</option>{contacts.filter((contact) => contact.isCustomer).map((contact) => <option value={contact.id} key={contact.id}>{contact.name}</option>)}</select> : <input disabled value={invoice.contact?.name ?? "—"} />}</div>
+        <div className="field"><label>{copy.currency}</label><select disabled={!editable} value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })}><option>USD</option><option>ZWG</option></select></div>
+        <div className="field"><label>{copy.dueDate}</label><input disabled={!editable} type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></div>
+        <div className="field"><label>{copy.taxDate}</label><input disabled={!editable} type="date" value={form.taxDate} onChange={(event) => setForm({ ...form, taxDate: event.target.value })} /></div>
+        {form.currency !== baseCcy && <div className="field"><label>{copy.rateToBase.replace("{currency}", baseCcy)}</label><input disabled={!editable} value={form.rateToBase} onChange={(event) => setForm({ ...form, rateToBase: event.target.value })} /></div>}
+        <div className="field"><label>{copy.taxJurisdiction}</label><input disabled value={invoice.taxJurisdiction ?? "—"} /></div>
+      </div>
+      <div className="field"><label>{copy.notes}</label><textarea disabled={!editable} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></div>
+      <h3>{copy.lines}</h3>
+      <div className="invoice-lines-editor">
+        {form.lines.map((line: any, index: number) => <div className="invoice-line-editor" key={`${index}-${line.productId}`}>
+          <select disabled={!editable} value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}><option value="">{copy.freeTextLine}</option>{products.map((product) => <option value={product.id} key={product.id}>{product.sku} — {product.name}</option>)}</select>
+          <input disabled={!editable} aria-label={copy.description} value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} />
+          <input disabled={!editable} aria-label={copy.quantity} value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} />
+          <input disabled={!editable} aria-label={copy.unitPrice} value={line.unitPrice} onChange={(event) => setLine(index, "unitPrice", event.target.value)} />
+          <select disabled={!editable} aria-label={copy.taxTreatment} value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{copy.taxTreatmentStandard}</option><option value="zero-rated">{copy.taxTreatmentZeroRated}</option><option value="exempt">{copy.taxTreatmentExempt}</option></select>
+          {editable && form.lines.length > 1 && <button className="btn ghost sm" aria-label={copy.removeLine.replace("{number}", String(index + 1))} onClick={() => setForm({ ...form, lines: form.lines.filter((_: any, itemIndex: number) => itemIndex !== index) })}>{copy.remove}</button>}
+        </div>)}
+      </div>
+      {editable && <button className="btn ghost sm" onClick={() => setForm({ ...form, lines: [...form.lines, { productId: "", description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard" }] })}>{copy.addLine}</button>}
+      <div className="invoice-detail-totals"><span>{copy.subtotal}: <b>{fmt(invoice.subtotal, invoice.currency)}</b></span><span>{copy.tax}: <b>{fmt(invoice.taxTotal, invoice.currency)}</b></span><span>{copy.total}: <b>{fmt(invoice.total, invoice.currency)}</b></span><span>{copy.paid}: <b>{fmt(invoice.amountPaid, invoice.currency)}</b></span></div>
+      {invoice.payments.length > 0 && <section><h3>{copy.payments}</h3><div className="table-scroll"><table><thead><tr><th>{copy.paymentDate}</th><th>{copy.reference}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{invoice.payments.map((payment) => <tr key={payment.id}><td>{new Date(payment.date).toLocaleDateString()}</td><td>{payment.reference ?? "—"}</td><td className="num">{fmt(payment.amount, invoice.currency)}</td></tr>)}</tbody></table></div></section>}
+      {error && <div className="err-text" role="alert">{error}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={onClose}>{copy.close}</button>{editable && <button className="btn" disabled={saving || !form.contactId || form.lines.some((line: any) => !line.description.trim())} onClick={save}>{saving ? copy.savingChanges : copy.saveChanges}</button>}</div>
+    </>}
+  </section></div>;
 }
 
 // ---------------------------------------------------------------------------

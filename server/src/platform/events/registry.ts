@@ -18,9 +18,9 @@ export type DomainEventPayloads = {
   "stock.moved": { movementId: string; productId: string; warehouseId: string; quantityDelta: string; kind: string };
   "stock.adjusted": { movementId: string; productId: string; warehouseId: string; quantityDelta: string };
   "tenant.lifecycle_changed": { tenantId: string; from: string; to: string };
-  "customer.changed": { customerId: string; change: "created" | "updated" | "imported" };
+  "customer.changed": { customerId: string; change: "created" | "updated" | "imported" | "bulk-updated" | "removed" };
   "product.changed": { productId: string; change: "created" | "imported" | "updated" };
-  "invoice.changed": { invoiceId: string; change: "drafted" };
+  "invoice.changed": { invoiceId: string; change: "drafted" | "updated" };
   "activity.recorded": { activityId: string; customerId: string };
 };
 

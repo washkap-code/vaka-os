@@ -10,7 +10,7 @@
 // If ANY step fails, everything rolls back — the three modules can never
 // disagree with each other.
 // ============================================================================
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   DB, db, schema, badRequest, conflict, notFound,
   toCents, fromCents, mulRate, audit, nextDocNumber,
@@ -57,6 +57,61 @@ export function computeTotals(lines: ResolvedDraftLine[]) {
   return { computed, subtotal: fromCents(subtotal), taxTotal: fromCents(taxTotal), total: fromCents(subtotal + taxTotal) };
 }
 
+async function validateDraftReferences(tx: DB, tenantId: string, lines: DraftLine[]) {
+  const productIds = [...new Set(lines.map((line) => line.productId).filter((id): id is string => Boolean(id)))];
+  if (productIds.length) {
+    const products = await tx.select({ id: schema.products.id }).from(schema.products).where(and(
+      eq(schema.products.tenantId, tenantId),
+      inArray(schema.products.id, productIds),
+      eq(schema.products.isActive, true),
+    ));
+    if (products.length !== productIds.length) throw notFound("One or more invoice products were not found");
+  }
+  const warehouseIds = [...new Set(lines.map((line) => line.warehouseId).filter((id): id is string => Boolean(id)))];
+  if (warehouseIds.length) {
+    const warehouses = await tx.select({ id: schema.warehouses.id }).from(schema.warehouses).where(and(
+      eq(schema.warehouses.tenantId, tenantId),
+      inArray(schema.warehouses.id, warehouseIds),
+    ));
+    if (warehouses.length !== warehouseIds.length) throw notFound("One or more invoice warehouses were not found");
+  }
+}
+
+function resolveDraftLines(countryCode: string, taxDate: string, lines: DraftLine[]) {
+  const resolvedLines: ResolvedDraftLine[] = lines.map((line) => {
+    const treatment = line.taxTreatment ?? "standard";
+    const resolution = resolveTax(countryCode, treatment, taxDate);
+    assertCompatibleTaxRate(line.taxRate, resolution);
+    return {
+      ...line,
+      taxTreatment: treatment,
+      taxRate: taxRateString(resolution),
+      taxRateEffectiveFrom: resolution.effectiveFrom,
+      taxRateEffectiveTo: resolution.effectiveTo,
+    };
+  });
+  const taxTreatment = documentTaxTreatment(resolvedLines.map((line) => line.taxTreatment));
+  return { ...computeTotals(resolvedLines), taxTreatment };
+}
+
+async function replaceDraftLines(tx: DB, invoiceId: string, computed: ReturnType<typeof computeTotals>["computed"]) {
+  await tx.delete(schema.invoiceLineItems).where(eq(schema.invoiceLineItems.invoiceId, invoiceId));
+  await tx.insert(schema.invoiceLineItems).values(computed.map((line) => ({
+    invoiceId,
+    productId: line.productId ?? null,
+    warehouseId: line.warehouseId ?? null,
+    description: line.description,
+    quantity: line.quantity,
+    unitPrice: line.unitPrice,
+    taxRate: line.taxRate,
+    taxTreatment: line.taxTreatment,
+    taxAmount: line.taxAmount,
+    taxRateEffectiveFrom: line.taxRateEffectiveFrom,
+    taxRateEffectiveTo: line.taxRateEffectiveTo,
+    lineTotal: line.lineTotal,
+  })));
+}
+
 export async function createDraftInvoice(opts: {
   tenantId: string; contactId: string; currency: "USD" | "ZWG";
   rateToBase?: string; dueDate?: Date; notes?: string; taxDate?: string;
@@ -68,24 +123,14 @@ export async function createDraftInvoice(opts: {
       .where(eq(schema.tenants.id, opts.tenantId));
     if (!tenant) throw notFound("Tenant not found");
     const [contact] = await tx.select().from(schema.contacts).where(and(
-      eq(schema.contacts.id, opts.contactId), eq(schema.contacts.tenantId, opts.tenantId)));
+      eq(schema.contacts.id, opts.contactId), eq(schema.contacts.tenantId, opts.tenantId),
+      isNull(schema.contacts.deletedAt)));
     if (!contact) throw notFound("Contact not found");
 
     const taxDate = opts.taxDate ?? todayIsoDate();
-    const resolvedLines: ResolvedDraftLine[] = opts.lines.map((line) => {
-      const treatment = line.taxTreatment ?? "standard";
-      const resolution = resolveTax(tenant.countryCode, treatment, taxDate);
-      assertCompatibleTaxRate(line.taxRate, resolution);
-      return {
-        ...line,
-        taxTreatment: treatment,
-        taxRate: taxRateString(resolution),
-        taxRateEffectiveFrom: resolution.effectiveFrom,
-        taxRateEffectiveTo: resolution.effectiveTo,
-      };
-    });
-    const documentTreatment = documentTaxTreatment(resolvedLines.map((line) => line.taxTreatment));
-    const { computed, subtotal, taxTotal, total } = computeTotals(resolvedLines);
+    await validateDraftReferences(tx, opts.tenantId, opts.lines);
+    const { computed, subtotal, taxTotal, total, taxTreatment: documentTreatment } =
+      resolveDraftLines(tenant.countryCode, taxDate, opts.lines);
 
     const [inv] = await tx.insert(schema.invoices).values({
       tenantId: opts.tenantId, contactId: opts.contactId,
@@ -95,14 +140,7 @@ export async function createDraftInvoice(opts: {
       subtotal, taxTotal, total, createdBy: opts.createdBy ?? null,
     }).returning();
 
-    await tx.insert(schema.invoiceLineItems).values(computed.map((l) => ({
-      invoiceId: inv.id, productId: l.productId ?? null, warehouseId: l.warehouseId ?? null,
-      description: l.description, quantity: l.quantity, unitPrice: l.unitPrice,
-      taxRate: l.taxRate, taxTreatment: l.taxTreatment, taxAmount: l.taxAmount,
-      taxRateEffectiveFrom: l.taxRateEffectiveFrom,
-      taxRateEffectiveTo: l.taxRateEffectiveTo,
-      lineTotal: l.lineTotal,
-    })));
+    await replaceDraftLines(tx, inv.id, computed);
 
     if (opts.dealId) {
       await tx.update(schema.deals).set({ wonInvoiceId: inv.id })
@@ -121,6 +159,81 @@ export async function createDraftInvoice(opts: {
   }));
 }
 
+export async function updateDraftInvoice(opts: {
+  tenantId: string;
+  invoiceId: string;
+  contactId: string;
+  currency: "USD" | "ZWG";
+  rateToBase?: string;
+  dueDate?: Date | null;
+  notes?: string | null;
+  taxDate?: string;
+  lines: DraftLine[];
+  updatedBy: string;
+}) {
+  if (!opts.lines.length) throw badRequest("Invoice needs at least one line");
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [invoice] = await tx.select().from(schema.invoices).where(and(
+      eq(schema.invoices.id, opts.invoiceId),
+      eq(schema.invoices.tenantId, opts.tenantId),
+    )).for("update");
+    if (!invoice) throw notFound("Invoice not found");
+    if (invoice.status !== "DRAFT") throw conflict("Only draft invoices can be amended");
+    const [tenant] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, opts.tenantId));
+    const [contact] = await tx.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+      eq(schema.contacts.id, opts.contactId),
+      eq(schema.contacts.tenantId, opts.tenantId),
+      isNull(schema.contacts.deletedAt),
+    ));
+    if (!tenant || !contact) throw notFound("Invoice customer not found");
+    await validateDraftReferences(tx, opts.tenantId, opts.lines);
+
+    const taxDate = opts.taxDate ?? invoice.taxDate ?? todayIsoDate();
+    const { computed, subtotal, taxTotal, total, taxTreatment } =
+      resolveDraftLines(tenant.countryCode, taxDate, opts.lines);
+    const [updated] = await tx.update(schema.invoices).set({
+      contactId: opts.contactId,
+      currency: opts.currency,
+      rateToBase: opts.rateToBase ?? "1",
+      dueDate: opts.dueDate ?? null,
+      notes: opts.notes ?? null,
+      taxJurisdiction: tenant.countryCode,
+      taxDate,
+      taxTreatment,
+      subtotal,
+      taxTotal,
+      total,
+    }).where(and(
+      eq(schema.invoices.id, invoice.id),
+      eq(schema.invoices.tenantId, opts.tenantId),
+      eq(schema.invoices.status, "DRAFT"),
+    )).returning();
+    if (!updated) throw conflict("Invoice is no longer an editable draft");
+    await replaceDraftLines(tx, invoice.id, computed);
+    await audit(tx, opts.tenantId, opts.updatedBy, "invoice.draft_updated", "invoice", invoice.id, {
+      previousCustomerId: invoice.contactId,
+      customerId: updated.contactId,
+      previousCurrency: invoice.currency,
+      currency: updated.currency,
+      previousTotal: invoice.total,
+      total: updated.total,
+      taxJurisdiction: updated.taxJurisdiction,
+      taxDate: updated.taxDate,
+      taxTreatment: updated.taxTreatment,
+      lineCount: computed.length,
+    });
+    queue({
+      id: `${DOMAIN_EVENTS.INVOICE_CHANGED}:${invoice.id}:updated:${Date.now()}`,
+      type: DOMAIN_EVENTS.INVOICE_CHANGED,
+      tenantId: opts.tenantId,
+      actorUserId: opts.updatedBy,
+      payload: { invoiceId: invoice.id, change: "updated" },
+    });
+    return { ...updated, lines: await tx.select().from(schema.invoiceLineItems)
+      .where(eq(schema.invoiceLineItems.invoiceId, invoice.id)) };
+  }));
+}
+
 export async function issueInvoice(opts: { tenantId: string; invoiceId: string; createdBy?: string | null }) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [inv] = await tx.select().from(schema.invoices).where(and(
@@ -136,6 +249,7 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
     const [customer] = await tx.select().from(schema.contacts).where(and(
       eq(schema.contacts.id, inv.contactId),
       eq(schema.contacts.tenantId, opts.tenantId),
+      isNull(schema.contacts.deletedAt),
     ));
     if (!issuer || !customer) throw notFound("Invoice document party not found");
 

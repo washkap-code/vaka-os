@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema, type DB } from "./lib.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
@@ -202,7 +202,8 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
     ]);
     await db.transaction(async (tx) => {
       const customers = await tx.select().from(schema.contacts)
-        .where(and(eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.isCustomer, true)));
+        .where(and(eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.isCustomer, true),
+          isNull(schema.contacts.deletedAt)));
       const invoices = await tx.select({
         id: schema.invoices.id,
         tenantId: schema.invoices.tenantId,
@@ -234,6 +235,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
     const definition = await this.definition(tenantId, "customer");
     const [row] = await db.select().from(schema.contacts).where(and(
       eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.id, customerId),
+      isNull(schema.contacts.deletedAt),
     ));
     const document = row ? customerDocument(row, definition) : null;
     if (document) await upsertDocument(db, document);

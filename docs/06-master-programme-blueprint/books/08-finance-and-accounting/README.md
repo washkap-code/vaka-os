@@ -50,6 +50,12 @@ Customer master, quote/order, invoice, credit/debit notes, receipts, allocations
 
 Invoice issue allocates an immutable number, freezes document inputs, posts the journal where configured, emits durable post-commit events and can be corrected only through controlled documents/reversal.
 
+P2-007 permits complete replacement of an unnumbered, unposted `DRAFT` invoice
+inside one tenant-scoped transaction. Customer/product ownership, country-pack
+tax evidence and exact totals are revalidated and audited. Once issued, the
+invoice remains immutable and corrections continue through controlled
+void/reversal documents; invoice deletion is not supported.
+
 ## 5. Accounts payable and procurement
 
 Supplier master, requisition/RFQ/PO, receipt, bill, three-way match, approvals, payment proposal, payment and supplier statement reconciliation connect source-to-pay. Receiving may affect inventory; supplier bill acceptance affects AP/tax; payment affects cash/AP. Each effect has an explicit event and atomic boundary.
