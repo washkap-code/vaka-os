@@ -1,6 +1,6 @@
 # P6-011 — Platform Operations Evidence Accessibility
 
-**Status:** Approved for implementation
+**Status:** Implementation complete; local frontend and browser gates passed; remote quality and production release pending behind P6-008 through P6-010
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and localisation adoption
 **Depends on:** P6-001 design system; P6-005 accessibility foundation; P6-008 platform shell/workforce/settings remediation; OPS-010 through OPS-014 control-centre and backup evidence foundations

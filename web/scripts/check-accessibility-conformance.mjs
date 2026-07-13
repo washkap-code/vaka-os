@@ -117,6 +117,16 @@ for (const expected of [
   'aria-label={copy.previewTableLabel} tabIndex={0}',
   'aria-label={copy.savedReconciliationsTableLabel} tabIndex={0}',
   'aria-label={copy.recentBankFeedTableLabel} tabIndex={0}',
+  'aria-label={copy.planMixTableLabel} tabIndex={0}',
+  'aria-label={copy.tenantGrowthTableLabel} tabIndex={0}',
+  'aria-label={copy.billingTableLabel} tabIndex={0}',
+  'aria-label={copy.activityTableLabel} tabIndex={0}',
+  'aria-label={copy.tenantsTableLabel} tabIndex={0}',
+  'aria-label={copy.tenantAuditTableLabel.replace',
+  'aria-label={copy.capabilityTableLabel} tabIndex={0}',
+  'aria-label={copy.operationsEvidenceTableLabel} tabIndex={0}',
+  'aria-label={copy.backupManifestFieldsTableLabel} tabIndex={0}',
+  'aria-label={copy.backupManifestRecordsTableLabel} tabIndex={0}',
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [

@@ -402,6 +402,11 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
   const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
+  const [msgTone, setMsgTone] = useState<"status" | "error">("status");
+  const showMessage = (value: string, tone: "status" | "error") => {
+    setMsg(value);
+    setMsgTone(tone);
+  };
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
   const can = (permission: string) => me.platformPermissions.includes(permission);
@@ -417,7 +422,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         requests.push(api("/platform/staff/roles").then((rows) => setPlatformRoles(rows as PlatformRole[])));
       }
       await Promise.all(requests);
-    } catch (error: any) { setMsg(error.message); }
+    } catch (error: any) { showMessage(error.message, "error"); }
   };
   useEffect(() => { void load(); }, []);
   const runBilling = async () => {
@@ -425,9 +430,9 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
     setBusy(true); setMsg("");
     try {
       const r = await api("/platform/billing/run", { method: "POST", body: {} });
-      setMsg(copy.billingComplete.replace("{result}", JSON.stringify(r)).slice(0, 400));
+      showMessage(copy.billingComplete.replace("{result}", JSON.stringify(r)).slice(0, 400), "status");
       await load();
-    } catch (e: any) { setMsg(e.message); }
+    } catch (e: any) { showMessage(e.message, "error"); }
     setBusy(false);
   };
   const reviewTenant = async (tenant: PlatformTenant) => {
@@ -438,7 +443,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
       const events = await api(`/platform/audit/${encodeURIComponent(tenant.id)}`);
       setTenantAudit(events as PlatformAuditEvent[]);
     } catch (e: any) {
-      setMsg(e.message);
+      showMessage(e.message, "error");
       setTenantAudit([]);
     }
   };
@@ -468,22 +473,22 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         {tab === "overview" && can("platform.billing.run") && <div className="row" style={{ marginBottom: 14 }}>
           <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>
         </div>}
-        {msg && <div className="banner warn">{msg}</div>}
+        {msg && <div className={`banner ${msgTone === "error" ? "bad" : "ok"}`} role={msgTone === "error" ? "alert" : "status"}>{msg}</div>}
         {tab === "overview" && analytics && <>
           <div className="cards">
             {[[copy.totalTenants, analytics.summary.total_tenants], [copy.trialTenants, analytics.summary.trial_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users], [copy.invoicesIssued, analytics.summary.invoices_issued], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding]].map(([label, value]) => <div className="card" key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
           </div>
           <div className="grid2">
-            <div className="panel"><h2>{copy.planMix}</h2><table><thead><tr><th>{copy.plan}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.planMix ?? []).map((row: any) => <tr key={row.plan}><td>{row.plan}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.planMix?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
-            <div className="panel"><h2>{copy.tenantGrowth}</h2><table><thead><tr><th>{copy.month}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.tenantGrowth ?? []).map((row: any) => <tr key={row.month}><td>{row.month}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.tenantGrowth?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
+            <div className="panel"><h2>{copy.planMix}</h2><div className="table-scroll" role="region" aria-label={copy.planMixTableLabel} tabIndex={0}><table><thead><tr><th>{copy.plan}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.planMix ?? []).map((row: any) => <tr key={row.plan}><td>{row.plan}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.planMix?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
+            <div className="panel"><h2>{copy.tenantGrowth}</h2><div className="table-scroll" role="region" aria-label={copy.tenantGrowthTableLabel} tabIndex={0}><table><thead><tr><th>{copy.month}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.tenantGrowth ?? []).map((row: any) => <tr key={row.month}><td>{row.month}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.tenantGrowth?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
           </div>
-          <div className="panel"><h2>{copy.billing}</h2><div className="table-scroll"><table><thead><tr><th>{copy.status}</th><th>{copy.currency}</th><th className="num">{copy.invoiceCount}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{(analytics.billing ?? []).map((row: any) => <tr key={`${row.status}-${row.currency}`}><td>{row.status}</td><td>{row.currency}</td><td className="num">{row.invoices}</td><td className="num">{fmt(row.amount, row.currency)}</td></tr>)}{!analytics.billing?.length && <tr><td colSpan={4}>{copy.noData}</td></tr>}</tbody></table></div></div>
-          <div className="panel"><h2>{copy.activity}</h2><div className="table-scroll"><table><thead><tr><th>{copy.action}</th><th className="num">{copy.events}</th></tr></thead><tbody>{(analytics.activity ?? []).map((row: any) => <tr key={row.action}><td>{row.action}</td><td className="num">{row.events}</td></tr>)}{!analytics.activity?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
+          <div className="panel"><h2>{copy.billing}</h2><div className="table-scroll" role="region" aria-label={copy.billingTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.status}</th><th>{copy.currency}</th><th className="num">{copy.invoiceCount}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{(analytics.billing ?? []).map((row: any) => <tr key={`${row.status}-${row.currency}`}><td>{row.status}</td><td>{row.currency}</td><td className="num">{row.invoices}</td><td className="num">{fmt(row.amount, row.currency)}</td></tr>)}{!analytics.billing?.length && <tr><td colSpan={4}>{copy.noData}</td></tr>}</tbody></table></div></div>
+          <div className="panel"><h2>{copy.activity}</h2><div className="table-scroll" role="region" aria-label={copy.activityTableLabel} tabIndex={0}><table><thead><tr><th>{copy.action}</th><th className="num">{copy.events}</th></tr></thead><tbody>{(analytics.activity ?? []).map((row: any) => <tr key={row.action}><td>{row.action}</td><td className="num">{row.events}</td></tr>)}{!analytics.activity?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div></div>
         </>}
         {tab === "tenants" && <>
         <div className="panel">
           <h2>{copy.tenantsHeading.replace("{count}", String(tenants.length))}</h2>
-          <div className="table-scroll"><table>
+          <div className="table-scroll" role="region" aria-label={copy.tenantsTableLabel} tabIndex={0}><table className="dense-data-table">
             <thead><tr><th>{copy.company}</th><th>{copy.subdomain}</th><th>{copy.status}</th><th>{copy.plan}</th><th className="num">{copy.users}</th><th>{copy.trialEnds}</th><th>{copy.created}</th><th>{copy.review}</th></tr></thead>
             <tbody>{tenants.map((t) => <tr key={t.id}><td>{t.company_name}</td><td>{t.subdomain}</td><td><span className={`pill ${t.status}`}>{t.status}</span></td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td><td><button className="btn ghost sm" onClick={() => void reviewTenant(t)}>{copy.reviewAudit}</button></td></tr>)}{!tenants.length && <tr><td colSpan={8}>{copy.noTenants}</td></tr>}</tbody>
           </table></div>
@@ -493,7 +498,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
             <div><h2>{copy.auditFor.replace("{company}", selectedTenant.company_name)}</h2><div className="sub">{selectedTenant.id}</div></div>
             <button className="btn ghost sm" onClick={() => { setSelectedTenant(null); setTenantAudit(null); }}>{copy.close}</button>
           </div>
-          {tenantAudit === null ? <p>{copy.loadingAudit}</p> : <div className="table-scroll"><table>
+          {tenantAudit === null ? <p role="status">{copy.loadingAudit}</p> : <div className="table-scroll" role="region" aria-label={copy.tenantAuditTableLabel.replace("{company}", selectedTenant.company_name)} tabIndex={0}><table className="dense-data-table">
             <thead><tr><th>{copy.action}</th><th>{copy.entity}</th><th>{copy.entityId}</th><th>{copy.time}</th></tr></thead>
             <tbody>{tenantAudit.map((event) => <tr key={event.id}><td>{event.action}</td><td>{event.entityType ?? "—"}</td><td>{event.entityId ?? "—"}</td><td>{new Date(event.createdAt).toLocaleString()}</td></tr>)}{!tenantAudit.length && <tr><td colSpan={4}>{copy.noAudit}</td></tr>}</tbody>
           </table></div>}
@@ -517,7 +522,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
               <div><h2>{copy.capabilityStatus}</h2><div className="sub">{copy.capabilityStatusHelp}</div></div>
               <div className="field compact-field"><label htmlFor="capability-group">{copy.scope}</label><select id="capability-group" value={catalogueGroup} onChange={(event) => setCatalogueGroup(event.target.value as typeof catalogueGroup)}><option value="all">{copy.all}</option><option value="Frozen product">{copy.frozenProducts}</option><option value="Platform Kernel service">{copy.kernelServices}</option></select></div>
             </div>
-            <div className="table-scroll"><table className="capability-table">
+            <div className="table-scroll" role="region" aria-label={copy.capabilityTableLabel} tabIndex={0}><table className="capability-table dense-data-table">
               <thead><tr><th>{copy.capability}</th><th>{copy.implementation}</th><th>{copy.verification}</th><th>{copy.availability}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
               <tbody>{visibleCapabilities.map((entry) => <tr key={entry.id}><td><strong>{entry.name}</strong><small>{entry.group}</small></td><td><span className={`status-chip state-${entry.implementation}`}>{entry.implementation}</span></td><td><span className={`status-chip state-${entry.verification}`}>{entry.verification}</span><small>{entry.verificationScope}</small></td><td><span className={`status-chip state-${entry.availability}`}>{entry.availability}</span></td><td>{entry.currentEvidence}</td><td>{entry.nextGate}</td></tr>)}</tbody>
             </table></div>
@@ -531,7 +536,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
                 <span><b>{controlCenter.operationsEvidence.summary.recorded}</b>{copy.recorded}</span>
               </div>
             </div>
-            <div className="table-scroll"><table className="evidence-table">
+            <div className="table-scroll" role="region" aria-label={copy.operationsEvidenceTableLabel} tabIndex={0}><table className="evidence-table dense-data-table">
               <thead><tr><th>{copy.gate}</th><th>{copy.status}</th><th>{copy.owner}</th><th>{copy.currentEvidence}</th><th>{copy.nextGate}</th></tr></thead>
               <tbody>{controlCenter.operationsEvidence.gates.map((gate) => <tr key={gate.id}><td><strong>{gate.name}</strong><small>{gate.category}</small></td><td><span className={`status-chip state-${gate.state}`}>{gate.state}</span></td><td>{gate.owner}</td><td>{gate.evidence}</td><td>{gate.nextGate}</td></tr>)}</tbody>
             </table></div>
@@ -542,7 +547,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
               <span className={`status-chip state-${controlCenter.backupManifest.status}`}>{controlCenter.backupManifest.status}</span>
             </div>
             <div className="sub">{copy.contractVersion.replace("{version}", controlCenter.backupManifest.version)}</div>
-            <div className="table-scroll"><table className="evidence-table">
+            <div className="table-scroll" role="region" aria-label={copy.backupManifestFieldsTableLabel} tabIndex={0}><table className="evidence-table dense-data-table">
               <thead><tr><th>{copy.field}</th><th>{copy.required}</th><th>{copy.classification}</th><th>{copy.rule}</th></tr></thead>
               <tbody>{controlCenter.backupManifest.fields.map((field) => <tr key={field.key}><td><strong>{field.label}</strong><small>{field.key}</small></td><td>{field.required ? copy.yes : copy.no}</td><td><span className={`status-chip state-${field.classification}`}>{field.classification}</span></td><td>{field.rule}</td></tr>)}</tbody>
             </table></div>
@@ -568,7 +573,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
             <div className="panel-heading">
               <div><h2>{copy.recentBackupManifests}</h2><div className="sub">{copy.recentBackupManifestsHelp}</div></div>
             </div>
-            <div className="table-scroll"><table className="evidence-table">
+            <div className="table-scroll" role="region" aria-label={copy.backupManifestRecordsTableLabel} tabIndex={0}><table className="evidence-table dense-data-table">
               <thead><tr><th>{copy.manifest}</th><th>{copy.status}</th><th>{copy.environment}</th><th>{copy.completed}</th><th>{copy.retention}</th><th>{copy.operator}</th><th>{copy.snapshotReference}</th></tr></thead>
               <tbody>{backupManifests.map((manifest) => <tr key={manifest.id}><td><strong>{manifest.manifestId}</strong><small>{manifest.contractVersion}</small></td><td><span className={`status-chip state-${manifest.status}`}>{manifest.status}</span>{manifest.failureReason && <small>{manifest.failureReason}</small>}</td><td>{manifest.environment}</td><td>{new Date(manifest.completedAt).toLocaleString()}</td><td>{new Date(manifest.retentionExpiresAt).toLocaleDateString()}</td><td>{manifest.operator}</td><td>{manifest.databaseSnapshotRef}</td></tr>)}
               {!backupManifests.length && <tr><td colSpan={7}>{copy.noBackupManifests}</td></tr>}</tbody>
@@ -576,7 +581,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
           </div>
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </>}
-        {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}
+        {tab === "operations" && !controlCenter && !msg && <div className="panel" role="status">{copy.loadingOperations}</div>}
         {tab === "staff" && <PlatformWorkforce me={me} staff={staff} roles={platformRoles} onReload={load} />}
         {tab === "settings" && <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />}
         {tab === "guide" && <PlatformAdminGuide />}
