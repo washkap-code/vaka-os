@@ -90,10 +90,17 @@ describe("runtime configuration", () => {
   it("requires an HTTPS public origin for production document links", () => {
     expect(publicAppUrl({ NODE_ENV: "test" })).toBe("http://localhost:4000");
     expect(() => publicAppUrl({ NODE_ENV: "production" }))
-      .toThrow("required for production document delivery");
+      .toThrow("required for production public links");
     expect(() => publicAppUrl({ NODE_ENV: "production", PUBLIC_APP_URL: "http://app.example.com" }))
       .toThrow("must use HTTPS");
     expect(publicAppUrl({ NODE_ENV: "production", PUBLIC_APP_URL: "https://app.example.com/" }))
       .toBe("https://app.example.com");
+    expect(publicAppUrl({ NODE_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "vakaos.com" }))
+      .toBe("https://vakaos.com");
+    expect(publicAppUrl({
+      NODE_ENV: "production",
+      PUBLIC_APP_URL: "https://configured.example.com",
+      VERCEL_PROJECT_PRODUCTION_URL: "vakaos.com",
+    })).toBe("https://configured.example.com");
   });
 });
