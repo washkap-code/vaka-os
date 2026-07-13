@@ -12,6 +12,15 @@
 
 ### Added
 
+- **Operational record accessibility and reflow (P6-007):** Extended the
+  governed P6-005 labelled-field and modal-focus patterns to deal, product,
+  reorder-rule and purchase-order creation. Added line-qualified accessible
+  names for repeating purchase inputs, labelled native-table scroll regions,
+  typed catalogue copy and 320-pixel form stacking. The permanent accessibility
+  gate now protects these contracts. Sales, stock, tax, purchase receiving,
+  permissions and accounting behavior are unchanged; Reports, Billing,
+  Imports, Settings and Platform Admin remain follow-on accessibility waves.
+
 - **Core-flow accessibility and reflow foundation (P6-005):** Added reusable
   labelled-field and modal-focus patterns across authentication, customer and
   invoice journeys, including persistent accessible names, named dialogs,

@@ -1,6 +1,6 @@
 # P6-007 — Operational Record Accessibility and Reflow
 
-**Status:** Approved for implementation
+**Status:** Implemented; local and browser verification passed; remote release gates pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and design-system adoption
 **Depends on:** P6-001 design system; P6-005 legacy field and modal patterns

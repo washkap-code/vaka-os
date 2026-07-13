@@ -2334,31 +2334,40 @@ function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
 // ---------------------------------------------------------------------------
 const STAGES = ["NEW", "QUALIFIED", "PROPOSAL", "WON"] as const;
 function Pipeline({ readonly }: { readonly: boolean }) {
+  const copy = appEnglish.deals;
+  const stageLabel = (stage: typeof STAGES[number]) => ({
+    NEW: copy.stageNew,
+    QUALIFIED: copy.stageQualified,
+    PROPOSAL: copy.stageProposal,
+    WON: copy.stageWon,
+  })[stage];
   const [deals, reload] = useLoad(() => api("/deals"));
   const [contacts] = useLoad(() => api("/contacts"));
   const [show, setShow] = useState(false);
   const [f, setF] = useState<any>({ valueCurrency: "USD", valueAmount: "0" });
   const [err, setErr] = useState("");
+  const openCreate = () => { setErr(""); setShow(true); };
+  const closeCreate = () => { setErr(""); setShow(false); };
   const save = async () => {
-    try { await api("/deals", { method: "POST", body: f }); setShow(false); setF({ valueCurrency: "USD", valueAmount: "0" }); reload(); }
+    try { await api("/deals", { method: "POST", body: f }); closeCreate(); setF({ valueCurrency: "USD", valueAmount: "0" }); reload(); }
     catch (e: any) { setErr(e.message); }
   };
   const move = async (id: string, stage: string) => { await api(`/deals/${id}/stage`, { method: "PATCH", body: { stage } }); reload(); };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
-      <div><h1>Sales Pipeline</h1><div className="sub">Won deals convert into invoices in Accounting</div></div>
-      {!readonly && <button className="btn" onClick={() => setShow(true)}>+ New deal</button>}
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      {!readonly && <button className="btn" onClick={openCreate}>{copy.newDeal}</button>}
     </div>
     <div className="kanban">
       {STAGES.map((s) => (
-        <div className="col" key={s}><h3>{s}</h3>
+        <div className="col" key={s}><h3>{stageLabel(s)}</h3>
           {(deals ?? []).filter((d: any) => d.stage === s).map((d: any) => (
             <div className="dealcard" key={d.id}>
               <b>{d.title}</b>
               <span>{fmt(d.valueAmount, d.valueCurrency)}</span>
               {!readonly && <div className="row" style={{ marginTop: 8 }}>
                 {STAGES.filter((x) => x !== s).slice(0, 2).map((x) => (
-                  <button key={x} className="btn ghost sm" onClick={() => move(d.id, x)}>→ {x}</button>
+                  <button key={x} className="btn ghost sm" aria-label={copy.moveTo.replace("{title}", d.title).replace("{stage}", stageLabel(x))} onClick={() => move(d.id, x)}>→ {stageLabel(x)}</button>
                 ))}
               </div>}
             </div>
@@ -2366,18 +2375,18 @@ function Pipeline({ readonly }: { readonly: boolean }) {
         </div>
       ))}
     </div>
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
-      <h2>New deal</h2>
-      <div className="field"><label>Title</label><input value={f.title ?? ""} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
+    {show && <LegacyModal labelledBy="new-deal-title" onClose={closeCreate}>
+      <h2 id="new-deal-title" tabIndex={-1} data-modal-initial-focus>{copy.newDealTitle}</h2>
+      <LegacyField label={copy.dealTitle}><input value={f.title ?? ""} onChange={(e) => setF({ ...f, title: e.target.value })} /></LegacyField>
       <div className="grid3">
-        <div className="field"><label>Contact</label><select value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
-          <option value="">Select…</option>{(contacts ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div className="field"><label>Value</label><input value={f.valueAmount} onChange={(e) => setF({ ...f, valueAmount: e.target.value })} /></div>
-        <div className="field"><label>Currency</label><select value={f.valueCurrency} onChange={(e) => setF({ ...f, valueCurrency: e.target.value })}><option>USD</option><option>ZWG</option></select></div>
+        <LegacyField label={copy.contact}><select value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
+          <option value="">{copy.selectContact}</option>{(contacts ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
+        <LegacyField label={copy.value}><input inputMode="decimal" value={f.valueAmount} onChange={(e) => setF({ ...f, valueAmount: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.currency}><select value={f.valueCurrency} onChange={(e) => setF({ ...f, valueCurrency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
       </div>
-      {err && <div className="err-text">{err}</div>}
-      <div className="row end"><button className="btn ghost" onClick={() => setShow(false)}>Cancel</button><button className="btn" onClick={save}>Save deal</button></div>
-    </div></div>}
+      {err && <div className="err-text" role="alert">{err}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button><button className="btn" onClick={save}>{copy.save}</button></div>
+    </LegacyModal>}
   </>);
 }
 
@@ -2736,6 +2745,7 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
   readonly: boolean; canWrite: boolean;
   searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
 }) {
+  const copy = appEnglish.products;
   const [rows, reload] = useLoad(() => api("/products"));
   const [warehouses] = useLoad(() => api("/warehouses"));
   const [show, setShow] = useState(false);
@@ -2745,6 +2755,8 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
   const [ruleError, setRuleError] = useState("");
   const [f, setF] = useState<any>({ currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
   const [err, setErr] = useState("");
+  const openCreate = () => { setErr(""); setShow(true); };
+  const closeCreate = () => { setErr(""); setShow(false); };
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
   useEffect(() => {
     if (!searchTarget || !rows) return;
@@ -2760,7 +2772,7 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
     onSearchTargetConsumed();
   }, [onSearchTargetConsumed, rows, searchTarget]);
   const save = async () => {
-    try { await api("/products", { method: "POST", body: { ...f, reorderLevel: Number(f.reorderLevel) } }); setShow(false); reload(); }
+    try { await api("/products", { method: "POST", body: { ...f, reorderLevel: Number(f.reorderLevel) } }); closeCreate(); reload(); }
     catch (e: any) { setErr(e.message); }
   };
   const opening = async (p: any) => {
@@ -2811,12 +2823,12 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
   };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
-      <div><h1>Products &amp; Stock</h1><div className="sub">Stock only moves through the ledger — sales, purchases and audited adjustments</div></div>
-      {!readonly && canWrite && <button className="btn" onClick={() => setShow(true)}>+ New product</button>}
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      {!readonly && canWrite && <button className="btn" onClick={openCreate}>{copy.newProduct}</button>}
     </div>
     <div className="panel">
-      <div className="table-scroll">
-      <table><thead><tr><th>SKU</th><th>Name</th><th className="num">Cost</th><th className="num">Sale price</th><th className="num">VAT %</th><th className="num">On hand</th><th>{appEnglish.lowStockAlerts.column}</th><th>Actions</th></tr></thead>
+      <div className="table-scroll" role="region" aria-label={copy.listLabel} tabIndex={0}>
+      <table><thead><tr><th>{copy.sku}</th><th>{copy.name}</th><th className="num">{copy.costPrice}</th><th className="num">{copy.salePrice}</th><th className="num">{copy.vatRate}</th><th className="num">{copy.onHand}</th><th>{appEnglish.lowStockAlerts.column}</th><th>{copy.actions}</th></tr></thead>
         <tbody>{(rows ?? []).map((p: any) => (
           <tr key={p.id} id={`product-record-${p.id}`} tabIndex={-1}
             className={highlightedProductId === p.id ? "search-target-row" : undefined}>
@@ -2826,42 +2838,42 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
             <td className="num" style={p.reorder_level > 0 && Number(p.on_hand) <= p.reorder_level ? { color: "var(--danger)", fontWeight: 700 } : {}}>{Number(p.on_hand)}</td>
             <td>{p.reorder_level > 0 ? `${appEnglish.lowStockAlerts.enabled} · ≤ ${p.reorder_level}` : appEnglish.lowStockAlerts.disabled}</td>
             <td>{!readonly && canWrite && <div className="row">
-              <button className="btn ghost sm" onClick={() => opening(p)}>Opening stock</button>
-              <button className="btn ghost sm" onClick={() => adjust(p)}>Adjust</button>
+              <button className="btn ghost sm" onClick={() => opening(p)}>{copy.openingStock}</button>
+              <button className="btn ghost sm" onClick={() => adjust(p)}>{copy.adjust}</button>
               <button className="btn ghost sm" onClick={() => openRule(p)}>{appEnglish.lowStockAlerts.rule}</button>
             </div>}</td>
           </tr>
         ))}</tbody></table>
       </div>
-      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No products yet.</p>}
+      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>{copy.empty}</p>}
     </div>
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
-      <h2>New product</h2>
+    {show && <LegacyModal labelledBy="new-product-title" onClose={closeCreate}>
+      <h2 id="new-product-title" tabIndex={-1} data-modal-initial-focus>{copy.newProductTitle}</h2>
       <div className="grid2">
-        <div className="field"><label>SKU</label><input value={f.sku ?? ""} onChange={(e) => setF({ ...f, sku: e.target.value })} /></div>
-        <div className="field"><label>Name</label><input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-        <div className="field"><label>Cost price</label><input value={f.costPrice} onChange={(e) => setF({ ...f, costPrice: e.target.value })} /></div>
-        <div className="field"><label>Sale price</label><input value={f.salePrice} onChange={(e) => setF({ ...f, salePrice: e.target.value })} /></div>
-        <div className="field"><label>Currency</label><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></div>
-        <div className="field"><label>{appEnglish.invoices.taxTreatment}</label><select value={f.taxTreatment} onChange={(e) => setF({ ...f, taxTreatment: e.target.value })}>
+        <LegacyField label={copy.sku}><input value={f.sku ?? ""} onChange={(e) => setF({ ...f, sku: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.name}><input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.costPrice}><input inputMode="decimal" value={f.costPrice} onChange={(e) => setF({ ...f, costPrice: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.salePrice}><input inputMode="decimal" value={f.salePrice} onChange={(e) => setF({ ...f, salePrice: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.currency}><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
+        <LegacyField label={appEnglish.invoices.taxTreatment}><select value={f.taxTreatment} onChange={(e) => setF({ ...f, taxTreatment: e.target.value })}>
           <option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option>
           <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
           <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
-        </select></div>
-        <div className="field"><label>Reorder level</label><input type="number" value={f.reorderLevel} onChange={(e) => setF({ ...f, reorderLevel: e.target.value })} /></div>
-        <div className="field"><label>Track stock?</label><select value={String(f.trackStock)} onChange={(e) => setF({ ...f, trackStock: e.target.value === "true" })}>
-          <option value="true">Yes — physical stock</option><option value="false">No — service item</option></select></div>
+        </select></LegacyField>
+        <LegacyField label={copy.reorderLevel}><input type="number" min="0" step="1" value={f.reorderLevel} onChange={(e) => setF({ ...f, reorderLevel: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.trackStock}><select value={String(f.trackStock)} onChange={(e) => setF({ ...f, trackStock: e.target.value === "true" })}>
+          <option value="true">{copy.physicalStock}</option><option value="false">{copy.serviceItem}</option></select></LegacyField>
       </div>
-      {err && <div className="err-text">{err}</div>}
-      <div className="row end"><button className="btn ghost" onClick={() => setShow(false)}>Cancel</button><button className="btn" onClick={save}>Save product</button></div>
-    </div></div>}
-    {ruleProduct && <div className="modalbg" onClick={() => setRuleProduct(null)}><div className="modal reorder-rule-modal" role="dialog" aria-modal="true" aria-labelledby="reorder-rule-title" tabIndex={-1} onKeyDown={(event) => { if (event.key === "Escape") setRuleProduct(null); }} onClick={(event) => event.stopPropagation()}>
-      <h2 id="reorder-rule-title">{appEnglish.lowStockAlerts.ruleFor.replace("{name}", ruleProduct.name)}</h2>
-      <div className="field"><label htmlFor="reorder-rule-threshold">{appEnglish.lowStockAlerts.threshold}</label><input autoFocus id="reorder-rule-threshold" type="number" min="0" max="1000000" step="1" value={ruleLevel} onChange={(event) => setRuleLevel(event.target.value)} /></div>
+      {err && <div className="err-text" role="alert">{err}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button><button className="btn" onClick={save}>{copy.save}</button></div>
+    </LegacyModal>}
+    {ruleProduct && <LegacyModal labelledBy="reorder-rule-title" onClose={() => setRuleProduct(null)} className="reorder-rule-modal">
+      <h2 id="reorder-rule-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.lowStockAlerts.ruleFor.replace("{name}", ruleProduct.name)}</h2>
+      <LegacyField label={appEnglish.lowStockAlerts.threshold}><input type="number" min="0" max="1000000" step="1" value={ruleLevel} onChange={(event) => setRuleLevel(event.target.value)} /></LegacyField>
       <p className="sub">{appEnglish.lowStockAlerts.thresholdHelp}</p>
       {ruleError && <div className="err-text" role="alert">{ruleError}</div>}
       <div className="row end"><button className="btn ghost" onClick={() => setRuleProduct(null)}>{appEnglish.lowStockAlerts.cancel}</button><button className="btn" disabled={ruleBusy || !/^\d+$/.test(ruleLevel) || Number(ruleLevel) > 1_000_000} onClick={saveRule}>{ruleBusy ? appEnglish.lowStockAlerts.saving : appEnglish.lowStockAlerts.save}</button></div>
-    </div></div>}
+    </LegacyModal>}
   </>);
 }
 
@@ -2869,6 +2881,7 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
 // Purchase orders
 // ---------------------------------------------------------------------------
 function PurchaseOrders({ readonly }: { readonly: boolean }) {
+  const copy = appEnglish.purchaseOrders;
   const [rows, reload] = useLoad(() => api("/purchase-orders"));
   const [contacts] = useLoad(() => api("/contacts"));
   const [products] = useLoad(() => api("/products"));
@@ -2877,6 +2890,8 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
   const [err, setErr] = useState("");
   const emptyLine = { productId: "", quantity: "1", unitCost: "0" };
   const [f, setF] = useState<any>({ currency: "USD", rateToBase: "1", lines: [{ ...emptyLine }] });
+  const openCreate = () => { setErr(""); setShow(true); };
+  const closeCreate = () => { setErr(""); setShow(false); };
   const setLine = (i: number, k: string, v: string) => {
     const lines = [...f.lines]; lines[i] = { ...lines[i], [k]: v };
     if (k === "productId" && v) {
@@ -2888,7 +2903,7 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
   const save = async () => {
     try {
       const body = { ...f, lines: f.lines.map((l: any) => ({ ...l, warehouseId: warehouses[0].id })) };
-      await api("/purchase-orders", { method: "POST", body }); setShow(false);
+      await api("/purchase-orders", { method: "POST", body }); closeCreate();
       setF({ currency: "USD", rateToBase: "1", lines: [{ ...emptyLine }] }); reload();
     } catch (e: any) { setErr(e.message); }
   };
@@ -2897,43 +2912,44 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
   };
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
-      <div><h1>Purchase Orders</h1><div className="sub">Receiving a PO takes stock in and posts to the ledger in one step</div></div>
-      {!readonly && <button className="btn" onClick={() => setShow(true)}>+ New PO</button>}
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      {!readonly && <button className="btn" onClick={openCreate}>{copy.newPurchaseOrder}</button>}
     </div>
     <div className="panel">
-      <table><thead><tr><th>Number</th><th>Vendor</th><th>Status</th><th className="num">Total</th><th>Actions</th></tr></thead>
+      <div className="table-scroll" role="region" aria-label={copy.listLabel} tabIndex={0}><table><thead><tr><th>{copy.number}</th><th>{copy.vendor}</th><th>{copy.status}</th><th className="num">{copy.total}</th><th>{copy.actions}</th></tr></thead>
         <tbody>{(rows ?? []).map((po: any) => {
           const vendor = (contacts ?? []).find((c: any) => c.id === po.vendorContactId);
           return (<tr key={po.id}>
             <td><b>{po.number}</b></td><td>{vendor?.name ?? "—"}</td>
             <td><span className={`pill ${po.status}`}>{po.status}</span></td>
             <td className="num">{fmt(po.total, po.currency)}</td>
-            <td>{!readonly && po.status === "ORDERED" && <button className="btn accent sm" onClick={() => receive(po.id)}>Receive goods</button>}</td>
+            <td>{!readonly && po.status === "ORDERED" && <button className="btn accent sm" onClick={() => receive(po.id)}>{copy.receiveGoods}</button>}</td>
           </tr>);
-        })}</tbody></table>
-      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No purchase orders yet.</p>}
+        })}</tbody></table></div>
+      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>{copy.empty}</p>}
     </div>
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
-      <h2>New purchase order</h2>
-      <div className="field"><label>Vendor</label><select value={f.vendorContactId ?? ""} onChange={(e) => setF({ ...f, vendorContactId: e.target.value })}>
-        <option value="">Select…</option>{(contacts ?? []).filter((c: any) => c.isVendor).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+    {show && <LegacyModal labelledBy="new-purchase-order-title" onClose={closeCreate}>
+      <h2 id="new-purchase-order-title" tabIndex={-1} data-modal-initial-focus>{copy.newPurchaseOrderTitle}</h2>
+      <LegacyField label={copy.vendor}><select value={f.vendorContactId ?? ""} onChange={(e) => setF({ ...f, vendorContactId: e.target.value })}>
+        <option value="">{copy.selectVendor}</option>{(contacts ?? []).filter((c: any) => c.isVendor).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
       {f.lines.map((l: any, i: number) => (
-        <div className="row" key={i} style={{ marginBottom: 8 }}>
-          <select style={{ flex: 3 }} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
-            <option value="">Select product…</option>
+        <fieldset className="purchase-line-create" key={i}>
+          <legend>{copy.line.replace("{number}", String(i + 1))}</legend>
+          <select aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.product)} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
+            <option value="">{copy.selectProduct}</option>
             {(products ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>)}
           </select>
-          <input style={{ flex: 1 }} placeholder="Qty" value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
-          <input style={{ flex: 1 }} placeholder="Unit cost" value={l.unitCost} onChange={(e) => setLine(i, "unitCost", e.target.value)} />
-        </div>
+          <input aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.quantity)} inputMode="decimal" placeholder={copy.quantity} value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
+          <input aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.unitCost)} inputMode="decimal" placeholder={copy.unitCost} value={l.unitCost} onChange={(e) => setLine(i, "unitCost", e.target.value)} />
+        </fieldset>
       ))}
-      <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...emptyLine }] })}>+ Add line</button>
-      {err && <div className="err-text">{err}</div>}
-      <div className="row end" style={{ marginTop: 14 }}>
-        <button className="btn ghost" onClick={() => setShow(false)}>Cancel</button>
-        <button className="btn" onClick={save}>Create PO</button>
+      <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...emptyLine }] })}>{copy.addLine}</button>
+      {err && <div className="err-text" role="alert">{err}</div>}
+      <div className="row end modal-actions">
+        <button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button>
+        <button className="btn" onClick={save}>{copy.create}</button>
       </div>
-    </div></div>}
+    </LegacyModal>}
   </>);
 }
 

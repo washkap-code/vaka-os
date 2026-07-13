@@ -173,8 +173,12 @@ The preview is a development-only page and includes light/dark switching, contro
    Escape close, background scroll locking, visible focus, 320-pixel reflow,
    reduced-motion and forced-colour fallbacks. It does not certify the whole
    product; remaining domain modules migrate in measured follow-on waves.
-9. Migrate legacy selectors to shared React primitives gradually.
-10. Migrate module DOM/components only through scoped tasks with screenshots,
+9. P6-007 extends those governed patterns to deal, product and purchase-order
+   creation. Repeating purchase lines use fieldsets and line-qualified control
+   names; operational tables remain native HTML tables inside labelled local
+   scroll regions; narrow forms stack without changing domain behavior.
+10. Migrate legacy selectors to shared React primitives gradually.
+11. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.
