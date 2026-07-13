@@ -549,7 +549,7 @@ export const appEnglish = {
     recorded: "Your interest in the {plan} package has been recorded. VAKA will confirm pricing and activation before making any billing change.",
     includedBelow: "Below current package",
     notesTitle: "Before upgrading",
-    notes: "Prices shown are recommended USD list prices. Your current subscription remains unchanged until VAKA confirms the upgrade, effective date and any implementation or provider charges.",
+    notes: "Prices shown are current USD list prices for new subscriptions. Your current subscription remains unchanged until VAKA confirms the upgrade, effective date and any implementation or provider charges.",
     planned: "Capabilities marked as planned are not active merely because a package is eligible. Mobile apps, OCR, messaging, bank feeds, payments, AI, payroll and advanced white-label features have separate release and provider dependencies.",
     plans: [
       {

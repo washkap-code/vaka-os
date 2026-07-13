@@ -2,11 +2,14 @@
 > NOT LEGAL ADVICE. Every clause must be reviewed, completed, and localised by
 > qualified Zimbabwean counsel before publication.
 
-1. **Parties & service.** Jonomi Digital Studio ("Provider") supplies the Jonomi
-   Business Platform as a subscription service to the subscribing business
+1. **Parties & service.** Jonomi Digital Studio ("Provider") supplies VAKA OS
+   as a subscription service to the subscribing business
    ("Client"). The Client's staff use it under the Client's responsibility.
-2. **Trial & billing.** 3 months free from signup; monthly invoices with usage
-   summaries thereafter; prices per published tier; [payment terms: 14 days].
+2. **Trial & billing.** New self-service workspaces receive a 30-day free trial;
+   existing workspaces retain any previously agreed trial end date. Monthly
+   invoices with usage summaries apply thereafter; prices per the published
+   package, plus disclosed taxes, provider usage, implementation or contracted
+   services where applicable; [payment terms: 14 days].
 3. **Non-payment ladder (mirrors the enforced system behaviour).**
    (a) reminders from day 1 overdue; (b) continued full access during a grace
    window; (c) after approximately [75] days overdue, account suspended to

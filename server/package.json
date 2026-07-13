@@ -10,6 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "seed": "tsx src/seed.ts",
+    "check:auth-schema": "node scripts/check-auth-schema.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --fileParallelism=false",
     "test:db:guard": "node --import tsx tests/finance/test-db-guard.ts",

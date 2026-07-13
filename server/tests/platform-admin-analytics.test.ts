@@ -8,10 +8,17 @@ const password = process.env.PLATFORM_ADMIN_PASSWORD;
 describe("platform admin analytics", () => {
   it.skipIf(!password)("returns aggregate operating metrics without tenant detail leakage", async () => {
     const adminLogin = await request(app).post("/api/v1/auth/login").send({
-      email: "platform-admin@jonomi.digital", password,
+      email: "washington@africaprocure.com", password,
     });
     expect(adminLogin.status).toBe(200);
     const adminAuth = { Authorization: `Bearer ${adminLogin.body.token}` };
+    if (adminLogin.body.user.mustChangePassword) {
+      const changed = await request(app).post("/api/v1/auth/change-password").set(adminAuth).send({
+        currentPassword: password,
+        newPassword: "CI-Only-Replacement-Password-2026",
+      });
+      expect(changed.status).toBe(200);
+    }
     const analytics = await request(app).get("/api/v1/platform/analytics").set(adminAuth);
     expect(analytics.status).toBe(200);
     expect(analytics.body.summary).toHaveProperty("total_tenants");
