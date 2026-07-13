@@ -503,7 +503,7 @@ export async function commitContactImport(opts: {
   actorUserId: string;
   batchId: string;
 }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
       eq(schema.importBatches.id, opts.batchId),
       eq(schema.importBatches.tenantId, opts.tenantId),
@@ -539,8 +539,13 @@ export async function commitContactImport(opts: {
         importedRows: created.length,
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
+    for (const contact of created) {
+      queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${contact.id}:imported`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId,
+        payload: { customerId: contact.id, change: "imported" } });
+    }
     return { batch: completed, importedRows: created.length };
-  });
+  }));
 }
 
 export async function previewProductImport(opts: {
@@ -611,7 +616,7 @@ export async function commitProductImport(opts: {
   actorUserId: string;
   batchId: string;
 }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
       eq(schema.importBatches.id, opts.batchId),
       eq(schema.importBatches.tenantId, opts.tenantId),
@@ -645,8 +650,13 @@ export async function commitProductImport(opts: {
         importedRows: created.length,
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
+    for (const product of created) {
+      queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${product.id}:imported`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId,
+        payload: { productId: product.id, change: "imported" } });
+    }
     return { batch: completed, importedRows: created.length };
-  });
+  }));
 }
 
 export async function previewOpeningStockImport(opts: {

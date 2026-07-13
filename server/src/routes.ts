@@ -7,7 +7,7 @@ import { Router, Response } from "express";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
 import {
-  db, schema, badRequest, notFound, conflict, audit, nextDocNumber,
+  db, schema, badRequest, notFound, conflict, forbidden, audit, nextDocNumber,
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
 import {
@@ -44,6 +44,9 @@ import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from
 import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
 import { recordAudit } from "./platform/audit-facade.js";
+import { searchQuerySchema, type SearchResultDocument } from "./search.js";
+import { SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { InvalidSearchQueryError } from "./platform/search/errors.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -136,6 +139,31 @@ api.get("/me", wrap(async (req) => {
       registrationNumber: t.registrationNumber, physicalAddress: t.physicalAddress,
     } : null,
   };
+}));
+
+api.get("/search", wrap(async (req, res) => {
+  const query = searchQuerySchema.parse(req.query);
+  const relevantPermissions = req.auth!.permissions.filter((permission) =>
+    ["crm.read", "accounting.read", "inventory.read"].includes(permission));
+  if (!relevantPermissions.length) throw forbidden("Search requires a customer, accounting, or inventory read permission");
+  let result;
+  try {
+    result = await platformKernel().container.get(SEARCH_SERVICE).search<SearchResultDocument>({
+      text: query.q,
+      limit: query.limit,
+      cursor: query.cursor,
+      entityTypes: query.entityTypes,
+    }, {
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      permissions: req.auth!.permissions,
+    });
+  } catch (error) {
+    if (error instanceof InvalidSearchQueryError) throw badRequest(error.message);
+    throw error;
+  }
+  res.setHeader("Cache-Control", "private, no-store");
+  return result;
 }));
 
 api.post("/auth/change-password", wrap(async (req) => {
@@ -651,16 +679,27 @@ api.get("/contacts", requirePermission("crm.read"), wrap(async (req) =>
   db.select().from(schema.contacts).where(eq(schema.contacts.tenantId, tenantId(req))).orderBy(schema.contacts.name)));
 api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.parse(req.body);
-  const [c] = await db.insert(schema.contacts).values({ ...body, tenantId: tenantId(req) }).returning();
-  await audit(db, tenantId(req), req.auth!.userId, "contact.created", "contact", c.id);
-  return c;
+  const tid = tenantId(req);
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [c] = await tx.insert(schema.contacts).values({ ...body, tenantId: tid }).returning();
+    await audit(tx, tid, req.auth!.userId, "contact.created", "contact", c.id);
+    queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${c.id}:created`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
+      tenantId: tid, actorUserId: req.auth!.userId, payload: { customerId: c.id, change: "created" } });
+    return c;
+  }));
 }));
 api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.partial().parse(req.body);
-  const [c] = await db.update(schema.contacts).set(body)
-    .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tenantId(req)))).returning();
-  if (!c) throw notFound("Contact not found");
-  return c;
+  const tid = tenantId(req);
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [c] = await tx.update(schema.contacts).set(body)
+      .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid))).returning();
+    if (!c) throw notFound("Contact not found");
+    await audit(tx, tid, req.auth!.userId, "contact.updated", "contact", c.id);
+    queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${c.id}:updated`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
+      tenantId: tid, actorUserId: req.auth!.userId, payload: { customerId: c.id, change: "updated" } });
+    return c;
+  }));
 }));
 api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
   const tid = tenantId(req);
@@ -730,7 +769,7 @@ api.get("/products", requirePermission("inventory.read"), wrap(async (req) => {
 api.post("/products", requirePermission("inventory.write"), wrap(async (req) => {
   const body = productSchema.parse(req.body);
   const tid = tenantId(req);
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [tenant] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tid));
     if (!tenant) throw notFound("Tenant not found");
     const resolution = resolveTax(tenant.countryCode, body.taxTreatment, todayIsoDate());
@@ -746,8 +785,10 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
       taxRate: p.taxRate,
       taxJurisdiction: tenant.countryCode,
     });
+    queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${p.id}:created`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
+      tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id, change: "created" } });
     return p;
-  });
+  }));
 }));
 api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));

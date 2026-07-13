@@ -21,7 +21,7 @@ rewrite and not a claim that every service is live in production.
 | `workflow` | named orchestration handlers | in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | injected store contract |
-| `search` | tenant- and actor-scoped discovery | injected provider contract |
+| `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Invoice/Product adapter composed; broader enterprise search gated |
 | `metadata` | extensible typed entity metadata | injected provider contract |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
 | `types` | reusable type helpers and tenant-scope assertions | small contract utility |
@@ -110,3 +110,15 @@ errors are isolated and event payloads carry stable identifiers, tenant/actor
 context and minimal scalar facts. This is a best-effort, process-local seam,
 not durable messaging. See `EVENT-CATALOGUE.md` for the governed contract and
 explicit operational limits.
+
+## Search adoption seam (P1-006)
+
+The composition root exposes `SEARCH_SERVICE` backed by a tenant-owned,
+rebuildable PostgreSQL index. An authenticated `/search` route supplies verified
+actor, tenant and permissions; the provider applies tenant and entity-read
+permission filters again. Canonical records remain authoritative. Lazy tenant
+reconciliation indexes pre-existing Customers, Invoices and Products, while
+P1-005 subscribers re-read affected records after committed customer, invoice,
+payment, stock and import facts. Delivery remains best-effort; durable indexing,
+deletion events, scale evidence, semantic search and user-facing global search
+remain gated.

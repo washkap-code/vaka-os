@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
+import type { SearchApplicationAdapter } from "../src/search.js";
 
 describe("platform runtime composition (P1-002)", () => {
   it("resolves the audit service and records through the bound writer", async () => {
@@ -91,5 +92,27 @@ describe("platform runtime composition (P1-002)", () => {
     })).resolves.toMatchObject({ requestId: "notice-1", transmitted: true });
     expect(persisted).toEqual(["tenant-1:EMAIL:sent"]);
     expect(audited).toEqual(["notice-1"]);
+  });
+
+  it("resolves search through the injected kernel adapter", async () => {
+    const calls: string[] = [];
+    const adapter: SearchApplicationAdapter = {
+      search: async <TDocument>(query: { text: string }, scope: { tenantId: string }) => {
+        calls.push(`${scope.tenantId}:${query.text}`);
+        return { results: [] as TDocument[] };
+      },
+      reconcileTenant: async () => {},
+      reindexCustomer: async () => {},
+      reindexInvoice: async () => {},
+      reindexProduct: async () => {},
+    };
+    const service = buildPlatformKernel({ auditWriter: () => {}, searchAdapter: adapter })
+      .container.get(SEARCH_SERVICE);
+    await expect(service.search({ text: "  customer  " }, {
+      tenantId: "tenant-1",
+      actorUserId: "user-1",
+      permissions: ["crm.read"],
+    })).resolves.toEqual({ results: [] });
+    expect(calls).toEqual(["tenant-1:customer"]);
   });
 });

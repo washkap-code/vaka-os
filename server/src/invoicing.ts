@@ -63,7 +63,7 @@ export async function createDraftInvoice(opts: {
   lines: DraftLine[]; dealId?: string; createdBy?: string | null;
 }) {
   if (!opts.lines.length) throw badRequest("Invoice needs at least one line");
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [tenant] = await tx.select().from(schema.tenants)
       .where(eq(schema.tenants.id, opts.tenantId));
     if (!tenant) throw notFound("Tenant not found");
@@ -114,8 +114,11 @@ export async function createDraftInvoice(opts: {
       taxTreatment: documentTreatment,
       taxTotal,
     });
+    queue({ id: `${DOMAIN_EVENTS.INVOICE_CHANGED}:${inv.id}:drafted`, type: DOMAIN_EVENTS.INVOICE_CHANGED,
+      tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+      payload: { invoiceId: inv.id, change: "drafted" } });
     return inv;
-  });
+  }));
 }
 
 export async function issueInvoice(opts: { tenantId: string; invoiceId: string; createdBy?: string | null }) {

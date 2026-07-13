@@ -26,10 +26,16 @@ originating request or prevent sibling subscribers from receiving the event.
 | `stock.moved` | Sale, void reversal, adjustment, opening stock, purchase receipt and opening-stock import | `movementId`, `productId`, `warehouseId`, `quantityDelta`, `kind` |
 | `stock.adjusted` | Manual stock adjustment | `movementId`, `productId`, `warehouseId`, `quantityDelta` |
 | `tenant.lifecycle_changed` | Billing lifecycle transition | `tenantId`, `from`, `to` |
+| `customer.changed` | Customer create/update and committed contact import | `customerId`, `change` |
+| `product.changed` | Product create and committed product import | `productId`, `change` |
+| `invoice.changed` | Invoice draft creation | `invoiceId`, `change` |
 
 Money values use integer-cent strings. Quantity deltas remain exact decimal
 strings. Stable event identifiers are derived from the event type and committed
 fact identifier; lifecycle identifiers also include the transition context.
+The three `*.changed` index-refresh facts contain identifiers and bounded
+change labels only; search subscribers always re-read the canonical
+tenant-owned record rather than treating their payload as document authority.
 
 ## Operational boundary
 
