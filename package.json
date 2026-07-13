@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["server", "web"],
   "scripts": {
-    "build": "npm run check:auth-schema --workspace server && npm run build --workspace web",
+    "build": "npm run check:runtime-schema --workspace server && npm run build --workspace web",
     "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
     "test": "npm run test --workspace server",
     "test:design-tokens": "npm run test:design-tokens --workspace web",
