@@ -167,8 +167,14 @@ The preview is a development-only page and includes light/dark switching, contro
    native-dialog primitive, semantic tokens, grouped minimal-result summaries,
    keyboard selection and a compact icon-only small-screen trigger with an
    invariant accessible name.
-8. Migrate legacy selectors to shared React primitives gradually.
-9. Migrate module DOM/components only through scoped tasks with screenshots,
+8. P6-005 establishes a bounded legacy-field and modal-focus accessibility
+   layer for authentication, customer and invoice core flows. It requires
+   persistent control names, named dialogs, focus entry/containment/return,
+   Escape close, background scroll locking, visible focus, 320-pixel reflow,
+   reduced-motion and forced-colour fallbacks. It does not certify the whole
+   product; remaining domain modules migrate in measured follow-on waves.
+9. Migrate legacy selectors to shared React primitives gradually.
+10. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.
@@ -177,16 +183,19 @@ Do not replace legacy components in bulk. Preserve behaviour first, then migrate
 
 - Brand palette and typography remain directional pending approval.
 - No approved vector logo asset exists; `Logo` is a restrained text treatment.
-- The repository does not yet include frontend unit, accessibility, or visual-regression test infrastructure.
+- The repository now includes a source-level accessibility conformance gate for
+  the P6-005 core flows. It does not replace component tests, automated browser
+  accessibility scans, assistive-technology review or visual regression, which
+  remain follow-on infrastructure.
 - Dropdown uses native `details`; advanced menu focus management may be needed for complex actions.
 - Dialog support depends on modern browser native `dialog` behaviour.
 - The existing product and homepage consume compatibility tokens, but their
   domain-module selectors/DOM have not yet migrated to the shared React
   primitives. The P6-002 shell is componentised but intentionally retains
   compatibility classes for incremental rollout.
-- P6-001 recorded pre-existing 200%-zoom horizontal overflow on representative
-  mobile homepage, auth and workspace surfaces. Exact before/after equality
-  proves token adoption did not introduce it; P6-005 owns remediation.
+- P6-005 removes page-level horizontal overflow from the scoped homepage,
+  authentication, customer and invoice paths at 320 and 640 CSS pixels. Other
+  domain screens remain subject to follow-on reflow audits.
 
 ## 11. Automated conformance
 
@@ -194,6 +203,7 @@ Run from `web/`:
 
 ```bash
 npm run test:design-tokens
+npm run test:accessibility
 ```
 
 The check covers live CSS and TSX surfaces. It rejects raw colour literals,
@@ -201,3 +211,10 @@ literal font stacks, literal CSS motion durations, undefined `--vaka-*`
 references, loss of the tenant-brand compatibility seam and workspace use of
 private homepage tone tokens. Its built-in negative fixture proves the scanner
 fails representative drift. CI runs the same command before the web build.
+
+The accessibility check covers the shared legacy field/modal layer and scoped
+authentication, customer, invoice and responsive CSS contracts. It rejects
+positive tab order, raw focus suppression, unnamed dialogs and loss of required
+label, focus, reflow, forced-colour or reduced-motion behavior. Its negative
+self-test proves representative violations fail the command. This is regression
+protection for the selected flows, not a WCAG certification claim.

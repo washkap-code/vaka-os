@@ -1,6 +1,6 @@
 # P6-005 — Core-flow Accessibility and Reflow Foundation
 
-**Status:** Approved for implementation
+**Status:** Implemented; local and browser verification passed; remote release gates pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and permanent regression guard
 **Depends on:** P6-001 design system; P6-002 shell; P6-004 command palette
