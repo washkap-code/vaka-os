@@ -31,6 +31,7 @@ import type {
 import {
   createHttpEmailTransport, findNotificationDuplicate, persistNotification,
 } from "./notifications.js";
+import { InMemoryEventBus } from "./platform/events/service.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -49,6 +50,9 @@ export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
 export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
   createServiceToken("platform.notifications.service");
 
+export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
+  createServiceToken("platform.events.bus");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -62,6 +66,7 @@ export interface PlatformKernelOptions {
   notificationWriter?: NotificationWriter;
   notificationDedupeLookup?: NotificationDedupeLookup;
   notificationAuditRecorder?: NotificationAuditRecorder;
+  eventSubscriberError?: (error: unknown, eventType: string) => void;
 }
 
 /**
@@ -116,6 +121,17 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       WHATSAPP: noopGateway("WHATSAPP", persist),
     }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit);
   });
+
+  kernel.container.registerFactory(EVENT_BUS, () => new InMemoryEventBus((error, event) => {
+    if (options.eventSubscriberError) {
+      options.eventSubscriberError(error, event.type);
+      return;
+    }
+    console.error("[event.subscriber_failed]", {
+      eventType: event.type,
+      error: error instanceof Error ? error.message : "Unknown subscriber error",
+    });
+  }));
 
   return kernel;
 }

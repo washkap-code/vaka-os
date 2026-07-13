@@ -17,7 +17,7 @@ rewrite and not a claim that every service is live in production.
 |---|---|---|
 | `identity` | actor, tenant, session, and permission context | adapter contract only |
 | `audit` | structured material-action evidence | injected sink contract |
-| `events` | tenant-aware domain events and subscriptions | in-memory reference bus for tests |
+| `events` | tenant-aware domain events and subscriptions | P1-005 post-commit in-process adapter composed; durable delivery gated |
 | `workflow` | named orchestration handlers | in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | injected store contract |
@@ -100,3 +100,13 @@ notifications are persisted; SMS and WhatsApp record non-transmitted intent
 only. Existing invoice and statement call sites are deliberately unchanged
 until P7-001. Tenant-scoped dedupe and read helpers live in the application
 adapter, while the Platform namespace remains independent of the database.
+
+## Event adoption seam (P1-005)
+
+The composition root exposes `EVENT_BUS`. Existing invoice, payment, stock and
+tenant-lifecycle write paths queue typed facts beside their transactional work;
+the publisher releases those facts only after a successful commit. Subscriber
+errors are isolated and event payloads carry stable identifiers, tenant/actor
+context and minimal scalar facts. This is a best-effort, process-local seam,
+not durable messaging. See `EVENT-CATALOGUE.md` for the governed contract and
+explicit operational limits.

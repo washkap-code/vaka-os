@@ -39,6 +39,7 @@ import {
 import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.js";
 import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
+import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -746,7 +747,15 @@ api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req)
     quantityDelta: z.string(), note: z.string().min(3), idempotencyKey: z.string().trim().min(8).max(120).optional(),
   }).parse(req.body);
   const idempotencyKey = financialIdempotencyKey(req, body.idempotencyKey);
-  return db.transaction((tx) => adjustStock(tx, { ...body, idempotencyKey, tenantId: tenantId(req), createdBy: req.auth!.userId }));
+  const tid = tenantId(req);
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const result = await adjustStock(tx, { ...body, idempotencyKey, tenantId: tid, createdBy: req.auth!.userId });
+    queue({ id: `${DOMAIN_EVENTS.STOCK_MOVED}:${result.movementId}`, type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: tid, actorUserId: req.auth!.userId,
+      payload: { movementId: result.movementId, productId: body.productId, warehouseId: body.warehouseId, quantityDelta: body.quantityDelta, kind: "ADJUSTMENT" } });
+    queue({ id: `${DOMAIN_EVENTS.STOCK_ADJUSTED}:${result.movementId}`, type: DOMAIN_EVENTS.STOCK_ADJUSTED, tenantId: tid, actorUserId: req.auth!.userId,
+      payload: { movementId: result.movementId, productId: body.productId, warehouseId: body.warehouseId, quantityDelta: body.quantityDelta } });
+    return result;
+  }));
 }));
 api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req) => {
   // Opening balances: stock in + Dr Inventory / Cr Opening Balance Equity
@@ -755,13 +764,15 @@ api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req
     quantity: z.string(), unitCost: z.string(),
   }).parse(req.body);
   const tid = tenantId(req);
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const r = await recordStockMovement(tx, {
       tenantId: tid, productId: body.productId, warehouseId: body.warehouseId,
       quantityDelta: body.quantity, unitCost: body.unitCost, reason: "OPENING",
       sourceType: "manual", createdBy: req.auth!.userId,
       requireZeroCurrent: true, requireNoHistory: true,
     });
+    queue({ id: `${DOMAIN_EVENTS.STOCK_MOVED}:${r.movementId}`, type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: tid, actorUserId: req.auth!.userId,
+      payload: { movementId: r.movementId, productId: body.productId, warehouseId: body.warehouseId, quantityDelta: body.quantity, kind: "OPENING" } });
     const { toCents, fromCents, mulRate } = await import("./lib.js");
     const { systemAccount, postJournal } = await import("./accounting.js");
     const value = fromCents(mulRate(toCents(body.unitCost), Number(body.quantity).toFixed(6)));
@@ -773,7 +784,7 @@ api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req
       lines: [{ accountId: inventory.id, debit: value }, { accountId: opening.id, credit: value }],
     });
     return r;
-  });
+  }));
 }));
 api.get("/stock/movements", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.stockMovements).where(eq(schema.stockMovements.tenantId, tenantId(req)))
@@ -812,10 +823,16 @@ api.post("/purchase-orders", requirePermission("inventory.write"), wrap(async (r
 api.get("/purchase-orders", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.purchaseOrders).where(eq(schema.purchaseOrders.tenantId, tenantId(req)))
     .orderBy(desc(schema.purchaseOrders.createdAt))));
-api.post("/purchase-orders/:id/receive", requirePermission("inventory.write", "accounting.post"), wrap(async (req) =>
-  db.transaction((tx) => receivePurchaseOrder(tx, {
-    tenantId: tenantId(req), purchaseOrderId: routeParam(req, "id"), createdBy: req.auth!.userId,
-  }))));
+api.post("/purchase-orders/:id/receive", requirePermission("inventory.write", "accounting.post"), wrap(async (req) => {
+  const tid = tenantId(req);
+  return runWithPostCommitEvents((queue) => db.transaction((tx) => receivePurchaseOrder(tx, {
+    tenantId: tid, purchaseOrderId: routeParam(req, "id"), createdBy: req.auth!.userId,
+    onMovement: (movement) => queue({
+      id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
+      type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: tid, actorUserId: req.auth!.userId, payload: movement,
+    }),
+  })));
+}));
 
 // ---------------------------------------------------------------------------
 // Accounting

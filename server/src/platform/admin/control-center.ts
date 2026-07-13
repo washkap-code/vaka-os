@@ -179,10 +179,10 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
     "kernel.event-bus",
     "Event Bus",
     "partial",
-    "Typed in-process event foundation exists; durable outbox, replay and dead-letter operations are not complete.",
-    "Implement post-commit delivery without weakening atomic finance or stock invariants.",
+    "Typed post-commit invoice, payment, stock and lifecycle events are composed in-process; durable outbox, replay and dead-letter operations are not complete.",
+    "Add a governed transactional outbox and operating controls before correctness-critical consumers rely on delivery.",
     "passed",
-    "Focused in-process event contract tests passed.",
+    "P1-005 focused and full database-backed suites passed; durable delivery remains gated.",
   ),
   kernel(
     "kernel.documents",

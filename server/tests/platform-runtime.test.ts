@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, IDENTITY_FACTORY, NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 
@@ -37,6 +37,25 @@ describe("platform runtime composition (P1-002)", () => {
     expect(one).not.toBe(two);
     expect(() => one.container.registerValue(AUDIT_SERVICE, {} as never))
       .toThrow(DuplicateServiceError);
+  });
+
+  it("composes isolated event buses and reports subscriber failures", async () => {
+    const failures: string[] = [];
+    const one = buildPlatformKernel({
+      auditWriter: () => {},
+      eventSubscriberError: (error, type) => failures.push(`${type}:${(error as Error).message}`),
+    }).container.get(EVENT_BUS);
+    const two = buildPlatformKernel({ auditWriter: () => {} }).container.get(EVENT_BUS);
+    const siblingDeliveries: string[] = [];
+    one.subscribe("invoice.issued", () => { throw new Error("consumer unavailable"); });
+    one.subscribe("invoice.issued", () => { siblingDeliveries.push("delivered"); });
+    two.subscribe("invoice.issued", () => { siblingDeliveries.push("wrong bus"); });
+    await one.publish({
+      id: "invoice.issued:inv-1", type: "invoice.issued", occurredAt: new Date(),
+      tenantId: "tenant-1", actorUserId: "user-1", payload: { invoiceId: "inv-1" },
+    });
+    expect(failures).toEqual(["invoice.issued:consumer unavailable"]);
+    expect(siblingDeliveries).toEqual(["delivered"]);
   });
 
   it("resolves the notification service with injected delivery, persistence and audit adapters", async () => {

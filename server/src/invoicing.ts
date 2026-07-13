@@ -18,6 +18,7 @@ import {
 } from "./lib.js";
 import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
+import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
 export interface DraftLine {
   productId?: string;
@@ -76,7 +77,7 @@ export async function createDraftInvoice(opts: {
 }
 
 export async function issueInvoice(opts: { tenantId: string; invoiceId: string; createdBy?: string | null }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [inv] = await tx.select().from(schema.invoices).where(and(
       eq(schema.invoices.id, opts.invoiceId), eq(schema.invoices.tenantId, opts.tenantId)));
     if (!inv) throw notFound("Invoice not found");
@@ -173,10 +174,15 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
         if (!wh) throw badRequest(`Line "${line.description}" has no warehouse and no default warehouse exists`);
         warehouseId = wh.id;
       }
-      await recordStockMovement(tx, {
+      const movement = await recordStockMovement(tx, {
         tenantId: opts.tenantId, productId: line.productId, warehouseId,
         quantityDelta: `-${line.quantity}`, unitCost: product.costPrice,
         reason: "SALE", sourceType: "invoice", sourceId: inv.id, createdBy: opts.createdBy,
+      });
+      queue({
+        id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
+        type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+        payload: { movementId: movement.movementId, productId: line.productId, warehouseId, quantityDelta: `-${line.quantity}`, kind: "SALE" },
       });
       cogsBase += mulRate(mulRate(toCents(product.costPrice), Number(line.quantity).toFixed(6)), "1");
     }
@@ -200,8 +206,13 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
 
     await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.issued", "invoice", inv.id,
       { number, total: inv.total, currency: inv.currency });
+    queue({
+      id: `${DOMAIN_EVENTS.INVOICE_ISSUED}:${inv.id}`,
+      type: DOMAIN_EVENTS.INVOICE_ISSUED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+      payload: { invoiceId: inv.id, customerId: inv.contactId, currency: inv.currency, totalCents: toCents(inv.total).toString(), issuedAt: issueDate.toISOString() },
+    });
     return updated;
-  });
+  }));
 }
 
 /**
@@ -221,7 +232,7 @@ export async function recordPayment(opts: {
     requestedDate: opts.date?.toISOString() ?? null,
     reference: opts.reference ?? null,
   });
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [existingPayment] = await tx.select().from(schema.payments).where(and(
       eq(schema.payments.tenantId, opts.tenantId),
       eq(schema.payments.idempotencyKey, idempotencyKey),
@@ -249,13 +260,13 @@ export async function recordPayment(opts: {
       throw conflict(`Payment ${opts.amount} exceeds outstanding balance ${fromCents(outstanding)}`);
 
     const date = opts.date ?? new Date();
-    await tx.insert(schema.payments).values({
+    const [payment] = await tx.insert(schema.payments).values({
       tenantId: opts.tenantId, invoiceId: inv.id, bankAccountId: opts.bankAccountId ?? null,
       amount: opts.amount, currency: inv.currency, date, reference: opts.reference ?? null,
       idempotencyKey,
       idempotencyFingerprint: fingerprint,
       createdBy: opts.createdBy ?? null,
-    });
+    }).returning({ id: schema.payments.id });
 
     const ar = await systemAccount(tx, opts.tenantId, "AR");
     let bankLedgerId: string;
@@ -284,8 +295,13 @@ export async function recordPayment(opts: {
       .where(eq(schema.invoices.id, inv.id)).returning();
     await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.payment_recorded", "invoice", inv.id,
       { amount: opts.amount, newStatus });
+    queue({
+      id: `${DOMAIN_EVENTS.PAYMENT_RECORDED}:${payment.id}`,
+      type: DOMAIN_EVENTS.PAYMENT_RECORDED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+      payload: { paymentId: payment.id, invoiceId: inv.id, customerId: inv.contactId, currency: inv.currency, amountCents: amountC.toString() },
+    });
     return updated;
-  });
+  }));
 }
 
 /**
@@ -293,7 +309,7 @@ export async function recordPayment(opts: {
  * stock — history is never deleted, only offset (audit-safe).
  */
 export async function voidInvoice(opts: { tenantId: string; invoiceId: string; reason: string; createdBy?: string | null }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [inv] = await tx.select().from(schema.invoices).where(and(
       eq(schema.invoices.id, opts.invoiceId), eq(schema.invoices.tenantId, opts.tenantId)));
     if (!inv) throw notFound("Invoice not found");
@@ -322,17 +338,27 @@ export async function voidInvoice(opts: { tenantId: string; invoiceId: string; r
         eq(schema.stockMovements.sourceType, "invoice"),
         eq(schema.stockMovements.sourceId, inv.id)));
       for (const m of moves) {
-        await recordStockMovement(tx, {
+        const movement = await recordStockMovement(tx, {
           tenantId: opts.tenantId, productId: m.productId, warehouseId: m.warehouseId,
           quantityDelta: String(-Number(m.quantityDelta)), unitCost: m.unitCost ?? undefined,
           reason: "ADJUSTMENT", sourceType: "invoice_void", sourceId: inv.id,
           note: `Void of invoice ${inv.number}`, createdBy: opts.createdBy, allowNegative: true,
+        });
+        queue({
+          id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
+          type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+          payload: { movementId: movement.movementId, productId: m.productId, warehouseId: m.warehouseId, quantityDelta: String(-Number(m.quantityDelta)), kind: "ADJUSTMENT" },
         });
       }
     }
     const [updated] = await tx.update(schema.invoices).set({ status: "VOID" })
       .where(eq(schema.invoices.id, inv.id)).returning();
     await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.voided", "invoice", inv.id, { reason: opts.reason });
+    queue({
+      id: `${DOMAIN_EVENTS.INVOICE_VOIDED}:${inv.id}`,
+      type: DOMAIN_EVENTS.INVOICE_VOIDED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+      payload: { invoiceId: inv.id, reason: opts.reason },
+    });
     return updated;
-  });
+  }));
 }

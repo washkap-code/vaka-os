@@ -10,6 +10,7 @@
 // ============================================================================
 import { and, eq, lt, count, or } from "drizzle-orm";
 import { DB, db, schema, badRequest, conflict, notFound, audit, fromCents, toCents } from "./lib.js";
+import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
 const GRACE_DAYS = 14;            // invoice due date after issue
 const PAST_DUE_TO_SUSPEND_DAYS = 75; // ~2.5 months past due => suspend (matches business plan's 2–3 months)
@@ -96,7 +97,7 @@ export async function runBillingCycle(asOf = new Date()) {
   const results = { invoiced: 0, movedPastDue: 0, suspended: 0, activatedFromTrial: 0 };
   const subs = await db.select().from(schema.subscriptions);
   for (const sub of subs) {
-    await db.transaction(async (tx) => {
+    await runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
       const [plan] = await tx.select().from(schema.plans).where(eq(schema.plans.id, sub.planId));
 
       if (sub.status === "TRIALING" && asOf >= sub.trialEnd) {
@@ -106,6 +107,8 @@ export async function runBillingCycle(asOf = new Date()) {
           status: "ACTIVE", currentPeriodStart: sub.trialEnd, currentPeriodEnd: periodEnd,
         }).where(eq(schema.subscriptions.id, sub.id));
         await tx.update(schema.tenants).set({ status: "ACTIVE" }).where(eq(schema.tenants.id, sub.tenantId));
+        queue({ id: `${DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED}:${sub.tenantId}:TRIAL:ACTIVE:${asOf.toISOString()}`, type: DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED, tenantId: sub.tenantId, actorUserId: null,
+          payload: { tenantId: sub.tenantId, from: "TRIAL", to: "ACTIVE" } });
         results.activatedFromTrial++; results.invoiced++;
         return;
       }
@@ -135,6 +138,8 @@ export async function runBillingCycle(asOf = new Date()) {
         await tx.update(schema.subscriptions).set({ status: "PAST_DUE" }).where(eq(schema.subscriptions.id, sub.id));
         await tx.update(schema.tenants).set({ status: "PAST_DUE" }).where(eq(schema.tenants.id, sub.tenantId));
         await audit(tx, sub.tenantId, null, "tenant.past_due", "subscription", sub.id);
+        queue({ id: `${DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED}:${sub.tenantId}:ACTIVE:PAST_DUE:${asOf.toISOString()}`, type: DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED, tenantId: sub.tenantId, actorUserId: null,
+          payload: { tenantId: sub.tenantId, from: "ACTIVE", to: "PAST_DUE" } });
         results.movedPastDue++;
       }
 
@@ -149,10 +154,12 @@ export async function runBillingCycle(asOf = new Date()) {
           await tx.update(schema.tenants).set({ status: "SUSPENDED" }).where(eq(schema.tenants.id, sub.tenantId));
           await audit(tx, sub.tenantId, null, "tenant.suspended", "subscription", sub.id,
             { policy: "suspend-then-escrow: data retained, reactivation = arrears + fee" });
+          queue({ id: `${DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED}:${sub.tenantId}:PAST_DUE:SUSPENDED:${asOf.toISOString()}`, type: DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED, tenantId: sub.tenantId, actorUserId: null,
+            payload: { tenantId: sub.tenantId, from: "PAST_DUE", to: "SUSPENDED" } });
           results.suspended++;
         }
       }
-    });
+    }));
   }
   return results;
 }
@@ -170,7 +177,7 @@ async function issueSubscriptionInvoice(tx: DB, sub: any, plan: any, periodStart
 
 /** Mark a subscription invoice paid; reactivate suspended/past-due tenants when clear. */
 export async function markSubscriptionInvoicePaid(opts: { tenantId: string; invoiceId: string; actorUserId?: string | null }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [inv] = await tx.select().from(schema.subscriptionInvoices).where(and(
       eq(schema.subscriptionInvoices.id, opts.invoiceId),
       eq(schema.subscriptionInvoices.tenantId, opts.tenantId)));
@@ -184,13 +191,20 @@ export async function markSubscriptionInvoicePaid(opts: { tenantId: string; invo
       eq(schema.subscriptionInvoices.status, "overdue")));
     const stillOverdue = Number(remaining[0].c) > 0;
     if (!stillOverdue) {
+      const [tenant] = await tx.select({ status: schema.tenants.status }).from(schema.tenants)
+        .where(eq(schema.tenants.id, opts.tenantId));
+      if (!tenant) throw notFound("Tenant not found");
       await tx.update(schema.subscriptions).set({ status: "ACTIVE", suspendedAt: null })
         .where(eq(schema.subscriptions.tenantId, opts.tenantId));
       await tx.update(schema.tenants).set({ status: "ACTIVE" }).where(eq(schema.tenants.id, opts.tenantId));
       await audit(tx, opts.tenantId, opts.actorUserId ?? null, "tenant.reactivated", "subscription", inv.subscriptionId);
+      if (tenant.status !== "ACTIVE") {
+        queue({ id: `${DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED}:${opts.tenantId}:${tenant.status}:ACTIVE:${opts.invoiceId}`, type: DOMAIN_EVENTS.TENANT_LIFECYCLE_CHANGED, tenantId: opts.tenantId, actorUserId: opts.actorUserId ?? null,
+          payload: { tenantId: opts.tenantId, from: tenant.status, to: "ACTIVE" } });
+      }
     }
     return { paid: true, reactivated: !stillOverdue };
-  });
+  }));
 }
 
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * 86_400_000);

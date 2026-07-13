@@ -12,6 +12,12 @@
 
 ### Added
 
+- **Post-commit domain event bus (P1-005):** Composed the kernel event bus and
+  added typed, stable invoice, payment, stock and tenant-lifecycle events to
+  existing write paths. Events publish only after successful transactions;
+  subscriber failures are isolated. Delivery is best-effort and in-process;
+  durable outbox, replay, retry and dead-letter operations remain gated.
+
 - **Notification service adapter (P1-004):** Added the kernel-composed
   notification service, provider-neutral HTTPS email transport, persisted
   in-app records, tenant-scoped dedupe/read helpers, delivery audit evidence
