@@ -109,6 +109,14 @@ for (const expected of [
   'aria-label={copy.invoicesTableLabel} tabIndex={0}',
   'role="group" aria-label={copy.actions}',
   'event.key === "ArrowRight"',
+  'labelledBy="capture-review-title"',
+  '<LegacyField label={copy.captureReviewNote}>',
+  '<LegacyField label={copy.accountName}>',
+  '<LegacyField label={copy.statementDate}>',
+  'aria-label={copy.captureTableLabel} tabIndex={0}',
+  'aria-label={copy.previewTableLabel} tabIndex={0}',
+  'aria-label={copy.savedReconciliationsTableLabel} tabIndex={0}',
+  'aria-label={copy.recentBankFeedTableLabel} tabIndex={0}',
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [

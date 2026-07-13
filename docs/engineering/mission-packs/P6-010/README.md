@@ -1,6 +1,6 @@
 # P6-010 — Controlled Imports and Capture Accessibility
 
-**Status:** Approved for implementation
+**Status:** Implementation complete; local frontend and browser gates passed; remote quality and production release pending behind P6-008 and P6-009
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and localisation adoption
 **Depends on:** P6-001 design system; P6-005 legacy field and modal patterns; P1-007 document service adoption; existing import and bank-reconciliation services
