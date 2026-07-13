@@ -175,8 +175,12 @@ tenant-scoped P1-006 search adapter, with guarded P1-008 navigation mapping and
 existing-record handoff. P6-005 establishes reusable labelled-field and
 modal-focus patterns across authentication, customer and invoice core flows,
 with a permanent source-conformance gate and verified 320/640-pixel reflow.
-Route/deep-link migration, product-wide visual modernisation and accessibility
-remediation of the remaining domain modules remain separately gated work.
+P6-007 extends the governed field, dialog and local-table patterns to deal,
+product and purchase-order creation without changing sales, stock, tax,
+procurement or accounting behavior. Route/deep-link migration, product-wide
+visual modernisation and accessibility remediation of the remaining domain
+modules remain separately gated work. Reports, Billing, Imports, Settings and
+Platform Admin remain later measured accessibility waves.
 
 **Objective:** Build a responsive, accessible, permission-aware frame for every module.
 
