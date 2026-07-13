@@ -98,6 +98,17 @@ for (const expected of [
   '<LegacyField label={appEnglish.settings.companyName}>',
   '<LegacyField label={copy.fullName}>',
   'role={messageTone === "error" ? "alert" : "status"}',
+  'role="tablist" aria-label={reportsCopy.navigation}',
+  'role="tab" aria-selected={tab === t}',
+  'aria-controls={`report-panel-${t}`}',
+  'role="tabpanel" id="report-panel-pl"',
+  'aria-label={reportsCopy.profitLossTableLabel} tabIndex={0}',
+  'aria-label={reportsCopy.balanceSheetTableLabel} tabIndex={0}',
+  'aria-label={reportsCopy.agedReceivablesTableLabel} tabIndex={0}',
+  'aria-label={copy.evidenceTableLabel} tabIndex={0}',
+  'aria-label={copy.invoicesTableLabel} tabIndex={0}',
+  'role="group" aria-label={copy.actions}',
+  'event.key === "ArrowRight"',
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [
@@ -105,6 +116,7 @@ for (const expected of [
   "grid-template-columns: minmax(0, 1fr)",
   "max-height: 94dvh",
   ".purchase-line-create",
+  ".report-tabs [role=\"tab\"][aria-selected=\"true\"]",
   "@media (forced-colors: active)",
   "@media (prefers-reduced-motion: reduce)",
 ]) requireContract(issues, "src/styles.css", styles, expected);
