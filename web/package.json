@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test:design-tokens": "node scripts/check-design-token-conformance.mjs",
+    "test:shell": "node --experimental-strip-types --test scripts/navigation-model.test.mjs",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "preview": "vite preview"

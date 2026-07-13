@@ -157,6 +157,12 @@ the same governed definitions.
 
 ## 7. Stage 5 — Application shell and navigation
 
+**Current evidence (2026-07-13):** P6-001 completed governed token adoption and
+P6-002 completed the responsive, permission-aware tenant shell, current-user
+recent notification menu, mobile account access and inert command-bar mount.
+Universal Workbench, visible command/search UI, route/deep-link migration and
+the full WCAG core-flow pass remain separately gated work.
+
 **Objective:** Build a responsive, accessible, permission-aware frame for every module.
 
 **Dependencies:** Stages 1–2 and auth context from Stage 4.

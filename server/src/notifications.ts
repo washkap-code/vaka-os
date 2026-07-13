@@ -3,7 +3,7 @@ import { emailProviderConfig, type EmailProviderConfig } from "./config.js";
 import { db, schema } from "./lib.js";
 import type {
   EmailTransport, EmailTransportMessage, NotificationDedupeLookup,
-  NotificationDelivery, NotificationWriter,
+  NotificationChannel, NotificationDelivery, NotificationWriter,
 } from "./platform/notifications/index.js";
 
 function deliveryFromRow(row: typeof schema.notifications.$inferSelect): NotificationDelivery {
@@ -82,7 +82,7 @@ export const persistNotification: NotificationWriter = async (request, result) =
 
 export async function listNotifications(
   tenantId: string,
-  opts: { limit?: number } = {},
+  opts: { limit?: number; recipient?: string; channel?: NotificationChannel } = {},
 ) {
   const limit = Math.max(1, Math.min(opts.limit ?? 50, 200));
   return db.select({
@@ -97,7 +97,11 @@ export async function listNotifications(
     dedupeKey: schema.notifications.dedupeKey,
     createdAt: schema.notifications.createdAt,
   }).from(schema.notifications)
-    .where(eq(schema.notifications.tenantId, tenantId))
+    .where(and(
+      eq(schema.notifications.tenantId, tenantId),
+      opts.recipient ? eq(schema.notifications.recipient, opts.recipient) : undefined,
+      opts.channel ? eq(schema.notifications.channel, opts.channel) : undefined,
+    ))
     .orderBy(desc(schema.notifications.createdAt))
     .limit(limit);
 }

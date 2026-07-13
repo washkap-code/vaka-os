@@ -4,6 +4,8 @@ import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
 import { PlatformAdminGuide } from "./platform-admin-guide";
+import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
+import { WorkspaceShell } from "./shell/workspace-shell";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -550,43 +552,20 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 // ---------------------------------------------------------------------------
 // Shell + navigation
 // ---------------------------------------------------------------------------
-const NAV = [
-  ["dashboard", "Dashboard"], ["contacts", "Contacts"], ["pipeline", "Sales Pipeline"],
-  ["invoices", "Invoices"], ["products", "Products & Stock"], ["pos", "Purchase Orders"],
-  ["reports", "Reports"], ["imports", "Imports"], ["usersActivity", appEnglish.activity.nav], ["billing", "Billing & Plan"],
-  ["upgrade", "Upgrade"], ["settings", "Settings"],
-] as const;
-type Page = (typeof NAV)[number][0];
-
 function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => void }) {
-  const [page, setPage] = useState<Page>("dashboard");
+  const [requestedPage, setRequestedPage] = useState<WorkspacePage>("dashboard");
   const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
-  const visibleNav = NAV.filter(([key]) =>
-    (key !== "imports" || me.permissions.includes("imports.create"))
-    && (key !== "usersActivity" || me.isTenantOwner));
+  const visibleNav = useMemo(() => visibleWorkspaceNavigation(me.permissions, me.isTenantOwner),
+    [me.permissions, me.isTenantOwner]);
+  const page = resolveWorkspacePage(requestedPage, visibleNav);
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
   return (
-    <div className="shell">
-      <aside className="side">
-        <div className="logo">
-          {t.logoUrl && <img src={t.logoUrl} alt="" className="workspace-logo" />}
-          {t.companyName}<small>VAKA OS</small>
-        </div>
-        <nav>
-          {visibleNav.map(([k, label]) => (
-            <button key={k} className={page === k ? "active" : ""} onClick={() => setPage(k)}>{label}</button>
-          ))}
-        </nav>
-        <div className="foot">
-          Workspace: {t.subdomain} · Powered by VAKA OS<br />
-          <a style={{ color: "rgb(var(--vaka-workspace-white-rgb) / .7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
-        </div>
-      </aside>
-      <main className="main">
+    <WorkspaceShell tenant={t} user={me.user} navigation={visibleNav} currentPage={page}
+      onNavigate={setRequestedPage} onLogout={onLogout}>
         {arrears && arrears.stage !== "CLEAR" && (
-          <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setPage("billing")} />
+          <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setRequestedPage("billing")} />
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
@@ -609,8 +588,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         {page === "billing" && <Billing />}
         {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
-      </main>
-    </div>
+    </WorkspaceShell>
   );
 }
 

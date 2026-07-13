@@ -1,6 +1,6 @@
 # P6-002 — Responsive, Permission-aware Application Shell
 
-**Status:** Approved for bounded implementation
+**Status:** Complete for the approved bounded scope
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend shell decomposition plus tenant/user-scoped notification read adapter
 **Depends on:** P6-001 design-token adoption; P1-004 notification service; existing verified-JWT/RBAC context
@@ -202,4 +202,3 @@ Revert the extracted shell components, navigation model, notification read
 route/filter, catalogue/styles/tests and documentation. Restore the current
 inline tenant `Shell` JSX in `App.tsx`. No data or schema rollback is required;
 existing P1-004 notification records and all domain routes remain unchanged.
-
