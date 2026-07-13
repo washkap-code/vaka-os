@@ -1,6 +1,6 @@
 # P1-007 — Document Service Adapter
 
-**Status:** Approved for bounded implementation
+**Status:** Technically verified; external storage and broad document management gated
 **Programme:** 1 — Platform Kernel and shared services
 **Type:** Tenant-scoped application adapter and compatibility migration
 **Depends on:** P1-001 document contract; P1-002 identity/audit adapters
