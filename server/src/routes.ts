@@ -51,6 +51,9 @@ import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } f
 import {
   DOCUMENT_KINDS, captureDocumentId, documentDataUrl, invoicePdfDocumentId, rawDocumentId,
 } from "./documents.js";
+import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
+import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
+import { sendFinanceDocument } from "./finance-document-delivery.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -73,6 +76,13 @@ const reconciliationWorksheetQuerySchema = z.object({
 });
 const prepareReconciliationSchema = reconciliationWorksheetQuerySchema.extend({
   notes: z.string().trim().max(1000).optional(),
+});
+const financeDeliveryConfirmationSchema = z.object({ confirm: z.literal(true) });
+const emailPreferenceSchema = z.object({
+  status: z.enum(["CONSENTED", "OPTED_OUT"]),
+  locale: z.enum(FINANCE_DELIVERY_LOCALES),
+  evidenceSource: z.enum(["CUSTOMER_REQUEST", "CONTRACT", "LEGITIMATE_INTEREST", "OTHER"]),
+  reason: z.string().trim().min(3).max(500).optional().nullable(),
 });
 
 // ---------------------------------------------------------------------------
@@ -728,6 +738,37 @@ api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
     return c;
   }));
 }));
+api.get("/contacts/:id/communication-preferences/email", requirePermission("crm.read"), wrap(async (req) => {
+  const tid = tenantId(req);
+  const [contact] = await db.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+    eq(schema.contacts.id, routeParam(req, "id")),
+    eq(schema.contacts.tenantId, tid),
+  ));
+  if (!contact) throw notFound("Contact not found");
+  return latestEmailPreference(tid, contact.id);
+}));
+api.post("/contacts/:id/communication-preferences/email", requirePermission("crm.write"), wrap(async (req) => {
+  const body = emailPreferenceSchema.parse(req.body);
+  return recordEmailPreference({
+    tenantId: tenantId(req),
+    contactId: routeParam(req, "id"),
+    actorUserId: req.auth!.userId,
+    ...body,
+  });
+}));
+api.post("/contacts/:id/statements/send", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = financeDeliveryConfirmationSchema.extend({
+    asAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).parse(req.body);
+  return sendFinanceDocument({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    idempotencyKey: financialIdempotencyKey(req),
+    kind: "STATEMENT",
+    contactId: routeParam(req, "id"),
+    asAt: new Date(`${body.asAt}T23:59:59.999Z`),
+  });
+}));
 api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
   const tid = tenantId(req);
   const [contact] = await db.select().from(schema.contacts)
@@ -1060,6 +1101,26 @@ api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, r
     res.send(Buffer.from(document.bytes));
   } catch (error) { next(error); }
 });
+api.post("/invoices/:id/send", requirePermission("accounting.post"), wrap(async (req) => {
+  financeDeliveryConfirmationSchema.parse(req.body);
+  return sendFinanceDocument({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    idempotencyKey: financialIdempotencyKey(req),
+    kind: "INVOICE",
+    invoiceId: routeParam(req, "id"),
+  });
+}));
+api.post("/invoices/:id/payment-reminders/send", requirePermission("accounting.post"), wrap(async (req) => {
+  financeDeliveryConfirmationSchema.parse(req.body);
+  return sendFinanceDocument({
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    idempotencyKey: financialIdempotencyKey(req),
+    kind: "PAYMENT_REMINDER",
+    invoiceId: routeParam(req, "id"),
+  });
+}));
 api.post("/invoices/:id/share-links", requirePermission("accounting.post"), wrap(async (req) => {
   const body = z.object({ expiresInDays: z.number().int().min(1).max(30).default(14) }).parse(req.body);
   return createInvoiceShareLink({

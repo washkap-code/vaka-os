@@ -10,6 +10,8 @@ export interface NotificationRequest {
   template: string;
   locale: string;
   variables: Record<string, string>;
+  /** Values sent to the provider but redacted from local delivery history. */
+  sensitiveVariableKeys?: readonly string[];
   dedupeKey?: string;
 }
 

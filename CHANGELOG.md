@@ -12,6 +12,19 @@
 
 ### Added
 
+- **Finance document notification delivery (P7-001):** Added explicit,
+  idempotent and audited invoice, customer-statement summary and overdue payment-
+  reminder email commands through the P1-004 notification service, with
+  initiating-user in-app outcomes. Delivery requires `accounting.post`, user
+  confirmation, canonical customer email and latest append-only consent
+  evidence; opt-out and invalid finance states fail closed. Templates are typed
+  and versioned, exact statement values stay currency-separated, English
+  fallback is explicit, and secure invoice bearer links are redacted from
+  persisted history. Added additive migration
+  `0019_finance_document_delivery.sql`. Production provider/domain approval,
+  dedicated UI, durable retries/webhooks/rate controls, automatic dunning and
+  reviewed ChiShona/isiNdebele finance copy remain gated.
+
 - **Unified document service adapter (P1-007):** Composed the Platform Kernel
   document contract over existing immutable invoice PDF snapshots and encrypted
   capture payloads. Authenticated/public invoice PDF retrieval and capture

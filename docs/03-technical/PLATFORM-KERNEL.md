@@ -97,9 +97,13 @@ The composition root exposes `NOTIFICATION_SERVICE`. New notification-producing
 modules resolve or receive this service rather than importing provider code.
 Email delivery uses an injected, provider-neutral HTTPS transport; in-app
 notifications are persisted; SMS and WhatsApp record non-transmitted intent
-only. Existing invoice and statement call sites are deliberately unchanged
-until P7-001. Tenant-scoped dedupe and read helpers live in the application
-adapter, while the Platform namespace remains independent of the database.
+only. P7-001 adopts email/in-app delivery for explicitly confirmed, consented
+invoice, customer-statement summary and payment-reminder commands. Typed
+finance templates, idempotent domain claims and provider-only variable
+redaction sit in the application adapter; the Platform namespace remains
+independent of finance/database rules. Provider acceptance is not receipt,
+read or payment, and automatic dunning/retry/webhook operations remain gated.
+Tenant-scoped dedupe and read helpers live in the application adapter.
 P5-004 is the first inventory adoption: low-stock breach generations are sent
 as persisted `IN_APP` requests through this service. It does not activate
 external email, SMS, WhatsApp or push delivery.
