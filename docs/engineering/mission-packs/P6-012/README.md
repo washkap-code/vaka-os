@@ -1,6 +1,6 @@
 # P6-012 — Dashboard and Secondary Evidence Accessibility
 
-**Status:** Approved for implementation
+**Status:** Implementation complete; local frontend and browser gates passed; remote quality and production release pending behind P6-008 through P6-011
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and localisation adoption
 **Depends on:** P6-003 Universal Workbench; P6-005 accessibility foundation; P3-004 controlled contact deletion; P2-007 invoice detail

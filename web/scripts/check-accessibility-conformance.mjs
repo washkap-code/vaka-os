@@ -39,6 +39,7 @@ const files = [
   "src/accessibility/legacy-modal.tsx",
   "src/accessibility/use-modal-focus.ts",
   "src/shell/workspace-shell.tsx",
+  "src/shell/universal-workbench.tsx",
   "src/shell/command-palette.tsx",
 ];
 const sources = new Map();
@@ -55,6 +56,7 @@ const landing = sources.get("src/landing.css");
 const field = sources.get("src/accessibility/legacy-field.tsx");
 const modal = sources.get("src/accessibility/legacy-modal.tsx");
 const focus = sources.get("src/accessibility/use-modal-focus.ts");
+const workbench = sources.get("src/shell/universal-workbench.tsx");
 
 for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"aria-invalid": error ? true']) {
   requireContract(issues, "src/accessibility/legacy-field.tsx", field, expected);
@@ -127,7 +129,15 @@ for (const expected of [
   'aria-label={copy.operationsEvidenceTableLabel} tabIndex={0}',
   'aria-label={copy.backupManifestFieldsTableLabel} tabIndex={0}',
   'aria-label={copy.backupManifestRecordsTableLabel} tabIndex={0}',
+  'aria-label={copy.deletionRequestsTableLabel} tabIndex={0}',
+  'aria-label={copy.paymentsTableLabel.replace',
 ]) requireContract(issues, "src/App.tsx", app, expected);
+
+for (const expected of [
+  'aria-label={copy.pipelineTableLabel} tabIndex={0}',
+  'aria-label={copy.overdueTableLabel} tabIndex={0}',
+  'aria-label={copy.lowStockTableLabel} tabIndex={0}',
+]) requireContract(issues, "src/shell/universal-workbench.tsx", workbench, expected);
 
 for (const expected of [
   ":where(a, button, input, select, textarea, [tabindex]):focus-visible",

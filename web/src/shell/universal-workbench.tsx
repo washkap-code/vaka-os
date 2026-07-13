@@ -113,7 +113,7 @@ export function UniversalWorkbench({ data, currency, navigation, onNavigate }: U
           <BarChart label={copy.pipelineChartLabel} rows={data.pipeline.map((row) => ({
             key: row.stage, label: row.stage, value: Number(row.value), display: fmt(row.value, currency), tone: "accent" as const,
           }))} />
-          <div className="table-scroll"><table><thead><tr><th>{copy.stage}</th><th className="num">{copy.deals}</th><th className="num">{copy.value}</th></tr></thead>
+          <div className="table-scroll" role="region" aria-label={copy.pipelineTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.stage}</th><th className="num">{copy.deals}</th><th className="num">{copy.value}</th></tr></thead>
             <tbody>{data.pipeline.map((row) => <tr key={row.stage}><td><span className={`pill ${row.stage}`}>{row.stage}</span></td><td className="num">{row.n}</td><td className="num">{fmt(row.value, currency)}</td></tr>)}</tbody></table></div>
         </>}
       </section>
@@ -129,14 +129,14 @@ export function UniversalWorkbench({ data, currency, navigation, onNavigate }: U
         </article>)}
       </div>}
       <h3 className="attention-heading">{copy.attentionTitle}</h3>
-      {data.receivables.attentionItems.length === 0 ? <p className="workbench-empty">{copy.noAttention}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.invoice}</th><th>{copy.customer}</th><th className="num">{copy.amount}</th><th className="num">{copy.daysOverdue}</th></tr></thead>
+      {data.receivables.attentionItems.length === 0 ? <p className="workbench-empty">{copy.noAttention}</p> : <div className="table-scroll" role="region" aria-label={copy.overdueTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.invoice}</th><th>{copy.customer}</th><th className="num">{copy.amount}</th><th className="num">{copy.daysOverdue}</th></tr></thead>
         <tbody>{data.receivables.attentionItems.map((item) => <tr key={item.invoiceId}><td><b>{item.number}</b></td><td>{item.contact}</td><td className="num">{fmt(item.outstanding, item.currency)}</td><td className="num bad-text">{item.daysOverdue}</td></tr>)}</tbody></table></div>}
     </section>
 
     <section className="workbench-panel" aria-labelledby="workbench-stock">
       <div className="workbench-panel-heading"><div><span>{copy.inventory}</span><h2 id="workbench-stock">{copy.lowStockTitle}</h2></div>
         {visiblePages.has("products") && <ModuleLink page="products" onNavigate={onNavigate}>{copy.viewStock}</ModuleLink>}</div>
-      {data.lowStock.length === 0 ? <p className="workbench-empty">{copy.stockHealthy}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.sku}</th><th>{copy.product}</th><th className="num">{copy.onHand}</th><th className="num">{copy.reorderLevel}</th></tr></thead>
+      {data.lowStock.length === 0 ? <p className="workbench-empty">{copy.stockHealthy}</p> : <div className="table-scroll" role="region" aria-label={copy.lowStockTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.sku}</th><th>{copy.product}</th><th className="num">{copy.onHand}</th><th className="num">{copy.reorderLevel}</th></tr></thead>
         <tbody>{data.lowStock.map((row) => <tr key={row.id}><td>{row.sku}</td><td>{row.name}</td><td className="num bad-text"><b>{Number(row.on_hand)}</b></td><td className="num">{row.reorder_level}</td></tr>)}</tbody></table></div>}
     </section>
   </div>;

@@ -2210,7 +2210,7 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
     </div>
     {requests.length > 0 && <div className="panel">
       <h2>{isTenantOwner ? copy.pendingApprovals : copy.deletionRequests}</h2>
-      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.requestedBy}</th><th>{copy.reason}</th><th>{copy.status}</th><th>{copy.actions}</th></tr></thead><tbody>
+      <div className="table-scroll" role="region" aria-label={copy.deletionRequestsTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.name}</th><th>{copy.requestedBy}</th><th>{copy.reason}</th><th>{copy.status}</th><th>{copy.actions}</th></tr></thead><tbody>
         {requests.map((request) => <tr key={request.id}><td>{request.contactName}</td><td>{request.requesterName}</td><td>{request.reason}</td><td><span className={`pill ${request.status}`}>{request.status}</span></td><td>{isTenantOwner && request.status === "PENDING" && <div className="row"><button className="btn sm" disabled={busy} onClick={() => decide(request.id, "APPROVE")}>{copy.approve}</button><button className="btn ghost sm" disabled={busy} onClick={() => decide(request.id, "REJECT")}>{copy.reject}</button></div>}</td></tr>)}
       </tbody></table></div>
     </div>}
@@ -2754,7 +2754,7 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
       </div>
       {editable && <button className="btn ghost sm" onClick={() => setForm({ ...form, lines: [...form.lines, { productId: "", description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard" }] })}>{copy.addLine}</button>}
       <div className="invoice-detail-totals"><span>{copy.subtotal}: <b>{fmt(invoice.subtotal, invoice.currency)}</b></span><span>{copy.tax}: <b>{fmt(invoice.taxTotal, invoice.currency)}</b></span><span>{copy.total}: <b>{fmt(invoice.total, invoice.currency)}</b></span><span>{copy.paid}: <b>{fmt(invoice.amountPaid, invoice.currency)}</b></span></div>
-      {invoice.payments.length > 0 && <section><h3>{copy.payments}</h3><div className="table-scroll"><table><thead><tr><th>{copy.paymentDate}</th><th>{copy.reference}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{invoice.payments.map((payment) => <tr key={payment.id}><td>{new Date(payment.date).toLocaleDateString()}</td><td>{payment.reference ?? "—"}</td><td className="num">{fmt(payment.amount, invoice.currency)}</td></tr>)}</tbody></table></div></section>}
+      {invoice.payments.length > 0 && <section><h3>{copy.payments}</h3><div className="table-scroll" role="region" aria-label={copy.paymentsTableLabel.replace("{invoice}", invoice.number ?? copy.draftInvoice)} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.paymentDate}</th><th>{copy.reference}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{invoice.payments.map((payment) => <tr key={payment.id}><td>{new Date(payment.date).toLocaleDateString()}</td><td>{payment.reference ?? "—"}</td><td className="num">{fmt(payment.amount, invoice.currency)}</td></tr>)}</tbody></table></div></section>}
       {error && <div className="err-text" role="alert">{error}</div>}
       <div className="row end modal-actions"><button className="btn ghost" onClick={onClose}>{copy.close}</button>{editable && <button className="btn" disabled={saving || !form.contactId || form.lines.some((line: any) => !line.description.trim())} onClick={save}>{saving ? copy.savingChanges : copy.saveChanges}</button>}</div>
     </>}
