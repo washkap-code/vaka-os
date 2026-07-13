@@ -748,7 +748,8 @@ function PlatformSecuritySettings({ me, onSaved, onLogout }: {
     </div>
     <div className="panel"><h2>{appEnglish.auth.twoFactorTitle}</h2>
       <p className="sub">{mfa?.enabled ? copy.mfaEnabled : copy.mfaDisabled}</p>
-      {!mfa?.enabled && !setup && <button className="btn accent" onClick={beginMfa}>{copy.enableMfa}</button>}
+      {!mfa?.enabled && mfa?.available === false && <div className="banner warn">{copy.mfaUnavailable}</div>}
+      {!mfa?.enabled && mfa?.available !== false && !setup && <button className="btn accent" onClick={beginMfa}>{copy.enableMfa}</button>}
       {setup && <div className="mfa-setup"><p>{copy.mfaSetupHelp}</p><div className="secret-box"><strong>{copy.secret}</strong><code>{setup.secret}</code></div>
         <details><summary>{copy.otpauthUri}</summary><code className="breakable-code">{setup.otpauthUri}</code></details>
         <div className="field"><label>{appEnglish.auth.authenticationCode}</label><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></div>

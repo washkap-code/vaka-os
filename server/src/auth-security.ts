@@ -7,8 +7,8 @@ import {
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { createHttpEmailTransport } from "./notifications.js";
 import type { EmailTransport } from "./platform/notifications/index.js";
-import { jwtSecret, mfaEncryptionSecret, publicAppUrl } from "./config.js";
-import { badRequest, db, schema, unauthorized, type DB } from "./lib.js";
+import { jwtSecret, mfaEncryptionSecret, mfaEnrollmentAvailable, publicAppUrl } from "./config.js";
+import { AppError, badRequest, db, schema, unauthorized, type DB } from "./lib.js";
 
 const SECRET = jwtSecret();
 const SECURITY_SECRET = mfaEncryptionSecret();
@@ -311,6 +311,7 @@ export async function mfaStatus(userId: string) {
     verifiedAt: schema.userMfaFactors.verifiedAt,
   }).from(schema.userMfaFactors).where(eq(schema.userMfaFactors.userId, userId));
   return {
+    available: mfaEnrollmentAvailable(),
     enabled: factor?.status === "VERIFIED",
     pending: factor?.status === "PENDING",
     recoveryCodesRemaining: factor?.status === "VERIFIED" ? factor.recoveryCodeHashes.length : 0,
@@ -319,6 +320,9 @@ export async function mfaStatus(userId: string) {
 }
 
 export async function beginMfaEnrollment(userId: string) {
+  if (!mfaEnrollmentAvailable()) {
+    throw new AppError(503, "Two-factor setup is temporarily unavailable while security configuration is completed", "MFA_SETUP_UNAVAILABLE");
+  }
   const [user] = await db.select().from(schema.users).where(and(
     eq(schema.users.id, userId),
     eq(schema.users.status, "active"),

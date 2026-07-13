@@ -3,6 +3,7 @@ import {
   databaseUrl,
   emailProviderConfig,
   jwtSecret,
+  mfaEnrollmentAvailable,
   mfaEncryptionSecret,
   platformAdminPassword,
   publicAppUrl,
@@ -54,6 +55,9 @@ describe("runtime configuration", () => {
     expect(() => mfaEncryptionSecret({
       NODE_ENV: "production", JWT_SECRET: jwt, MFA_ENCRYPTION_KEY: "too-short",
     })).toThrow("at least 32 bytes");
+    expect(mfaEnrollmentAvailable({ NODE_ENV: "production", JWT_SECRET: jwt })).toBe(false);
+    expect(mfaEnrollmentAvailable({ NODE_ENV: "production", JWT_SECRET: jwt, MFA_ENCRYPTION_KEY: mfa })).toBe(true);
+    expect(mfaEnrollmentAvailable({ NODE_ENV: "test" })).toBe(true);
   });
 
   it("requires a non-placeholder administrator password for seeding", () => {
