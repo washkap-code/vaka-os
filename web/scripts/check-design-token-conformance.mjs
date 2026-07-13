@@ -1,7 +1,11 @@
 import { readFile } from "node:fs/promises";
 
 const TOKEN_SOURCE = "src/design-system/tokens.css";
-const LIVE_SURFACES = ["src/styles.css", "src/landing.css", "src/App.tsx", "src/landing.tsx"];
+const LIVE_SURFACES = [
+  "src/styles.css", "src/landing.css", "src/App.tsx", "src/landing.tsx",
+  "src/shell/notification-copy.ts", "src/shell/notification-menu.tsx",
+  "src/shell/user-menu.tsx", "src/shell/workspace-shell.tsx",
+];
 
 function lineNumber(source, offset) {
   return source.slice(0, offset).split("\n").length;

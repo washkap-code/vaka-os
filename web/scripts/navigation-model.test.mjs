@@ -1,0 +1,50 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { resolveWorkspacePage, visibleWorkspaceNavigation } from "../src/shell/navigation.ts";
+import { notificationCopy } from "../src/shell/notification-copy.ts";
+
+const notificationCatalogue = {
+  lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
+  deliverySentTitle: "Sent", deliverySentDetail: "{documentType} to {recipientName}",
+  deliveryFailedTitle: "Failed", deliveryFailedDetail: "{documentType} to {recipientName}",
+  securityTitle: "Security", securityDetail: "Security detail",
+  genericTitle: "Workspace update", genericDetail: "Generic safe detail",
+  stockItem: "Stock item", unknownAmount: "unknown", document: "Document", recipient: "recipient",
+};
+
+test("workspace navigation exposes only permitted domains", () => {
+  const navigation = visibleWorkspaceNavigation(["crm.read", "billing.manage"], false);
+  assert.deepEqual(navigation.map((item) => item.key), ["contacts", "pipeline", "billing", "upgrade", "settings"]);
+});
+
+test("owner-only activity stays hidden from non-owners and visible to owners", () => {
+  assert.equal(visibleWorkspaceNavigation([], false).some((item) => item.key === "usersActivity"), false);
+  assert.equal(visibleWorkspaceNavigation([], true).some((item) => item.key === "usersActivity"), true);
+});
+
+test("a forbidden current page falls back to the first visible destination", () => {
+  const navigation = visibleWorkspaceNavigation(["inventory.read"], false);
+  assert.equal(resolveWorkspacePage("dashboard", navigation), "products");
+  assert.equal(resolveWorkspacePage("pos", navigation), "pos");
+});
+
+test("billing and settings remain available without domain permissions", () => {
+  assert.deepEqual(visibleWorkspaceNavigation([], false).map((item) => item.key), ["billing", "settings"]);
+});
+
+test("known notifications use only their catalogue-owned display fields", () => {
+  const formatted = notificationCopy({
+    id: "one", template: "inventory.low_stock", locale: "en-ZW", status: "accepted", createdAt: "2026-07-13",
+    variables: { name: "Cooking Oil", onHand: "2", threshold: "5", secret: "must-not-render" },
+  }, notificationCatalogue);
+  assert.deepEqual(formatted, { title: "Low stock", detail: "Cooking Oil: 2/5" });
+  assert.equal(JSON.stringify(formatted).includes("must-not-render"), false);
+});
+
+test("unknown notifications never expose arbitrary persisted variables", () => {
+  const formatted = notificationCopy({
+    id: "two", template: "future.template", locale: "en-ZW", status: "accepted", createdAt: "2026-07-13",
+    variables: { bearerToken: "private-value", personalData: "private-name" },
+  }, notificationCatalogue);
+  assert.deepEqual(formatted, { title: "Workspace update", detail: "Generic safe detail" });
+});

@@ -156,8 +156,11 @@ The preview is a development-only page and includes light/dark switching, contro
 3. Add visual regression baselines for light, dark, mobile, and increased-contrast states.
 4. P6-001 completed compatibility adoption across the public, authentication
    and authenticated surfaces with automated conformance and visual parity.
-5. Migrate legacy selectors to shared React primitives gradually.
-6. Migrate module DOM/components only through scoped tasks with screenshots,
+5. P6-002 extracted the authenticated shell into focused components using the
+   governed compatibility roles and added every live shell TSX file to the
+   conformance scan. Domain modules remain on their existing selectors.
+6. Migrate legacy selectors to shared React primitives gradually.
+7. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.
@@ -170,7 +173,9 @@ Do not replace legacy components in bulk. Preserve behaviour first, then migrate
 - Dropdown uses native `details`; advanced menu focus management may be needed for complex actions.
 - Dialog support depends on modern browser native `dialog` behaviour.
 - The existing product and homepage consume compatibility tokens, but their
-  legacy selectors/DOM have not yet migrated to the shared React primitives.
+  domain-module selectors/DOM have not yet migrated to the shared React
+  primitives. The P6-002 shell is componentised but intentionally retains
+  compatibility classes for incremental rollout.
 - P6-001 recorded pre-existing 200%-zoom horizontal overflow on representative
   mobile homepage, auth and workspace surfaces. Exact before/after equality
   proves token adoption did not introduce it; P6-005 owns remediation.

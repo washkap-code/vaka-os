@@ -56,6 +56,7 @@ import {
 import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
 import { sendFinanceDocument } from "./finance-document-delivery.js";
+import { listNotifications } from "./notifications.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -212,6 +213,24 @@ api.post("/auth/logout", wrap(async (req) => {
 }));
 
 api.use(requireCompletedPasswordChange as any);
+
+const notificationListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+api.get("/notifications", wrap(async (req, res) => {
+  const { limit } = notificationListQuerySchema.parse(req.query);
+  const notifications = await listNotifications(tenantId(req), {
+    limit,
+    recipient: req.auth!.userId,
+    channel: "IN_APP",
+  });
+  res.setHeader("Cache-Control", "private, no-store");
+  return {
+    notifications: notifications.map(({ id, template, locale, variables, status, createdAt }) => ({
+      id, template, locale, variables, status, createdAt,
+    })),
+  };
+}));
 
 api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
   const tid = tenantId(req);

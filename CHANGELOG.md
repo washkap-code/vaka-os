@@ -12,6 +12,17 @@
 
 ### Added
 
+- **Responsive, permission-aware application shell (P6-002):** Extracted the
+  authenticated tenant shell into focused React components with permission and
+  owner-aware destinations, deterministic safe fallback, a compact desktop
+  header and a 320-pixel-safe mobile drawer with Escape/focus behavior. Added
+  semantic landmarks, an inert P6-004 command mount, current-user account
+  actions and a recent-notification menu backed by a new completed-password-
+  protected, tenant/user/IN_APP-scoped and no-store endpoint. Notification copy
+  is catalogue-owned and unknown templates fail to a generic message. No route
+  framework, read/unread state, migration, dependency or financial behavior was
+  added; P6-004 search UI and P6-005 full WCAG verification remain gated.
+
 - **App-wide design-system token adoption (P6-001):** Routed the public
   homepage, authentication and authenticated workspace through governed
   colour, typography, spacing, radius, elevation, motion and component roles
