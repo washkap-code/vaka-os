@@ -4,6 +4,7 @@
 // through the lifecycle gate (read-only + billing + export).
 // ============================================================================
 import { Router, Response } from "express";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { and, eq, desc, sql } from "drizzle-orm";
 import {
@@ -22,7 +23,6 @@ import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard }
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
-import { getInvoicePdf } from "./invoice-documents.js";
 import { createInvoiceShareLink, listInvoiceShareLinks, openInvoiceShareLink, revokeInvoiceShareLink } from "./invoice-sharing.js";
 import {
   commitBankStatementImport, commitContactImport, commitOpeningStockImport,
@@ -36,7 +36,6 @@ import {
   matchBankTransactionToInvoice, matchBankTransactionsAsTransfer, matchBankTransactionToInvoices,
   postBankTransactionFee,
 } from "./bank-reconciliation.js";
-import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.js";
 import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
@@ -45,10 +44,13 @@ import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-repor
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
+import {
+  DOCUMENT_KINDS, captureDocumentId, documentDataUrl, invoicePdfDocumentId, rawDocumentId,
+} from "./documents.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -377,7 +379,12 @@ api.get("/captures/:id", requirePermission("imports.create"), wrap(async (req) =
     eq(schema.captureDocuments.tenantId, tenantId(req)),
   ));
   if (!capture) throw notFound("Capture not found");
-  return { ...capture, dataUrl: revealCaptureDataUrl(capture.dataUrl) };
+  const document = await platformKernel().container.get(DOCUMENT_SERVICE).get(
+    captureDocumentId(capture.id),
+    { tenantId: tenantId(req), actorUserId: req.auth!.userId },
+  );
+  if (!document) throw notFound("Capture not found");
+  return { ...capture, dataUrl: documentDataUrl(document) };
 }));
 api.post("/captures/:id/review", requirePermission("imports.approve"), wrap(async (req) => {
   const body = z.object({
@@ -416,16 +423,23 @@ api.post("/captures", requirePermission("imports.create"), wrap(async (req) => {
   const parsed = captureDataUrl(body.dataUrl);
   const tid = tenantId(req);
   const fileName = body.fileName.replace(/[^a-zA-Z0-9._ -]/g, "_");
-  const [capture] = await db.insert(schema.captureDocuments).values({
-    tenantId: tid, createdBy: req.auth!.userId, documentType: body.documentType,
-    fileName, mediaType: parsed.mediaType, byteSize: parsed.bytes.length,
-    dataUrl: protectCaptureDataUrl(body.dataUrl), status: "CAPTURED",
-  }).returning({
-    id: schema.captureDocuments.id, documentType: schema.captureDocuments.documentType,
-    fileName: schema.captureDocuments.fileName, mediaType: schema.captureDocuments.mediaType,
-    byteSize: schema.captureDocuments.byteSize, status: schema.captureDocuments.status,
-    createdAt: schema.captureDocuments.createdAt,
-  });
+  const descriptor = await platformKernel().container.get(DOCUMENT_SERVICE).put({
+    descriptor: {
+      id: captureDocumentId(randomUUID()), tenantId: tid, kind: DOCUMENT_KINDS.CAPTURE,
+      classification: body.documentType, fileName, mediaType: parsed.mediaType,
+      byteSize: parsed.bytes.length, createdAt: new Date(),
+    },
+    bytes: parsed.bytes,
+  }, { tenantId: tid, actorUserId: req.auth!.userId });
+  const capture = {
+    id: rawDocumentId(descriptor.id, DOCUMENT_KINDS.CAPTURE),
+    documentType: descriptor.classification,
+    fileName: descriptor.fileName,
+    mediaType: descriptor.mediaType,
+    byteSize: descriptor.byteSize,
+    status: "CAPTURED",
+    createdAt: descriptor.createdAt,
+  };
   await audit(db, tid, req.auth!.userId, "capture.created", "capture_document", capture.id, {
     documentType: capture.documentType, mediaType: capture.mediaType, bytes: capture.byteSize,
   });
@@ -1031,13 +1045,19 @@ api.get("/invoices/:id", requirePermission("accounting.read"), wrap(async (req) 
 }));
 api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, res, next) => {
   try {
-    const result = await getInvoicePdf(tenantId(req as AuthedRequest), routeParam(req as AuthedRequest, "id"));
+    const request = req as AuthedRequest;
+    const invoiceId = routeParam(request, "id");
+    const document = await platformKernel().container.get(DOCUMENT_SERVICE).get(
+      invoicePdfDocumentId(invoiceId),
+      { tenantId: tenantId(request), actorUserId: request.auth!.userId },
+    );
+    if (!document) throw notFound("Issued invoice document is not available");
     await audit(db, tenantId(req as AuthedRequest), (req as AuthedRequest).auth!.userId,
-      "invoice.downloaded", "invoice", result.invoiceId, { templateVersion: result.templateVersion });
+      "invoice.downloaded", "invoice", invoiceId, { templateVersion: document.descriptor.version });
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="invoice-${result.invoiceId}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoiceId}.pdf"`);
     res.setHeader("Cache-Control", "private, no-store");
-    res.send(result.pdf);
+    res.send(Buffer.from(document.bytes));
   } catch (error) { next(error); }
 });
 api.post("/invoices/:id/share-links", requirePermission("accounting.post"), wrap(async (req) => {

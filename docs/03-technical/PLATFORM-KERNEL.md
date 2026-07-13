@@ -20,7 +20,7 @@ rewrite and not a claim that every service is live in production.
 | `events` | tenant-aware domain events and subscriptions | P1-005 post-commit in-process adapter composed; durable delivery gated |
 | `workflow` | named orchestration handlers | in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
-| `documents` | tenant-scoped document storage/retrieval | injected store contract |
+| `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
 | `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Invoice/Product adapter composed; broader enterprise search gated |
 | `metadata` | extensible typed entity metadata | P1-008 immutable canonical registry composed; dynamic values and broad adoption gated |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
@@ -86,8 +86,8 @@ instantiated by the existing application during this mission.
 2. Wrap the existing audit writer and identity context behind adapters.
 3. Add parity tests for each migrated service and tenant boundary.
 4. Introduce an outbox-backed event adapter before asynchronous workflows.
-5. Migrate document storage only after encryption, malware scanning, retention,
-   backup, and recovery controls are approved.
+5. Migrate to external object storage only after encryption, malware scanning,
+   retention, backup, and recovery controls are approved.
 6. Remove duplicate module infrastructure only after production evidence and a
    documented rollback window.
 
@@ -138,3 +138,14 @@ fields and result descriptors from this registry while retaining explicit,
 tenant-safe canonical queries. Metadata cannot select arbitrary tables, execute
 rules or grant data access. Custom metadata writes, the target
 Party/Organisation/LegalEntity model and any AI context builder remain gated.
+
+## Document adoption seam (P1-007)
+
+The composition root exposes `DOCUMENT_SERVICE` over the existing immutable
+invoice issue snapshots and encrypted capture payloads. Authenticated invoice
+downloads, opaque public invoice share links, and capture create/detail paths
+consume this service without changing their HTTP contracts. Kind-qualified
+identifiers, explicit tenant/actor scope and provider-level tenant filters fail
+closed across document domains. Capture list/review remains its existing
+workflow; external object storage, malware scanning, OCR, retention automation
+and general document management remain gated.

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { signupFinanceTenant } from "./finance/helpers.js";
+import { db, schema } from "../src/lib.js";
+import { eq } from "drizzle-orm";
 
 const app = createApp();
 const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -15,6 +17,10 @@ describe("mobile document capture intake", () => {
     expect(created.status).toBe(200);
     expect(created.body).toMatchObject({ documentType: "RECEIPT", mediaType: "image/png", status: "CAPTURED" });
     expect(created.body).not.toHaveProperty("dataUrl");
+    const [stored] = await db.select({ dataUrl: schema.captureDocuments.dataUrl })
+      .from(schema.captureDocuments).where(eq(schema.captureDocuments.id, created.body.id));
+    expect(stored.dataUrl).toMatch(/^v1\./);
+    expect(stored.dataUrl).not.toContain(png);
 
     const list = await request(app).get("/api/v1/captures").set(tenant.auth);
     expect(list.status).toBe(200);
@@ -33,6 +39,8 @@ describe("mobile document capture intake", () => {
     const otherList = await request(app).get("/api/v1/captures").set(other.auth);
     expect(otherList.status).toBe(200);
     expect(otherList.body).toHaveLength(0);
+    const otherDetail = await request(app).get(`/api/v1/captures/${created.body.id}`).set(other.auth);
+    expect(otherDetail.status).toBe(404);
     const invalid = await request(app).post("/api/v1/captures").set(tenant.auth).send({
       documentType: "OTHER", fileName: "unsafe.txt", dataUrl: "data:text/plain;base64,SGk=",
     });

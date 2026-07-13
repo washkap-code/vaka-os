@@ -3,6 +3,9 @@ export type DocumentId = string;
 export interface DocumentDescriptor {
   id: DocumentId;
   tenantId: string;
+  kind: string;
+  classification?: string;
+  version?: string;
   fileName: string;
   mediaType: string;
   byteSize: number;

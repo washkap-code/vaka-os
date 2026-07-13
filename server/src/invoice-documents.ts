@@ -1,8 +1,6 @@
-import { db, notFound, schema } from "./lib.js";
-import { and, eq } from "drizzle-orm";
 import { deflateSync, inflateSync } from "node:zlib";
 
-type SnapshotDocument = {
+export type InvoiceSnapshotDocument = {
   issuer: { companyName: string; logoUrl?: string | null; physicalAddress: string | null; registrationNumber: string | null; taxNumber: string | null; vatNumber: string | null };
   customer: { name: string; address: string | null; taxNumber: string | null };
   invoice: {
@@ -164,7 +162,7 @@ function parseLogo(logoUrl: string | null | undefined): PdfImage | null {
   return match[1] === "png" ? decodePng(data) : decodeJpeg(data);
 }
 
-function makePdf(document: SnapshotDocument): Buffer {
+export function renderInvoicePdf(document: InvoiceSnapshotDocument): Buffer {
   const logo = parseLogo(document.issuer.logoUrl);
   const lines: string[] = [];
   const add = (text: string, size = 10) => {
@@ -226,17 +224,4 @@ function makePdf(document: SnapshotDocument): Buffer {
   for (let index = 1; index <= objects.length; index++) output += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
   output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
   return Buffer.from(output, "utf8");
-}
-
-export async function getInvoicePdf(tenantId: string, invoiceId: string) {
-  const [snapshot] = await db.select().from(schema.invoiceDocumentSnapshots).where(and(
-    eq(schema.invoiceDocumentSnapshots.tenantId, tenantId),
-    eq(schema.invoiceDocumentSnapshots.invoiceId, invoiceId),
-  ));
-  if (!snapshot) throw notFound("Issued invoice document is not available");
-  return {
-    invoiceId,
-    templateVersion: snapshot.templateVersion,
-    pdf: makePdf(snapshot.document as SnapshotDocument),
-  };
 }

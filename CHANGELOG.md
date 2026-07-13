@@ -12,6 +12,16 @@
 
 ### Added
 
+- **Unified document service adapter (P1-007):** Composed the Platform Kernel
+  document contract over existing immutable invoice PDF snapshots and encrypted
+  capture payloads. Authenticated/public invoice PDF retrieval and capture
+  binary create/detail now use one tenant-aware service with kind-qualified
+  identifiers, explicit actor scope, content/size validation and provider-level
+  tenant isolation, while preserving all existing endpoint contracts,
+  permissions, audits and storage formats. No migration was added. External
+  object storage, malware scanning, retention automation, OCR and general
+  document management remain gated.
+
 - **Reorder rules and low-stock alerts (P5-004):** Added an audited,
   tenant-scoped product reorder-rule workflow and exact aggregate stock
   threshold evaluator. P1-005 stock/product subscribers persist serialized
