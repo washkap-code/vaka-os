@@ -151,6 +151,7 @@ describe("P2-003 VAT technical report", () => {
     expect(pdf.headers["cache-control"]).toBe("private, no-store");
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
     expect(pdf.body.toString("latin1")).toContain("VAT technical preview - not filing-ready");
+    expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const audits = await db.select().from(schema.auditLogs).where(and(
       eq(schema.auditLogs.tenantId, tenantA.tenantId),

@@ -8,6 +8,7 @@ import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } 
 import { WorkspaceShell } from "./shell/workspace-shell";
 import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
 import { useListSelection } from "./records/use-list-selection";
+import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -2385,6 +2386,11 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
+  const [pdfPreview, setPdfPreview] = useState<{
+    url: string;
+    invoice: { id: string; number: string | null };
+  } | null>(null);
   const empty = { description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard", productId: "" };
   const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
 
@@ -2412,24 +2418,35 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
   const act = async (path: string, body: any = {}) => {
     try { await api(path, { method: "POST", body }); reload(); } catch (e: any) { alert(e.message); }
   };
+  useEffect(() => () => {
+    if (pdfPreview?.url) URL.revokeObjectURL(pdfPreview.url);
+  }, [pdfPreview?.url]);
+
+  const loadPdf = async (invoice: { id: string; number: string | null }) => {
+    setPdfBusyId(invoice.id);
+    try {
+      return await fetchInvoicePdf(invoice.id, getToken());
+    } finally {
+      setPdfBusyId(null);
+    }
+  };
   const downloadPdf = async (invoice: { id: string; number: string | null }) => {
     try {
-      const response = await fetch(`/api/v1/invoices/${invoice.id}/pdf`, {
-        headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || appEnglish.invoices.pdfDownloadFailed);
-      }
-      const url = URL.createObjectURL(await response.blob());
+      const url = URL.createObjectURL(await loadPdf(invoice));
       const link = document.createElement("a");
       link.href = url;
-      link.download = `invoice-${invoice.number ?? invoice.id}.pdf`;
+      link.download = invoicePdfFilename(invoice.number, invoice.id);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
+  };
+  const previewPdf = async (invoice: { id: string; number: string | null }) => {
+    try {
+      const url = URL.createObjectURL(await loadPdf(invoice));
+      setPdfPreview({ url, invoice });
+    } catch (error: any) { alert(error.message || appEnglish.invoices.pdfPreviewFailed); }
   };
   const getShareLink = async (invoice: { id: string }) => {
     const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
@@ -2511,7 +2528,8 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
             <td><span className={`pill ${i.status}`}>{i.status}</span></td>
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
             <td><div className="row">
-              {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
+              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => previewPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
+              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => downloadPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
               {!readonly && canPost && <>
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
@@ -2531,6 +2549,15 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
         ))}</tbody></table>
       {loadedRows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
+    {pdfPreview && <div className="modalbg invoice-preview-backdrop" onClick={() => setPdfPreview(null)}>
+      <section className="modal invoice-preview-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-preview-title" onClick={(event) => event.stopPropagation()}>
+        <div className="invoice-preview-heading">
+          <div><h2 id="invoice-preview-title">{appEnglish.invoices.previewTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)}</h2><p className="sub">{appEnglish.invoices.previewHelp}</p></div>
+          <div className="row"><a className="btn ghost sm" href={pdfPreview.url} download={invoicePdfFilename(pdfPreview.invoice.number, pdfPreview.invoice.id)}>{appEnglish.invoices.downloadPdf}</a><button className="btn ghost sm" onClick={() => setPdfPreview(null)}>{appEnglish.invoices.closePreview}</button></div>
+        </div>
+        <iframe className="invoice-preview-frame" src={pdfPreview.url} title={appEnglish.invoices.previewFrameTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)} />
+      </section>
+    </div>}
     {linkInvoice && <div className="modalbg" onClick={() => setLinkInvoice(null)}><div className="modal" onClick={(e) => e.stopPropagation()}>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <h2>{appEnglish.invoices.shareLinksTitle}</h2>

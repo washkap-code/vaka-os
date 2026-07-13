@@ -326,6 +326,18 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .modalbg { position: fixed; inset: 0; background: rgb(var(--vaka-workspace-overlay-rgb) / .5); display: grid; place-items: center; z-index: 40; }
 .modal { background: var(--vaka-workspace-surface); border-radius: 12px; padding: 24px 26px; width: 620px; max-width: 94vw; max-height: 88vh; overflow: auto; }
 .modal h2 { font-size: 17px; margin-bottom: 16px; }
+.invoice-preview-backdrop { padding: var(--vaka-space-4); }
+.invoice-preview-modal { display: grid; grid-template-rows: auto minmax(0, 1fr); height: min(90vh, 62rem); max-width: 70rem; overflow: hidden; padding: var(--vaka-space-5); width: min(94vw, 70rem); }
+.invoice-preview-heading { align-items: start; display: flex; gap: var(--vaka-space-4); justify-content: space-between; }
+.invoice-preview-heading .sub { margin-bottom: var(--vaka-space-4); }
+.invoice-preview-heading a { text-decoration: none; }
+.invoice-preview-frame { background: var(--vaka-color-surface-subtle); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-md); height: 100%; min-height: 32rem; width: 100%; }
+@media (max-width: 760px) {
+  .invoice-preview-backdrop { padding: 0; }
+  .invoice-preview-modal { border-radius: 0; height: 100vh; max-height: none; padding: var(--vaka-space-3); width: 100vw; }
+  .invoice-preview-heading { flex-direction: column; }
+  .invoice-preview-frame { min-height: 0; }
+}
 .link-button { appearance: none; border: 0; background: transparent; color: var(--brand); cursor: pointer; padding: 0; text-align: left; font: inherit; }
 .link-button:hover { text-decoration: underline; }
 .customer-timeline-modal { width: 760px; }

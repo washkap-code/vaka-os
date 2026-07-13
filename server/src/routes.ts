@@ -1319,7 +1319,9 @@ api.get("/invoices/:id/pdf", requirePermission("accounting.read"), async (req, r
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="invoice-${invoiceId}.pdf"`);
     res.setHeader("Cache-Control", "private, no-store");
-    res.send(Buffer.from(document.bytes));
+    res.setHeader("Content-Length", String(document.bytes.byteLength));
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.end(Buffer.from(document.bytes));
   } catch (error) { next(error); }
 });
 api.post("/invoices/:id/send", requirePermission("accounting.post"), wrap(async (req) => {

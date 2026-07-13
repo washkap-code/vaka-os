@@ -94,6 +94,7 @@ describe("P2-006 statutory report pack", () => {
     expect(pdf.status).toBe(200);
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
     expect(pdf.body.toString("latin1")).toContain("technical preview");
+    expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const audits = await db.select().from(schema.auditLogs).where(and(eq(schema.auditLogs.tenantId, tenant.tenantId), eq(schema.auditLogs.action, "report.statutory_pack_exported")));
     expect(audits).toHaveLength(2);

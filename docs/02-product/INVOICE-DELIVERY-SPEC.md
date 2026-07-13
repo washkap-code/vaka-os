@@ -73,6 +73,11 @@ review:
 - a clear VAKA-powered attribution policy where required; and
 - a stable document/template version.
 
+Every VAKA-generated invoice and report PDF carries the restrained page footer
+`Powered by VAKA OS | www.vakaos.com`. It remains visually subordinate to the
+tenant's snapshotted identity, logo, colours and statutory content, but must be
+legible and must not overlap totals, evidence or page numbering.
+
 Financial values must come from authoritative invoice records. PDF or email
 templates must never recalculate ledger values independently.
 
@@ -107,6 +112,9 @@ test one approach.
 - The service uses tenant-scoped invoice data and stored branding only.
 - Authorisation is checked for every generation and download.
 - Generated files use deterministic, safe filenames.
+- The browser validates the PDF media type and `%PDF-` signature before preview
+  or download; malformed/error payloads are never offered as documents.
+- Issued invoices can be previewed in the authenticated workspace before download.
 - Responses use appropriate content type, disposition, cache, and security
   headers.
 - Sensitive documents are not exposed through permanent public URLs.
