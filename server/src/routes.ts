@@ -42,6 +42,8 @@ import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
+import { getStatutoryReportPack, statutoryReportPeriodSchema } from "./statutory-report-pack.js";
+import { renderStatutoryReportCsv, renderStatutoryReportPdf } from "./statutory-report-exports.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
 import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
@@ -1295,6 +1297,34 @@ api.get("/reports/vat.pdf", requirePermission("reports.read"), async (req, res, 
     res.setHeader("Cache-Control", "private, no-store");
     res.send(renderVatReportPdf(report));
   } catch (error) { next(error); }
+});
+api.get("/reports/statutory-pack", requirePermission("reports.read"), wrap(async (req, res) => {
+  const period = statutoryReportPeriodSchema.parse(req.query);
+  res.setHeader("Cache-Control", "private, no-store");
+  return getStatutoryReportPack({ tenantId: tenantId(req), period });
+}));
+async function exportStatutoryPack(req: AuthedRequest, res: Response, format: "csv" | "pdf") {
+  const period = statutoryReportPeriodSchema.parse(req.query);
+  const report = await getStatutoryReportPack({ tenantId: tenantId(req), period });
+  await recordAudit({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId, action: "report.statutory_pack_exported",
+    entityType: "tenant", entityId: tenantId(req),
+    metadata: {
+      format, ...period, version: report.version, currency: report.currency, checks: report.checks,
+      trialBalanceRows: report.trialBalance.length, receivableRows: report.agedReceivables.items.length,
+      payableRows: report.agedPayables.items.length,
+    },
+  });
+  res.setHeader("Content-Type", format === "csv" ? "text/csv; charset=utf-8" : "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="statutory-report-technical-preview-${period.from}-${period.to}.${format}"`);
+  res.setHeader("Cache-Control", "private, no-store");
+  res.send(format === "csv" ? renderStatutoryReportCsv(report) : renderStatutoryReportPdf(report));
+}
+api.get("/reports/statutory-pack.csv", requirePermission("reports.read"), (req, res, next) => {
+  exportStatutoryPack(req as AuthedRequest, res, "csv").catch(next);
+});
+api.get("/reports/statutory-pack.pdf", requirePermission("reports.read"), (req, res, next) => {
+  exportStatutoryPack(req as AuthedRequest, res, "pdf").catch(next);
 });
 
 // ---------------------------------------------------------------------------

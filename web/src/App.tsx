@@ -44,6 +44,15 @@ type VatTechnicalReportView = {
     invoice: null | { number: string | null; taxTreatment: string | null };
   }>;
 };
+type StatutoryReportPackView = {
+  availability: "TECHNICAL_PREVIEW"; notFilingReady: true; currency: "USD" | "ZWG";
+  checks: { trialBalanceBalances: boolean; profitAndLossTies: boolean; balanceSheetBalances: boolean };
+  trialBalance: Array<{ accountId: string }>;
+  profitAndLoss: { totalIncome: string; totalExpenses: string; netProfit: string };
+  balanceSheet: { totalAssets: string; totalLiabilitiesAndEquity: string };
+  agedReceivables: { controlBalance: string; scheduledBalance: string; unallocatedBalance: string; items: unknown[] };
+  agedPayables: { controlBalance: string; scheduledBalance: string; unallocatedBalance: string; requiresReconciliation: boolean; completeOpenItemSubledger: false; items: unknown[] };
+};
 
 type CustomerTimelineItem = {
   id: string;
@@ -2374,7 +2383,7 @@ function Reports({ ccy }: { ccy: string }) {
   const localDate = (value: Date) => new Date(value.getTime() - value.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
   const defaultTo = localDate(today);
   const defaultFrom = localDate(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "vat">("pl");
+  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "vat" | "statutory">("pl");
   const [pl] = useLoad(() => api("/reports/profit-loss"), [tab]);
   const [bs] = useLoad(() => api("/reports/balance-sheet"), [tab]);
   const [ar] = useLoad(() => api("/reports/aged-receivables"), [tab]);
@@ -2385,6 +2394,12 @@ function Reports({ ccy }: { ccy: string }) {
   const [vatLoading, setVatLoading] = useState(false);
   const [vatError, setVatError] = useState("");
   const copy = appEnglish.reports.vat;
+  const statutoryCopy = appEnglish.reports.statutory;
+  const [statutoryPeriod, setStatutoryPeriod] = useState({ from: defaultFrom, to: defaultTo, asAt: defaultTo });
+  const [statutoryApplied, setStatutoryApplied] = useState(statutoryPeriod);
+  const [statutory, setStatutory] = useState<StatutoryReportPackView | null>(null);
+  const [statutoryLoading, setStatutoryLoading] = useState(false);
+  const [statutoryError, setStatutoryError] = useState("");
   useEffect(() => {
     if (tab !== "vat") return;
     let active = true;
@@ -2396,6 +2411,17 @@ function Reports({ ccy }: { ccy: string }) {
       .finally(() => { if (active) setVatLoading(false); });
     return () => { active = false; };
   }, [tab, vatApplied]);
+  useEffect(() => {
+    if (tab !== "statutory") return;
+    let active = true;
+    setStatutoryLoading(true); setStatutoryError("");
+    const query = new URLSearchParams(statutoryApplied).toString();
+    api(`/reports/statutory-pack?${query}`)
+      .then((result) => { if (active) setStatutory(result as StatutoryReportPackView); })
+      .catch((error: Error) => { if (active) { setStatutory(null); setStatutoryError(error.message); } })
+      .finally(() => { if (active) setStatutoryLoading(false); });
+    return () => { active = false; };
+  }, [tab, statutoryApplied]);
   const downloadVat = async (format: "csv" | "pdf") => {
     setVatError("");
     try {
@@ -2416,12 +2442,27 @@ function Reports({ ccy }: { ccy: string }) {
       URL.revokeObjectURL(url);
     } catch (error) { setVatError(error instanceof Error ? error.message : copy.downloadFailed); }
   };
+  const downloadStatutory = async (format: "csv" | "pdf") => {
+    setStatutoryError("");
+    try {
+      const query = new URLSearchParams(statutoryApplied).toString();
+      const response = await fetch(`/api/v1/reports/statutory-pack.${format}?${query}`, { headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {} });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || statutoryCopy.downloadFailed);
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url; link.download = `statutory-report-technical-preview-${statutoryApplied.from}-${statutoryApplied.to}.${format}`;
+      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    } catch (error) { setStatutoryError(error instanceof Error ? error.message : statutoryCopy.downloadFailed); }
+  };
   return (<>
     <h1>Reports</h1><div className="sub">Every figure computed live from the double-entry ledger — in {ccy}</div>
     <div className="row" style={{ marginBottom: 16 }}>
-      {(["pl", "bs", "ar", "journal", "vat"] as const).map((t) => (
+      {(["pl", "bs", "ar", "journal", "vat", "statutory"] as const).map((t) => (
         <button key={t} className={`btn ${tab === t ? "" : "ghost"} sm`} onClick={() => setTab(t)}>
-          {{ pl: "Profit & Loss", bs: "Balance Sheet", ar: "Aged Receivables", journal: "Journal", vat: copy.tab }[t]}
+          {{ pl: "Profit & Loss", bs: "Balance Sheet", ar: "Aged Receivables", journal: "Journal", vat: copy.tab, statutory: statutoryCopy.tab }[t]}
         </button>
       ))}
     </div>
@@ -2509,6 +2550,32 @@ function Reports({ ccy }: { ccy: string }) {
               <td className="num">{fmt(row.debit, vat.currency)}</td><td className="num">{fmt(row.credit, vat.currency)}</td><td className="num">{fmt(row.impact, vat.currency)}</td>
             </tr>)}</tbody></table>
         </div>}
+      </>}
+    </div>}
+    {tab === "statutory" && <div className="panel">
+      <h2>{statutoryCopy.title}</h2>
+      <div className="banner warn">{statutoryCopy.notFilingReady}</div>
+      <div className="grid3" style={{ marginTop: 14 }}>
+        <div className="field"><label htmlFor="statutory-from">{statutoryCopy.from}</label><input id="statutory-from" type="date" value={statutoryPeriod.from} onChange={(event) => setStatutoryPeriod({ ...statutoryPeriod, from: event.target.value })} /></div>
+        <div className="field"><label htmlFor="statutory-to">{statutoryCopy.to}</label><input id="statutory-to" type="date" value={statutoryPeriod.to} onChange={(event) => setStatutoryPeriod({ ...statutoryPeriod, to: event.target.value })} /></div>
+        <div className="field"><label htmlFor="statutory-as-at">{statutoryCopy.asAt}</label><input id="statutory-as-at" type="date" value={statutoryPeriod.asAt} onChange={(event) => setStatutoryPeriod({ ...statutoryPeriod, asAt: event.target.value })} /></div>
+      </div>
+      <div className="row" style={{ marginBottom: 14 }}>
+        <button className="btn sm" onClick={() => setStatutoryApplied(statutoryPeriod)}>{statutoryCopy.apply}</button>
+        <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("csv")}>{statutoryCopy.csv}</button>
+        <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("pdf")}>{statutoryCopy.pdf}</button>
+      </div>
+      {statutoryLoading && <p className="sub">{statutoryCopy.loading}</p>}
+      {statutoryError && <div className="err-text" role="alert">{statutoryError}</div>}
+      {statutory && !statutoryLoading && <>
+        <div className="cards">
+          <div className="card"><div className="k">{statutoryCopy.netProfit}</div><div className="v">{fmt(statutory.profitAndLoss.netProfit, statutory.currency)}</div></div>
+          <div className="card"><div className="k">{statutoryCopy.totalAssets}</div><div className="v">{fmt(statutory.balanceSheet.totalAssets, statutory.currency)}</div></div>
+          <div className="card"><div className="k">{statutoryCopy.receivables}</div><div className="v">{fmt(statutory.agedReceivables.controlBalance, statutory.currency)}</div></div>
+          <div className="card"><div className="k">{statutoryCopy.payables}</div><div className="v">{fmt(statutory.agedPayables.controlBalance, statutory.currency)}</div></div>
+        </div>
+        <p className="sub">{statutoryCopy.tieOuts.replace("{count}", String(statutory.trialBalance.length))}</p>
+        <div className={`banner ${statutory.agedPayables.requiresReconciliation ? "warn" : ""}`}>{statutoryCopy.apCoverage} {statutoryCopy.unallocated.replace("{amount}", fmt(statutory.agedPayables.unallocatedBalance, statutory.currency))}</div>
       </>}
     </div>}
   </>);

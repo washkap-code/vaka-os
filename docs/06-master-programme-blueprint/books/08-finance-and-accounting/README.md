@@ -86,6 +86,15 @@ Approved inventory valuation (currently weighted-average foundations) derives CO
 
 Budgets/forecasts are versioned planning data and never posted history. Trial balance, P&L, balance sheet, cash flow, ledgers, AR/AP ageing, tax and management reports reconcile to source balances with as-at/currency/dimension disclosure. Close includes task ownership, reconciliations, exceptions, period lock and sign-off. Multi-entity consolidation adds elimination, translation and ownership rules only after legal-entity isolation exists.
 
+P2-006 implements a bounded read-only technical preview over the posted tenant
+ledger: trial balance, P&L, balance sheet, invoice-source AR and supported PO-
+receipt-source AP, with exact control tie-outs and audited CSV/PDF exports. It
+preserves unsupported control entries as explicit unallocated reconciliation
+exceptions. It is not a statutory filing or audited financial statement.
+Supplier bills, due dates, AP allocation/payment, complete open-item accounting,
+canonical legal-entity scope, close/lock, comparative disclosure and qualified
+accountant approval remain release gates.
+
 ## 11. Finance Intelligence
 
 AI may explain reconciled data, identify anomalies, forecast, summarize overdue exposure and draft actions. Output separates fact, deterministic calculation, inference and recommendation; identifies evidence/as-at/currency; states uncertainty; respects permissions; and records material assistance. Any proposed write is an exact preview executed only by the authorized deterministic service after confirmation. Autonomous posting is prohibited.

@@ -8,6 +8,10 @@ import { db, schema } from "./lib.js";
 
 type ReceivableCurrency = "USD" | "ZWG";
 type AgeingBucket = "current" | "d30" | "d60" | "d90" | "d90plus";
+export type TrialBalanceRow = { accountId: string; code: string; name: string; type: string; debit: string; credit: string; balance: string };
+export type StatementLine = { code: string; name: string; amount: string };
+export type ProfitAndLossReport = { income: StatementLine[]; expenses: StatementLine[]; totalIncome: string; totalExpenses: string; netProfit: string };
+export type BalanceSheetReport = { assets: StatementLine[]; liabilities: StatementLine[]; equity: StatementLine[]; currentEarnings: string; totalAssets: string; totalLiabilities: string; totalEquity: string; totalLiabilitiesAndEquity: string; balances: boolean };
 
 export type AgedReceivableItem = {
   invoiceId: string;
@@ -60,19 +64,25 @@ function ageingBucket(daysOverdue: number): AgeingBucket {
 }
 
 /** Trial balance as at a date: per-account net debit/credit from journal lines. */
-export async function trialBalance(tenantId: string, asAt: Date) {
+export async function trialBalance(tenantId: string, asAt: Date): Promise<TrialBalanceRow[]> {
   const rows = await db.execute(sql`
     SELECT a.id, a.code, a.name, a.type,
-           COALESCE(SUM(jl.debit), 0)  AS total_debit,
-           COALESCE(SUM(jl.credit), 0) AS total_credit
+           COALESCE(t.total_debit, 0)  AS total_debit,
+           COALESCE(t.total_credit, 0) AS total_credit
     FROM accounts a
-    LEFT JOIN journal_lines jl ON jl.account_id = a.id
-    LEFT JOIN journal_entries je ON je.id = jl.journal_entry_id AND je.date <= ${asAt}
+    LEFT JOIN (
+      SELECT jl.account_id,
+             SUM(jl.debit) AS total_debit,
+             SUM(jl.credit) AS total_credit
+      FROM journal_lines jl
+      JOIN journal_entries je ON je.id = jl.journal_entry_id
+      WHERE je.tenant_id = ${tenantId} AND je.date <= ${asAt}
+      GROUP BY jl.account_id
+    ) t ON t.account_id = a.id
     WHERE a.tenant_id = ${tenantId}
-    GROUP BY a.id, a.code, a.name, a.type
     ORDER BY a.code
   `);
-  return (rows as any).rows.map((r: any) => {
+  return ((rows as unknown as { rows: Array<{ id: string; code: string; name: string; type: string; total_debit: string; total_credit: string }> }).rows).map((r) => {
     const debit = toMinorUnits(r.total_debit);
     const credit = toMinorUnits(r.total_credit);
     return {
@@ -85,7 +95,7 @@ export async function trialBalance(tenantId: string, asAt: Date) {
 }
 
 /** Profit & Loss for a period. Income shown positive when credit-heavy. */
-export async function profitAndLoss(tenantId: string, from: Date, to: Date) {
+export async function profitAndLoss(tenantId: string, from: Date, to: Date): Promise<ProfitAndLossReport> {
   const rows = await db.execute(sql`
     SELECT a.code, a.name, a.type,
            COALESCE(SUM(jl.credit - jl.debit), 0) AS net_credit
@@ -115,16 +125,16 @@ export async function profitAndLoss(tenantId: string, from: Date, to: Date) {
 }
 
 /** Balance sheet as at a date, with retained earnings computed from P&L history. */
-export async function balanceSheet(tenantId: string, asAt: Date) {
+export async function balanceSheet(tenantId: string, asAt: Date): Promise<BalanceSheetReport> {
   const tb = await trialBalance(tenantId, asAt);
-  const assets = tb.filter((r: any) => r.type === "ASSET" && toMinorUnits(r.balance) !== 0n)
-    .map((r: any) => ({ code: r.code, name: r.name, amount: r.balance }));
-  const liabilities = tb.filter((r: any) => r.type === "LIABILITY" && toMinorUnits(r.balance) !== 0n)
-    .map((r: any) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
-  const equity = tb.filter((r: any) => r.type === "EQUITY" && toMinorUnits(r.balance) !== 0n)
-    .map((r: any) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
-  const pl = tb.filter((r: any) => r.type === "INCOME" || r.type === "EXPENSE")
-    .reduce((total: bigint, r: any) => total - toMinorUnits(r.balance), 0n); // credit-positive
+  const assets = tb.filter((r) => r.type === "ASSET" && toMinorUnits(r.balance) !== 0n)
+    .map((r) => ({ code: r.code, name: r.name, amount: r.balance }));
+  const liabilities = tb.filter((r) => r.type === "LIABILITY" && toMinorUnits(r.balance) !== 0n)
+    .map((r) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
+  const equity = tb.filter((r) => r.type === "EQUITY" && toMinorUnits(r.balance) !== 0n)
+    .map((r) => ({ code: r.code, name: r.name, amount: fromMinorUnits(-toMinorUnits(r.balance)) }));
+  const pl = tb.filter((r) => r.type === "INCOME" || r.type === "EXPENSE")
+    .reduce((total, r) => total - toMinorUnits(r.balance), 0n); // credit-positive
   const totalAssets = exactSum(assets.map((account: { amount: string }) => account.amount));
   const totalLiabilities = exactSum(liabilities.map((account: { amount: string }) => account.amount));
   const totalEquity = exactSum(equity.map((account: { amount: string }) => account.amount)) + pl;
