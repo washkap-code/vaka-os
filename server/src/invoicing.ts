@@ -17,8 +17,13 @@ import {
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
 import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accounting.js";
+import type { JournalLineInput } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import type { TaxTreatment } from "./platform/localisation/types.js";
+import {
+  assertCompatibleTaxRate, documentTaxTreatment, resolveTax, taxRateString, todayIsoDate,
+} from "./tax.js";
 
 export interface DraftLine {
   productId?: string;
@@ -26,10 +31,20 @@ export interface DraftLine {
   description: string;
   quantity: string;
   unitPrice: string;
-  taxRate: string; // percent, e.g. "15"
+  /** Governed classification. Omitted legacy clients resolve to standard. */
+  taxTreatment?: TaxTreatment;
+  /** Compatibility input only; must match the country-pack resolution. */
+  taxRate?: string;
 }
 
-export function computeTotals(lines: DraftLine[]) {
+type ResolvedDraftLine = DraftLine & {
+  taxTreatment: TaxTreatment;
+  taxRate: string;
+  taxRateEffectiveFrom: string | null;
+  taxRateEffectiveTo: string | null;
+};
+
+export function computeTotals(lines: ResolvedDraftLine[]) {
   let subtotal = 0n, taxTotal = 0n;
   const computed = lines.map((l) => {
     const qty = Number(l.quantity);
@@ -37,41 +52,68 @@ export function computeTotals(lines: DraftLine[]) {
     const lineNet = mulRate(toCents(l.unitPrice), qty.toFixed(6));
     const lineTax = mulRate(lineNet, (Number(l.taxRate) / 100).toFixed(6));
     subtotal += lineNet; taxTotal += lineTax;
-    return { ...l, lineTotal: fromCents(lineNet) };
+    return { ...l, lineTotal: fromCents(lineNet), taxAmount: fromCents(lineTax) };
   });
   return { computed, subtotal: fromCents(subtotal), taxTotal: fromCents(taxTotal), total: fromCents(subtotal + taxTotal) };
 }
 
 export async function createDraftInvoice(opts: {
   tenantId: string; contactId: string; currency: "USD" | "ZWG";
-  rateToBase?: string; dueDate?: Date; notes?: string;
+  rateToBase?: string; dueDate?: Date; notes?: string; taxDate?: string;
   lines: DraftLine[]; dealId?: string; createdBy?: string | null;
 }) {
   if (!opts.lines.length) throw badRequest("Invoice needs at least one line");
-  const { computed, subtotal, taxTotal, total } = computeTotals(opts.lines);
   return db.transaction(async (tx) => {
+    const [tenant] = await tx.select().from(schema.tenants)
+      .where(eq(schema.tenants.id, opts.tenantId));
+    if (!tenant) throw notFound("Tenant not found");
     const [contact] = await tx.select().from(schema.contacts).where(and(
       eq(schema.contacts.id, opts.contactId), eq(schema.contacts.tenantId, opts.tenantId)));
     if (!contact) throw notFound("Contact not found");
+
+    const taxDate = opts.taxDate ?? todayIsoDate();
+    const resolvedLines: ResolvedDraftLine[] = opts.lines.map((line) => {
+      const treatment = line.taxTreatment ?? "standard";
+      const resolution = resolveTax(tenant.countryCode, treatment, taxDate);
+      assertCompatibleTaxRate(line.taxRate, resolution);
+      return {
+        ...line,
+        taxTreatment: treatment,
+        taxRate: taxRateString(resolution),
+        taxRateEffectiveFrom: resolution.effectiveFrom,
+        taxRateEffectiveTo: resolution.effectiveTo,
+      };
+    });
+    const documentTreatment = documentTaxTreatment(resolvedLines.map((line) => line.taxTreatment));
+    const { computed, subtotal, taxTotal, total } = computeTotals(resolvedLines);
 
     const [inv] = await tx.insert(schema.invoices).values({
       tenantId: opts.tenantId, contactId: opts.contactId,
       currency: opts.currency, rateToBase: opts.rateToBase ?? "1",
       status: "DRAFT", dueDate: opts.dueDate ?? null, notes: opts.notes ?? null,
+      taxJurisdiction: tenant.countryCode, taxDate, taxTreatment: documentTreatment,
       subtotal, taxTotal, total, createdBy: opts.createdBy ?? null,
     }).returning();
 
     await tx.insert(schema.invoiceLineItems).values(computed.map((l) => ({
       invoiceId: inv.id, productId: l.productId ?? null, warehouseId: l.warehouseId ?? null,
       description: l.description, quantity: l.quantity, unitPrice: l.unitPrice,
-      taxRate: l.taxRate, lineTotal: l.lineTotal,
+      taxRate: l.taxRate, taxTreatment: l.taxTreatment, taxAmount: l.taxAmount,
+      taxRateEffectiveFrom: l.taxRateEffectiveFrom,
+      taxRateEffectiveTo: l.taxRateEffectiveTo,
+      lineTotal: l.lineTotal,
     })));
 
     if (opts.dealId) {
       await tx.update(schema.deals).set({ wonInvoiceId: inv.id })
         .where(and(eq(schema.deals.id, opts.dealId), eq(schema.deals.tenantId, opts.tenantId)));
     }
-    await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.drafted", "invoice", inv.id);
+    await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.drafted", "invoice", inv.id, {
+      taxJurisdiction: tenant.countryCode,
+      taxDate,
+      taxTreatment: documentTreatment,
+      taxTotal,
+    });
     return inv;
   });
 }
@@ -101,7 +143,7 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
     await tx.insert(schema.invoiceDocumentSnapshots).values({
       tenantId: opts.tenantId,
       invoiceId: inv.id,
-      templateVersion: "invoice-document-v1",
+      templateVersion: "invoice-document-v2",
       document: {
         issuedAt: issueDate.toISOString(),
         issuer: {
@@ -127,6 +169,9 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
           rateToBase: inv.rateToBase,
           issueDate: issueDate.toISOString(),
           dueDate: inv.dueDate?.toISOString() ?? null,
+          taxJurisdiction: inv.taxJurisdiction,
+          taxDate: inv.taxDate,
+          taxTreatment: inv.taxTreatment,
           subtotal: inv.subtotal,
           taxTotal: inv.taxTotal,
           total: inv.total,
@@ -137,6 +182,10 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
           quantity: line.quantity,
           unitPrice: line.unitPrice,
           taxRate: line.taxRate,
+          taxTreatment: line.taxTreatment,
+          taxAmount: line.taxAmount,
+          taxRateEffectiveFrom: line.taxRateEffectiveFrom,
+          taxRateEffectiveTo: line.taxRateEffectiveTo,
           lineTotal: line.lineTotal,
         })),
       },
@@ -150,11 +199,11 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
     const taxBase = mulRate(toCents(inv.taxTotal), inv.rateToBase);
     const totalBase = subtotalBase + taxBase;
 
-    const jLines = [
+    const jLines: JournalLineInput[] = [
       { accountId: ar.id, debit: fromCents(totalBase), originalAmount: inv.total, originalCurrency: inv.currency as "USD" | "ZWG", exchangeRate: inv.rateToBase },
       { accountId: salesAcc.id, credit: fromCents(subtotalBase) },
     ];
-    if (taxBase > 0n) jLines.push({ accountId: vatOut.id, credit: fromCents(taxBase) } as any);
+    if (taxBase > 0n) jLines.push({ accountId: vatOut.id, credit: fromCents(taxBase) });
     await postJournal(tx, {
       tenantId: opts.tenantId, date: issueDate, memo: `Invoice ${number}`,
       sourceType: "invoice", sourceId: inv.id, createdBy: opts.createdBy, lines: jLines,
@@ -205,7 +254,15 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
       .where(eq(schema.invoices.id, inv.id)).returning();
 
     await audit(tx, opts.tenantId, opts.createdBy ?? null, "invoice.issued", "invoice", inv.id,
-      { number, total: inv.total, currency: inv.currency });
+      {
+        number,
+        total: inv.total,
+        currency: inv.currency,
+        taxJurisdiction: inv.taxJurisdiction,
+        taxDate: inv.taxDate,
+        taxTreatment: inv.taxTreatment,
+        taxTotal: inv.taxTotal,
+      });
     queue({
       id: `${DOMAIN_EVENTS.INVOICE_ISSUED}:${inv.id}`,
       type: DOMAIN_EVENTS.INVOICE_ISSUED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,

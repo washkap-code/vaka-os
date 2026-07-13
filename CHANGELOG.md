@@ -12,6 +12,14 @@
 
 ### Added
 
+- **VAT treatment model (P2-002):** Added tenant-jurisdiction, tax-date,
+  line-level standard/zero-rated/exempt and document-level mixed VAT evidence.
+  Standard rates resolve from the effective-dated country pack; raw rates are
+  compatibility checks only. Invoice totals, journals, immutable snapshots,
+  PDFs and product/import defaults now preserve the governed treatment. Added
+  additive migration `0015_vat_treatment_model.sql`. Qualified Zimbabwean
+  accountant/tax approval remains mandatory before market release.
+
 - **Post-commit domain event bus (P1-005):** Composed the kernel event bus and
   added typed, stable invoice, payment, stock and tenant-lifecycle events to
   existing write paths. Events publish only after successful transactions;

@@ -37,7 +37,7 @@ describe("finance kernel - invoice document snapshots", () => {
       eq(schema.invoiceDocumentSnapshots.invoiceId, issued.id),
       eq(schema.invoiceDocumentSnapshots.tenantId, tenant.tenantId),
     ));
-    expect(snapshot.templateVersion).toBe("invoice-document-v1");
+    expect(snapshot.templateVersion).toBe("invoice-document-v2");
     expect(snapshot.document).toMatchObject({
       issuer: {
         companyName: "Snapshot Trading (Private) Limited",
@@ -50,9 +50,17 @@ describe("finance kernel - invoice document snapshots", () => {
         number: issued.number,
         status: "ISSUED",
         currency: "USD",
+        taxJurisdiction: "ZW",
+        taxTreatment: "standard",
         total: "230.00",
       },
-      lines: [expect.objectContaining({ description: "Business advisory", quantity: "2.000", lineTotal: "200.00" })],
+      lines: [expect.objectContaining({
+        description: "Business advisory",
+        quantity: "2.000",
+        taxTreatment: "standard",
+        taxAmount: "30.00",
+        lineTotal: "200.00",
+      })],
     });
 
     await db.update(schema.tenants).set({ companyName: "Changed Later" })
@@ -69,6 +77,8 @@ describe("finance kernel - invoice document snapshots", () => {
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
     expect(pdf.body.toString("latin1")).toContain("/Subtype /Image");
     expect(pdf.body.toString("latin1")).toContain("/Im1 Do");
+    expect(pdf.body.toString("latin1")).toContain("VAT treatment: standard");
+    expect(pdf.body.toString("latin1")).toContain("VAT: standard at 15.00% = USD 30.00");
 
     const share = await request(app).post(`/api/v1/invoices/${issued.id}/share-links`).set(tenant.auth)
       .send({ expiresInDays: 7 });

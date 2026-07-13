@@ -22,6 +22,8 @@ async function signup(label: string) {
 }
 
 describe("bank invoice matching", () => {
+  // Synthetic exempt lines keep these fixtures focused on bank allocation,
+  // not on whether a real Zimbabwe supply qualifies for a tax treatment.
   it("matches an imported positive bank line to an exact open invoice with audit and journal evidence", async () => {
     const tenant = await signup("a");
     const auth = { Authorization: `Bearer ${tenant.token}` };
@@ -31,7 +33,7 @@ describe("bank invoice matching", () => {
     const draft = await request(app).post("/api/v1/invoices").set(auth).send({
       contactId: customer.body.id,
       currency: "USD",
-      lines: [{ description: "Consulting", quantity: "1", unitPrice: "100.00", taxRate: "0" }],
+      lines: [{ description: "Consulting", quantity: "1", unitPrice: "100.00", taxTreatment: "exempt" }],
     });
     expect(draft.status).toBe(200);
     const issued = await request(app).post(`/api/v1/invoices/${draft.body.id}/issue`).set(auth).send({});
@@ -106,7 +108,7 @@ describe("bank invoice matching", () => {
     const draft = await request(app).post("/api/v1/invoices").set(auth).send({
       contactId: customer.body.id,
       currency: "USD",
-      lines: [{ description: "Implementation", quantity: "1", unitPrice: "250.00", taxRate: "0" }],
+      lines: [{ description: "Implementation", quantity: "1", unitPrice: "250.00", taxTreatment: "exempt" }],
     });
     expect(draft.status).toBe(200);
     const issued = await request(app).post(`/api/v1/invoices/${draft.body.id}/issue`).set(auth).send({});
@@ -163,12 +165,12 @@ describe("bank invoice matching", () => {
     const firstDraft = await request(app).post("/api/v1/invoices").set(auth).send({
       contactId: customer.body.id,
       currency: "USD",
-      lines: [{ description: "Support", quantity: "1", unitPrice: "100.00", taxRate: "0" }],
+      lines: [{ description: "Support", quantity: "1", unitPrice: "100.00", taxTreatment: "exempt" }],
     });
     const secondDraft = await request(app).post("/api/v1/invoices").set(auth).send({
       contactId: customer.body.id,
       currency: "USD",
-      lines: [{ description: "Training", quantity: "1", unitPrice: "150.00", taxRate: "0" }],
+      lines: [{ description: "Training", quantity: "1", unitPrice: "150.00", taxTreatment: "exempt" }],
     });
     expect(firstDraft.status).toBe(200);
     expect(secondDraft.status).toBe(200);

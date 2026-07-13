@@ -40,6 +40,7 @@ import { protectCaptureDataUrl, revealCaptureDataUrl } from "./capture-storage.j
 import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -711,7 +712,9 @@ const productSchema = z.object({
   sku: z.string().min(1), name: z.string().min(1), description: z.string().optional().nullable(),
   unitOfMeasure: z.string().default("unit"),
   costPrice: z.string().default("0"), salePrice: z.string().default("0"),
-  currency: z.enum(["USD", "ZWG"]).default("USD"), taxRate: z.string().default("15"),
+  currency: z.enum(["USD", "ZWG"]).default("USD"),
+  taxTreatment: z.enum(["standard", "zero-rated", "exempt"]).default("standard"),
+  taxRate: z.string().optional(),
   reorderLevel: z.number().int().min(0).default(0), trackStock: z.boolean().default(true),
 });
 api.get("/products", requirePermission("inventory.read"), wrap(async (req) => {
@@ -723,9 +726,25 @@ api.get("/products", requirePermission("inventory.read"), wrap(async (req) => {
 }));
 api.post("/products", requirePermission("inventory.write"), wrap(async (req) => {
   const body = productSchema.parse(req.body);
-  const [p] = await db.insert(schema.products).values({ ...body, tenantId: tenantId(req) }).returning();
-  await audit(db, tenantId(req), req.auth!.userId, "product.created", "product", p.id);
-  return p;
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [tenant] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tid));
+    if (!tenant) throw notFound("Tenant not found");
+    const resolution = resolveTax(tenant.countryCode, body.taxTreatment, todayIsoDate());
+    assertCompatibleTaxRate(body.taxRate, resolution);
+    const [p] = await tx.insert(schema.products).values({
+      ...body,
+      tenantId: tid,
+      taxRate: taxRateString(resolution),
+      taxTreatment: body.taxTreatment,
+    }).returning();
+    await audit(tx, tid, req.auth!.userId, "product.created", "product", p.id, {
+      taxTreatment: p.taxTreatment,
+      taxRate: p.taxRate,
+      taxJurisdiction: tenant.countryCode,
+    });
+    return p;
+  });
 }));
 api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));
@@ -858,9 +877,12 @@ const invoiceSchema = z.object({
   contactId: z.string().uuid(), currency: z.enum(["USD", "ZWG"]),
   rateToBase: z.string().default("1"), dueDate: z.coerce.date().optional().nullable(),
   notes: z.string().optional().nullable(), dealId: z.string().uuid().optional(),
+  taxDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   lines: z.array(z.object({
     productId: z.string().uuid().optional(), warehouseId: z.string().uuid().optional(),
-    description: z.string().min(1), quantity: z.string(), unitPrice: z.string(), taxRate: z.string().default("15"),
+    description: z.string().min(1), quantity: z.string(), unitPrice: z.string(),
+    taxTreatment: z.enum(["standard", "zero-rated", "exempt"]).default("standard"),
+    taxRate: z.string().optional(),
   })).min(1),
 });
 api.get("/invoices", requirePermission("accounting.read"), wrap(async (req) => {

@@ -47,4 +47,26 @@ describe("LocalisationService — Zimbabwe pack", () => {
   it("throws when no VAT rate covers the requested date", () => {
     expect(() => svc.standardVatPercent("ZW", "1990-01-01")).toThrow(NoEffectiveTaxRateError);
   });
+
+  it("resolves standard, zero-rated and exempt treatments without conflating their evidence", () => {
+    const service = new LocalisationService([ZIMBABWE]);
+    expect(service.resolveTax("ZW", "standard", "2026-07-13")).toEqual({
+      treatment: "standard",
+      percent: 15,
+      effectiveFrom: "2020-01-01",
+      effectiveTo: null,
+    });
+    expect(service.resolveTax("ZW", "zero-rated", "2026-07-13")).toEqual({
+      treatment: "zero-rated",
+      percent: 0,
+      effectiveFrom: null,
+      effectiveTo: null,
+    });
+    expect(service.resolveTax("ZW", "exempt", "2026-07-13")).toEqual({
+      treatment: "exempt",
+      percent: 0,
+      effectiveFrom: null,
+      effectiveTo: null,
+    });
+  });
 });

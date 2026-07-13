@@ -5,6 +5,8 @@ import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } 
 import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import type { TaxTreatment } from "./platform/localisation/types.js";
+import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 
 const MAX_CSV_BYTES = 1_000_000;
 const MAX_ROWS = 5_000;
@@ -31,6 +33,7 @@ type ProductImportData = {
   costPrice: string;
   salePrice: string;
   currency: "USD" | "ZWG";
+  taxTreatment: TaxTreatment;
   taxRate: string;
   reorderLevel: number;
   trackStock: boolean;
@@ -97,6 +100,8 @@ const productHeaderAliases: Record<string, keyof ProductImportData> = {
   currency: "currency",
   tax_rate: "taxRate",
   vat_rate: "taxRate",
+  tax_treatment: "taxTreatment",
+  vat_treatment: "taxTreatment",
   reorder_level: "reorderLevel",
   minimum_stock: "reorderLevel",
   track_stock: "trackStock",
@@ -174,14 +179,6 @@ function parseMoney(value: string, field: string): string {
   const clean = value.trim() || "0";
   if (!/^\d{1,12}(\.\d{1,2})?$/.test(clean)) {
     throw new Error(`${field} must be a non-negative amount with no more than 2 decimal places`);
-  }
-  return Number(clean).toFixed(2);
-}
-
-function parseRate(value: string): string {
-  const clean = value.trim() || "15";
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(clean) || Number(clean) > 100) {
-    throw new Error("Tax rate must be between 0 and 100 with no more than 2 decimal places");
   }
   return Number(clean).toFixed(2);
 }
@@ -353,7 +350,12 @@ function parseContactRow(headers: Array<keyof ContactImportData | null>, cells: 
   };
 }
 
-function parseProductRow(headers: Array<keyof ProductImportData | null>, cells: string[]): ProductImportData {
+function parseProductRow(
+  headers: Array<keyof ProductImportData | null>,
+  cells: string[],
+  countryCode: string,
+  taxDate: string,
+): ProductImportData {
   const source = new Map<keyof ProductImportData, string>();
   headers.forEach((header, index) => {
     if (header) source.set(header, cells[index] ?? "");
@@ -366,6 +368,14 @@ function parseProductRow(headers: Array<keyof ProductImportData | null>, cells: 
   if (!["USD", "ZWG"].includes(currency)) throw new Error("Currency must be USD or ZWG");
   const reorder = (source.get("reorderLevel") ?? "0").trim() || "0";
   if (!/^\d{1,9}$/.test(reorder)) throw new Error("Reorder level must be a non-negative whole number");
+  const rawTreatment = (source.get("taxTreatment") ?? "standard").trim().toLowerCase();
+  if (!(["standard", "zero-rated", "exempt"] as const).includes(rawTreatment as TaxTreatment)) {
+    throw new Error("Tax treatment must be standard, zero-rated, or exempt");
+  }
+  const taxTreatment = rawTreatment as TaxTreatment;
+  const resolution = resolveTax(countryCode, taxTreatment, taxDate);
+  const suppliedRate = (source.get("taxRate") ?? "").trim() || undefined;
+  assertCompatibleTaxRate(suppliedRate, resolution);
   return {
     sku,
     name,
@@ -374,7 +384,8 @@ function parseProductRow(headers: Array<keyof ProductImportData | null>, cells: 
     costPrice: parseMoney(source.get("costPrice") ?? "", "Cost price"),
     salePrice: parseMoney(source.get("salePrice") ?? "", "Sale price"),
     currency: currency as ProductImportData["currency"],
-    taxRate: parseRate(source.get("taxRate") ?? ""),
+    taxTreatment,
+    taxRate: taxRateString(resolution),
     reorderLevel: Number(reorder),
     trackStock: parseBoolean(source.get("trackStock") ?? "", true),
     isActive: parseBoolean(source.get("isActive") ?? "", true),
@@ -543,12 +554,16 @@ export async function previewProductImport(opts: {
   if (!headers.includes("sku") || !headers.includes("name")) {
     throw badRequest("CSV must include sku and name columns");
   }
+  const [tenant] = await db.select({ countryCode: schema.tenants.countryCode })
+    .from(schema.tenants).where(eq(schema.tenants.id, opts.tenantId));
+  if (!tenant) throw badRequest("Workspace was not found");
+  const taxDate = todayIsoDate();
   const existing = await db.select({ sku: schema.products.sku })
     .from(schema.products).where(eq(schema.products.tenantId, opts.tenantId));
   const duplicateSkus = new Set(existing.map((product) => product.sku.trim().toLowerCase()));
   const staged = csvRows.slice(1).map((cells, index) => {
     try {
-      const data = parseProductRow(headers, cells);
+      const data = parseProductRow(headers, cells, tenant.countryCode, taxDate);
       const key = data.sku.toLowerCase();
       const duplicate = duplicateSkus.has(key);
       duplicateSkus.add(key);

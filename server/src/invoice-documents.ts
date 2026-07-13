@@ -5,8 +5,17 @@ import { deflateSync, inflateSync } from "node:zlib";
 type SnapshotDocument = {
   issuer: { companyName: string; logoUrl?: string | null; physicalAddress: string | null; registrationNumber: string | null; taxNumber: string | null; vatNumber: string | null };
   customer: { name: string; address: string | null; taxNumber: string | null };
-  invoice: { number: string | null; issueDate: string; dueDate: string | null; currency: string; subtotal: string; taxTotal: string; total: string; notes: string | null };
-  lines: Array<{ description: string; quantity: string; unitPrice: string; taxRate: string; lineTotal: string }>;
+  invoice: {
+    number: string | null; issueDate: string; dueDate: string | null; currency: string;
+    taxJurisdiction?: string | null; taxDate?: string | null; taxTreatment?: string | null;
+    subtotal: string; taxTotal: string; total: string; notes: string | null;
+  };
+  lines: Array<{
+    description: string; quantity: string; unitPrice: string; taxRate: string;
+    taxTreatment?: string | null; taxAmount?: string | null;
+    taxRateEffectiveFrom?: string | null; taxRateEffectiveTo?: string | null;
+    lineTotal: string;
+  }>;
 };
 
 function escapePdfText(value: string): string {
@@ -166,12 +175,18 @@ function makePdf(document: SnapshotDocument): Buffer {
   add("VAKA invoice", 11);
   add(`Invoice: ${document.invoice.number ?? "Issued invoice"}`);
   add(`Issued: ${document.invoice.issueDate.slice(0, 10)}    Due: ${document.invoice.dueDate?.slice(0, 10) ?? "—"}`);
+  if (document.invoice.taxTreatment) {
+    add(`VAT treatment: ${document.invoice.taxTreatment}    Jurisdiction: ${document.invoice.taxJurisdiction ?? "—"}    Tax date: ${document.invoice.taxDate ?? "—"}`, 9);
+  }
   add(`Customer: ${document.customer.name}`);
   if (document.customer.address) add(document.customer.address);
   add(" ");
   add("Description                         Qty       Unit price       Total", 9);
   for (const line of document.lines) {
     add(`${line.description}    ${line.quantity}    ${document.invoice.currency} ${line.unitPrice}    ${document.invoice.currency} ${line.lineTotal}`, 9);
+    if (line.taxTreatment) {
+      add(`  VAT: ${line.taxTreatment} at ${line.taxRate}% = ${document.invoice.currency} ${line.taxAmount ?? "0.00"}`, 8);
+    }
   }
   add(" ");
   add(`Subtotal: ${document.invoice.currency} ${document.invoice.subtotal}`);

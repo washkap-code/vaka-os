@@ -26,11 +26,11 @@ describe("product CSV imports", () => {
     const tenant = await signup("a");
     const auth = { Authorization: `Bearer ${tenant.token}` };
     const csvText = [
-      "sku,name,description,unit,cost_price,sale_price,currency,tax_rate,reorder_level,track_stock,is_active",
-      "BREAD-001,Brown Bread,700g loaf,each,0.80,1.20,USD,15,10,yes,yes",
-      "BREAD-001,Duplicate Bread,,each,0.80,1.20,USD,15,10,yes,yes",
-      "BAD-PRICE,Bad Price,,each,free,1.00,USD,15,0,yes,yes",
-      "CONSULT-01,Business Consultation,Hourly service,hour,0,75.00,USD,0,0,no,yes",
+      "sku,name,description,unit,cost_price,sale_price,currency,tax_treatment,tax_rate,reorder_level,track_stock,is_active",
+      "BREAD-001,Brown Bread,700g loaf,each,0.80,1.20,USD,standard,15,10,yes,yes",
+      "BREAD-001,Duplicate Bread,,each,0.80,1.20,USD,standard,15,10,yes,yes",
+      "BAD-PRICE,Bad Price,,each,free,1.00,USD,standard,15,0,yes,yes",
+      "CONSULT-01,Business Consultation,Hourly service,hour,0,75.00,USD,exempt,0,0,no,yes",
     ].join("\n");
     const preview = await request(app).post("/api/v1/imports/products/preview")
       .set(auth).send({ csvText });
@@ -59,6 +59,10 @@ describe("product CSV imports", () => {
       .where(eq(schema.products.tenantId, tenant.tenant.id));
     expect(products.map((product) => product.sku).sort()).toEqual(["BREAD-001", "CONSULT-01"]);
     expect(products.find((product) => product.sku === "CONSULT-01")?.trackStock).toBe(false);
+    expect(products.find((product) => product.sku === "CONSULT-01")).toMatchObject({
+      taxTreatment: "exempt",
+      taxRate: "0.00",
+    });
     const stock = await db.select().from(schema.stockMovements)
       .where(eq(schema.stockMovements.tenantId, tenant.tenant.id));
     expect(stock).toHaveLength(0);

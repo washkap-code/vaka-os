@@ -24,6 +24,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-002 | Identity & Audit Adapters | ✅ Complete |
 | P1-003 | First kernel audit adoption seam | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
 | P2-001 | Country Pack Engine (Zimbabwe reference) | ✅ Implemented; full DB-backed suite verified green; professional tax review still required before VAT go-live |
+| P2-002 | VAT treatment model (standard/zero-rated/exempt) | ✅ Technically verified; qualified accountant/tax approval pending |
 | P1-004 | Notification service adapter (email + persisted in-app) | ✅ Implemented; full DB-backed suite verified; provider/product adoption gated |
 | P1-005 | Event bus: emit domain events from existing write paths | ✅ Implemented; full DB-backed suite verified; durable delivery gated |
 | P6-006 | Platform Admin Control Centre | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
