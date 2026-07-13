@@ -36,6 +36,9 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 export const persistNotification: NotificationWriter = async (request, result) => {
+  const sensitiveKeys = new Set(request.sensitiveVariableKeys ?? []);
+  const persistedVariables = Object.fromEntries(Object.entries(request.variables).map(([key, value]) =>
+    [key, sensitiveKeys.has(key) ? "[REDACTED]" : value]));
   try {
     const [row] = await db.insert(schema.notifications).values({
       id: request.id,
@@ -44,7 +47,7 @@ export const persistNotification: NotificationWriter = async (request, result) =
       channel: request.channel,
       template: request.template,
       locale: request.locale,
-      variables: request.variables,
+      variables: persistedVariables,
       status: result.status,
       transmitted: result.transmitted,
       providerMessageId: result.providerMessageId ?? null,

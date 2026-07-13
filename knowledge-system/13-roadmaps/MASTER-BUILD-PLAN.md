@@ -127,7 +127,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 
 | ID | Outcome | Depends on | Status |
 |---|---|---|---|
-| P7-001 | Notification delivery (email) for invoices, statements, reminders via provider adapter | P1-004 | Planned |
+| P7-001 | Notification delivery (email) for invoices, statements, reminders via provider adapter | P1-004 | ✅ Implemented bounded explicit-send foundation; provider operations gated |
 | P7-002 | Communication timeline links every message to its business object | P1-005, P3-003 | Planned |
 | P7-003 | Templates (invoice, quote, reminder) with tenant branding | P1-007 | Foundation (PDF branding) |
 | P7-004 | Governed WhatsApp + secure document delivery (opt-in, consent, audit) | P7-001 | Planned |

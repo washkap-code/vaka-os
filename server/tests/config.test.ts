@@ -4,6 +4,7 @@ import {
   emailProviderConfig,
   jwtSecret,
   platformAdminPassword,
+  publicAppUrl,
 } from "../src/config.js";
 
 describe("runtime configuration", () => {
@@ -71,5 +72,15 @@ describe("runtime configuration", () => {
       EMAIL_PROVIDER_TOKEN: "a".repeat(32),
       EMAIL_FROM: "notifications@example.com",
     })).toThrow("must use HTTPS");
+  });
+
+  it("requires an HTTPS public origin for production document links", () => {
+    expect(publicAppUrl({ NODE_ENV: "test" })).toBe("http://localhost:4000");
+    expect(() => publicAppUrl({ NODE_ENV: "production" }))
+      .toThrow("required for production document delivery");
+    expect(() => publicAppUrl({ NODE_ENV: "production", PUBLIC_APP_URL: "http://app.example.com" }))
+      .toThrow("must use HTTPS");
+    expect(publicAppUrl({ NODE_ENV: "production", PUBLIC_APP_URL: "https://app.example.com/" }))
+      .toBe("https://app.example.com");
   });
 });

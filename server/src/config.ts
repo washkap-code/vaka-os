@@ -87,6 +87,20 @@ export interface EmailProviderConfig {
   from: string;
 }
 
+/** Absolute public origin used only to build revocable customer document links. */
+export function publicAppUrl(env: RuntimeEnvironment = process.env): string {
+  const configured = valueOf(env, "PUBLIC_APP_URL");
+  if (!configured) {
+    if (isProduction(env)) throw new Error("PUBLIC_APP_URL is required for production document delivery");
+    return "http://localhost:4000";
+  }
+  let parsed: URL;
+  try { parsed = new URL(configured); } catch { throw new Error("PUBLIC_APP_URL must be a valid URL"); }
+  if (isProduction(env) && parsed.protocol !== "https:") throw new Error("PUBLIC_APP_URL must use HTTPS in production");
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("PUBLIC_APP_URL must use HTTP or HTTPS");
+  return parsed.toString().replace(/\/$/, "");
+}
+
 /** Provider-neutral HTTP email transport. Missing production config fails closed. */
 export function emailProviderConfig(
   env: RuntimeEnvironment = process.env,

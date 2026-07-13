@@ -455,6 +455,52 @@ export const invoiceShareLinks = pgTable("invoice_share_links", {
   index("invoice_share_link_tenant_invoice").on(t.tenantId, t.invoiceId, t.createdAt),
 ]);
 
+// Append-only customer communication preference evidence. Current consent is
+// derived from the latest tenant/contact/channel event; history is never edited.
+export const contactCommunicationPreferenceEvents = pgTable("contact_communication_preference_events", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  contactId: uuid("contact_id").notNull().references(() => contacts.id),
+  channel: text("channel").notNull(),
+  status: text("status").notNull(),
+  locale: text("locale").notNull(),
+  evidenceSource: text("evidence_source").notNull(),
+  reason: text("reason"),
+  actorUserId: uuid("actor_user_id").references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  index("contact_communication_preference_latest").on(t.tenantId, t.contactId, t.channel, t.createdAt, t.id),
+  check("contact_communication_preference_channel_check", sql`${t.channel} IN ('EMAIL')`),
+  check("contact_communication_preference_status_check", sql`${t.status} IN ('CONSENTED', 'OPTED_OUT')`),
+  check("contact_communication_preference_locale_check", sql`${t.locale} IN ('en-ZW', 'sn-ZW', 'nd-ZW')`),
+  check("contact_communication_preference_source_check", sql`${t.evidenceSource} IN ('CUSTOMER_REQUEST', 'CONTRACT', 'LEGITIMATE_INTEREST', 'OTHER')`),
+]);
+
+// Operational idempotency claim and outcome for one approved finance send.
+// It never becomes accounting authority and does not alter invoice state.
+export const financeDocumentDeliveryRequests = pgTable("finance_document_delivery_requests", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  contactId: uuid("contact_id").notNull().references(() => contacts.id),
+  invoiceId: uuid("invoice_id").references(() => invoices.id),
+  documentType: text("document_type").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  idempotencyFingerprint: text("idempotency_fingerprint").notNull(),
+  status: text("status").default("PROCESSING").notNull(),
+  emailNotificationId: text("email_notification_id"),
+  inAppNotificationId: text("in_app_notification_id"),
+  shareLinkId: uuid("share_link_id").references(() => invoiceShareLinks.id),
+  failureCode: text("failure_code"),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("finance_document_delivery_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+  index("finance_document_delivery_tenant_contact_time").on(t.tenantId, t.contactId, t.createdAt),
+  check("finance_document_delivery_type_check", sql`${t.documentType} IN ('INVOICE', 'STATEMENT', 'PAYMENT_REMINDER')`),
+  check("finance_document_delivery_status_check", sql`${t.status} IN ('PROCESSING', 'SENT', 'FAILED')`),
+]);
+
 export const payments = pgTable("payments", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

@@ -1,6 +1,6 @@
 # VAKA Invoice Delivery and Receivables Specification
 
-**Status:** Issued-document snapshot foundation implemented; rendering and delivery pending
+**Status:** Issued PDF/share and bounded consented email delivery implemented; production delivery operations gated
 **Owner:** Product, Finance, and Engineering
 **Last reviewed:** 2026-07-05
 
@@ -10,9 +10,10 @@ Help an authorised business user create a trustworthy invoice, present it under
 the company’s identity, deliver it to the correct customer, and understand
 which receivables require attention.
 
-This specification does not declare delivery, PDF generation, managed logo
-upload, or the Customer Portal live. Repository inspection found those
-capabilities incomplete.
+The repository now contains bounded PDF/share-link and explicit consented-email
+foundations. It does not declare production provider readiness, delivery/read
+confirmation, managed asset storage, automatic dunning, or the Customer Portal
+live.
 
 ## 2. Users and journeys
 
@@ -51,9 +52,9 @@ later add statements, payment status, and preferences.
 | Company logo field and branding update API | Partial; URL only |
 | Managed logo upload | Missing |
 | Immutable issued invoice-document snapshot | Implemented foundation |
-| Branded invoice template | Pending renderer |
-| PDF generation/download | Missing |
-| Invoice email delivery and delivery history | Missing |
+| Branded invoice template | Implemented foundation from immutable issue snapshot; template expansion/review pending |
+| PDF generation/download | Implemented through P1-007 document service |
+| Invoice email delivery and delivery history | P7-001 bounded explicit-send foundation implemented; provider/retry/webhook operations gated |
 | Secure customer invoice link/portal | Expiring/revocable PDF link foundation implemented; fuller portal missing |
 
 ## 4. Invoice document requirements
@@ -131,6 +132,22 @@ Authorised users can review the invoice's share-link history in the workspace,
 see whether a link has been viewed or has expired, and revoke active links.
 The token itself is never returned by the management endpoint.
 
+P7-001 implements the bounded provider-managed command foundation: an
+`accounting.post` user explicitly confirms an issued-invoice send with an
+idempotency key; the server resolves the canonical customer email, requires the
+latest append-only EMAIL preference to be `CONSENTED`, creates a 14-day opaque
+share link, and sends through the P1-004 notification service. A persisted
+in-app outcome is created for the initiating user. The same governed service
+also supports customer-statement summaries and manual overdue-invoice payment
+reminders. Provider acceptance is recorded as sent-to-provider only—not
+delivered, opened, read or paid.
+
+Automatic/bulk dunning, durable queue/outbox recovery, provider retries,
+delivery/bounce webhooks, rate limits and production deliverability evidence
+remain gated. English is the reviewed fallback; ChiShona and isiNdebele
+preferences are retained but finance translations remain disabled pending
+qualified review.
+
 Sending requires:
 
 - `accounting.post` or a future narrower `invoices.send` permission;
@@ -203,8 +220,11 @@ At minimum:
 4. Add secure tenant-scoped logo storage behind an asset abstraction.
 5. Build and test the server-side branded PDF renderer from the issue-time snapshot.
 6. Add authorised preview and PDF-download controls.
-7. Add delivery records and transactional outbox.
-8. Integrate an approved email provider and confirmation UI.
+7. Add delivery records and transactional outbox. **Implemented foundation:**
+   idempotent domain request/outcome records; durable queue/retry worker remains gated.
+8. Integrate an approved email provider and confirmation UI. **Implemented
+   foundation:** provider-neutral explicit send API and in-app outcome; approved
+   production provider/domain operations and dedicated confirmation UI remain gated.
 9. Add secure customer document links with expiry and revocation. **Implemented foundation:** one-invoice PDF share links with opaque stored-hash tokens, 1–30 day expiry, revocation and audit evidence.
 10. Extend into the authenticated Customer Portal, statements, and reviewed
     multilingual templates.
