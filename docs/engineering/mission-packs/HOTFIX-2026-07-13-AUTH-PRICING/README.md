@@ -25,6 +25,12 @@ Earlier production logs also showed `user_sessions` missing after deployment.
 The recurring operational cause is that code deployment is not gated on the
 minimum production schema required by authentication.
 
+During verification, the owner also reported that creating a customer returned
+an unexpected error. Production evidence showed the contact transaction had
+committed, but post-commit event publication tried to construct an email
+transport with incomplete optional provider configuration. The API therefore
+returned HTTP 500 after success and encouraged three identical retries.
+
 ## Approved target
 
 - Preserve `waskap@me.com` as the active Owner of the Nomvuyo tenant workspace.
@@ -47,6 +53,11 @@ minimum production schema required by authentication.
 - Add a read-only production-schema compatibility gate for authentication so a
   deployment cannot report ready when its required login tables/columns are
   absent.
+- Never return a false write failure after a business transaction has already
+  committed. Log post-commit projection/delivery failures for operations while
+  returning the committed result to the user.
+- Keep optional email delivery unavailable when it is not configured without
+  preventing customer, search, timeline, finance or stock events from loading.
 
 ## Production database boundary
 

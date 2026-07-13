@@ -1,29 +1,43 @@
 // Seed: subscription plans + platform super-admin.
 import bcrypt from "bcryptjs";
 import { db, schema } from "./lib.js";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { platformAdminPassword } from "./config.js";
-
-const PLANS = [
-  { name: "Starter", userLimit: 1, priceAmount: "12.00", features: { inventoryLocations: 1 } },
-  { name: "Growth", userLimit: 3, priceAmount: "30.00", features: { inventoryLocations: 2, resourceCentre: true } },
-  { name: "Business", userLimit: 10, priceAmount: "75.00", features: { inventoryLocations: 5, approvals: true } },
-  { name: "Enterprise", userLimit: 999, priceAmount: "150.00", features: { whiteLabel: true, sla: true, customModules: true } },
-];
+import { CURRENT_PLANS, PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_NAME } from "./commercial.js";
 
 async function main() {
   const adminPassword = platformAdminPassword();
-  for (const p of PLANS) {
-    const existing = await db.select().from(schema.plans).where(eq(schema.plans.name, p.name));
-    if (!existing.length) await db.insert(schema.plans).values(p as any);
+  for (const plan of CURRENT_PLANS) {
+    await db.insert(schema.plans).values({ ...plan }).onConflictDoUpdate({
+      target: schema.plans.name,
+      set: {
+        userLimit: plan.userLimit,
+        priceAmount: plan.priceAmount,
+        features: plan.features,
+      },
+    });
   }
-  const adminEmail = "platform-admin@jonomi.digital";
-  const existing = await db.select().from(schema.users).where(eq(schema.users.email, adminEmail));
-  if (!existing.length) {
+  const [existingAdmin] = await db.select().from(schema.users).where(and(
+    isNull(schema.users.tenantId),
+    eq(schema.users.isPlatformAdmin, true),
+  ));
+  if (!existingAdmin) {
     await db.insert(schema.users).values({
-      tenantId: null, email: adminEmail,
+      tenantId: null, email: PLATFORM_ADMIN_EMAIL,
       passwordHash: await bcrypt.hash(adminPassword, 12),
-      fullName: "Jonomi Platform Admin", isPlatformAdmin: true,
+      fullName: PLATFORM_ADMIN_NAME, isPlatformAdmin: true,
+      mustChangePassword: true,
+    });
+  } else if (existingAdmin.email !== PLATFORM_ADMIN_EMAIL || existingAdmin.fullName !== PLATFORM_ADMIN_NAME) {
+    await db.update(schema.users).set({
+      email: PLATFORM_ADMIN_EMAIL,
+      fullName: PLATFORM_ADMIN_NAME,
+      status: "active",
+    }).where(eq(schema.users.id, existingAdmin.id));
+    await db.insert(schema.platformAuditLogs).values({
+      userId: existingAdmin.id,
+      action: "platform_admin.identity_corrected",
+      metadata: { previousEmail: existingAdmin.email, newEmail: PLATFORM_ADMIN_EMAIL, source: "seed" },
     });
   }
   console.log("Seeded plans + platform admin");

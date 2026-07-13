@@ -62,6 +62,7 @@ describe("runtime configuration", () => {
 
   it("keeps email disabled in local development and fails closed on incomplete production config", () => {
     expect(emailProviderConfig({ NODE_ENV: "development" })).toBeNull();
+    expect(emailProviderConfig({ NODE_ENV: "production" })).toBeNull();
     expect(() => emailProviderConfig({
       NODE_ENV: "production",
       EMAIL_PROVIDER_URL: "https://mail.example/send",
