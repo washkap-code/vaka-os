@@ -79,6 +79,8 @@ for (const expected of [
   'labelledBy="new-product-title"',
   'labelledBy="reorder-rule-title"',
   'labelledBy="new-purchase-order-title"',
+  'labelledBy="platform-staff-dialog-title"',
+  'labelledBy="add-team-member-title"',
   "const copy = appEnglish.products;",
   "const copy = appEnglish.purchaseOrders;",
   'aria-label={copy.listLabel} tabIndex={0}',
@@ -87,6 +89,17 @@ for (const expected of [
   'aria-label={copy.lineField.replace',
   "data-modal-initial-focus",
   "copy.lineField.replace",
+  'href="#platform-main"',
+  'aria-label={copy.navigation}',
+  'aria-current={tab === "settings" ? "page" : undefined}',
+  'className="side-signout"',
+  'aria-label={copy.staffTableLabel} tabIndex={0}',
+  'aria-label={copy.sessionsTableLabel} tabIndex={0}',
+  'aria-label={copy.usersTableLabel} tabIndex={0}',
+  'aria-label={copy.eventsTableLabel} tabIndex={0}',
+  '<LegacyField label={appEnglish.settings.companyName}>',
+  '<LegacyField label={copy.fullName}>',
+  'role={messageTone === "error" ? "alert" : "status"}',
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [

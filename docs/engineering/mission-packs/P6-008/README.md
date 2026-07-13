@@ -1,6 +1,6 @@
 # P6-008 — Settings and Access Administration Accessibility
 
-**Status:** Approved for implementation
+**Status:** Implemented; local frontend and browser verification passed; remote release gates pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and design-system adoption
 **Depends on:** P6-001 design system; P6-005 legacy field and modal patterns; P9-008 account recovery, MFA and platform workforce
