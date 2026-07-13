@@ -169,9 +169,11 @@ P6-002 completed the responsive, permission-aware tenant shell, current-user
 recent notification menu, mobile account access and inert command-bar mount.
 P6-003 implements the Universal Workbench presentation over the existing live
 dashboard read model with accessible performance/ageing/pipeline visuals,
-priority summaries and permission-filtered module actions. Visible
-command/search UI, route/deep-link migration, product-wide visual modernisation
-and the full WCAG core-flow pass remain separately gated work.
+priority summaries and permission-filtered module actions. P6-004 implements a
+visible, keyboard-accessible universal command/search palette over the existing
+tenant-scoped P1-006 search adapter, with guarded P1-008 navigation mapping and
+existing-record handoff. Route/deep-link migration, product-wide visual
+modernisation and the full WCAG core-flow pass remain separately gated work.
 
 **Objective:** Build a responsive, accessible, permission-aware frame for every module.
 

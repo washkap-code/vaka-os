@@ -37,7 +37,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P5-004 | Product reorder rules and in-app low-stock alerts | ✅ Technically verified; durable delivery, external channels and auto-replenishment gated |
 | P6-006 | Platform Admin Control Centre | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
 | P6-003 | Universal Workbench | ✅ Released (PR #65); full remote quality gate and production deployment passed |
-| P6-004 | Universal Command and Search Palette | Approved for implementation |
+| P6-004 | Universal Command and Search Palette | Implemented; focused/browser gates passed; remote quality and release gates pending |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |

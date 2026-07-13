@@ -4,7 +4,7 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (t: string | null) =>
   t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
 
-export async function api(path: string, opts: { method?: string; body?: unknown } = {}) {
+export async function api(path: string, opts: { method?: string; body?: unknown; signal?: AbortSignal } = {}) {
   const res = await fetch(`/api/v1${path}`, {
     method: opts.method ?? "GET",
     headers: {
@@ -12,6 +12,7 @@ export async function api(path: string, opts: { method?: string; body?: unknown 
       ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || data.details?.join("; ") || `Request failed (${res.status})`);

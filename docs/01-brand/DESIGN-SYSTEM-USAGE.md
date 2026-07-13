@@ -163,8 +163,12 @@ The preview is a development-only page and includes light/dark switching, contro
    semantic surface/elevation roles, exact-value bar views with accessible text
    equivalents, permission-filtered next actions and small-screen stacking. Chart
    geometry is presentation only and never replaces authoritative report values.
-7. Migrate legacy selectors to shared React primitives gradually.
-8. Migrate module DOM/components only through scoped tasks with screenshots,
+7. P6-004 establishes the universal command/search pattern using the governed
+   native-dialog primitive, semantic tokens, grouped minimal-result summaries,
+   keyboard selection and a compact icon-only small-screen trigger with an
+   invariant accessible name.
+8. Migrate legacy selectors to shared React primitives gradually.
+9. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.

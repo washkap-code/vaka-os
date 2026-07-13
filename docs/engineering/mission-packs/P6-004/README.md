@@ -1,6 +1,6 @@
 # P6-004 — Universal Command and Search Palette
 
-**Status:** Approved for implementation
+**Status:** Implemented; focused and browser gates passed; remote quality gate pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend command/search presentation over existing tenant-scoped services
 **Depends on:** P6-002 shell mount; P1-006 search adapter; P1-008 metadata registry
@@ -84,8 +84,8 @@ rewrite or a guarantee of durable real-time indexing.
 - Server result filtering remains authoritative. Client mapping accepts only
   the three currently governed searchable objects and known destinations.
 - Search text is operational business data. It is sent only to VAKA's existing
-  same-origin API, is not placed in URLs/history, analytics or logs, and is
-  cleared on close.
+  same-origin search endpoint, is not placed in the browser address/history,
+  analytics or client logs, and is cleared on close.
 - Search is read-only and creates no audit event. Opening a result does not
   mutate the record.
 - Network failure leaves existing navigation usable, offers a retry path and
@@ -141,7 +141,7 @@ rewrite or a guarantee of durable real-time indexing.
   destinations; unknown descriptors fail closed.
 - Existing Customer and Invoice dialogs open from search; Product selection
   focuses the matching product row without inventing edit capability.
-- The query and results clear on close and are not written to URL/history,
+- The query and results clear on close and are not written to browser history,
   storage, analytics or logs.
 - New TSX/CSS passes the P6-001 token-conformance gate and responsive
   320-pixel verification.
