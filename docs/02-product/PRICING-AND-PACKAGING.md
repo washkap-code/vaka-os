@@ -1,9 +1,9 @@
 # VAKA Pricing and Packaging
 
-**Status:** Recommended commercial model; leadership validation and entitlement implementation pending
+**Status:** Approved list prices and standard trial for new workspaces; entitlement implementation remains staged
 
 **Owner:** Product, Commercial, Finance, and Engineering
-**Last reviewed:** 2026-07-05
+**Last reviewed:** 2026-07-13
 
 ## 1. Packaging principle
 
@@ -18,7 +18,7 @@ Plans must not weaken tenant isolation, encryption, backups, data ownership,
 essential permissions, audit integrity, accessibility, or customer export
 rights. Trust is not a premium add-on.
 
-Recommended prices below are list-price hypotheses for validation. They exclude
+The prices below are the current USD list prices for new workspaces. They exclude
 applicable taxes, payment-provider fees, messaging, OCR, AI, premium storage,
 custom implementation, and other explicitly metered services.
 
@@ -69,12 +69,12 @@ Therefore:
   plan-restricted; and
 - changing a seed object alone does not change an existing production plan.
 
-## 4. Proposed packages
+## 4. Current packages
 
 ### Starter — Run the essentials
 
 **Audience:** founders, sole traders, and very small businesses
-**Recommended list price:** USD 19/month, or USD 190/year
+**List price:** USD 19/month, or USD 190/year
 
 **Included users:** 1
 **Locations:** 1
@@ -110,7 +110,7 @@ in higher tiers.
 ### Growth — Coordinate a growing team
 
 **Audience:** growing businesses with sales, finance, and stock responsibilities
-**Recommended list price:** USD 69/month, or USD 690/year
+**List price:** USD 69/month, or USD 690/year
 
 **Included users:** 5
 **Locations:** 2
@@ -144,7 +144,7 @@ control.
 
 **Audience:** established SMEs with departments, locations, approvals, and
 stronger reporting needs
-**Recommended list price:** USD 249/month, or USD 2,490/year
+**List price:** USD 249/month, or USD 2,490/year
 
 **Included users:** 15
 **Locations:** 5
@@ -186,7 +186,7 @@ workflows, training, integrations, or onsite work require a quote.
 
 **Audience:** larger, multi-entity, regulated, franchise, or white-label
 organisations
-**Recommended commercial floor:** from USD 599/month on annual agreement;
+**Commercial floor:** from USD 599/month on annual agreement;
 final price by scope
 
 **Included users:** contracted
@@ -292,8 +292,9 @@ subscription suspension.
 
 ## 8. Trial, pilot, and discount policy
 
-- Replace the broad three-month free period with a 30-day product trial once
-  onboarding and billing are production-ready.
+- New self-service workspaces receive a 30-day product trial.
+- Preserve the recorded trial end date for existing workspaces; do not silently
+  shorten a previously granted trial.
 - Keep pilot programmes separate, invitation-only, time-bounded, and tied to
   feedback/support commitments.
 - Annual prepayment may provide approximately two months’ value, reflected in

@@ -101,14 +101,14 @@ export function publicAppUrl(env: RuntimeEnvironment = process.env): string {
   return parsed.toString().replace(/\/$/, "");
 }
 
-/** Provider-neutral HTTP email transport. Missing production config fails closed. */
+/** Provider-neutral HTTP email transport. An absent provider remains unavailable; partial config is invalid. */
 export function emailProviderConfig(
   env: RuntimeEnvironment = process.env,
 ): EmailProviderConfig | null {
   const url = valueOf(env, "EMAIL_PROVIDER_URL");
   const token = valueOf(env, "EMAIL_PROVIDER_TOKEN");
   const from = valueOf(env, "EMAIL_FROM");
-  if (!url && !token && !from && !isProduction(env)) return null;
+  if (!url && !token && !from) return null;
   if (!url || !token || !from) {
     throw new Error("EMAIL_PROVIDER_URL, EMAIL_PROVIDER_TOKEN and EMAIL_FROM must be configured together");
   }

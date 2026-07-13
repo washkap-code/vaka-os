@@ -64,9 +64,9 @@ cd ../server && npm test
 ```
 
 Sign up at the web UI → you get a fully seeded tenant (chart of accounts,
-roles, default warehouse, trial subscription) and 3 months free.
+roles, default warehouse, trial subscription) and a 30-day free trial for new workspaces.
 
-Platform admin: `platform-admin@jonomi.digital` (password from
+Platform admin: `washington@africaprocure.com` (password from
 `PLATFORM_ADMIN_PASSWORD` at seed time). Seeding fails closed when that variable
 is missing, weak, or still contains the example placeholder.
 Monthly billing run: `POST /api/v1/platform/billing/run` (wire to cron in production).

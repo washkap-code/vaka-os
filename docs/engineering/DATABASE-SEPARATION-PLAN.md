@@ -41,7 +41,7 @@ Today VAKA's production data lives in the Supabase project **`vaka-platform` (`k
    node --import tsx scripts/apply-finance-integrity-controls.ts   # requires a name containing 'test' guard — run 0007 SQL directly against prod instead (see note)
    ```
    Note: `apply-finance-integrity-controls.ts` is guarded to test databases. For production, apply `drizzle/0007_financial_integrity_controls.sql` directly (it is idempotent), or add a production-safe controls script.
-3. **Seed reference data** on the new DB: `PLATFORM_ADMIN_PASSWORD=… node --import tsx src/seed.ts` (plans + platform admin). Then repoint the admin email to `waskap@me.com` as done on the old DB.
+3. **Seed reference data** on the new DB: `PLATFORM_ADMIN_PASSWORD=… node --import tsx src/seed.ts` (plans + platform admin). Verify the tenantless platform administrator is `washington@africaprocure.com`; `waskap@me.com` remains tenant-owned and must not be repurposed as a platform identity.
 4. **Migrate tenant data** from `vaka-platform` → `vaka-os-prod`:
    - Because volume is tiny, prefer an explicit, ordered `pg_dump --data-only --table=public.<vaka_table>` for the 40 VAKA tables **only** (never `genfin_*`), restored into the new DB in FK-dependency order.
    - Alternatively, for a near-empty dataset, re-create the single tenant via the app and skip a bulk copy.

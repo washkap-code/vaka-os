@@ -15,6 +15,7 @@ import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
 import { captureReferralAttribution } from "./referrals.js";
+import { STANDARD_TRIAL_DAYS } from "./commercial.js";
 
 const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
@@ -46,7 +47,7 @@ export async function signupTenant(opts: {
     const existing = await tx.select().from(schema.tenants).where(eq(schema.tenants.subdomain, sub));
     if (existing.length) throw conflict("Subdomain already taken");
 
-    const trialEndsAt = new Date(); trialEndsAt.setMonth(trialEndsAt.getMonth() + 3); // 3 months free
+    const trialEndsAt = new Date(Date.now() + STANDARD_TRIAL_DAYS * 86_400_000);
     const [tenant] = await tx.insert(schema.tenants).values({
       companyName: opts.companyName, subdomain: sub,
       baseCurrency: opts.baseCurrency, status: "TRIAL", trialEndsAt,
@@ -156,18 +157,31 @@ export async function setTenantUserStatus(opts: {
 }
 
 export async function login(email: string, password: string, subdomain?: string, context: LoginContext = {}) {
-  let user;
+  const normalizedEmail = email.toLowerCase().trim();
+  let candidates;
   if (subdomain) {
-    const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.subdomain, subdomain.toLowerCase()));
+    const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.subdomain, subdomain.toLowerCase().trim()));
     if (!tenant) throw unauthorized("Invalid credentials");
-    [user] = await db.select().from(schema.users).where(and(
-      eq(schema.users.tenantId, tenant.id), eq(schema.users.email, email.toLowerCase())));
+    candidates = await db.select().from(schema.users).where(and(
+      eq(schema.users.tenantId, tenant.id),
+      eq(schema.users.email, normalizedEmail),
+      eq(schema.users.status, "active"),
+    ));
   } else {
-    [user] = await db.select().from(schema.users).where(eq(schema.users.email, email.toLowerCase()));
+    candidates = await db.select().from(schema.users).where(and(
+      eq(schema.users.email, normalizedEmail),
+      eq(schema.users.status, "active"),
+    ));
   }
-  if (!user || user.status !== "active") throw unauthorized("Invalid credentials");
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) throw unauthorized("Invalid credentials");
+  const passwordMatches = await Promise.all(candidates.map(async (candidate) => ({
+    candidate,
+    matches: await bcrypt.compare(password, candidate.passwordHash),
+  })));
+  const matchedUsers = passwordMatches.filter(({ matches }) => matches).map(({ candidate }) => candidate);
+  if (matchedUsers.length !== 1) throw unauthorized(
+    matchedUsers.length > 1 ? "Enter your company subdomain to select the correct workspace" : "Invalid credentials",
+  );
+  const [user] = matchedUsers;
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
 
   const sessionId = randomUUID();

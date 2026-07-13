@@ -521,12 +521,15 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
         </div>
         <div className="field"><label>Your full name</label><input value={f.ownerName ?? ""} onChange={set("ownerName")} /></div>
       </>}
-      {mode === "login" && <div className="field"><label>Company subdomain (optional)</label><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" /></div>}
-      <div className="field"><label>Email</label><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} /></div>
-      <div className="field"><label>Password</label><input type="password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""} onChange={set(mode === "login" ? "password" : "ownerPassword")} /></div>
-      {mode === "signup" && <div className="field"><label>Plan (3 months free on all plans)</label>
+      {mode === "login" && <div className="field"><label>Company subdomain (optional)</label><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /><small>Workspace users can enter their company subdomain. Platform administrators should leave this blank.</small></div>}
+      <div className="field"><label>Email</label><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} autoComplete="email" /></div>
+      <div className="field"><label>Password</label><input type="password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""} onChange={set(mode === "login" ? "password" : "ownerPassword")} autoComplete={mode === "login" ? "current-password" : "new-password"} /></div>
+      {mode === "signup" && <div className="field"><label>Package — 30-day free trial</label>
         <select value={f.planName} onChange={set("planName")}>
-          <option>Starter</option><option>Growth</option><option>Business</option><option>Enterprise</option>
+          <option value="Starter">Starter — USD 19/month · 1 user · 1 location</option>
+          <option value="Growth">Growth — USD 69/month · 5 users · 2 locations</option>
+          <option value="Business">Business — USD 249/month · 15 users · 5 locations</option>
+          <option value="Enterprise">Enterprise — from USD 599/month · contracted scale</option>
         </select></div>}
       {mode === "signup" && <div className="field">
         <label>{appEnglish.auth.referralCode}</label>
@@ -534,7 +537,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
         <small>{appEnglish.auth.referralHelp}</small>
       </div>}
       <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
-        {busy ? "Working…" : mode === "login" ? "Sign in" : "Create company — start 3 months free"}
+        {busy ? "Working…" : mode === "login" ? "Sign in" : "Create company — start 30-day free trial"}
       </button>
       {err && <div className="err-text">{err}</div>}
       <div className="alt">

@@ -93,6 +93,17 @@ export interface PlatformKernelOptions {
   documentStore?: DocumentStore;
 }
 
+function configuredEmailTransport(): EmailTransport {
+  try {
+    return createHttpEmailTransport();
+  } catch (error) {
+    console.error("[notification.email_configuration_invalid]", {
+      error: error instanceof Error ? error.message : "Unknown email configuration error",
+    });
+    return async () => { throw new Error("Email delivery is not configured"); };
+  }
+}
+
 /**
  * Build a fully composed Platform Kernel for this application.
  * Idempotent per call: each invocation returns an isolated kernel.
@@ -139,7 +150,7 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
         },
       }));
     return new NotificationService({
-      EMAIL: emailGateway(options.emailTransport ?? createHttpEmailTransport(), persist),
+      EMAIL: emailGateway(options.emailTransport ?? configuredEmailTransport(), persist),
       IN_APP: inAppGateway(persist),
       SMS: noopGateway("SMS", persist),
       WHATSAPP: noopGateway("WHATSAPP", persist),
