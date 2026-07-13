@@ -44,6 +44,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P6-009 | Financial Reporting and Billing Accessibility | Implemented; local frontend and browser verification passed; remote release pending behind P6-008 |
 | P6-010 | Controlled Imports and Capture Accessibility | Implemented; local frontend and browser verification passed; remote release pending behind P6-008 and P6-009 |
 | P6-011 | Platform Operations Evidence Accessibility | Implemented; local frontend and browser verification passed; remote release pending behind P6-008 through P6-010 |
+| P6-012 | Dashboard and Secondary Evidence Accessibility | Approved for implementation |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |
