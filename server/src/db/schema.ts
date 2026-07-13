@@ -51,6 +51,14 @@ export const tenants = pgTable("tenants", {
   createdAt: createdAt(),
 });
 
+export const platformRoles = pgTable("platform_roles", {
+  key: text("key").primaryKey(),
+  name: text("name").notNull(),
+  permissions: jsonb("permissions").$type<string[]>().default([]).notNull(),
+  isSystem: boolean("is_system").default(true).notNull(),
+  createdAt: createdAt(),
+});
+
 export const users = pgTable("users", {
   id: id(),
   tenantId: uuid("tenant_id").references(() => tenants.id), // null => platform super-admin
@@ -59,11 +67,70 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   roleId: uuid("role_id"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
+  platformRoleKey: text("platform_role_key").references(() => platformRoles.key),
   status: text("status").default("active").notNull(), // active | invited | disabled
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("users_tenant_email").on(t.tenantId, t.email)]);
+}, (t) => [
+  uniqueIndex("users_tenant_email").on(t.tenantId, t.email),
+  uniqueIndex("platform_users_email_unique").on(t.email).where(sql`${t.tenantId} IS NULL`),
+]);
+
+export const passwordResetRequests = pgTable("password_reset_requests", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  tenantId: uuid("tenant_id").references(() => tenants.id),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  deliveryStatus: text("delivery_status").default("PENDING").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("password_reset_requests_token_hash").on(t.tokenHash),
+  index("password_reset_requests_user_time").on(t.userId, t.createdAt),
+  check("password_reset_requests_delivery_check", sql`${t.deliveryStatus} IN ('PENDING', 'SENT', 'FAILED')`),
+]);
+
+export const userMfaFactors = pgTable("user_mfa_factors", {
+  id: id(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  factorType: text("factor_type").default("TOTP").notNull(),
+  status: text("status").default("PENDING").notNull(),
+  encryptedSecret: text("encrypted_secret").notNull(),
+  secretIv: text("secret_iv").notNull(),
+  secretTag: text("secret_tag").notNull(),
+  recoveryCodeHashes: jsonb("recovery_code_hashes").$type<string[]>().default([]).notNull(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("user_mfa_factors_user").on(t.userId),
+  check("user_mfa_factors_type_check", sql`${t.factorType} = 'TOTP'`),
+  check("user_mfa_factors_status_check", sql`${t.status} IN ('PENDING', 'VERIFIED')`),
+]);
+
+export const platformStaffProfiles = pgTable("platform_staff_profiles", {
+  userId: uuid("user_id").primaryKey().references(() => users.id),
+  employeeNumber: text("employee_number").unique(),
+  businessFunction: text("business_function").notNull(),
+  jobTitle: text("job_title").notNull(),
+  workPhone: text("work_phone"),
+  location: text("location"),
+  managerUserId: uuid("manager_user_id").references(() => users.id),
+  employmentState: text("employment_state").default("ACTIVE").notNull(),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  operationalNotes: text("operational_notes"),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("platform_staff_profiles_function").on(t.businessFunction, t.employmentState),
+  index("platform_staff_profiles_manager").on(t.managerUserId),
+  index("platform_staff_profiles_updated_by").on(t.updatedBy),
+  check("platform_staff_profiles_state_check", sql`${t.employmentState} IN ('ACTIVE', 'LEAVE', 'ENDED')`),
+]);
 
 // Server-side presence and revocation record for an authenticated JWT. The
 // bearer token itself is never stored; token_hash is only used to invalidate

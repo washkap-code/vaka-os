@@ -14,7 +14,12 @@ if (!databaseUrl) {
 const required = [
   ["tenants", "country_code"],
   ["users", "must_change_password"],
+  ["users", "platform_role_key"],
   ["user_sessions", "id"],
+  ["platform_roles", "key"],
+  ["password_reset_requests", "token_hash"],
+  ["user_mfa_factors", "encrypted_secret"],
+  ["platform_staff_profiles", "user_id"],
   ["invoices", "tax_jurisdiction"],
   ["invoices", "tax_date"],
   ["invoices", "tax_treatment"],

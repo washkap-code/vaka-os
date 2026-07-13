@@ -71,6 +71,23 @@ export function captureEncryptionSecret(env: RuntimeEnvironment = process.env): 
   return jwtSecret(env);
 }
 
+/**
+ * Stable encryption/HMAC material for MFA factors and recovery codes. Keep it
+ * separate from JWT signing so routine session-key rotation cannot lock out
+ * enrolled users. The fallback keeps existing deployments bootable while the
+ * dedicated key is introduced; production must set the dedicated value before
+ * any factor is enrolled.
+ */
+export function mfaEncryptionSecret(env: RuntimeEnvironment = process.env): string {
+  const configured = valueOf(env, "MFA_ENCRYPTION_KEY");
+  if (configured) {
+    return isProduction(env)
+      ? assertSafeSecret("MFA_ENCRYPTION_KEY", configured, 32)
+      : configured;
+  }
+  return jwtSecret(env);
+}
+
 export function platformAdminPassword(
   env: RuntimeEnvironment = process.env,
 ): string {

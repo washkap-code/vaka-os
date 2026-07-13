@@ -128,6 +128,13 @@ the same governed definitions.
 
 ## 6. Stage 4 — Authentication and onboarding
 
+**Current evidence (2026-07-13):** P9-008 added provider-neutral password
+recovery, optional authenticator TOTP and recovery codes, AAL2 session
+enforcement, own-security settings, fixed least-privilege platform roles and a
+governed VAKA staff directory. Provider-backed production email delivery,
+email verification, invitations, refresh-token rotation, SSO and risk-based
+step-up remain separately gated.
+
 **Objective:** Provide secure account creation, login, verification, recovery, and company setup.
 
 **Dependencies:** Stages 1–2; threat model; email/support provider; privacy/legal decisions.

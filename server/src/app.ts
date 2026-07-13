@@ -24,6 +24,9 @@ export function createApp() {
   // scaling horizontally — see docs/02-security-compliance.md.)
   app.use("/api/v1/auth/login", createRateLimiter({ windowMs: 5 * 60_000, max: 20, label: "login attempts" }));
   app.use("/api/v1/auth/signup", createRateLimiter({ windowMs: 10 * 60_000, max: 10, label: "signup attempts" }));
+  app.use("/api/v1/auth/password-reset/request", createRateLimiter({ windowMs: 15 * 60_000, max: 5, label: "password reset requests" }));
+  app.use("/api/v1/auth/password-reset/complete", createRateLimiter({ windowMs: 15 * 60_000, max: 10, label: "password reset attempts" }));
+  app.use("/api/v1/auth/mfa", createRateLimiter({ windowMs: 5 * 60_000, max: 20, label: "two-factor attempts" }));
   app.use("/api/v1/public", createRateLimiter({ windowMs: 60_000, max: 60, label: "requests" }));
 
   app.get("/health", (_req, res) => res.json({ ok: true, service: "vaka-os" }));

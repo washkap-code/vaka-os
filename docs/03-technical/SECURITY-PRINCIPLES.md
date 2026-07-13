@@ -2,7 +2,7 @@
 
 **Status:** Security standard
 **Owner:** Engineering, Security, and Data Protection
-**Last reviewed:** 2026-07-04
+**Last reviewed:** 2026-07-13
 
 ## 1. Security and privacy by design
 
@@ -44,6 +44,14 @@ Tenant data leakage is a critical incident.
 - Rate limiting and credential-stuffing controls.
 - Audit login, failure, reset, MFA, and privileged session events.
 
+Current implementation evidence (P9-008) includes non-enumerating,
+single-use 30-minute password-reset links; session revocation after recovery;
+optional authenticator TOTP with encrypted secrets and hash-only one-time
+recovery codes; AAL2 enforcement for enrolled accounts; and user-controlled
+session review/revocation. Email delivery still depends on an approved,
+configured HTTPS provider. SSO, refresh-token rotation and risk-based step-up
+remain future work.
+
 ## 5. Role-based access
 
 - Server-side RBAC.
@@ -52,6 +60,12 @@ Tenant data leakage is a critical incident.
 - Segregation of duties for payroll, payments, permissions, and high-risk adjustments.
 - Permission changes are audited.
 - UI hiding never replaces authorisation.
+
+Platform workforce access uses fixed, server-resolved platform roles rather
+than the compatibility `is_platform_admin` marker alone. VAKA staff roles do
+not create tenant membership or impersonation. Only the Principal
+Administrator can create, alter, disable or reset another platform staff
+identity; each such action is separately audited.
 
 ## 6. Data protection
 

@@ -13,9 +13,18 @@ import {
 } from "./lib.js";
 import {
   AuthedRequest, authenticate, lifecycleGate, requirePermission,
-  requirePlatformAdmin, tenantId, signupTenant, login, changePassword,
+  requirePlatformPermission, tenantId, signupTenant, login, changePassword,
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
+  issueAuthenticatedSession,
 } from "./auth.js";
+import {
+  beginMfaEnrollment, completePasswordReset, disableMfa, mfaStatus,
+  replaceMfaRecoveryCodes, requestPasswordReset, verifyMfaEnrollment, verifyMfaLogin,
+} from "./auth-security.js";
+import {
+  createPlatformStaff, issuePlatformStaffTemporaryPassword, listPlatformRoles,
+  listPlatformStaff, updatePlatformStaff,
+} from "./platform-staff.js";
 import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, voidInvoice } from "./invoicing.js";
 import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
@@ -126,6 +135,36 @@ api.post("/auth/login", wrap(async (req) => {
   });
 }));
 
+api.post("/auth/password-reset/request", wrap(async (req) => {
+  const body = z.object({
+    email: z.string().email(),
+    subdomain: z.string().trim().min(3).max(31).optional(),
+  }).parse(req.body);
+  return requestPasswordReset(body.email, body.subdomain);
+}));
+
+api.post("/auth/password-reset/complete", wrap(async (req) => {
+  const body = z.object({
+    token: z.string().min(32).max(256),
+    newPassword: z.string().min(12).max(256),
+  }).parse(req.body);
+  return completePasswordReset(body.token, body.newPassword);
+}));
+
+api.post("/auth/mfa/verify-login", wrap(async (req) => {
+  const body = z.object({
+    challengeToken: z.string().min(32).max(2048),
+    code: z.string().trim().min(6).max(32),
+  }).parse(req.body);
+  const verified = await verifyMfaLogin(body.challengeToken, body.code);
+  return issueAuthenticatedSession(verified.userId, {
+    clientType: req.header("X-Vaka-Client") ?? "web",
+    appVersion: req.header("X-Vaka-App-Version") ?? undefined,
+    userAgent: req.header("User-Agent") ?? undefined,
+    ip: req.ip,
+  }, "aal2");
+}));
+
 // Public customer document access. The opaque, expiry-bound share token is
 // validated server-side before any invoice information or PDF is returned.
 api.get("/public/invoices/:token/pdf", async (req, res, next) => {
@@ -148,10 +187,19 @@ api.get("/me", wrap(async (req) => {
     id: schema.users.id,
     email: schema.users.email,
     fullName: schema.users.fullName,
+    platformRoleKey: schema.users.platformRoleKey,
   }).from(schema.users).where(eq(schema.users.id, req.auth!.userId));
+  const [staffProfile] = req.auth!.isPlatformAdmin
+    ? await db.select({
+      workPhone: schema.platformStaffProfiles.workPhone,
+      location: schema.platformStaffProfiles.location,
+      businessFunction: schema.platformStaffProfiles.businessFunction,
+      jobTitle: schema.platformStaffProfiles.jobTitle,
+    }).from(schema.platformStaffProfiles).where(eq(schema.platformStaffProfiles.userId, req.auth!.userId))
+    : [];
   return {
     ...req.auth,
-    user: currentUser,
+    user: { ...currentUser, ...staffProfile },
     tenant: t ? {
       id: t.id, companyName: t.companyName, subdomain: t.subdomain, status: t.status,
       baseCurrency: t.baseCurrency, trialEndsAt: t.trialEndsAt,
@@ -217,6 +265,96 @@ api.post("/auth/logout", wrap(async (req) => {
 }));
 
 api.use(requireCompletedPasswordChange as any);
+
+api.patch("/me/profile", wrap(async (req) => {
+  const body = z.object({
+    fullName: z.string().trim().min(2).max(120),
+    workPhone: z.string().trim().max(40).optional().nullable(),
+    location: z.string().trim().max(120).optional().nullable(),
+  }).parse(req.body);
+  return db.transaction(async (tx) => {
+    await tx.update(schema.users).set({ fullName: body.fullName }).where(eq(schema.users.id, req.auth!.userId));
+    if (req.auth!.isPlatformAdmin) {
+      const [profile] = await tx.select({ userId: schema.platformStaffProfiles.userId })
+        .from(schema.platformStaffProfiles).where(eq(schema.platformStaffProfiles.userId, req.auth!.userId));
+      if (profile) {
+        await tx.update(schema.platformStaffProfiles).set({
+          workPhone: body.workPhone || null,
+          location: body.location || null,
+          updatedBy: req.auth!.userId,
+          updatedAt: new Date(),
+        }).where(eq(schema.platformStaffProfiles.userId, req.auth!.userId));
+      }
+      await tx.insert(schema.platformAuditLogs).values({
+        userId: req.auth!.userId,
+        action: "platform.staff_self_profile_updated",
+        metadata: { profileFields: ["fullName", "workPhone", "location"] },
+      });
+    } else if (req.auth!.tenantId) {
+      await audit(tx, req.auth!.tenantId, req.auth!.userId, "security.profile_updated", "user", req.auth!.userId, {
+        profileFields: ["fullName"],
+      });
+    }
+    return { updated: true };
+  });
+}));
+
+api.get("/auth/mfa", wrap(async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  return mfaStatus(req.auth!.userId);
+}));
+api.post("/auth/mfa/enroll", wrap(async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  return beginMfaEnrollment(req.auth!.userId);
+}));
+api.post("/auth/mfa/enroll/verify", wrap(async (req, res) => {
+  const { code } = z.object({ code: z.string().trim().regex(/^\d{6}$/) }).parse(req.body);
+  res.setHeader("Cache-Control", "private, no-store");
+  return verifyMfaEnrollment(req.auth!.userId, code);
+}));
+api.post("/auth/mfa/recovery-codes", wrap(async (req, res) => {
+  const body = z.object({
+    currentPassword: z.string().min(1).max(256),
+    code: z.string().trim().regex(/^\d{6}$/),
+  }).parse(req.body);
+  res.setHeader("Cache-Control", "private, no-store");
+  return replaceMfaRecoveryCodes(req.auth!.userId, body.currentPassword, body.code);
+}));
+api.delete("/auth/mfa", wrap(async (req) => {
+  const body = z.object({
+    currentPassword: z.string().min(1).max(256),
+    code: z.string().trim().min(6).max(32),
+  }).parse(req.body);
+  return disableMfa(req.auth!.userId, body.currentPassword, body.code);
+}));
+api.get("/security/my-sessions", wrap(async (req) =>
+  db.select({
+    id: schema.userSessions.id,
+    clientType: schema.userSessions.clientType,
+    deviceDescription: schema.userSessions.deviceDescription,
+    createdAt: schema.userSessions.createdAt,
+    lastSeenAt: schema.userSessions.lastSeenAt,
+    idleExpiresAt: schema.userSessions.idleExpiresAt,
+    absoluteExpiresAt: schema.userSessions.absoluteExpiresAt,
+    revokedAt: schema.userSessions.revokedAt,
+  }).from(schema.userSessions)
+    .where(eq(schema.userSessions.userId, req.auth!.userId))
+    .orderBy(desc(schema.userSessions.lastSeenAt))
+    .limit(20)));
+api.post("/security/my-sessions/:id/revoke", wrap(async (req) => {
+  const sessionId = routeParam(req, "id");
+  const [owned] = await db.select({ id: schema.userSessions.id }).from(schema.userSessions).where(and(
+    eq(schema.userSessions.id, sessionId),
+    eq(schema.userSessions.userId, req.auth!.userId),
+  ));
+  if (!owned) throw notFound("Session not found");
+  return revokeSession({
+    tenantId: req.auth!.tenantId,
+    sessionId,
+    actorUserId: req.auth!.userId,
+    reason: "user_security_settings",
+  });
+}));
 
 const notificationListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -1507,7 +1645,40 @@ api.post("/billing/upgrade-interest", requirePermission("billing.manage"), wrap(
 // ---------------------------------------------------------------------------
 // Platform admin (Jonomi staff only)
 // ---------------------------------------------------------------------------
-api.get("/platform/analytics", requirePlatformAdmin as any, wrap(async () => {
+const platformStaffProfileSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  platformRoleKey: z.enum(["OPERATIONS_ADMIN", "FINANCE_OPERATIONS", "SUPPORT_ANALYST", "SECURITY_AUDITOR"]),
+  employeeNumber: z.string().trim().max(40).optional().nullable(),
+  businessFunction: z.string().trim().min(2).max(100),
+  jobTitle: z.string().trim().min(2).max(120),
+  workPhone: z.string().trim().max(40).optional().nullable(),
+  location: z.string().trim().max(120).optional().nullable(),
+  managerUserId: z.string().uuid().optional().nullable(),
+  employmentState: z.enum(["ACTIVE", "LEAVE", "ENDED"]).default("ACTIVE"),
+  startDate: z.string().date().optional().nullable(),
+  endDate: z.string().date().optional().nullable(),
+  operationalNotes: z.string().trim().max(1000).optional().nullable(),
+});
+
+api.get("/platform/staff/roles", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformRoles()));
+api.get("/platform/staff", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformStaff()));
+api.post("/platform/staff", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+  const body = platformStaffProfileSchema.extend({
+    email: z.string().email(),
+    initialPassword: z.string().min(12).max(256).optional(),
+  }).parse(req.body);
+  return createPlatformStaff(req.auth!.userId, body);
+}));
+api.patch("/platform/staff/:id", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+  const body = platformStaffProfileSchema.extend({ status: z.enum(["active", "disabled"]) }).parse(req.body);
+  return updatePlatformStaff(req.auth!.userId, routeParam(req, "id"), body);
+}));
+api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+  const body = z.object({ temporaryPassword: z.string().min(12).max(256).optional() }).parse(req.body);
+  return issuePlatformStaffTemporaryPassword(req.auth!.userId, routeParam(req, "id"), body.temporaryPassword);
+}));
+
+api.get("/platform/analytics", requirePlatformPermission("platform.overview.read"), wrap(async () => {
   const [summary] = (await db.execute(sql`
     SELECT
       COUNT(*)::int AS total_tenants,
@@ -1546,7 +1717,7 @@ api.get("/platform/analytics", requirePlatformAdmin as any, wrap(async () => {
     activity: (activity as any).rows,
   };
 }));
-api.get("/platform/control-center", requirePlatformAdmin as any, wrap(async () => {
+api.get("/platform/control-center", requirePlatformPermission("platform.operations.read"), wrap(async () => {
   type ControlCenterRow = {
     database_observed_at: string;
     active_sessions: number;
@@ -1574,7 +1745,7 @@ api.get("/platform/control-center", requirePlatformAdmin as any, wrap(async () =
     suspendedTenants: row.suspended_tenants,
   });
 }));
-api.get("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async () =>
+api.get("/platform/backup-manifests", requirePlatformPermission("platform.backups.read"), wrap(async () =>
   db.select({
     id: schema.platformBackupManifests.id,
     manifestId: schema.platformBackupManifests.manifestId,
@@ -1594,7 +1765,7 @@ api.get("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async ()
   }).from(schema.platformBackupManifests)
     .orderBy(desc(schema.platformBackupManifests.completedAt))
     .limit(50)));
-api.post("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async (req) => {
+api.post("/platform/backup-manifests", requirePlatformPermission("platform.backups.write"), wrap(async (req) => {
   const body = backupManifestInputSchema.parse(req.body);
   return db.transaction(async (tx) => {
     const [recorded] = await tx.insert(schema.platformBackupManifests).values({
@@ -1621,7 +1792,7 @@ api.post("/platform/backup-manifests", requirePlatformAdmin as any, wrap(async (
     return recorded;
   });
 }));
-api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (req) => {
+api.post("/platform/referral-codes", requirePlatformPermission("platform.referrals.manage"), wrap(async (req) => {
   const body = z.object({
     code: z.string().min(5).max(32),
     program: z.enum(["GENERAL", "PROFESSIONAL"]),
@@ -1633,7 +1804,7 @@ api.post("/platform/referral-codes", requirePlatformAdmin as any, wrap(async (re
   }).parse(req.body);
   return createReferralCode({ ...body, createdBy: req.auth!.userId });
 }));
-api.get("/platform/referral-codes", requirePlatformAdmin as any, wrap(async () =>
+api.get("/platform/referral-codes", requirePlatformPermission("platform.referrals.manage"), wrap(async () =>
   db.select({
     id: schema.referralCodes.id,
     code: schema.referralCodes.code,
@@ -1646,7 +1817,7 @@ api.get("/platform/referral-codes", requirePlatformAdmin as any, wrap(async () =
     expiresAt: schema.referralCodes.expiresAt,
     createdAt: schema.referralCodes.createdAt,
   }).from(schema.referralCodes).orderBy(desc(schema.referralCodes.createdAt))));
-api.get("/platform/referral-attributions", requirePlatformAdmin as any, wrap(async () => {
+api.get("/platform/referral-attributions", requirePlatformPermission("platform.referrals.manage"), wrap(async () => {
   const rows = await db.execute(sql`
     SELECT ra.id, ra.referred_tenant_id, t.company_name, ra.program,
            ra.rule_version, ra.captured_at, rc.code, rc.referrer_tenant_id,
@@ -1665,7 +1836,7 @@ api.get("/platform/referral-attributions", requirePlatformAdmin as any, wrap(asy
     ORDER BY ra.captured_at DESC`);
   return (rows as any).rows;
 }));
-api.post("/platform/referral-attributions/:id/reviews", requirePlatformAdmin as any, wrap(async (req) => {
+api.post("/platform/referral-attributions/:id/reviews", requirePlatformPermission("platform.referrals.manage"), wrap(async (req) => {
   const body = z.object({
     decision: z.enum(["QUALIFIED", "REJECTED", "HELD"]),
     reasonCode: z.string().min(3).max(50),
@@ -1677,7 +1848,7 @@ api.post("/platform/referral-attributions/:id/reviews", requirePlatformAdmin as 
     actorUserId: req.auth!.userId,
   });
 }));
-api.get("/platform/tenants", requirePlatformAdmin as any, wrap(async () => {
+api.get("/platform/tenants", requirePlatformPermission("platform.tenants.read"), wrap(async () => {
   const rows = await db.execute(sql`
     SELECT t.id, t.company_name, t.subdomain, t.status, t.trial_ends_at, t.created_at,
            p.name AS plan, s.status AS sub_status,
@@ -1688,16 +1859,25 @@ api.get("/platform/tenants", requirePlatformAdmin as any, wrap(async () => {
     ORDER BY t.created_at DESC`);
   return (rows as any).rows;
 }));
-api.post("/platform/billing/run", requirePlatformAdmin as any, wrap(async (req) => {
+api.post("/platform/billing/run", requirePlatformPermission("platform.billing.run"), wrap(async (req) => {
   const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
   return runBillingCycle(asOf);
 }));
-api.post("/platform/tenants/:id/mark-invoice-paid/:invoiceId", requirePlatformAdmin as any, wrap(async (req) =>
+api.post("/platform/tenants/:id/mark-invoice-paid/:invoiceId", requirePlatformPermission("platform.billing.payment.manage"), wrap(async (req) =>
   markSubscriptionInvoicePaid({
     tenantId: routeParam(req, "id"),
     invoiceId: routeParam(req, "invoiceId"),
     actorUserId: req.auth!.userId,
   })));
-api.get("/platform/audit/:tenantId", requirePlatformAdmin as any, wrap(async (req) =>
-  db.select().from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, routeParam(req, "tenantId")))
-    .orderBy(desc(schema.auditLogs.createdAt)).limit(200)));
+api.get("/platform/audit/:tenantId", requirePlatformPermission("platform.tenant_audit.read"), wrap(async (req) => {
+  const reviewedTenantId = z.string().uuid().parse(routeParam(req, "tenantId"));
+  const events = await db.select().from(schema.auditLogs)
+    .where(eq(schema.auditLogs.tenantId, reviewedTenantId))
+    .orderBy(desc(schema.auditLogs.createdAt)).limit(200);
+  await db.insert(schema.platformAuditLogs).values({
+    userId: req.auth!.userId,
+    action: "platform.tenant_audit_reviewed",
+    metadata: { reviewedTenantId, eventCount: events.length },
+  });
+  return events;
+}));

@@ -1,6 +1,6 @@
 # VAKA OS Super Admin User Guide
 
-Edition 1.0 · Effective 2026-07-11 · Audience: authorised VAKA platform administrators
+Edition 1.1 · Effective 2026-07-13 · Audience: authorised VAKA platform administrators
 
 This guide explains the Platform Administration console that is available when an authorised VAKA staff account signs in without a tenant workspace. It describes the current console and its controls. It is not evidence that every VAKA product, platform service, country pack, integration or launch gate is implemented.
 
@@ -28,19 +28,70 @@ The delivery chain is ChatGPT to Knowledge System to Mission Packs to Codex to G
 1. Open the VAKA OS sign-in screen.
 2. Enter the authorised platform-administrator email and password without a tenant subdomain.
 3. Complete a required temporary-password change before continuing.
-4. Confirm that the page title is Platform administration and that no tenant workspace is shown.
-5. Sign out from the lower-left navigation when work is complete.
+4. If authenticator two-factor authentication is enabled, enter the current
+   six-digit authenticator code or one unused recovery code.
+5. Confirm that the page title is Platform administration and that no tenant workspace is shown.
+6. Sign out from the lower-left navigation when work is complete.
+
+Use Forgot password when the password is unavailable. Platform staff leave
+the company subdomain blank. The reset link is single-use and expires after 30
+minutes; completing recovery ends every existing session. The response never
+confirms whether an email account exists. If no email arrives, check spam and
+then use the approved support process without asking anyone to reveal or store
+the old password.
 
 If a tenant workspace appears, sign out and report the identity/context mismatch. Do not perform platform operations from a tenant-scoped session.
 
 ## 4. Console navigation
 
-The console has four working areas.
+The console has six working areas, subject to the signed-in role's permissions.
 
 - Overview shows aggregate tenant, user, billing, growth and audit-event signals.
 - Tenants lists client workspaces and allows authorised review of their recent material audit events.
 - Operations shows runtime observations, the Architecture Freeze and the status of every frozen product and Platform Kernel service.
+- VAKA Staff shows authorised operational staff profiles, functions and
+  limited platform-access roles. Only the Principal Administrator can add or
+  alter staff access.
+- Settings covers the signed-in administrator's profile, password, optional
+  authenticator MFA, recovery codes and active sessions.
 - User Guide provides this searchable guide and a Markdown download.
+
+The fixed delegated roles are Operations Administrator, Finance Operations,
+Support Analyst and Security Auditor. They receive only their predefined
+platform permissions. They do not receive tenant membership, tenant
+impersonation or ordinary CRM/accounting/inventory permissions.
+
+## 4.1 Managing VAKA operational staff
+
+Only the Principal Administrator can add or edit VAKA staff access.
+
+1. Open VAKA Staff and select Add staff.
+2. Record the staff member's name, work email, employee number, business
+   function, job title, manager, location, employment state and approved role.
+3. Leave the initial-password field blank to generate a strong temporary
+   password, or enter an approved temporary value. Reveal it only when needed
+   to verify typing.
+4. Transfer the one-time temporary password through an approved secure
+   channel. The staff member must replace it at first login.
+5. Disable access promptly when duties end or access is withdrawn. Disabling
+   the identity revokes its active sessions; do not delete its audit history.
+
+Role, status, profile and temporary-password actions are audited. The
+Principal Administrator cannot demote or disable the principal identity from
+this area, and a delegated role cannot create another administrator.
+
+## 4.2 Personal security settings
+
+- Profile permits changes to your display name, work phone and location.
+- Change password requires the current password and a new value of at least 12
+  characters.
+- Enable two-factor authentication by entering the displayed secret into an
+  RFC 6238-compatible authenticator app and verifying one current code.
+- Store the eight recovery codes offline in an approved password manager. Each
+  code works once. Replacing codes invalidates the previous set.
+- Enabling or disabling MFA ends active sessions and requires a fresh sign-in.
+- Active sessions lists your recent devices. Revoke any session you do not
+  recognise and report suspected compromise.
 
 Every status is evidence-sensitive. Definition, implementation, verification and availability are separate. Partial implementation is not completion; focused tests are not a production release; planned means unavailable.
 
@@ -276,12 +327,15 @@ A launch gate closes only with named evidence, accountable sign-off, known-risk 
 
 The initial control centre is a governed foundation, not the final enterprise operations suite.
 
-- No complete MFA, SSO or refresh-token rotation.
+- Optional authenticator MFA is implemented; mandatory role policy,
+  risk-based step-up, SSO and refresh-token rotation remain incomplete.
 - No platform-admin impersonation or unrestricted business-record search.
 - No full three-language runtime.
 - No native encrypted offline application or complete offline sync.
 - No general production AI model/action layer.
-- No complete provider-backed email, SMS or WhatsApp operations layer.
+- Password recovery uses the provider-neutral email boundary, but live delivery
+  depends on approved provider configuration; no complete SMS or WhatsApp
+  operations layer exists.
 - No automatic backup/restore drill in this console.
 - No complete workflow, rules, policy, search, metadata or document-administration suite.
 - No product-level proof that every Microsoft/SAP benchmark dimension is met.

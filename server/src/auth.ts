@@ -16,6 +16,8 @@ import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
 import { captureReferralAttribution } from "./referrals.js";
 import { STANDARD_TRIAL_DAYS } from "./commercial.js";
+import { createMfaLoginChallenge, hasVerifiedMfa } from "./auth-security.js";
+import type { PlatformPermission } from "./platform-staff.js";
 
 const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
@@ -26,6 +28,8 @@ export interface AuthedRequest extends Request {
     isTenantOwner: boolean; sessionId: string | null;
     mustChangePassword: boolean;
     permissions: string[]; accessLevel: "full" | "readonly" | "export_only";
+    platformRoleKey: string | null; platformRoleName: string | null;
+    platformPermissions: string[]; assuranceLevel: "aal1" | "aal2";
   };
 }
 
@@ -182,11 +186,39 @@ export async function login(email: string, password: string, subdomain?: string,
     matchedUsers.length > 1 ? "Enter your company subdomain to select the correct workspace" : "Invalid credentials",
   );
   const [user] = matchedUsers;
+  if (await hasVerifiedMfa(user.id)) {
+    return {
+      mfaRequired: true as const,
+      challengeToken: createMfaLoginChallenge(user.id),
+      token: "",
+      user: {
+        id: user.id, email: user.email, fullName: user.fullName,
+        tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
+        mustChangePassword: user.mustChangePassword,
+      },
+    };
+  }
+  return issueAuthenticatedSession(user.id, context, "aal1");
+}
+
+export async function issueAuthenticatedSession(
+  userId: string,
+  context: LoginContext = {},
+  assuranceLevel: "aal1" | "aal2" = "aal1",
+) {
+  const [user] = await db.select().from(schema.users).where(and(
+    eq(schema.users.id, userId),
+    eq(schema.users.status, "active"),
+  ));
+  if (!user) throw unauthorized("Invalid credentials");
+  if (assuranceLevel === "aal1" && await hasVerifiedMfa(user.id)) {
+    throw unauthorized("Two-factor authentication required");
+  }
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
 
   const sessionId = randomUUID();
   const token = jwt.sign(
-    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId },
+    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId, aal: assuranceLevel },
     JWT_SECRET, { expiresIn: ACCESS_TTL },
   );
   const now = new Date();
@@ -213,7 +245,7 @@ export async function login(email: string, password: string, subdomain?: string,
   } else {
     await db.insert(schema.platformAuditLogs).values({ userId: user.id, action: "platform_admin.session_created", metadata: { sessionId } });
   }
-  return { token, user: {
+  return { mfaRequired: false as const, token, user: {
     id: user.id, email: user.email, fullName: user.fullName,
     tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
     mustChangePassword: user.mustChangePassword,
@@ -236,6 +268,9 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
     let permissions: string[] = [];
     let isTenantOwner = false;
     let accessLevel: "full" | "readonly" | "export_only" = "full";
+    let platformRoleKey: string | null = null;
+    let platformRoleName: string | null = null;
+    let platformPermissions: string[] = [];
     if (user.tenantId) {
       if (user.roleId) {
         const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, user.roleId));
@@ -246,7 +281,17 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
       if (!tenant) throw unauthorized("Tenant not found");
       accessLevel = accessLevelFor(tenant.status);
       (req as any).tenant = tenant;
+    } else if (user.isPlatformAdmin && user.platformRoleKey) {
+      const [platformRole] = await db.select().from(schema.platformRoles)
+        .where(eq(schema.platformRoles.key, user.platformRoleKey));
+      if (!platformRole) throw unauthorized("Platform access role is unavailable");
+      platformRoleKey = platformRole.key;
+      platformRoleName = platformRole.name;
+      platformPermissions = platformRole.permissions;
     }
+    const mfaEnabled = await hasVerifiedMfa(user.id);
+    const assuranceLevel = payload.aal === "aal2" ? "aal2" : "aal1";
+    if (mfaEnabled && assuranceLevel !== "aal2") throw unauthorized("Two-factor authentication required");
     const sessionId = typeof payload.sid === "string" ? payload.sid : null;
     if (sessionId) {
       const now = new Date();
@@ -270,6 +315,7 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
       isTenantOwner, sessionId,
       mustChangePassword: user.mustChangePassword,
       permissions, accessLevel,
+      platformRoleKey, platformRoleName, platformPermissions, assuranceLevel,
     };
     next();
   } catch (e) { next(e); }
@@ -361,15 +407,25 @@ export function lifecycleGate(req: AuthedRequest, _res: Response, next: NextFunc
 export function requirePermission(...perms: Permission[]) {
   return (req: AuthedRequest, _res: Response, next: NextFunction) => {
     const a = req.auth!;
-    if (a.isPlatformAdmin) return next();
+    if (!a.tenantId) return next(forbidden("This endpoint requires a tenant workspace"));
     if (perms.every((p) => a.permissions.includes(p))) return next();
     next(forbidden(`Missing permission: ${perms.join(", ")}`));
   };
 }
 
 export function requirePlatformAdmin(req: AuthedRequest, _res: Response, next: NextFunction) {
-  if (req.auth?.isPlatformAdmin) return next();
+  if (req.auth?.isPlatformAdmin && req.auth.platformRoleKey) return next();
   next(forbidden("Platform administrator access required"));
+}
+
+export function requirePlatformPermission(...permissions: PlatformPermission[]) {
+  return (req: AuthedRequest, _res: Response, next: NextFunction) => {
+    if (!req.auth?.isPlatformAdmin || !req.auth.platformRoleKey) {
+      return next(forbidden("Platform staff access required"));
+    }
+    if (permissions.every((permission) => req.auth!.platformPermissions.includes(permission))) return next();
+    return next(forbidden(`Missing platform permission: ${permissions.join(", ")}`));
+  };
 }
 
 /** Convenience: current tenant id or 403. */
