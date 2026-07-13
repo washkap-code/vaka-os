@@ -30,6 +30,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-005 | Event bus: emit domain events from existing write paths | ✅ Implemented; full DB-backed suite verified; durable delivery gated |
 | P1-006 | Tenant-scoped Customer/Invoice/Product search adapter | ✅ Technically verified internal adapter; durable delivery, scale and UI gated |
 | P1-008 | Canonical Company/Customer/Invoice/Product metadata registry | ✅ Technically verified read-only registry; dynamic values and AI context gated |
+| P9-008 | Account recovery, optional MFA and governed platform workforce | Approved for implementation |
 | P3-003 | Customer activity and communication timeline | ✅ Technically verified for manual CRM activity and financial milestones; provider communications gated |
 | P3-004 | Customer records, bulk actions and controlled deletion | Implemented on branch; verification and release pending |
 | P2-007 | Invoice detail and draft amendment | Implemented on branch; verification and release pending |

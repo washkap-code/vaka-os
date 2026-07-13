@@ -18,7 +18,12 @@ import { useListSelection } from "./records/use-list-selection";
 type Me = {
   userId: string; permissions: string[]; accessLevel: string; mustChangePassword: boolean;
   isTenantOwner: boolean; sessionId: string | null;
-  user: { id: string; email: string; fullName: string };
+  platformRoleKey: string | null; platformRoleName: string | null; platformPermissions: string[];
+  assuranceLevel: "aal1" | "aal2";
+  user: {
+    id: string; email: string; fullName: string; workPhone?: string | null; location?: string | null;
+    businessFunction?: string | null; jobTitle?: string | null;
+  };
   tenant: {
     id: string; companyName: string; subdomain: string; status: string;
     baseCurrency: "USD" | "ZWG"; trialEndsAt: string;
@@ -120,6 +125,16 @@ type PlatformAuditEvent = {
   entityType: string | null;
   entityId: string | null;
   createdAt: string;
+};
+
+type PlatformRole = { key: string; name: string; permissions: string[] };
+type PlatformStaff = {
+  id: string; email: string; fullName: string; status: "active" | "disabled";
+  mustChangePassword: boolean; lastLoginAt: string | null; platformRoleKey: string;
+  roleName: string; permissions: string[]; employeeNumber: string | null;
+  businessFunction: string; jobTitle: string; workPhone: string | null; location: string | null;
+  managerUserId: string | null; employmentState: "ACTIVE" | "LEAVE" | "ENDED";
+  startDate: string | null; endDate: string | null; operationalNotes: string | null;
 };
 
 type PlatformCapabilityStatus = {
@@ -263,16 +278,62 @@ export default function App() {
       setToken(null); setMe(null); setGate("landing");
     });
   };
-  const [gate, setGate] = useState<"landing" | "login" | "signup">("landing");
+  const resetToken = new URLSearchParams(window.location.search).get("resetToken");
+  const [gate, setGate] = useState<"landing" | "login" | "signup">(resetToken ? "login" : "landing");
 
   if (!booted) return null;
   if (!me) {
+    if (resetToken) return <PasswordReset token={resetToken} onDone={() => {
+      window.history.replaceState({}, "", window.location.pathname);
+      setGate("login");
+    }} />;
     if (gate === "landing") return <Landing onLogin={() => setGate("login")} onSignup={() => setGate("signup")} />;
     return <Auth initialMode={gate} onBack={() => setGate("landing")} onDone={refresh} />;
   }
   if (me.mustChangePassword) return <PasswordChange onDone={refresh} onLogout={logout} />;
-  if (!me.tenant) return <PlatformAdmin onLogout={logout} />;
+  if (!me.tenant) return <PlatformAdmin me={me} onLogout={logout} onRefresh={refresh} />;
   return <Shell me={me} onLogout={logout} onRefresh={refresh} />;
+}
+
+function PasswordField({ label, value, onChange, autoComplete, disabled = false }: {
+  label: string; value: string; onChange: (value: string) => void;
+  autoComplete?: string; disabled?: boolean;
+}) {
+  const [visible, setVisible] = useState(false);
+  return <div className="field"><label>{label}</label><div className="password-control">
+    <input disabled={disabled} type={visible ? "text" : "password"} autoComplete={autoComplete}
+      value={value} onChange={(event) => onChange(event.target.value)} />
+    <button type="button" className="password-toggle" aria-pressed={visible}
+      aria-label={visible ? appEnglish.auth.hidePassword : appEnglish.auth.showPassword}
+      onClick={() => setVisible((current) => !current)}>
+      {visible ? appEnglish.auth.hidePassword : appEnglish.auth.showPassword}
+    </button>
+  </div></div>;
+}
+
+function PasswordReset({ token, onDone }: { token: string; onDone: () => void }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (password !== confirmPassword) { setMessage(appEnglish.auth.passwordMismatch); return; }
+    setBusy(true); setMessage("");
+    try {
+      await api("/auth/password-reset/complete", { method: "POST", body: { token, newPassword: password } });
+      setMessage(appEnglish.auth.resetComplete);
+    } catch (error: any) { setMessage(error.message); }
+    setBusy(false);
+  };
+  return <div className="auth"><div className="box">
+    <div className="brandline">VAKA Operating System</div>
+    <h1>{appEnglish.auth.resetPassword}</h1><p>{appEnglish.auth.resetHelp}</p>
+    <PasswordField label={appEnglish.auth.newPassword} value={password} onChange={setPassword} autoComplete="new-password" />
+    <PasswordField label={appEnglish.auth.confirmPassword} value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
+    <button className="btn accent full-width" disabled={busy} onClick={submit}>{appEnglish.auth.resetPassword}</button>
+    {message && <div className="banner warn">{message}</div>}
+    <div className="alt"><a onClick={onDone}>{appEnglish.auth.backToSignIn}</a></div>
+  </div></div>;
 }
 
 function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: () => void }) {
@@ -306,21 +367,12 @@ function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: ()
       <div className="brandline">VAKA Operating System</div>
       <h1>{appEnglish.auth.changeTemporaryPassword}</h1>
       <p>{appEnglish.auth.changeTemporaryPasswordHelp}</p>
-      <div className="field">
-        <label>{appEnglish.auth.temporaryPassword}</label>
-        <input type="password" autoComplete="current-password" value={currentPassword}
-          onChange={(event) => setCurrentPassword(event.target.value)} />
-      </div>
-      <div className="field">
-        <label>{appEnglish.auth.newPassword}</label>
-        <input type="password" autoComplete="new-password" value={newPassword}
-          onChange={(event) => setNewPassword(event.target.value)} />
-      </div>
-      <div className="field">
-        <label>{appEnglish.auth.confirmPassword}</label>
-        <input type="password" autoComplete="new-password" value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)} />
-      </div>
+      <PasswordField label={appEnglish.auth.temporaryPassword} value={currentPassword}
+        onChange={setCurrentPassword} autoComplete="current-password" />
+      <PasswordField label={appEnglish.auth.newPassword} value={newPassword}
+        onChange={setNewPassword} autoComplete="new-password" />
+      <PasswordField label={appEnglish.auth.confirmPassword} value={confirmPassword}
+        onChange={setConfirmPassword} autoComplete="new-password" />
       <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
         {busy ? appEnglish.auth.changingPassword : appEnglish.auth.changePassword}
       </button>
@@ -333,31 +385,35 @@ function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: ()
 // ---------------------------------------------------------------------------
 // Platform admin (Jonomi staff — users with no tenant)
 // ---------------------------------------------------------------------------
-function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
+function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => Promise<void> }) {
   const [tenants, setTenants] = useState<PlatformTenant[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
   const [controlCenter, setControlCenter] = useState<PlatformControlCenter | null>(null);
   const [backupManifests, setBackupManifests] = useState<BackupManifestRecord[]>([]);
-  const [tab, setTab] = useState<"overview" | "tenants" | "operations" | "guide">("overview");
+  const [staff, setStaff] = useState<PlatformStaff[]>([]);
+  const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
+  const [tab, setTab] = useState<"overview" | "tenants" | "operations" | "staff" | "settings" | "guide">("overview");
   const [catalogueGroup, setCatalogueGroup] = useState<"all" | PlatformCapabilityStatus["group"]>("all");
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
   const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
-  const load = () => Promise.all([
-    api("/platform/tenants"),
-    api("/platform/analytics"),
-    api("/platform/control-center"),
-    api("/platform/backup-manifests"),
-  ])
-    .then(([tenantRows, summary, control, manifests]) => {
-      setTenants(tenantRows as PlatformTenant[]);
-      setAnalytics(summary);
-      setControlCenter(control as PlatformControlCenter);
-      setBackupManifests(manifests as BackupManifestRecord[]);
-    })
-    .catch((e: any) => setMsg(e.message));
+  const can = (permission: string) => me.platformPermissions.includes(permission);
+  const load = async () => {
+    try {
+      const requests: Promise<void>[] = [];
+      if (can("platform.tenants.read")) requests.push(api("/platform/tenants").then((rows) => setTenants(rows as PlatformTenant[])));
+      if (can("platform.overview.read")) requests.push(api("/platform/analytics").then(setAnalytics));
+      if (can("platform.operations.read")) requests.push(api("/platform/control-center").then((value) => setControlCenter(value as PlatformControlCenter)));
+      if (can("platform.backups.read")) requests.push(api("/platform/backup-manifests").then((rows) => setBackupManifests(rows as BackupManifestRecord[])));
+      if (can("platform.staff.read")) {
+        requests.push(api("/platform/staff").then((rows) => setStaff(rows as PlatformStaff[])));
+        requests.push(api("/platform/staff/roles").then((rows) => setPlatformRoles(rows as PlatformRole[])));
+      }
+      await Promise.all(requests);
+    } catch (error: any) { setMsg(error.message); }
+  };
   useEffect(() => { void load(); }, []);
   const runBilling = async () => {
     if (!window.confirm(copy.billingConfirm)) return;
@@ -388,20 +444,22 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
       <aside className="side">
         <div className="logo">VAKA OS<small>{copy.title}</small></div>
         <nav>
-          <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button>
-          <button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button>
-          <button className={tab === "operations" ? "active" : ""} onClick={() => setTab("operations")}>{copy.operations}</button>
+          {can("platform.overview.read") && <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button>}
+          {can("platform.tenants.read") && <button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button>}
+          {can("platform.operations.read") && <button className={tab === "operations" ? "active" : ""} onClick={() => setTab("operations")}>{copy.operations}</button>}
+          {can("platform.staff.read") && <button className={tab === "staff" ? "active" : ""} onClick={() => setTab("staff")}>{copy.workforce}</button>}
+          <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>{copy.settings}</button>
           <button className={tab === "guide" ? "active" : ""} onClick={() => setTab("guide")}>{copy.userGuide}</button>
         </nav>
         <div className="foot">
-          Jonomi Digital Studio<br />
-          <a style={{ color: "rgb(var(--vaka-workspace-white-rgb) / .7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
+          {me.user.fullName}<br /><small>{me.platformRoleName}</small><br />
+          <a className="side-signout" onClick={onLogout}>Sign out</a>
         </div>
       </aside>
       <main className="main">
         <h1>{copy.title}</h1>
         <div className="sub">{copy.subtitle}</div>
-        {tab === "overview" && <div className="row" style={{ marginBottom: 14 }}>
+        {tab === "overview" && can("platform.billing.run") && <div className="row" style={{ marginBottom: 14 }}>
           <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>
         </div>}
         {msg && <div className="banner warn">{msg}</div>}
@@ -513,6 +571,8 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </>}
         {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}
+        {tab === "staff" && <PlatformWorkforce me={me} staff={staff} roles={platformRoles} onReload={load} />}
+        {tab === "settings" && <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />}
         {tab === "guide" && <PlatformAdminGuide />}
       </main>
     </div>
@@ -520,10 +580,200 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
 }
 
 // ---------------------------------------------------------------------------
+// Platform workforce and administrator security settings
+// ---------------------------------------------------------------------------
+const emptyPlatformStaff = {
+  fullName: "", email: "", platformRoleKey: "SUPPORT_ANALYST", employeeNumber: "",
+  businessFunction: "Customer Support", jobTitle: "", workPhone: "", location: "Zimbabwe",
+  managerUserId: "", employmentState: "ACTIVE", startDate: "", endDate: "",
+  operationalNotes: "", status: "active", initialPassword: "",
+};
+
+function PlatformWorkforce({ me, staff, roles, onReload }: {
+  me: Me; staff: PlatformStaff[]; roles: PlatformRole[]; onReload: () => Promise<void>;
+}) {
+  const copy = appEnglish.platformAdmin;
+  const canManage = me.platformPermissions.includes("platform.staff.manage");
+  const [editing, setEditing] = useState<any | null>(null);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const create = async () => {
+    setBusy(true); setMessage("");
+    try {
+      const result = await api("/platform/staff", { method: "POST", body: {
+        ...editing,
+        managerUserId: editing.managerUserId || null,
+        startDate: editing.startDate || null,
+        endDate: editing.endDate || null,
+        initialPassword: editing.initialPassword || undefined,
+      } });
+      setMessage(copy.staffCreated.replace("{password}", result.temporaryPassword));
+      setEditing(null); await onReload();
+    } catch (error: any) { setMessage(error.message); }
+    setBusy(false);
+  };
+  const save = async () => {
+    setBusy(true); setMessage("");
+    try {
+      await api(`/platform/staff/${editing.id}`, { method: "PATCH", body: {
+        ...editing,
+        managerUserId: editing.managerUserId || null,
+        startDate: editing.startDate || null,
+        endDate: editing.endDate || null,
+      } });
+      setEditing(null); await onReload();
+    } catch (error: any) { setMessage(error.message); }
+    setBusy(false);
+  };
+  const issueTemporaryPassword = async (staffId: string) => {
+    if (!window.confirm("Issue a new one-time password and end this staff member's active sessions?")) return;
+    try {
+      const result = await api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {} });
+      setMessage(copy.temporaryPasswordIssued.replace("{password}", result.temporaryPassword));
+      await onReload();
+    } catch (error: any) { setMessage(error.message); }
+  };
+  return <>
+    <div className="panel-heading"><div><h2>{copy.staffHeading}</h2><div className="sub">{copy.staffHelp}</div></div>
+      {canManage && <button className="btn accent" onClick={() => setEditing({ ...emptyPlatformStaff, platformRoleKey: roles[0]?.key ?? "SUPPORT_ANALYST" })}>{copy.addStaff}</button>}
+    </div>
+    {message && <div className="banner warn security-sensitive-message">{message}</div>}
+    <div className="panel"><div className="table-scroll"><table><thead><tr>
+      <th>{copy.users}</th><th>{copy.role}</th><th>{copy.function}</th><th>{copy.jobTitle}</th><th>{copy.location}</th><th>{copy.staffStatus}</th>{canManage && <th>{copy.review}</th>}
+    </tr></thead><tbody>{staff.map((member) => <tr key={member.id}>
+      <td><strong>{member.fullName}</strong><small>{member.email}</small></td><td>{member.roleName}</td>
+      <td>{member.businessFunction}</td><td>{member.jobTitle}</td><td>{member.location ?? "—"}</td>
+      <td><span className={`pill ${member.status === "active" ? "ACTIVE" : "VOID"}`}>{member.status}</span></td>
+      {canManage && <td><div className="row"><button className="btn ghost sm" disabled={member.platformRoleKey === "PRINCIPAL_ADMIN" || member.id === me.userId}
+        onClick={() => setEditing({ ...member })}>{copy.editStaff}</button>
+        <button className="btn ghost sm" disabled={member.platformRoleKey === "PRINCIPAL_ADMIN" || member.id === me.userId}
+          onClick={() => void issueTemporaryPassword(member.id)}>{copy.issueTemporaryPassword}</button></div></td>}
+    </tr>)}{!staff.length && <tr><td colSpan={canManage ? 7 : 6}>{copy.noStaff}</td></tr>}</tbody></table></div></div>
+    {editing && <div className="modal-backdrop" role="presentation"><div className="modal record-modal" role="dialog" aria-modal="true" aria-label={editing.id ? copy.editStaff : copy.addStaff}>
+      <div className="panel-heading"><h2>{editing.id ? copy.editStaff : copy.addStaff}</h2><button className="btn ghost sm" onClick={() => setEditing(null)}>{copy.close}</button></div>
+      <div className="grid2 record-form-grid">
+        <div className="field"><label>{copy.users}</label><input value={editing.fullName ?? ""} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} /></div>
+        <div className="field"><label>Email</label><input type="email" disabled={Boolean(editing.id)} value={editing.email ?? ""} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></div>
+        <div className="field"><label>{copy.role}</label><select value={editing.platformRoleKey ?? ""} onChange={(event) => setEditing({ ...editing, platformRoleKey: event.target.value })}>{roles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}</select></div>
+        <div className="field"><label>{copy.employeeNumber}</label><input value={editing.employeeNumber ?? ""} onChange={(event) => setEditing({ ...editing, employeeNumber: event.target.value })} /></div>
+        <div className="field"><label>{copy.function}</label><input value={editing.businessFunction ?? ""} onChange={(event) => setEditing({ ...editing, businessFunction: event.target.value })} /></div>
+        <div className="field"><label>{copy.jobTitle}</label><input value={editing.jobTitle ?? ""} onChange={(event) => setEditing({ ...editing, jobTitle: event.target.value })} /></div>
+        <div className="field"><label>{copy.workPhone}</label><input value={editing.workPhone ?? ""} onChange={(event) => setEditing({ ...editing, workPhone: event.target.value })} /></div>
+        <div className="field"><label>{copy.location}</label><input value={editing.location ?? ""} onChange={(event) => setEditing({ ...editing, location: event.target.value })} /></div>
+        <div className="field"><label>{copy.manager}</label><select value={editing.managerUserId ?? ""} onChange={(event) => setEditing({ ...editing, managerUserId: event.target.value })}><option value="">—</option>{staff.filter((item) => item.id !== editing.id).map((item) => <option key={item.id} value={item.id}>{item.fullName}</option>)}</select></div>
+        <div className="field"><label>{copy.employmentState}</label><select value={editing.employmentState ?? "ACTIVE"} onChange={(event) => setEditing({ ...editing, employmentState: event.target.value })}><option>ACTIVE</option><option>LEAVE</option><option>ENDED</option></select></div>
+        <div className="field"><label>{copy.startDate}</label><input type="date" value={editing.startDate ?? ""} onChange={(event) => setEditing({ ...editing, startDate: event.target.value })} /></div>
+        <div className="field"><label>{copy.endDate}</label><input type="date" value={editing.endDate ?? ""} onChange={(event) => setEditing({ ...editing, endDate: event.target.value })} /></div>
+        {editing.id && <div className="field"><label>{copy.staffStatus}</label><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value })}><option value="active">Active</option><option value="disabled">Disabled</option></select></div>}
+      </div>
+      <div className="field"><label>{copy.operationalNotes}</label><textarea value={editing.operationalNotes ?? ""} onChange={(event) => setEditing({ ...editing, operationalNotes: event.target.value })} /></div>
+      {!editing.id && <PasswordField label={copy.initialPassword} value={editing.initialPassword ?? ""} onChange={(value) => setEditing({ ...editing, initialPassword: value })} autoComplete="new-password" />}
+      <div className="row end"><button className="btn ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn accent" disabled={busy} onClick={editing.id ? save : create}>{editing.id ? copy.saveStaff : copy.createStaff}</button></div>
+    </div></div>}
+  </>;
+}
+
+function PlatformSecuritySettings({ me, onSaved, onLogout }: {
+  me: Me; onSaved: () => Promise<void>; onLogout: () => void;
+}) {
+  const copy = appEnglish.platformAdmin;
+  const [profile, setProfile] = useState({ fullName: me.user.fullName, workPhone: me.user.workPhone ?? "", location: me.user.location ?? "" });
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [mfa, setMfa] = useState<any>(null);
+  const [setup, setSetup] = useState<any>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [securityPassword, setSecurityPassword] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [message, setMessage] = useState("");
+  const loadSecurity = () => Promise.all([api("/auth/mfa"), api("/security/my-sessions")])
+    .then(([factor, sessionRows]) => { setMfa(factor); setSessions(sessionRows); })
+    .catch((error: any) => setMessage(error.message));
+  useEffect(() => { void loadSecurity(); }, []);
+  const saveProfile = async () => {
+    try { await api("/me/profile", { method: "PATCH", body: profile }); setMessage("Profile updated."); await onSaved(); }
+    catch (error: any) { setMessage(error.message); }
+  };
+  const savePassword = async () => {
+    if (newPassword !== confirmPassword) { setMessage(appEnglish.auth.passwordMismatch); return; }
+    try {
+      await api("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setMessage(copy.passwordChanged);
+    } catch (error: any) { setMessage(error.message); }
+  };
+  const beginMfa = async () => { try { setSetup(await api("/auth/mfa/enroll", { method: "POST", body: {} })); } catch (error: any) { setMessage(error.message); } };
+  const verifyEnrollment = async () => {
+    try {
+      const result = await api("/auth/mfa/enroll/verify", { method: "POST", body: { code: mfaCode } });
+      setRecoveryCodes(result.recoveryCodes); setSetup(null); setMfa({ enabled: true, recoveryCodesRemaining: result.recoveryCodes.length });
+      setMessage("Two-factor authentication is enabled. Save the recovery codes, then sign in again.");
+    } catch (error: any) { setMessage(error.message); }
+  };
+  const replaceCodes = async () => {
+    try {
+      const result = await api("/auth/mfa/recovery-codes", { method: "POST", body: { currentPassword: securityPassword, code: mfaCode } });
+      setRecoveryCodes(result.recoveryCodes); setSecurityPassword(""); setMfaCode(""); await loadSecurity();
+    } catch (error: any) { setMessage(error.message); }
+  };
+  const disable = async () => {
+    if (!window.confirm("Disable two-factor authentication and end all active sessions?")) return;
+    try { await api("/auth/mfa", { method: "DELETE", body: { currentPassword: securityPassword, code: mfaCode } }); onLogout(); }
+    catch (error: any) { setMessage(error.message); }
+  };
+  const revoke = async (sessionId: string) => {
+    try { await api(`/security/my-sessions/${sessionId}/revoke`, { method: "POST", body: {} }); if (sessionId === me.sessionId) onLogout(); else await loadSecurity(); }
+    catch (error: any) { setMessage(error.message); }
+  };
+  return <>
+    {message && <div className="banner warn">{message}</div>}
+    <div className="grid2 settings-grid">
+      <div className="panel"><h2>{copy.profileSettings}</h2>
+        <div className="field"><label>{copy.users}</label><input value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} /></div>
+        <div className="field"><label>Email</label><input value={me.user.email} disabled /></div>
+        <div className="field"><label>{copy.role}</label><input value={me.platformRoleName ?? ""} disabled /></div>
+        <div className="field"><label>{copy.function}</label><input value={me.user.businessFunction ?? ""} disabled /></div>
+        <div className="field"><label>{copy.jobTitle}</label><input value={me.user.jobTitle ?? ""} disabled /></div>
+        <div className="field"><label>{copy.workPhone}</label><input value={profile.workPhone} onChange={(event) => setProfile({ ...profile, workPhone: event.target.value })} /></div>
+        <div className="field"><label>{copy.location}</label><input value={profile.location} onChange={(event) => setProfile({ ...profile, location: event.target.value })} /></div>
+        <button className="btn accent" onClick={saveProfile}>{copy.saveProfile}</button>
+      </div>
+      <div className="panel"><h2>{copy.securitySettings}</h2>
+        <PasswordField label={copy.currentPassword} value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" />
+        <PasswordField label={appEnglish.auth.newPassword} value={newPassword} onChange={setNewPassword} autoComplete="new-password" />
+        <PasswordField label={copy.confirmPassword} value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
+        <button className="btn accent" onClick={savePassword}>{appEnglish.auth.changePassword}</button>
+      </div>
+    </div>
+    <div className="panel"><h2>{appEnglish.auth.twoFactorTitle}</h2>
+      <p className="sub">{mfa?.enabled ? copy.mfaEnabled : copy.mfaDisabled}</p>
+      {!mfa?.enabled && !setup && <button className="btn accent" onClick={beginMfa}>{copy.enableMfa}</button>}
+      {setup && <div className="mfa-setup"><p>{copy.mfaSetupHelp}</p><div className="secret-box"><strong>{copy.secret}</strong><code>{setup.secret}</code></div>
+        <details><summary>{copy.otpauthUri}</summary><code className="breakable-code">{setup.otpauthUri}</code></details>
+        <div className="field"><label>{appEnglish.auth.authenticationCode}</label><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></div>
+        <button className="btn accent" onClick={verifyEnrollment}>{copy.verifyMfa}</button></div>}
+      {recoveryCodes.length > 0 && <div className="recovery-codes"><h3>{copy.recoveryCodes}</h3><p>{copy.recoveryCodesHelp}</p><ul>{recoveryCodes.map((code) => <li key={code}><code>{code}</code></li>)}</ul>
+        <button className="btn ghost" onClick={onLogout}>{appEnglish.auth.signOut}</button></div>}
+      {mfa?.enabled && recoveryCodes.length === 0 && <><p>{copy.remainingCodes.replace("{count}", String(mfa.recoveryCodesRemaining))}</p>
+        <div className="grid2"><PasswordField label={copy.currentPassword} value={securityPassword} onChange={setSecurityPassword} autoComplete="current-password" />
+          <div className="field"><label>{appEnglish.auth.authenticationCode}</label><input inputMode="numeric" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></div></div>
+        <div className="row"><button className="btn ghost" onClick={replaceCodes}>{copy.replaceRecoveryCodes}</button><button className="btn danger" onClick={disable}>{copy.disableMfa}</button></div></>}
+    </div>
+    <div className="panel"><h2>{copy.activeSessionsHeading}</h2><div className="table-scroll"><table><thead><tr><th>Client</th><th>Device</th><th>Last seen</th><th>Created</th><th></th></tr></thead>
+      <tbody>{sessions.map((session) => <tr key={session.id}><td>{session.clientType}</td><td>{session.deviceDescription ?? "—"}</td><td>{new Date(session.lastSeenAt).toLocaleString()}</td><td>{new Date(session.createdAt).toLocaleString()}</td><td>{!session.revokedAt && <button className="btn ghost sm" onClick={() => void revoke(session.id)}>{copy.revokeSession}</button>}</td></tr>)}
+      {!sessions.length && <tr><td colSpan={5}>{copy.noSessions}</td></tr>}</tbody></table></div></div>
+  </>;
+}
+
+// ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
 function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; initialMode?: "login" | "signup"; onBack?: () => void }) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [recovering, setRecovering] = useState(false);
+  const [mfaChallenge, setMfaChallenge] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [f, setF] = useState<any>({
     baseCurrency: "USD",
     planName: "Starter",
@@ -538,10 +788,61 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
       const res = mode === "login"
         ? await api("/auth/login", { method: "POST", body: { email: f.email, password: f.password, subdomain: f.subdomain || undefined } })
         : await api("/auth/signup", { method: "POST", body: f });
+      if (res.mfaRequired) {
+        setMfaChallenge(res.challengeToken);
+        setBusy(false);
+        return;
+      }
       setToken(res.token); onDone();
     } catch (e: any) { setErr(e.message); }
     setBusy(false);
   };
+
+  const requestRecovery = async () => {
+    setErr(""); setBusy(true);
+    try {
+      await api("/auth/password-reset/request", {
+        method: "POST",
+        body: { email: f.email, subdomain: f.subdomain || undefined },
+      });
+      setErr(appEnglish.auth.recoverySent);
+    } catch (error: any) { setErr(error.message); }
+    setBusy(false);
+  };
+
+  const verifyMfa = async () => {
+    setErr(""); setBusy(true);
+    try {
+      const res = await api("/auth/mfa/verify-login", {
+        method: "POST",
+        body: { challengeToken: mfaChallenge, code: mfaCode },
+      });
+      setToken(res.token); onDone();
+    } catch (error: any) { setErr(error.message); }
+    setBusy(false);
+  };
+
+  if (mfaChallenge) return <div className="auth"><div className="box">
+    <div className="brandline">VAKA Operating System</div>
+    <h1>{appEnglish.auth.twoFactorTitle}</h1><p>{appEnglish.auth.twoFactorLoginHelp}</p>
+    <div className="field"><label>{appEnglish.auth.authenticationCode}</label>
+      <input inputMode="numeric" autoComplete="one-time-code" value={mfaCode}
+        onChange={(event) => setMfaCode(event.target.value)} /></div>
+    <button className="btn accent full-width" disabled={busy} onClick={verifyMfa}>{appEnglish.auth.verifyAndSignIn}</button>
+    {err && <div className="err-text">{err}</div>}
+    <div className="alt"><a onClick={() => { setMfaChallenge(""); setMfaCode(""); setErr(""); }}>{appEnglish.auth.backToSignIn}</a></div>
+  </div></div>;
+
+  if (recovering) return <div className="auth"><div className="box">
+    <div className="brandline">VAKA Operating System</div>
+    <h1>{appEnglish.auth.recoverAccess}</h1><p>{appEnglish.auth.recoveryHelp}</p>
+    <div className="field"><label>Company subdomain (workspace accounts)</label>
+      <input value={f.subdomain ?? ""} onChange={set("subdomain")} autoComplete="organization" /></div>
+    <div className="field"><label>Email</label><input type="email" value={f.email ?? ""} onChange={set("email")} autoComplete="email" /></div>
+    <button className="btn accent full-width" disabled={busy} onClick={requestRecovery}>{appEnglish.auth.recoverAccess}</button>
+    {err && <div className="banner warn">{err}</div>}
+    <div className="alt"><a onClick={() => { setRecovering(false); setErr(""); }}>{appEnglish.auth.backToSignIn}</a></div>
+  </div></div>;
 
   return (
     <div className="auth"><div className="box">
@@ -558,7 +859,9 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
       </>}
       {mode === "login" && <div className="field"><label>Company subdomain (optional)</label><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /><small>Workspace users can enter their company subdomain. Platform administrators should leave this blank.</small></div>}
       <div className="field"><label>Email</label><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} autoComplete="email" /></div>
-      <div className="field"><label>Password</label><input type="password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""} onChange={set(mode === "login" ? "password" : "ownerPassword")} autoComplete={mode === "login" ? "current-password" : "new-password"} /></div>
+      <PasswordField label="Password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""}
+        onChange={(value) => setF({ ...f, [mode === "login" ? "password" : "ownerPassword"]: value })}
+        autoComplete={mode === "login" ? "current-password" : "new-password"} />
       {mode === "signup" && <div className="field"><label>Package — 30-day free trial</label>
         <select value={f.planName} onChange={set("planName")}>
           <option value="Starter">Starter — USD 19/month · 1 user · 1 location</option>
@@ -576,6 +879,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
       </button>
       {err && <div className="err-text">{err}</div>}
       <div className="alt">
+        {mode === "login" && <><a onClick={() => { setRecovering(true); setErr(""); }}>{appEnglish.auth.forgotPassword}</a> · </>}
         {mode === "login"
           ? <>New here? <a onClick={() => setMode("signup")}>Create your company</a></>
           : <>Already registered? <a onClick={() => setMode("login")}>Sign in</a></>}
@@ -1711,7 +2015,9 @@ function UsersActivity() {
       <div className="field"><label>{copy.role}</label><select value={newUser.roleId} onChange={(event) => setNewUser({ ...newUser, roleId: event.target.value })}>
         <option value="">{copy.role}</option>{(data.roles ?? []).filter((role: any) => role.name !== "Owner").map((role: any) => <option key={role.id} value={role.id}>{role.name}</option>)}
       </select></div>
-      <div className="field"><label>{copy.initialPassword}</label><input type="password" value={newUser.initialPassword} onChange={(event) => setNewUser({ ...newUser, initialPassword: event.target.value })} /><small>{copy.initialPasswordHelp}</small></div>
+      <PasswordField label={copy.initialPassword} value={newUser.initialPassword}
+        onChange={(value) => setNewUser({ ...newUser, initialPassword: value })} autoComplete="new-password" />
+      <small className="field-help">{copy.initialPasswordHelp}</small>
       {createdPassword && <div className="banner warn">{copy.userCreated.replace("{password}", createdPassword)}</div>}
       <div className="row end"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
     </div></div>}

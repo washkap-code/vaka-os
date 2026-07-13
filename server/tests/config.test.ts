@@ -3,6 +3,7 @@ import {
   databaseUrl,
   emailProviderConfig,
   jwtSecret,
+  mfaEncryptionSecret,
   platformAdminPassword,
   publicAppUrl,
 } from "../src/config.js";
@@ -42,6 +43,17 @@ describe("runtime configuration", () => {
     expect(jwtSecret({ NODE_ENV: "production", JWT_SECRET: secret })).toBe(
       secret,
     );
+  });
+
+  it("keeps MFA encryption stable and independently configurable", () => {
+    const jwt = "j".repeat(64);
+    const mfa = "m".repeat(32);
+    expect(mfaEncryptionSecret({ NODE_ENV: "production", JWT_SECRET: jwt, MFA_ENCRYPTION_KEY: mfa }))
+      .toBe(mfa);
+    expect(mfaEncryptionSecret({ NODE_ENV: "production", JWT_SECRET: jwt })).toBe(jwt);
+    expect(() => mfaEncryptionSecret({
+      NODE_ENV: "production", JWT_SECRET: jwt, MFA_ENCRYPTION_KEY: "too-short",
+    })).toThrow("at least 32 bytes");
   });
 
   it("requires a non-placeholder administrator password for seeding", () => {
