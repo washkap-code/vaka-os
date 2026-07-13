@@ -28,7 +28,7 @@ export type CurrencyAgeing = {
 
 const MONEY_PATTERN = /^-?\d+(?:\.\d{1,2})?$/;
 
-function toMinorUnits(value: string | number): bigint {
+export function toMinorUnits(value: string | number): bigint {
   const exact = String(value).trim();
   if (!MONEY_PATTERN.test(exact)) {
     throw new Error(`Expected exact two-decimal money value, received: ${value}`);
@@ -39,13 +39,13 @@ function toMinorUnits(value: string | number): bigint {
   return negative ? -minor : minor;
 }
 
-function fromMinorUnits(value: bigint): string {
+export function fromMinorUnits(value: bigint): string {
   const negative = value < 0n;
   const absolute = negative ? -value : value;
   return `${negative ? "-" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}`;
 }
 
-function exactSum(values: Iterable<string | number>): bigint {
+export function exactSum(values: Iterable<string | number>): bigint {
   let total = 0n;
   for (const value of values) total += toMinorUnits(value);
   return total;

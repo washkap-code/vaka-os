@@ -66,7 +66,7 @@ Goal: trustworthy, ZIMRA-aware financial operations; Zimbabwe rules configurable
 |---|---|---|---|
 | P2-001 | Country Pack engine + Zimbabwe reference (currencies, effective-dated VAT, statutory IDs, compliance calendar) | P1-002 | ✅ Implemented and full-suite verified; professional review open |
 | P2-002 | VAT treatment model (standard/zero-rated/exempt) applied at line + document level with parity tests | P2-001 | ✅ Technically verified; professional approval pending |
-| P2-003 | VAT return report (period selection, output/input VAT, evidence export) | P2-002 | Planned |
+| P2-003 | VAT return report (period selection, output/input VAT, evidence export) | P2-002 | ✅ Technically verified preview; professional filing approval pending |
 | P2-004 | Effective-dated exchange-rate register with source/date/time; reports in base currency with original-currency traceability | P2-001 | Foundation exists |
 | P2-005 | Financial period close (lock posted periods; adjustments as offsetting entries only) | — | Planned |
 | P2-006 | Statutory report pack (trial balance, P&L, balance sheet, aged receivables/payables) export to PDF/CSV | P2-002 | Foundation exists |
@@ -205,7 +205,9 @@ P10-001 → P10-002 → P10-003               (launch)
 ```
 
 P1-003, P2-001 and P2-002 are implemented foundations with green full-suite
-evidence; professional review remains open where stated. P1-004 and P1-005 are
-implemented and verified as internal adapter foundations. The next dependency
-missions are **P1-006** and **P2-003**; cross-cutting operations work remains tracked in the
-permanent `OPS-*` namespace.
+evidence; professional review remains open where stated. P2-003 is implemented
+as an internal, full-suite-verified, not-filing-ready technical report pending
+qualified review. P1-004 and P1-005 are implemented and verified as
+internal adapter foundations. The next dependency mission is **P1-006**;
+cross-cutting operations work remains tracked in the permanent `OPS-*`
+namespace.

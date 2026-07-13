@@ -41,6 +41,9 @@ import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
+import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
+import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
+import { recordAudit } from "./platform/audit-facade.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1049,6 +1052,44 @@ api.get("/reports/balance-sheet", requirePermission("reports.read"), wrap(async 
   balanceSheet(tenantId(req), req.query.asAt ? new Date(String(req.query.asAt)) : new Date())));
 api.get("/reports/aged-receivables", requirePermission("reports.read"), wrap(async (req) =>
   agedReceivables(tenantId(req))));
+api.get("/reports/vat", requirePermission("reports.read"), wrap(async (req) =>
+  getVatTechnicalReport({ tenantId: tenantId(req), period: vatReportPeriodSchema.parse(req.query) })));
+api.get("/reports/vat.csv", requirePermission("reports.read"), async (req, res, next) => {
+  try {
+    const period = vatReportPeriodSchema.parse(req.query);
+    const report = await getVatTechnicalReport({ tenantId: tenantId(req as AuthedRequest), period });
+    await recordAudit({
+      tenantId: tenantId(req as AuthedRequest),
+      actorUserId: (req as AuthedRequest).auth!.userId,
+      action: "report.vat_exported",
+      entityType: "tenant",
+      entityId: tenantId(req as AuthedRequest),
+      metadata: { format: "csv", from: period.from, to: period.to, evidenceCount: report.evidence.length },
+    });
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="vat-technical-preview-${period.from}-${period.to}.csv"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(renderVatReportCsv(report));
+  } catch (error) { next(error); }
+});
+api.get("/reports/vat.pdf", requirePermission("reports.read"), async (req, res, next) => {
+  try {
+    const period = vatReportPeriodSchema.parse(req.query);
+    const report = await getVatTechnicalReport({ tenantId: tenantId(req as AuthedRequest), period });
+    await recordAudit({
+      tenantId: tenantId(req as AuthedRequest),
+      actorUserId: (req as AuthedRequest).auth!.userId,
+      action: "report.vat_exported",
+      entityType: "tenant",
+      entityId: tenantId(req as AuthedRequest),
+      metadata: { format: "pdf", from: period.from, to: period.to, evidenceCount: report.evidence.length },
+    });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="vat-technical-preview-${period.from}-${period.to}.pdf"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(renderVatReportPdf(report));
+  } catch (error) { next(error); }
+});
 
 // ---------------------------------------------------------------------------
 // AI-ready read models — deterministic context only; no model/provider call.

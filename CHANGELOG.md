@@ -12,6 +12,14 @@
 
 ### Added
 
+- **VAT technical return report (P2-003):** Added authorised, tenant-scoped
+  period reporting over posted VAT control-account lines, with exact output
+  VAT, input VAT and net-position calculations. The Reports workspace now
+  exposes period selection and reconcilable JSON, formula-safe CSV and
+  multi-page PDF evidence exports; CSV/PDF exports create minimised audit
+  evidence. The report remains explicitly not filing-ready: supplier input-VAT,
+  legal-entity and qualified Zimbabwean accountant/tax approval gates remain.
+
 - **VAT treatment model (P2-002):** Added tenant-jurisdiction, tax-date,
   line-level standard/zero-rated/exempt and document-level mixed VAT evidence.
   Standard rates resolve from the effective-dated country pack; raw rates are

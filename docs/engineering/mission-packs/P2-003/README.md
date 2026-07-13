@@ -1,6 +1,6 @@
 # P2-003 - VAT Return Report
 
-**Status:** Approved for implementation
+**Status:** Technically verified; qualified accountant/tax approval pending
 **Programme:** 2 - Finance, Tax & Localisation (Zimbabwe)
 **Type:** Read-only financial reporting and evidence export
 **Depends on:** P2-001 country packs; P2-002 VAT treatment evidence
