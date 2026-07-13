@@ -4,6 +4,7 @@ import { z } from "zod";
 import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } from "./lib.js";
 import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
+import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
 const MAX_CSV_BYTES = 1_000_000;
 const MAX_ROWS = 5_000;
@@ -735,7 +736,7 @@ export async function commitOpeningStockImport(opts: {
   actorUserId: string;
   batchId: string;
 }) {
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
       eq(schema.importBatches.id, opts.batchId),
       eq(schema.importBatches.tenantId, opts.tenantId),
@@ -781,6 +782,19 @@ export async function commitOpeningStockImport(opts: {
         createdBy: opts.actorUserId,
         requireZeroCurrent: true,
         requireNoHistory: true,
+      });
+      queue({
+        id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
+        type: DOMAIN_EVENTS.STOCK_MOVED,
+        tenantId: opts.tenantId,
+        actorUserId: opts.actorUserId,
+        payload: {
+          movementId: movement.movementId,
+          productId: product.id,
+          warehouseId: warehouse.id,
+          quantityDelta: data.quantity,
+          kind: "OPENING",
+        },
       });
       totalValue += mulRate(toCents(data.unitCost), data.quantity);
       if (totalValue > MAX_MONEY_CENTS) {
@@ -832,7 +846,7 @@ export async function commitOpeningStockImport(opts: {
       currency: tenant.baseCurrency,
       journalEntryId,
     };
-  });
+  }));
 }
 
 export async function previewBankStatementImport(opts: {

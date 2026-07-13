@@ -24,7 +24,7 @@ This is the single ordered list of engineering **missions** that takes VAKA OS f
 
 | Programme | Theme | Status |
 |---|---|---|
-| **P1** | Platform kernel & shared services | In progress (P1-001→004 implemented; P1-005 next) |
+| **P1** | Platform kernel & shared services | In progress (P1-001→005 implemented; P1-006 next) |
 | **P2** | Finance, tax & localisation (Zimbabwe) | Foundation live; hardening |
 | **P3** | CRM & sales | Foundation live; completion |
 | **P4** | Procurement & suppliers | Partial |
@@ -49,7 +49,7 @@ Goal: every module consumes shared contracts; no duplicated infrastructure.
 | P1-002 | Identity & Audit adapters behind kernel contracts (parity + isolation tests) | P1-001 | ✅ Done |
 | P1-003 | Establish the first callable kernel audit adoption seam with row-parity and fail-closed tests | P1-002 | ✅ Implemented; full-suite verified 2026-07-12 |
 | P1-004 | Notification service adapter → email + persisted in-app behind one contract; SMS/WhatsApp placeholders | P1-002 | ✅ Implemented; provider/product adoption gated |
-| P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | Planned |
+| P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | ✅ Implemented; durable delivery gated |
 | P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | Planned |
 | P1-007 | Document service adapter unifying invoice PDFs + capture storage behind one contract | P1-002 | Planned |
 | P1-008 | Metadata registry seeded with canonical objects (Company, Customer, Invoice…) powering search + AI context | P1-005 | Planned |
@@ -205,7 +205,7 @@ P10-001 → P10-002 → P10-003               (launch)
 ```
 
 P1-003 and P2-001 are implemented foundations with green full-suite evidence;
-professional review remains open where stated. P1-004 is implemented and
-verified as an internal adapter foundation. The next dependency missions are
-**P1-005** and **P2-002**; cross-cutting operations work remains tracked in the
+professional review remains open where stated. P1-004 and P1-005 are
+implemented and verified as internal adapter foundations. The next dependency
+missions are **P1-006** and **P2-002**; cross-cutting operations work remains tracked in the
 permanent `OPS-*` namespace.

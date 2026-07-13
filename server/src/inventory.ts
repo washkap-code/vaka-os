@@ -174,7 +174,11 @@ export async function adjustStock(
  * one transaction, so stock and ledger always agree.
  */
 export async function receivePurchaseOrder(
-  tx: DB, opts: { tenantId: string; purchaseOrderId: string; createdBy?: string | null },
+  tx: DB,
+  opts: {
+    tenantId: string; purchaseOrderId: string; createdBy?: string | null;
+    onMovement?: (movement: { movementId: string; productId: string; warehouseId: string; quantityDelta: string; kind: string }) => void;
+  },
 ) {
   const [po] = await tx.select().from(schema.purchaseOrders).where(and(
     eq(schema.purchaseOrders.id, opts.purchaseOrderId),
@@ -189,11 +193,15 @@ export async function receivePurchaseOrder(
 
   let goodsBase = 0n;
   for (const line of lines) {
-    await recordStockMovement(tx, {
+    const movement = await recordStockMovement(tx, {
       tenantId: opts.tenantId, productId: line.productId, warehouseId: line.warehouseId,
       quantityDelta: line.quantity, unitCost: line.unitCost,
       reason: "PURCHASE", sourceType: "purchase_order", sourceId: po.id,
       createdBy: opts.createdBy,
+    });
+    opts.onMovement?.({
+      movementId: movement.movementId, productId: line.productId,
+      warehouseId: line.warehouseId, quantityDelta: line.quantity, kind: "PURCHASE",
     });
     // update product cost snapshot to latest purchase cost (simple costing; FIFO layer is a Phase 2 enhancement)
     await tx.update(schema.products).set({ costPrice: line.unitCost })

@@ -1,6 +1,6 @@
 # P1-005 — Event bus: emit domain events from existing write paths
 
-**Status:** Approved — ready to build
+**Status:** Implemented and verified
 **Programme:** 1 — Platform
 **Type:** Infrastructure (additive, zero behaviour change)
 **Depends on:** P1-002 (merged), P1-001 event-bus contracts
