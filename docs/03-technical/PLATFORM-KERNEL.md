@@ -22,7 +22,7 @@ rewrite and not a claim that every service is live in production.
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | injected store contract |
 | `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Invoice/Product adapter composed; broader enterprise search gated |
-| `metadata` | extensible typed entity metadata | injected provider contract |
+| `metadata` | extensible typed entity metadata | P1-008 immutable canonical registry composed; dynamic values and broad adoption gated |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
 | `types` | reusable type helpers and tenant-scope assertions | small contract utility |
 | `container` | explicit constructor dependency injection | memoised value/factory container |
@@ -122,3 +122,16 @@ P1-005 subscribers re-read affected records after committed customer, invoice,
 payment, stock and import facts. Delivery remains best-effort; durable indexing,
 deletion events, scale evidence, semantic search and user-facing global search
 remain gated.
+
+## Metadata adoption seam (P1-008)
+
+The composition root exposes `METADATA_SERVICE` backed by an immutable,
+code-seeded provider. Company, Customer, Invoice and Product definitions record
+their current physical lineage, permissions, localisation keys, navigation,
+search/result fields and fail-closed future-AI exposure. `/metadata/objects`
+derives tenant and permissions from verified authentication and returns no
+record values. P1-006 now obtains searchable-object permissions, searchable
+fields and result descriptors from this registry while retaining explicit,
+tenant-safe canonical queries. Metadata cannot select arbitrary tables, execute
+rules or grant data access. Custom metadata writes, the target
+Party/Organisation/LegalEntity model and any AI context builder remain gated.

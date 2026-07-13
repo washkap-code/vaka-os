@@ -34,6 +34,9 @@ import {
 import { InMemoryEventBus } from "./platform/events/service.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
+import { MetadataService } from "./platform/metadata/service.js";
+import type { MetadataProvider } from "./platform/metadata/interfaces.js";
+import { CanonicalMetadataProvider } from "./metadata.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -58,6 +61,9 @@ export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
 export const SEARCH_SERVICE: ServiceToken<SearchService> =
   createServiceToken("platform.search.service");
 
+export const METADATA_SERVICE: ServiceToken<MetadataService> =
+  createServiceToken("platform.metadata.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -73,6 +79,7 @@ export interface PlatformKernelOptions {
   notificationAuditRecorder?: NotificationAuditRecorder;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
   searchAdapter?: SearchApplicationAdapter;
+  metadataProvider?: MetadataProvider;
 }
 
 /**
@@ -139,7 +146,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     });
   }));
 
-  const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider();
+  const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
+  kernel.container.registerValue(METADATA_SERVICE, metadataService);
+
+  const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
   subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
 

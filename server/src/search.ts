@@ -7,6 +7,8 @@ import type { SearchProvider } from "./platform/search/interfaces.js";
 import type { SearchQuery, SearchResponse, SearchScope } from "./platform/search/types.js";
 import type { EventBusContract } from "./platform/events/interfaces.js";
 import { DOMAIN_EVENTS, type DomainEventPayloads } from "./platform/events/registry.js";
+import type { MetadataServiceContract } from "./platform/metadata/interfaces.js";
+import type { MetadataObjectDefinition } from "./platform/metadata/types.js";
 
 export const SEARCH_ENTITY_TYPES = ["customer", "invoice", "product"] as const;
 export type SearchEntityType = typeof SEARCH_ENTITY_TYPES[number];
@@ -37,12 +39,6 @@ type IndexedDocument = {
   document: SearchResultDocument;
 };
 
-const PERMISSION_BY_ENTITY: Record<SearchEntityType, SearchPermission> = {
-  customer: "crm.read",
-  invoice: "accounting.read",
-  product: "inventory.read",
-};
-
 function normalizeSearchText(parts: readonly (string | null | undefined)[]): string {
   return parts.filter((part): part is string => Boolean(part?.trim()))
     .join(" ").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
@@ -62,27 +58,47 @@ async function upsertDocument(tx: DB, document: IndexedDocument): Promise<void> 
     });
 }
 
-function customerDocument(row: typeof schema.contacts.$inferSelect): IndexedDocument | null {
+function searchableValues(
+  definition: MetadataObjectDefinition,
+  values: Record<string, string | readonly string[] | null | undefined>,
+): (string | null | undefined)[] {
+  return definition.fields.filter((field) => field.searchable).flatMap((field) => {
+    const value = values[field.key];
+    return Array.isArray(value) ? [...value] : [value as string | null | undefined];
+  });
+}
+
+function searchPermission(definition: MetadataObjectDefinition): SearchPermission {
+  if (!definition.searchable || !definition.readPermission
+    || !["crm.read", "accounting.read", "inventory.read"].includes(definition.readPermission)) {
+    throw new InvalidSearchQueryError(`Metadata object ${definition.key} is not governed for search`);
+  }
+  return definition.readPermission as SearchPermission;
+}
+
+function customerDocument(row: typeof schema.contacts.$inferSelect, definition: MetadataObjectDefinition): IndexedDocument | null {
   if (!row.isCustomer) return null;
   return {
     tenantId: row.tenantId,
     entityType: "customer",
     entityId: row.id,
     title: row.name,
-    searchText: normalizeSearchText([row.name, ...row.tags]),
-    permission: "crm.read",
+    searchText: normalizeSearchText(searchableValues(definition, { name: row.name, tags: row.tags })),
+    permission: searchPermission(definition),
     document: { id: row.id, entityType: "customer", name: row.name, contactType: row.type },
   };
 }
 
-function productDocument(row: typeof schema.products.$inferSelect): IndexedDocument {
+function productDocument(row: typeof schema.products.$inferSelect, definition: MetadataObjectDefinition): IndexedDocument {
   return {
     tenantId: row.tenantId,
     entityType: "product",
     entityId: row.id,
     title: `${row.sku} — ${row.name}`,
-    searchText: normalizeSearchText([row.sku, row.name, row.description]),
-    permission: "inventory.read",
+    searchText: normalizeSearchText(searchableValues(definition, {
+      sku: row.sku, name: row.name, description: row.description,
+    })),
+    permission: searchPermission(definition),
     document: {
       id: row.id,
       entityType: "product",
@@ -99,15 +115,17 @@ function productDocument(row: typeof schema.products.$inferSelect): IndexedDocum
 function invoiceDocument(row: {
   id: string; tenantId: string; number: string | null; status: string;
   currency: "USD" | "ZWG"; total: string; customerName: string;
-}): IndexedDocument {
+}, definition: MetadataObjectDefinition): IndexedDocument {
   const title = row.number ?? `Draft invoice — ${row.customerName}`;
   return {
     tenantId: row.tenantId,
     entityType: "invoice",
     entityId: row.id,
     title,
-    searchText: normalizeSearchText([title, row.status, row.customerName]),
-    permission: "accounting.read",
+    searchText: normalizeSearchText(searchableValues(definition, {
+      number: row.number ?? "draft invoice", status: row.status, customerName: row.customerName,
+    })),
+    permission: searchPermission(definition),
     document: {
       id: row.id,
       entityType: "invoice",
@@ -154,6 +172,15 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   private readonly reconciledTenants = new Set<string>();
   private readonly pendingReconciliations = new Map<string, Promise<void>>();
 
+  constructor(private readonly metadata: MetadataServiceContract) {}
+
+  private async definition(tenantId: string, entityType: SearchEntityType): Promise<MetadataObjectDefinition> {
+    const definition = await this.metadata.object(entityType, tenantId);
+    if (!definition) throw new InvalidSearchQueryError(`Metadata object is not registered: ${entityType}`);
+    searchPermission(definition);
+    return definition;
+  }
+
   async reconcileTenant(tenantId: string): Promise<void> {
     if (this.reconciledTenants.has(tenantId)) return;
     const existing = this.pendingReconciliations.get(tenantId);
@@ -168,6 +195,11 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   private async rebuildTenant(tenantId: string): Promise<void> {
+    const [customerDefinition, invoiceDefinition, productDefinition] = await Promise.all([
+      this.definition(tenantId, "customer"),
+      this.definition(tenantId, "invoice"),
+      this.definition(tenantId, "product"),
+    ]);
     await db.transaction(async (tx) => {
       const customers = await tx.select().from(schema.contacts)
         .where(and(eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.isCustomer, true)));
@@ -186,9 +218,9 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       const products = await tx.select().from(schema.products)
         .where(eq(schema.products.tenantId, tenantId));
       const documents = [
-        ...customers.map(customerDocument).filter((row): row is IndexedDocument => row !== null),
-        ...invoices.map(invoiceDocument),
-        ...products.map(productDocument),
+        ...customers.map((row) => customerDocument(row, customerDefinition)).filter((row): row is IndexedDocument => row !== null),
+        ...invoices.map((row) => invoiceDocument(row, invoiceDefinition)),
+        ...products.map((row) => productDocument(row, productDefinition)),
       ];
       await tx.delete(schema.searchDocuments).where(and(
         eq(schema.searchDocuments.tenantId, tenantId),
@@ -199,10 +231,11 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   async reindexCustomer(tenantId: string, customerId: string): Promise<void> {
+    const definition = await this.definition(tenantId, "customer");
     const [row] = await db.select().from(schema.contacts).where(and(
       eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.id, customerId),
     ));
-    const document = row ? customerDocument(row) : null;
+    const document = row ? customerDocument(row, definition) : null;
     if (document) await upsertDocument(db, document);
     else await db.delete(schema.searchDocuments).where(and(
       eq(schema.searchDocuments.tenantId, tenantId),
@@ -216,6 +249,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   async reindexInvoice(tenantId: string, invoiceId: string): Promise<void> {
+    const definition = await this.definition(tenantId, "invoice");
     const [row] = await db.select({
       id: schema.invoices.id,
       tenantId: schema.invoices.tenantId,
@@ -228,7 +262,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       eq(schema.contacts.id, schema.invoices.contactId),
       eq(schema.contacts.tenantId, tenantId),
     )).where(and(eq(schema.invoices.tenantId, tenantId), eq(schema.invoices.id, invoiceId)));
-    if (row) await upsertDocument(db, invoiceDocument(row));
+    if (row) await upsertDocument(db, invoiceDocument(row, definition));
     else await db.delete(schema.searchDocuments).where(and(
       eq(schema.searchDocuments.tenantId, tenantId),
       eq(schema.searchDocuments.entityType, "invoice"),
@@ -237,10 +271,11 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   async reindexProduct(tenantId: string, productId: string): Promise<void> {
+    const definition = await this.definition(tenantId, "product");
     const [row] = await db.select().from(schema.products).where(and(
       eq(schema.products.tenantId, tenantId), eq(schema.products.id, productId),
     ));
-    if (row) await upsertDocument(db, productDocument(row));
+    if (row) await upsertDocument(db, productDocument(row, definition));
     else await db.delete(schema.searchDocuments).where(and(
       eq(schema.searchDocuments.tenantId, tenantId),
       eq(schema.searchDocuments.entityType, "product"),
@@ -259,7 +294,9 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       })
       : [...SEARCH_ENTITY_TYPES];
     const permissions = new Set(scope.permissions ?? []);
-    const allowedTypes = requestedTypes.filter((type) => permissions.has(PERMISSION_BY_ENTITY[type]));
+    const definitions = new Map<SearchEntityType, MetadataObjectDefinition>();
+    for (const type of requestedTypes) definitions.set(type, await this.definition(scope.tenantId, type));
+    const allowedTypes = requestedTypes.filter((type) => permissions.has(searchPermission(definitions.get(type)!)));
     if (!allowedTypes.length) return { results: [] };
 
     const normalizedQuery = normalizeSearchText([query.text]);
@@ -294,6 +331,16 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
         title: row.title,
         document: row.document as TDocument,
         score: row.score,
+        object: (() => {
+          const definition = definitions.get(row.entityType as SearchEntityType)!;
+          return {
+            key: definition.key,
+            version: definition.version,
+            labelKey: definition.labelKey,
+            fallbackLabel: definition.fallbackLabel,
+            navigation: definition.navigation,
+          };
+        })(),
       })),
       ...(hasMore ? { nextCursor: encodeCursor(offset + limit, fingerprint) } : {}),
     };
