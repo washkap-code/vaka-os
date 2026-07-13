@@ -48,6 +48,7 @@ import { searchQuerySchema, type SearchResultDocument } from "./search.js";
 import { METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
+import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -728,6 +729,23 @@ api.get("/contacts/:id", requirePermission("crm.read"), wrap(async (req) => {
     .orderBy(desc(schema.invoices.createdAt)).limit(50);
   return { contact, deals: dealRows, activities: activityRows, invoices: invoiceRows };
 }));
+api.get("/contacts/:id/timeline", requirePermission("crm.read"), wrap(async (req, res) => {
+  const tid = tenantId(req);
+  const contactId = routeParam(req, "id");
+  const query = timelineQuerySchema.parse(req.query);
+  const [contact] = await db.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+    eq(schema.contacts.id, contactId), eq(schema.contacts.tenantId, tid), eq(schema.contacts.isCustomer, true),
+  ));
+  if (!contact) throw notFound("Customer not found");
+  await new CustomerTimelineProjector().reconcileCustomer(tid, contactId);
+  res.setHeader("Cache-Control", "private, no-store");
+  try {
+    return await getCustomerTimeline({ tenantId: tid, contactId, ...query });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_TIMELINE_CURSOR") throw badRequest("Timeline cursor is invalid");
+    throw error;
+  }
+}));
 
 const dealSchema = z.object({
   contactId: z.string().uuid(), title: z.string().min(1),
@@ -752,11 +770,36 @@ api.patch("/deals/:id/stage", requirePermission("crm.write"), wrap(async (req) =
 api.post("/activities", requirePermission("crm.write"), wrap(async (req) => {
   const body = z.object({
     contactId: z.string().uuid(), dealId: z.string().uuid().optional().nullable(),
-    type: z.enum(["call", "email", "meeting", "note", "task"]), body: z.string().min(1),
+    type: z.enum(["call", "email", "meeting", "note", "task"]), body: z.string().trim().min(1).max(5000),
     dueAt: z.coerce.date().optional().nullable(),
   }).parse(req.body);
-  const [a] = await db.insert(schema.activities).values({ ...body, tenantId: tenantId(req), ownerUserId: req.auth!.userId }).returning();
-  return a;
+  const tid = tenantId(req);
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [contact] = await tx.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+      eq(schema.contacts.id, body.contactId), eq(schema.contacts.tenantId, tid),
+    ));
+    if (!contact) throw notFound("Contact not found");
+    if (body.dealId) {
+      const [deal] = await tx.select({ id: schema.deals.id }).from(schema.deals).where(and(
+        eq(schema.deals.id, body.dealId), eq(schema.deals.tenantId, tid), eq(schema.deals.contactId, body.contactId),
+      ));
+      if (!deal) throw notFound("Deal not found");
+    }
+    const [activity] = await tx.insert(schema.activities).values({
+      ...body, tenantId: tid, ownerUserId: req.auth!.userId,
+    }).returning();
+    await audit(tx, tid, req.auth!.userId, "activity.recorded", "activity", activity.id, {
+      contactId: activity.contactId, type: activity.type,
+    });
+    queue({
+      id: `${DOMAIN_EVENTS.ACTIVITY_RECORDED}:${activity.id}`,
+      type: DOMAIN_EVENTS.ACTIVITY_RECORDED,
+      tenantId: tid,
+      actorUserId: req.auth!.userId,
+      payload: { activityId: activity.id, customerId: activity.contactId },
+    });
+    return activity;
+  }));
 }));
 
 // ---------------------------------------------------------------------------

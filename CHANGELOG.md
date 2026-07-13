@@ -12,6 +12,18 @@
 
 ### Added
 
+- **Customer activity and communication timeline (P3-003):** Added a
+  tenant-scoped, rebuildable customer chronology over canonical manual CRM
+  activities, issued/voided invoices and payments. P1-005 subscribers refresh
+  the projection after commit and lazy reconciliation repairs pre-existing or
+  missed history. Manual activities are now validated, tenant/deal checked,
+  audited atomically and emitted after commit. The responsive Contacts view
+  includes permission-aware activity entry, stable cursor pagination and exact
+  integer-cent financial evidence. Email entries remain manual CRM records—not
+  provider delivery proof. Added additive migration
+  `0017_customer_timeline_projection.sql`; durable event delivery and complete
+  omnichannel history remain gated.
+
 - **Canonical metadata registry (P1-008):** Composed a read-only kernel registry
   for Company, Customer, Invoice and Product with versioned physical lineage,
   permissions, localisation/navigation descriptors, search/result fields and

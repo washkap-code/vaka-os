@@ -45,6 +45,9 @@ describe("platform runtime composition (P1-002)", () => {
     const one = buildPlatformKernel({
       auditWriter: () => {},
       eventSubscriberError: (error, type) => failures.push(`${type}:${(error as Error).message}`),
+      customerTimelineProjector: {
+        projectActivity: async () => {}, projectInvoice: async () => {}, projectPayment: async () => {}, reconcileCustomer: async () => {},
+      },
     }).container.get(EVENT_BUS);
     const two = buildPlatformKernel({ auditWriter: () => {} }).container.get(EVENT_BUS);
     const siblingDeliveries: string[] = [];

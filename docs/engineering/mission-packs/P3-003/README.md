@@ -1,6 +1,6 @@
 # P3-003 — Customer Activity and Communication Timeline
 
-**Status:** Ready for implementation; communication-provider coverage gated
+**Status:** Technically verified; communication-provider coverage gated
 **Programme:** 3 — CRM and sales
 **Type:** Tenant-scoped derived timeline, event subscriber, read API and responsive customer view
 **Depends on:** P1-002 identity/audit; P1-005 event bus; canonical CRM and invoicing records

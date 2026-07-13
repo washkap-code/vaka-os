@@ -335,6 +335,23 @@ export const activities = pgTable("activities", {
   createdAt: createdAt(),
 }, (t) => [index("activities_tenant_contact").on(t.tenantId, t.contactId)]);
 
+// Rebuildable chronology only. Canonical activity/financial content remains in
+// its source tables and is hydrated under tenant scope when a timeline is read.
+export const customerTimelineEvents = pgTable("customer_timeline_events", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  contactId: uuid("contact_id").notNull().references(() => contacts.id),
+  eventKind: text("event_kind").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceId: text("source_id").notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  actorUserId: uuid("actor_user_id"),
+  projectedAt: createdAt(),
+}, (t) => [
+  uniqueIndex("customer_timeline_source").on(t.tenantId, t.eventKind, t.sourceId),
+  index("customer_timeline_contact_time").on(t.tenantId, t.contactId, t.occurredAt, t.id),
+]);
+
 // ---------------------------------------------------------------------------
 // ACCOUNTING — double-entry ledger is the single source of truth
 // ---------------------------------------------------------------------------
