@@ -74,6 +74,9 @@ jobs:
       - name: Check design-token conformance
         run: npm run test:design-tokens
 
+      - name: Check accessibility conformance
+        run: npm run test:accessibility
+
       - name: Build web
         run: npm run build
 

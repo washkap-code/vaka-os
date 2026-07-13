@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 const TOKEN_SOURCE = "src/design-system/tokens.css";
 const LIVE_SURFACES = [
   "src/styles.css", "src/landing.css", "src/App.tsx", "src/landing.tsx",
+  "src/accessibility/legacy-field.tsx", "src/accessibility/legacy-modal.tsx",
+  "src/accessibility/use-modal-focus.ts",
   "src/shell/notification-copy.ts", "src/shell/notification-menu.tsx",
   "src/shell/user-menu.tsx", "src/shell/workspace-shell.tsx",
   "src/shell/universal-workbench.tsx", "src/shell/workbench-model.ts",

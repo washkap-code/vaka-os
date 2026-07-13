@@ -12,6 +12,17 @@
 
 ### Added
 
+- **Core-flow accessibility and reflow foundation (P6-005):** Added reusable
+  labelled-field and modal-focus patterns across authentication, customer and
+  invoice journeys, including persistent accessible names, named dialogs,
+  initial/contained/returned focus, Escape close and background scroll locking.
+  Scoped layouts now reflow without page-level overflow at 320 and 640 CSS
+  pixels, with visible focus, reduced-motion and forced-colour protections.
+  Added a self-testing accessibility conformance command and CI gate. This is a
+  bounded WCAG 2.2 AA-aligned foundation, not whole-product certification;
+  remaining domain screens and broader assistive-technology coverage stay
+  explicitly gated.
+
 - **Responsive, permission-aware application shell (P6-002):** Extracted the
   authenticated tenant shell into focused React components with permission and
   owner-aware destinations, deterministic safe fallback, a compact desktop

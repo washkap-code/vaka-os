@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
@@ -10,6 +10,8 @@ import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbe
 import type { WorkspaceSearchTarget } from "./shell/command-search-model";
 import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
+import { LegacyField } from "./accessibility/legacy-field";
+import { LegacyModal } from "./accessibility/legacy-modal";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -300,8 +302,9 @@ function PasswordField({ label, value, onChange, autoComplete, disabled = false 
   autoComplete?: string; disabled?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
-  return <div className="field"><label>{label}</label><div className="password-control">
-    <input disabled={disabled} type={visible ? "text" : "password"} autoComplete={autoComplete}
+  const inputId = useId();
+  return <div className="field"><label htmlFor={inputId}>{label}</label><div className="password-control">
+    <input id={inputId} disabled={disabled} type={visible ? "text" : "password"} autoComplete={autoComplete}
       value={value} onChange={(event) => onChange(event.target.value)} />
     <button type="button" className="password-toggle" aria-pressed={visible}
       aria-label={visible ? appEnglish.auth.hidePassword : appEnglish.auth.showPassword}
@@ -331,8 +334,8 @@ function PasswordReset({ token, onDone }: { token: string; onDone: () => void })
     <PasswordField label={appEnglish.auth.newPassword} value={password} onChange={setPassword} autoComplete="new-password" />
     <PasswordField label={appEnglish.auth.confirmPassword} value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
     <button className="btn accent full-width" disabled={busy} onClick={submit}>{appEnglish.auth.resetPassword}</button>
-    {message && <div className="banner warn">{message}</div>}
-    <div className="alt"><a onClick={onDone}>{appEnglish.auth.backToSignIn}</a></div>
+    {message && <div className="banner warn" role="status">{message}</div>}
+    <div className="alt"><button type="button" className="auth-link" onClick={onDone}>{appEnglish.auth.backToSignIn}</button></div>
   </div></div>;
 }
 
@@ -376,8 +379,8 @@ function PasswordChange({ onDone, onLogout }: { onDone: () => void; onLogout: ()
       <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
         {busy ? appEnglish.auth.changingPassword : appEnglish.auth.changePassword}
       </button>
-      {err && <div className="err-text">{err}</div>}
-      <div className="alt"><a onClick={onLogout}>{appEnglish.auth.signOut}</a></div>
+      {err && <div className="err-text" role="alert">{err}</div>}
+      <div className="alt"><button type="button" className="auth-link" onClick={onLogout}>{appEnglish.auth.signOut}</button></div>
     </div></div>
   );
 }
@@ -826,23 +829,25 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
   if (mfaChallenge) return <div className="auth"><div className="box">
     <div className="brandline">VAKA Operating System</div>
     <h1>{appEnglish.auth.twoFactorTitle}</h1><p>{appEnglish.auth.twoFactorLoginHelp}</p>
-    <div className="field"><label>{appEnglish.auth.authenticationCode}</label>
+    <LegacyField label={appEnglish.auth.authenticationCode}>
       <input inputMode="numeric" autoComplete="one-time-code" value={mfaCode}
-        onChange={(event) => setMfaCode(event.target.value)} /></div>
+        onChange={(event) => setMfaCode(event.target.value)} />
+    </LegacyField>
     <button className="btn accent full-width" disabled={busy} onClick={verifyMfa}>{appEnglish.auth.verifyAndSignIn}</button>
-    {err && <div className="err-text">{err}</div>}
-    <div className="alt"><a onClick={() => { setMfaChallenge(""); setMfaCode(""); setErr(""); }}>{appEnglish.auth.backToSignIn}</a></div>
+    {err && <div className="err-text" role="alert">{err}</div>}
+    <div className="alt"><button type="button" className="auth-link" onClick={() => { setMfaChallenge(""); setMfaCode(""); setErr(""); }}>{appEnglish.auth.backToSignIn}</button></div>
   </div></div>;
 
   if (recovering) return <div className="auth"><div className="box">
     <div className="brandline">VAKA Operating System</div>
     <h1>{appEnglish.auth.recoverAccess}</h1><p>{appEnglish.auth.recoveryHelp}</p>
-    <div className="field"><label>Company subdomain (workspace accounts)</label>
-      <input value={f.subdomain ?? ""} onChange={set("subdomain")} autoComplete="organization" /></div>
-    <div className="field"><label>Email</label><input type="email" value={f.email ?? ""} onChange={set("email")} autoComplete="email" /></div>
+    <LegacyField label="Company subdomain (workspace accounts)">
+      <input value={f.subdomain ?? ""} onChange={set("subdomain")} autoComplete="organization" />
+    </LegacyField>
+    <LegacyField label="Email"><input type="email" value={f.email ?? ""} onChange={set("email")} autoComplete="email" /></LegacyField>
     <button className="btn accent full-width" disabled={busy} onClick={requestRecovery}>{appEnglish.auth.recoverAccess}</button>
     {err && <div className="banner warn">{err}</div>}
-    <div className="alt"><a onClick={() => { setRecovering(false); setErr(""); }}>{appEnglish.auth.backToSignIn}</a></div>
+    <div className="alt"><button type="button" className="auth-link" onClick={() => { setRecovering(false); setErr(""); }}>{appEnglish.auth.backToSignIn}</button></div>
   </div></div>;
 
   return (
@@ -850,41 +855,40 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
       <div className="brandline">VAKA Operating System — Build Your Business</div>
       <h1>{mode === "login" ? "Sign in" : "Create your company"}</h1>
       {mode === "signup" && <>
-        <div className="field"><label>Company name</label><input value={f.companyName ?? ""} onChange={set("companyName")} placeholder="Harare Retail (Pvt) Ltd" /></div>
+        <LegacyField label="Company name"><input value={f.companyName ?? ""} onChange={set("companyName")} placeholder="Harare Retail (Pvt) Ltd" autoComplete="organization" /></LegacyField>
         <div className="grid2">
-          <div className="field"><label>Subdomain</label><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" /></div>
-          <div className="field"><label>Base currency</label>
-            <select value={f.baseCurrency} onChange={set("baseCurrency")}><option>USD</option><option>ZWG</option></select></div>
+          <LegacyField label="Subdomain"><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /></LegacyField>
+          <LegacyField label="Base currency">
+            <select value={f.baseCurrency} onChange={set("baseCurrency")}><option>USD</option><option>ZWG</option></select>
+          </LegacyField>
         </div>
-        <div className="field"><label>Your full name</label><input value={f.ownerName ?? ""} onChange={set("ownerName")} /></div>
+        <LegacyField label="Your full name"><input value={f.ownerName ?? ""} onChange={set("ownerName")} autoComplete="name" /></LegacyField>
       </>}
-      {mode === "login" && <div className="field"><label>Company subdomain (optional)</label><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /><small>Workspace users can enter their company subdomain. Platform administrators should leave this blank.</small></div>}
-      <div className="field"><label>Email</label><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} autoComplete="email" /></div>
+      {mode === "login" && <LegacyField label="Company subdomain (optional)" hint="Workspace users can enter their company subdomain. Platform administrators should leave this blank."><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /></LegacyField>}
+      <LegacyField label="Email"><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} autoComplete="email" /></LegacyField>
       <PasswordField label="Password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""}
         onChange={(value) => setF({ ...f, [mode === "login" ? "password" : "ownerPassword"]: value })}
         autoComplete={mode === "login" ? "current-password" : "new-password"} />
-      {mode === "signup" && <div className="field"><label>Package — 30-day free trial</label>
+      {mode === "signup" && <LegacyField label="Package — 30-day free trial">
         <select value={f.planName} onChange={set("planName")}>
           <option value="Starter">Starter — USD 19/month · 1 user · 1 location</option>
           <option value="Growth">Growth — USD 69/month · 5 users · 2 locations</option>
           <option value="Business">Business — USD 249/month · 15 users · 5 locations</option>
           <option value="Enterprise">Enterprise — from USD 599/month · contracted scale</option>
-        </select></div>}
-      {mode === "signup" && <div className="field">
-        <label>{appEnglish.auth.referralCode}</label>
+        </select></LegacyField>}
+      {mode === "signup" && <LegacyField label={appEnglish.auth.referralCode} hint={appEnglish.auth.referralHelp}>
         <input value={f.referralCode ?? ""} onChange={set("referralCode")} placeholder={appEnglish.auth.referralPlaceholder} />
-        <small>{appEnglish.auth.referralHelp}</small>
-      </div>}
+      </LegacyField>}
       <button className="btn accent" style={{ width: "100%" }} disabled={busy} onClick={submit}>
         {busy ? "Working…" : mode === "login" ? "Sign in" : "Create company — start 30-day free trial"}
       </button>
-      {err && <div className="err-text">{err}</div>}
+      {err && <div className="err-text" role="alert">{err}</div>}
       <div className="alt">
-        {mode === "login" && <><a onClick={() => { setRecovering(true); setErr(""); }}>{appEnglish.auth.forgotPassword}</a> · </>}
+        {mode === "login" && <><button type="button" className="auth-link" onClick={() => { setRecovering(true); setErr(""); }}>{appEnglish.auth.forgotPassword}</button> · </>}
         {mode === "login"
-          ? <>New here? <a onClick={() => setMode("signup")}>Create your company</a></>
-          : <>Already registered? <a onClick={() => setMode("login")}>Sign in</a></>}
-        {onBack && <> · <a onClick={onBack}>Back to home</a></>}
+          ? <>New here? <button type="button" className="auth-link" onClick={() => setMode("signup")}>Create your company</button></>
+          : <>Already registered? <button type="button" className="auth-link" onClick={() => setMode("login")}>Sign in</button></>}
+        {onBack && <> · <button type="button" className="auth-link" onClick={onBack}>Back to home</button></>}
       </div>
     </div></div>
   );
@@ -2062,27 +2066,27 @@ function ContactFields({ value, onChange, disabled = false }: {
     onChange({ ...value, [key]: event.target.value });
   return <>
     <div className="grid2 record-form-grid">
-      <div className="field"><label>{copy.name}</label><input disabled={disabled} value={value.name ?? ""} onChange={set("name")} /></div>
-      <div className="field"><label>{copy.type}</label><select disabled={disabled} value={value.type ?? "COMPANY"} onChange={set("type")}><option value="COMPANY">{copy.company}</option><option value="INDIVIDUAL">{copy.individual}</option></select></div>
-      <div className="field"><label>{copy.email}</label><input disabled={disabled} type="email" value={value.email ?? ""} onChange={set("email")} /></div>
-      <div className="field"><label>{copy.phone}</label><input disabled={disabled} value={value.phone ?? ""} onChange={set("phone")} /></div>
-      <div className="field"><label>{copy.website}</label><input disabled={disabled} type="url" placeholder="https://" value={value.website ?? ""} onChange={set("website")} /></div>
-      <div className="field"><label>{copy.industry}</label><input disabled={disabled} value={value.industry ?? ""} onChange={set("industry")} /></div>
-      <div className="field"><label>{copy.registrationNumber}</label><input disabled={disabled} value={value.registrationNumber ?? ""} onChange={set("registrationNumber")} /></div>
-      <div className="field"><label>{copy.taxNumber}</label><input disabled={disabled} value={value.taxNumber ?? ""} onChange={set("taxNumber")} /></div>
-      <div className="field"><label>{copy.addressLine1}</label><input disabled={disabled} value={value.addressLine1 ?? value.address ?? ""} onChange={set("addressLine1")} /></div>
-      <div className="field"><label>{copy.addressLine2}</label><input disabled={disabled} value={value.addressLine2 ?? ""} onChange={set("addressLine2")} /></div>
-      <div className="field"><label>{copy.city}</label><input disabled={disabled} value={value.city ?? ""} onChange={set("city")} /></div>
-      <div className="field"><label>{copy.region}</label><input disabled={disabled} value={value.region ?? ""} onChange={set("region")} /></div>
-      <div className="field"><label>{copy.postalCode}</label><input disabled={disabled} value={value.postalCode ?? ""} onChange={set("postalCode")} /></div>
-      <div className="field"><label>{copy.countryCode}</label><input disabled={disabled} maxLength={2} placeholder="ZW" value={value.countryCode ?? ""} onChange={set("countryCode")} /></div>
-      <div className="field"><label>{copy.tags}</label><input disabled={disabled} value={Array.isArray(value.tags) ? value.tags.join(", ") : value.tags ?? ""} onChange={(event) => onChange({ ...value, tags: event.target.value })} /></div>
-      <div className="field"><label>{copy.roles}</label><div className="row record-role-options">
+      <LegacyField label={copy.name}><input disabled={disabled} value={value.name ?? ""} onChange={set("name")} /></LegacyField>
+      <LegacyField label={copy.type}><select disabled={disabled} value={value.type ?? "COMPANY"} onChange={set("type")}><option value="COMPANY">{copy.company}</option><option value="INDIVIDUAL">{copy.individual}</option></select></LegacyField>
+      <LegacyField label={copy.email}><input disabled={disabled} type="email" value={value.email ?? ""} onChange={set("email")} /></LegacyField>
+      <LegacyField label={copy.phone}><input disabled={disabled} type="tel" value={value.phone ?? ""} onChange={set("phone")} /></LegacyField>
+      <LegacyField label={copy.website}><input disabled={disabled} type="url" placeholder="https://" value={value.website ?? ""} onChange={set("website")} /></LegacyField>
+      <LegacyField label={copy.industry}><input disabled={disabled} value={value.industry ?? ""} onChange={set("industry")} /></LegacyField>
+      <LegacyField label={copy.registrationNumber}><input disabled={disabled} value={value.registrationNumber ?? ""} onChange={set("registrationNumber")} /></LegacyField>
+      <LegacyField label={copy.taxNumber}><input disabled={disabled} value={value.taxNumber ?? ""} onChange={set("taxNumber")} /></LegacyField>
+      <LegacyField label={copy.addressLine1}><input disabled={disabled} autoComplete="address-line1" value={value.addressLine1 ?? value.address ?? ""} onChange={set("addressLine1")} /></LegacyField>
+      <LegacyField label={copy.addressLine2}><input disabled={disabled} autoComplete="address-line2" value={value.addressLine2 ?? ""} onChange={set("addressLine2")} /></LegacyField>
+      <LegacyField label={copy.city}><input disabled={disabled} autoComplete="address-level2" value={value.city ?? ""} onChange={set("city")} /></LegacyField>
+      <LegacyField label={copy.region}><input disabled={disabled} autoComplete="address-level1" value={value.region ?? ""} onChange={set("region")} /></LegacyField>
+      <LegacyField label={copy.postalCode}><input disabled={disabled} autoComplete="postal-code" value={value.postalCode ?? ""} onChange={set("postalCode")} /></LegacyField>
+      <LegacyField label={copy.countryCode}><input disabled={disabled} autoComplete="country" maxLength={2} placeholder="ZW" value={value.countryCode ?? ""} onChange={set("countryCode")} /></LegacyField>
+      <LegacyField label={copy.tags}><input disabled={disabled} value={Array.isArray(value.tags) ? value.tags.join(", ") : value.tags ?? ""} onChange={(event) => onChange({ ...value, tags: event.target.value })} /></LegacyField>
+      <fieldset className="field record-role-fieldset"><legend>{copy.roles}</legend><div className="row record-role-options">
         <label><input disabled={disabled} type="checkbox" checked={!!value.isCustomer} onChange={(event) => onChange({ ...value, isCustomer: event.target.checked })} />{copy.customer}</label>
         <label><input disabled={disabled} type="checkbox" checked={!!value.isVendor} onChange={(event) => onChange({ ...value, isVendor: event.target.checked })} />{copy.vendor}</label>
-      </div></div>
+      </div></fieldset>
     </div>
-    <div className="field"><label>{copy.notes}</label><textarea disabled={disabled} rows={4} value={value.notes ?? ""} onChange={set("notes")} /></div>
+    <LegacyField label={copy.notes}><textarea disabled={disabled} rows={4} value={value.notes ?? ""} onChange={set("notes")} /></LegacyField>
   </>;
 }
 
@@ -2173,7 +2177,7 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
       </>}
       <button className="btn ghost sm" onClick={selection.clear}>{copy.clearSelection}</button>
     </div>}
-    <div className="panel table-scroll">
+    <div className="panel table-scroll" role="region" aria-label={copy.listLabel} tabIndex={0}>
       <table><thead><tr><th className="select-column"><input type="checkbox" aria-label={copy.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>{copy.name}</th><th>{copy.type}</th><th>{copy.email}</th><th>{copy.phone}</th><th>{copy.location}</th><th>{copy.roles}</th></tr></thead>
         <tbody>{rows.map((contact) => (
           <tr key={contact.id}><td><input type="checkbox" aria-label={copy.selectContact.replace("{name}", contact.name)} checked={selection.selectedIds.has(contact.id)} onChange={() => selection.toggle(contact.id)} /></td><td><button className="link-button" onClick={() => setSelected(contact)} aria-label={`${appEnglish.customerTimeline.open}: ${contact.name}`}><b>{contact.name}</b></button></td><td>{contact.type}</td><td>{contact.email ?? "—"}</td><td>{contact.phone ?? "—"}</td><td>{[contact.city, contact.countryCode].filter(Boolean).join(", ") || "—"}</td>
@@ -2187,11 +2191,11 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
         {requests.map((request) => <tr key={request.id}><td>{request.contactName}</td><td>{request.requesterName}</td><td>{request.reason}</td><td><span className={`pill ${request.status}`}>{request.status}</span></td><td>{isTenantOwner && request.status === "PENDING" && <div className="row"><button className="btn sm" disabled={busy} onClick={() => decide(request.id, "APPROVE")}>{copy.approve}</button><button className="btn ghost sm" disabled={busy} onClick={() => decide(request.id, "REJECT")}>{copy.reject}</button></div>}</td></tr>)}
       </tbody></table></div>
     </div>}
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal record-modal" role="dialog" aria-modal="true" aria-labelledby="new-contact-title" onClick={(event) => event.stopPropagation()}>
-      <h2 id="new-contact-title">{copy.newContactTitle}</h2><ContactFields value={f} onChange={setF} />
+    {show && <LegacyModal labelledBy="new-contact-title" onClose={() => setShow(false)} className="record-modal">
+      <h2 id="new-contact-title" tabIndex={-1} data-modal-initial-focus>{copy.newContactTitle}</h2><ContactFields value={f} onChange={setF} />
       {err && <div className="err-text" role="alert">{err}</div>}
       <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShow(false)}>{copy.cancel}</button><button className="btn" disabled={busy || !String(f.name ?? "").trim()} onClick={save}>{busy ? copy.saving : copy.saveContact}</button></div>
-    </div></div>}
+    </LegacyModal>}
     {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onDelete={() => remove([selected.id])} onSaved={(contact) => { setSelected(contact); reload(); }} onClose={() => setSelected(null)} />}
   </>);
 }
@@ -2208,7 +2212,6 @@ function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
   onSaved: (contact: ContactSummary) => void; onClose: () => void;
 }) {
   const copy = appEnglish.customerTimeline;
-  const dialogRef = useRef<HTMLElement>(null);
   const [items, setItems] = useState<CustomerTimelineItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2244,16 +2247,6 @@ function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
   };
 
   useEffect(() => { void load(); }, [contact.id]);
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      window.removeEventListener("keydown", closeOnEscape);
-      previouslyFocused?.focus();
-    };
-  }, [contact.id]);
 
   const saveActivity = async () => {
     setSaving(true);
@@ -2292,10 +2285,9 @@ function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
     return copy[item.detail.type === "activity" ? item.detail.activityType : "note"];
   };
 
-  return <div className="modalbg" onClick={onClose} role="presentation">
-    <section ref={dialogRef} tabIndex={-1} className="modal customer-timeline-modal" role="dialog" aria-modal="true" aria-labelledby="customer-timeline-title" onClick={(event) => event.stopPropagation()}>
+  return <LegacyModal labelledBy="customer-timeline-title" onClose={onClose} className="customer-timeline-modal">
       <div className="timeline-heading">
-        <div><h2 id="customer-timeline-title">{profile.name ?? contact.name} · {copy.title}</h2><p className="sub">{copy.subtitle}</p></div>
+        <div><h2 id="customer-timeline-title" tabIndex={-1} data-modal-initial-focus>{profile.name ?? contact.name} · {copy.title}</h2><p className="sub">{copy.subtitle}</p></div>
         <button className="btn ghost sm" onClick={onClose}>{copy.close}</button>
       </div>
       <section className="record-profile-section" aria-labelledby="customer-profile-title">
@@ -2334,8 +2326,7 @@ function CustomerTimeline({ contact, canWrite, onDelete, onSaved, onClose }: {
         </li>)}
       </ol>}
       {cursor && !loading && !error && <button className="btn ghost timeline-more" disabled={loadingMore} onClick={() => void load(cursor, true)}>{loadingMore ? copy.loadingMore : copy.loadMore}</button>}
-    </section>
-  </div>;
+  </LegacyModal>;
 }
 
 // ---------------------------------------------------------------------------
@@ -2546,7 +2537,7 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
       <button className="btn ghost sm" onClick={selection.clear}>{appEnglish.invoices.clearSelection}</button>
       <span className="sub">{appEnglish.invoices.bulkSafety}</span>
     </div>}
-    <div className="panel table-scroll">
+    <div className="panel table-scroll" role="region" aria-label={appEnglish.invoices.listLabel} tabIndex={0}>
       <table><thead><tr><th className="select-column"><input type="checkbox" aria-label={appEnglish.invoices.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>Actions</th></tr></thead>
         <tbody>{rows.map((i: any) => (
           <tr key={i.id}>
@@ -2576,18 +2567,16 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
         ))}</tbody></table>
       {loadedRows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
-    {pdfPreview && <div className="modalbg invoice-preview-backdrop" onClick={() => setPdfPreview(null)}>
-      <section className="modal invoice-preview-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-preview-title" onClick={(event) => event.stopPropagation()}>
+    {pdfPreview && <LegacyModal labelledBy="invoice-preview-title" onClose={() => setPdfPreview(null)} className="invoice-preview-modal" backdropClassName="invoice-preview-backdrop">
         <div className="invoice-preview-heading">
-          <div><h2 id="invoice-preview-title">{appEnglish.invoices.previewTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)}</h2><p className="sub">{appEnglish.invoices.previewHelp}</p></div>
+          <div><h2 id="invoice-preview-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.invoices.previewTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)}</h2><p className="sub">{appEnglish.invoices.previewHelp}</p></div>
           <div className="row"><a className="btn ghost sm" href={pdfPreview.url} download={invoicePdfFilename(pdfPreview.invoice.number, pdfPreview.invoice.id)}>{appEnglish.invoices.downloadPdf}</a><button className="btn ghost sm" onClick={() => setPdfPreview(null)}>{appEnglish.invoices.closePreview}</button></div>
         </div>
         <iframe className="invoice-preview-frame" src={pdfPreview.url} title={appEnglish.invoices.previewFrameTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)} />
-      </section>
-    </div>}
-    {linkInvoice && <div className="modalbg" onClick={() => setLinkInvoice(null)}><div className="modal" onClick={(e) => e.stopPropagation()}>
+    </LegacyModal>}
+    {linkInvoice && <LegacyModal labelledBy="invoice-share-links-title" onClose={() => setLinkInvoice(null)}>
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <h2>{appEnglish.invoices.shareLinksTitle}</h2>
+        <h2 id="invoice-share-links-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.invoices.shareLinksTitle}</h2>
         <button className="btn ghost sm" onClick={() => setLinkInvoice(null)}>{appEnglish.invoices.closeShareLinks}</button>
       </div>
       <p className="sub">{appEnglish.invoices.shareLinksDescription}</p>
@@ -2601,30 +2590,31 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
           {!readonly && !link.revokedAt && new Date(link.expiresAt).getTime() > Date.now() && <button className="btn ghost sm" onClick={() => revokeShareLink(link.id)}>{appEnglish.invoices.revokeShareLink}</button>}
         </div>)}
       </div>}
-    </div></div>}
+    </LegacyModal>}
     {selectedInvoiceId && <InvoiceRecordDialog invoiceId={selectedInvoiceId} contacts={(contacts ?? []) as ContactSummary[]} products={products ?? []} baseCcy={baseCcy} canEdit={!readonly && canPost} onSaved={() => reload()} onClose={() => setSelectedInvoiceId(null)} />}
-    {show && <div className="modalbg" onClick={() => setShow(false)}><div className="modal" onClick={(e) => e.stopPropagation()}>
-      <h2>New invoice</h2>
+    {show && <LegacyModal labelledBy="new-invoice-title" onClose={() => setShow(false)}>
+      <h2 id="new-invoice-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.invoices.newInvoice}</h2>
       <div className="grid3">
-        <div className="field"><label>Customer</label><select value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
-          <option value="">Select…</option>{(contacts ?? []).filter((c: any) => c.isCustomer).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div className="field"><label>Currency</label><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></div>
-        {f.currency !== baseCcy && <div className="field"><label>Rate to {baseCcy} (1 {f.currency} = ? {baseCcy})</label>
-          <input value={f.rateToBase} onChange={(e) => setF({ ...f, rateToBase: e.target.value })} /></div>}
+        <LegacyField label={appEnglish.invoices.customer}><select value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
+          <option value="">{appEnglish.invoices.select}</option>{(contacts ?? []).filter((c: any) => c.isCustomer).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
+        <LegacyField label={appEnglish.invoices.currency}><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
+        {f.currency !== baseCcy && <LegacyField label={appEnglish.invoices.rateToBase.replace("{currency}", baseCcy)}>
+          <input inputMode="decimal" value={f.rateToBase} onChange={(e) => setF({ ...f, rateToBase: e.target.value })} />
+        </LegacyField>}
       </div>
-      <h2 style={{ fontSize: 14 }}>Lines</h2>
+      <h3>{appEnglish.invoices.lines}</h3>
       {f.lines.map((l: any, i: number) => (
-        <div className="row" key={i} style={{ marginBottom: 8 }}>
-          <select style={{ flex: 2 }} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
-            <option value="">Service / free-text line</option>
+        <fieldset className="invoice-line-create" key={i}>
+          <legend className="vds-visually-hidden">{appEnglish.invoices.lines} {i + 1}</legend>
+          <select aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.freeTextLine).replace("{number}", String(i + 1))} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
+            <option value="">{appEnglish.invoices.freeTextLine}</option>
             {(products ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.sku} — {p.name} ({Number(p.on_hand)} on hand)</option>)}
           </select>
-          <input style={{ flex: 3 }} placeholder="Description" value={l.description} onChange={(e) => setLine(i, "description", e.target.value)} />
-          <input style={{ flex: 1 }} placeholder="Qty" value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
-          <input style={{ flex: 1 }} placeholder="Price" value={l.unitPrice} onChange={(e) => setLine(i, "unitPrice", e.target.value)} />
+          <input aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.description).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.description} value={l.description} onChange={(e) => setLine(i, "description", e.target.value)} />
+          <input inputMode="decimal" aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.quantity).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.quantity} value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
+          <input inputMode="decimal" aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.unitPrice).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.unitPrice} value={l.unitPrice} onChange={(e) => setLine(i, "unitPrice", e.target.value)} />
           <select
-            style={{ flex: 1 }}
-            aria-label={appEnglish.invoices.taxTreatment}
+            aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.taxTreatment).replace("{number}", String(i + 1))}
             value={l.taxTreatment}
             onChange={(e) => setLine(i, "taxTreatment", e.target.value)}
           >
@@ -2632,16 +2622,16 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
             <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
             <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
           </select>
-        </div>
+        </fieldset>
       ))}
       <p className="sub">{appEnglish.invoices.taxTreatmentHelp}</p>
       <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...empty }] })}>+ Add line</button>
-      {err && <div className="err-text">{err}</div>}
+      {err && <div className="err-text" role="alert">{err}</div>}
       <div className="row end" style={{ marginTop: 14 }}>
-        <button className="btn ghost" onClick={() => setShow(false)}>Cancel</button>
-        <button className="btn" onClick={save}>Save draft</button>
+        <button className="btn ghost" onClick={() => setShow(false)}>{appEnglish.invoices.cancel}</button>
+        <button className="btn" onClick={save}>{appEnglish.invoices.saveDraft}</button>
       </div>
-    </div></div>}
+    </LegacyModal>}
   </>);
 }
 
@@ -2675,10 +2665,6 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
     } finally { setLoading(false); }
   };
   useEffect(() => { void load(); }, [invoiceId]);
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close);
-  }, [invoiceId]);
   const editable = canEdit && invoice?.status === "DRAFT";
   const setLine = (index: number, key: string, value: string) => {
     const lines = [...form.lines]; lines[index] = { ...lines[index], [key]: value };
@@ -2709,28 +2695,28 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
       setError(requestError instanceof Error ? requestError.message : copy.updateFailed);
     } finally { setSaving(false); }
   };
-  return <div className="modalbg" onClick={onClose} role="presentation"><section className="modal record-modal invoice-record-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-record-title" onClick={(event) => event.stopPropagation()}>
-    <div className="timeline-heading"><div><h2 id="invoice-record-title">{invoice?.number ?? copy.draftInvoice}</h2>{invoice && <p className="sub">{invoice.contact?.name ?? "—"} · <span className={`pill ${invoice.status}`}>{invoice.status}</span></p>}</div><button className="btn ghost sm" onClick={onClose}>{copy.close}</button></div>
+  return <LegacyModal labelledBy="invoice-record-title" onClose={onClose} className="record-modal invoice-record-modal">
+    <div className="timeline-heading"><div><h2 id="invoice-record-title" tabIndex={-1} data-modal-initial-focus>{invoice?.number ?? copy.draftInvoice}</h2>{invoice && <p className="sub">{invoice.contact?.name ?? "—"} · <span className={`pill ${invoice.status}`}>{invoice.status}</span></p>}</div><button className="btn ghost sm" onClick={onClose}>{copy.close}</button></div>
     {loading ? <p className="sub" role="status">{copy.loadingDetail}</p> : error && !form ? <div className="err-text" role="alert">{error}</div> : invoice && form && <>
       {invoice.status !== "DRAFT" && <div className="banner warn">{copy.historicalLocked}</div>}
       {invoice.status === "DRAFT" && !canEdit && <div className="banner warn">{copy.draftReadOnly}</div>}
       <div className="grid3 record-form-grid">
-        <div className="field"><label>{copy.customer}</label>{editable ? <select value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })}><option value="">{copy.selectCustomer}</option>{contacts.filter((contact) => contact.isCustomer).map((contact) => <option value={contact.id} key={contact.id}>{contact.name}</option>)}</select> : <input disabled value={invoice.contact?.name ?? "—"} />}</div>
-        <div className="field"><label>{copy.currency}</label><select disabled={!editable} value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })}><option>USD</option><option>ZWG</option></select></div>
-        <div className="field"><label>{copy.dueDate}</label><input disabled={!editable} type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></div>
-        <div className="field"><label>{copy.taxDate}</label><input disabled={!editable} type="date" value={form.taxDate} onChange={(event) => setForm({ ...form, taxDate: event.target.value })} /></div>
-        {form.currency !== baseCcy && <div className="field"><label>{copy.rateToBase.replace("{currency}", baseCcy)}</label><input disabled={!editable} value={form.rateToBase} onChange={(event) => setForm({ ...form, rateToBase: event.target.value })} /></div>}
-        <div className="field"><label>{copy.taxJurisdiction}</label><input disabled value={invoice.taxJurisdiction ?? "—"} /></div>
+        <LegacyField label={copy.customer}>{editable ? <select value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })}><option value="">{copy.selectCustomer}</option>{contacts.filter((contact) => contact.isCustomer).map((contact) => <option value={contact.id} key={contact.id}>{contact.name}</option>)}</select> : <input disabled value={invoice.contact?.name ?? "—"} />}</LegacyField>
+        <LegacyField label={copy.currency}><select disabled={!editable} value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
+        <LegacyField label={copy.dueDate}><input disabled={!editable} type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.taxDate}><input disabled={!editable} type="date" value={form.taxDate} onChange={(event) => setForm({ ...form, taxDate: event.target.value })} /></LegacyField>
+        {form.currency !== baseCcy && <LegacyField label={copy.rateToBase.replace("{currency}", baseCcy)}><input disabled={!editable} inputMode="decimal" value={form.rateToBase} onChange={(event) => setForm({ ...form, rateToBase: event.target.value })} /></LegacyField>}
+        <LegacyField label={copy.taxJurisdiction}><input disabled value={invoice.taxJurisdiction ?? "—"} /></LegacyField>
       </div>
-      <div className="field"><label>{copy.notes}</label><textarea disabled={!editable} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></div>
+      <LegacyField label={copy.notes}><textarea disabled={!editable} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></LegacyField>
       <h3>{copy.lines}</h3>
       <div className="invoice-lines-editor">
         {form.lines.map((line: any, index: number) => <div className="invoice-line-editor" key={`${index}-${line.productId}`}>
-          <select disabled={!editable} value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}><option value="">{copy.freeTextLine}</option>{products.map((product) => <option value={product.id} key={product.id}>{product.sku} — {product.name}</option>)}</select>
-          <input disabled={!editable} aria-label={copy.description} value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} />
-          <input disabled={!editable} aria-label={copy.quantity} value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} />
-          <input disabled={!editable} aria-label={copy.unitPrice} value={line.unitPrice} onChange={(event) => setLine(index, "unitPrice", event.target.value)} />
-          <select disabled={!editable} aria-label={copy.taxTreatment} value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{copy.taxTreatmentStandard}</option><option value="zero-rated">{copy.taxTreatmentZeroRated}</option><option value="exempt">{copy.taxTreatmentExempt}</option></select>
+          <select disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.freeTextLine).replace("{number}", String(index + 1))} value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}><option value="">{copy.freeTextLine}</option>{products.map((product) => <option value={product.id} key={product.id}>{product.sku} — {product.name}</option>)}</select>
+          <input disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.description).replace("{number}", String(index + 1))} value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} />
+          <input disabled={!editable} inputMode="decimal" aria-label={copy.lineField.replace("{field}", copy.quantity).replace("{number}", String(index + 1))} value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} />
+          <input disabled={!editable} inputMode="decimal" aria-label={copy.lineField.replace("{field}", copy.unitPrice).replace("{number}", String(index + 1))} value={line.unitPrice} onChange={(event) => setLine(index, "unitPrice", event.target.value)} />
+          <select disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.taxTreatment).replace("{number}", String(index + 1))} value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{copy.taxTreatmentStandard}</option><option value="zero-rated">{copy.taxTreatmentZeroRated}</option><option value="exempt">{copy.taxTreatmentExempt}</option></select>
           {editable && form.lines.length > 1 && <button className="btn ghost sm" aria-label={copy.removeLine.replace("{number}", String(index + 1))} onClick={() => setForm({ ...form, lines: form.lines.filter((_: any, itemIndex: number) => itemIndex !== index) })}>{copy.remove}</button>}
         </div>)}
       </div>
@@ -2740,7 +2726,7 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
       {error && <div className="err-text" role="alert">{error}</div>}
       <div className="row end modal-actions"><button className="btn ghost" onClick={onClose}>{copy.close}</button>{editable && <button className="btn" disabled={saving || !form.contactId || form.lines.some((line: any) => !line.description.trim())} onClick={save}>{saving ? copy.savingChanges : copy.saveChanges}</button>}</div>
     </>}
-  </section></div>;
+  </LegacyModal>;
 }
 
 // ---------------------------------------------------------------------------

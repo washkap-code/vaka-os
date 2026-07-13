@@ -164,7 +164,7 @@ step-up remain separately gated.
 
 ## 7. Stage 5 — Application shell and navigation
 
-**Current evidence (2026-07-13):** P6-001 completed governed token adoption and
+**Current evidence (2026-07-14):** P6-001 completed governed token adoption and
 P6-002 completed the responsive, permission-aware tenant shell, current-user
 recent notification menu, mobile account access and inert command-bar mount.
 P6-003 implements the Universal Workbench presentation over the existing live
@@ -172,8 +172,11 @@ dashboard read model with accessible performance/ageing/pipeline visuals,
 priority summaries and permission-filtered module actions. P6-004 implements a
 visible, keyboard-accessible universal command/search palette over the existing
 tenant-scoped P1-006 search adapter, with guarded P1-008 navigation mapping and
-existing-record handoff. Route/deep-link migration, product-wide visual
-modernisation and the full WCAG core-flow pass remain separately gated work.
+existing-record handoff. P6-005 establishes reusable labelled-field and
+modal-focus patterns across authentication, customer and invoice core flows,
+with a permanent source-conformance gate and verified 320/640-pixel reflow.
+Route/deep-link migration, product-wide visual modernisation and accessibility
+remediation of the remaining domain modules remain separately gated work.
 
 **Objective:** Build a responsive, accessible, permission-aware frame for every module.
 
