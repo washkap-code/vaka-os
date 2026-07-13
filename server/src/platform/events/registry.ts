@@ -5,6 +5,9 @@ export const DOMAIN_EVENTS = {
   STOCK_MOVED: "stock.moved",
   STOCK_ADJUSTED: "stock.adjusted",
   TENANT_LIFECYCLE_CHANGED: "tenant.lifecycle_changed",
+  CUSTOMER_CHANGED: "customer.changed",
+  PRODUCT_CHANGED: "product.changed",
+  INVOICE_CHANGED: "invoice.changed",
 } as const;
 
 export type DomainEventPayloads = {
@@ -14,6 +17,9 @@ export type DomainEventPayloads = {
   "stock.moved": { movementId: string; productId: string; warehouseId: string; quantityDelta: string; kind: string };
   "stock.adjusted": { movementId: string; productId: string; warehouseId: string; quantityDelta: string };
   "tenant.lifecycle_changed": { tenantId: string; from: string; to: string };
+  "customer.changed": { customerId: string; change: "created" | "updated" | "imported" };
+  "product.changed": { productId: string; change: "created" | "imported" };
+  "invoice.changed": { invoiceId: string; change: "drafted" };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

@@ -1,6 +1,6 @@
 # P1-006 — Search Service Adapter
 
-**Status:** Approved for implementation
+**Status:** Technically verified internal adapter; durable/scale operations gated
 **Programme:** 1 — Platform Kernel and shared services
 **Type:** Tenant-scoped derived index, kernel adapter and read API
 **Depends on:** P1-001 search contract; P1-002 identity context; P1-005 event bus

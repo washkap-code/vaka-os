@@ -50,7 +50,7 @@ Goal: every module consumes shared contracts; no duplicated infrastructure.
 | P1-003 | Establish the first callable kernel audit adoption seam with row-parity and fail-closed tests | P1-002 | ✅ Implemented; full-suite verified 2026-07-12 |
 | P1-004 | Notification service adapter → email + persisted in-app behind one contract; SMS/WhatsApp placeholders | P1-002 | ✅ Implemented; provider/product adoption gated |
 | P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | ✅ Implemented; durable delivery gated |
-| P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | Planned |
+| P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | ✅ Technically verified internal adapter; durable/scale operations gated |
 | P1-007 | Document service adapter unifying invoice PDFs + capture storage behind one contract | P1-002 | Planned |
 | P1-008 | Metadata registry seeded with canonical objects (Company, Customer, Invoice…) powering search + AI context | P1-005 | Planned |
 
@@ -208,6 +208,8 @@ P1-003, P2-001 and P2-002 are implemented foundations with green full-suite
 evidence; professional review remains open where stated. P2-003 is implemented
 as an internal, full-suite-verified, not-filing-ready technical report pending
 qualified review. P1-004 and P1-005 are implemented and verified as
-internal adapter foundations. The next dependency mission is **P1-006**;
+internal adapter foundations. P1-006 is implemented and full-suite verified as
+a bounded internal keyword-search adapter. The next dependency mission is
+**P1-008**;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.

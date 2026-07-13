@@ -32,6 +32,8 @@ import {
   createHttpEmailTransport, findNotificationDuplicate, persistNotification,
 } from "./notifications.js";
 import { InMemoryEventBus } from "./platform/events/service.js";
+import { SearchService } from "./platform/search/service.js";
+import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -53,6 +55,9 @@ export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
 export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
   createServiceToken("platform.events.bus");
 
+export const SEARCH_SERVICE: ServiceToken<SearchService> =
+  createServiceToken("platform.search.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -67,6 +72,7 @@ export interface PlatformKernelOptions {
   notificationDedupeLookup?: NotificationDedupeLookup;
   notificationAuditRecorder?: NotificationAuditRecorder;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
+  searchAdapter?: SearchApplicationAdapter;
 }
 
 /**
@@ -132,6 +138,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       error: error instanceof Error ? error.message : "Unknown subscriber error",
     });
   }));
+
+  const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider();
+  kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
+  subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
 
   return kernel;
 }

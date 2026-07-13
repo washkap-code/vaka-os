@@ -90,6 +90,26 @@ export const userSessions = pgTable("user_sessions", {
   index("user_sessions_user_activity").on(t.userId, t.lastSeenAt),
 ]);
 
+// Rebuildable tenant search index. Canonical business records remain in their
+// owning tables; this contains only minimal, permission-labelled discovery
+// summaries for the Platform Kernel search adapter.
+export const searchDocuments = pgTable("search_documents", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id").notNull(),
+  title: text("title").notNull(),
+  searchText: text("search_text").notNull(),
+  permission: text("permission").notNull(),
+  document: jsonb("document").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("search_documents_tenant_entity").on(t.tenantId, t.entityType, t.entityId),
+  index("search_documents_tenant_title").on(t.tenantId, t.entityType, t.title),
+  check("search_documents_entity_type_check", sql`${t.entityType} IN ('customer', 'invoice', 'product')`),
+  check("search_documents_permission_check", sql`${t.permission} IN ('crm.read', 'accounting.read', 'inventory.read')`),
+]);
+
 export const platformAuditLogs = pgTable("platform_audit_logs", {
   id: id(),
   userId: uuid("user_id").references(() => users.id),

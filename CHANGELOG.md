@@ -12,6 +12,16 @@
 
 ### Added
 
+- **Tenant-scoped search adapter (P1-006):** Composed the kernel search service
+  with a rebuildable PostgreSQL index for canonical Customers, Invoices and
+  Products. Added verified-JWT tenant/permission filtering, deterministic
+  ranking and cursors, lazy canonical reconciliation, and post-commit refresh
+  subscribers for customer, invoice, payment, product, stock and import facts.
+  Indexed summaries deliberately exclude sensitive contact, tax, cost, note
+  and ledger fields. Added additive migration `0016_search_documents.sql`.
+  Durable delivery, deletion events, scale/SLO evidence, semantic search,
+  P1-008 metadata adoption and a global-search UI remain gated.
+
 - **VAT technical return report (P2-003):** Added authorised, tenant-scoped
   period reporting over posted VAT control-account lines, with exact output
   VAT, input VAT and net-position calculations. The Reports workspace now

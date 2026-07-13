@@ -197,10 +197,10 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
     "kernel.search",
     "Search",
     "partial",
-    "Typed search contract exists; no complete tenant-scoped enterprise index is available.",
-    "Implement authorised indexing, deletion, reconciliation, performance and operations.",
+    "P1-006 composes a tenant- and permission-scoped Customer, Invoice and Product keyword index behind the kernel contract; enterprise scale and durable indexing are not complete.",
+    "Add governed deletion events, outbox/retry delivery, performance evidence, operations and P1-008 metadata adoption.",
     "passed",
-    "Focused Platform Kernel search contract tests passed.",
+    "P1-006 focused tenant/permission/event tests and the full database-backed suite passed.",
   ),
   kernel(
     "kernel.ai-context",
