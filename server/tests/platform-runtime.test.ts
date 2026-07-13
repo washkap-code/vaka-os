@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 import type { SearchApplicationAdapter } from "../src/search.js";
@@ -126,5 +126,36 @@ describe("platform runtime composition (P1-002)", () => {
       canonicalName: "Invoice",
       readPermission: "accounting.read",
     });
+  });
+
+  it("resolves documents through an injected tenant-aware store", async () => {
+    const calls: string[] = [];
+    const descriptor = {
+      id: "capture:doc-1", tenantId: "tenant-1", kind: "capture", fileName: "receipt.png",
+      mediaType: "image/png", byteSize: 3, createdAt: new Date("2026-07-13T00:00:00Z"),
+    };
+    const service = buildPlatformKernel({
+      auditWriter: () => {},
+      documentStore: {
+        put: async (payload, context) => {
+          calls.push(`put:${context.tenantId}:${payload.descriptor.id}`);
+          return payload.descriptor;
+        },
+        get: async (id, context) => {
+          calls.push(`get:${context.tenantId}:${id}`);
+          return { descriptor, bytes: new Uint8Array([1, 2, 3]) };
+        },
+      },
+    }).container.get(DOCUMENT_SERVICE);
+    await expect(service.get(descriptor.id, {
+      tenantId: "tenant-1", actorUserId: "user-1",
+    })).resolves.toMatchObject({ descriptor });
+    await expect(service.put({ descriptor, bytes: new Uint8Array([1, 2, 3]) }, {
+      tenantId: "tenant-1", actorUserId: "user-1",
+    })).resolves.toEqual(descriptor);
+    expect(calls).toEqual([
+      "get:tenant-1:capture:doc-1",
+      "put:tenant-1:capture:doc-1",
+    ]);
   });
 });

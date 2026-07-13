@@ -1,7 +1,8 @@
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { createHash, randomBytes } from "node:crypto";
 import { audit, conflict, db, notFound, schema } from "./lib.js";
-import { getInvoicePdf } from "./invoice-documents.js";
+import { invoicePdfDocumentId } from "./documents.js";
+import { DOCUMENT_SERVICE, platformKernel } from "./platform-runtime.js";
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -81,11 +82,19 @@ export async function openInvoiceShareLink(token: string) {
     gt(schema.invoiceShareLinks.expiresAt, new Date()),
   ));
   if (!link) throw notFound("Shared invoice is unavailable");
-  const pdf = await getInvoicePdf(link.tenantId, link.invoiceId);
+  const document = await platformKernel().container.get(DOCUMENT_SERVICE).get(
+    invoicePdfDocumentId(link.invoiceId),
+    { tenantId: link.tenantId, actorUserId: null },
+  );
+  if (!document) throw notFound("Shared invoice is unavailable");
   await db.transaction(async (tx) => {
     await tx.update(schema.invoiceShareLinks).set({ viewedAt: new Date() })
       .where(eq(schema.invoiceShareLinks.id, link.id));
     await audit(tx, link.tenantId, null, "invoice.share_link_opened", "invoice", link.invoiceId, { shareLinkId: link.id });
   });
-  return pdf;
+  return {
+    invoiceId: link.invoiceId,
+    templateVersion: document.descriptor.version,
+    pdf: Buffer.from(document.bytes),
+  };
 }

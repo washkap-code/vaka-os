@@ -39,6 +39,9 @@ import type { MetadataProvider } from "./platform/metadata/interfaces.js";
 import { CanonicalMetadataProvider } from "./metadata.js";
 import { CustomerTimelineProjector, subscribeCustomerTimeline, type CustomerTimelineProjectorContract } from "./customer-timeline.js";
 import { LowStockAlertCoordinator, subscribeLowStockAlerts, type LowStockAlertCoordinatorContract } from "./low-stock-alerts.js";
+import { DocumentService } from "./platform/documents/service.js";
+import type { DocumentServiceContract, DocumentStore } from "./platform/documents/interfaces.js";
+import { PostgresDocumentStore } from "./documents.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -66,6 +69,9 @@ export const SEARCH_SERVICE: ServiceToken<SearchService> =
 export const METADATA_SERVICE: ServiceToken<MetadataService> =
   createServiceToken("platform.metadata.service");
 
+export const DOCUMENT_SERVICE: ServiceToken<DocumentServiceContract> =
+  createServiceToken("platform.documents.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -84,6 +90,7 @@ export interface PlatformKernelOptions {
   metadataProvider?: MetadataProvider;
   customerTimelineProjector?: CustomerTimelineProjectorContract;
   lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
+  documentStore?: DocumentStore;
 }
 
 /**
@@ -152,6 +159,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
   kernel.container.registerValue(METADATA_SERVICE, metadataService);
+
+  kernel.container.registerFactory(DOCUMENT_SERVICE, () =>
+    new DocumentService(options.documentStore ?? new PostgresDocumentStore()),
+  );
 
   const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
