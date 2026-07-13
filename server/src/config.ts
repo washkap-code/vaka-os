@@ -106,9 +106,13 @@ export interface EmailProviderConfig {
 
 /** Absolute public origin used only to build revocable customer document links. */
 export function publicAppUrl(env: RuntimeEnvironment = process.env): string {
-  const configured = valueOf(env, "PUBLIC_APP_URL");
+  const vercelProductionDomain = valueOf(env, "VERCEL_PROJECT_PRODUCTION_URL");
+  const configured = valueOf(env, "PUBLIC_APP_URL")
+    ?? (vercelProductionDomain ? `https://${vercelProductionDomain}` : undefined);
   if (!configured) {
-    if (isProduction(env)) throw new Error("PUBLIC_APP_URL is required for production document delivery");
+    if (isProduction(env)) throw new Error(
+      "PUBLIC_APP_URL or VERCEL_PROJECT_PRODUCTION_URL is required for production public links",
+    );
     return "http://localhost:4000";
   }
   let parsed: URL;
