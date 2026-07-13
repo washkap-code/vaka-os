@@ -181,6 +181,7 @@ export const appEnglish = {
     confirmPassword: "Confirm new password",
     passwordChanged: "Password changed successfully.",
     mfaDisabled: "Authenticator-app 2FA is not enabled.",
+    mfaUnavailable: "Authenticator setup is awaiting production security-key configuration. Existing sign-in remains available.",
     mfaEnabled: "Authenticator-app 2FA is enabled.",
     enableMfa: "Set up authenticator app",
     mfaSetupHelp: "Add this secret to your authenticator app, then enter its six-digit code. The secret is shown only during setup.",

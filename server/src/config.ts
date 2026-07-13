@@ -88,6 +88,10 @@ export function mfaEncryptionSecret(env: RuntimeEnvironment = process.env): stri
   return jwtSecret(env);
 }
 
+export function mfaEnrollmentAvailable(env: RuntimeEnvironment = process.env): boolean {
+  return !isProduction(env) || Boolean(valueOf(env, "MFA_ENCRYPTION_KEY"));
+}
+
 export function platformAdminPassword(
   env: RuntimeEnvironment = process.env,
 ): string {
