@@ -12,6 +12,17 @@
 
 ### Added
 
+- **App-wide design-system token adoption (P6-001):** Routed the public
+  homepage, authentication and authenticated workspace through governed
+  colour, typography, spacing, radius, elevation, motion and component roles
+  while preserving existing selectors, DOM, routes and computed rendering.
+  Tenant `--brand`/`--accent` overrides remain compatible and cannot replace
+  functional status colours. Added a self-testing conformance command and CI
+  gate covering live CSS/TSX for raw colours, font stacks, motion durations,
+  undefined tokens and compatibility-contract drift. This is a parity
+  foundation for P6-002, not a redesign, final brand approval or full WCAG
+  claim; pre-existing 200%-zoom overflow remains tracked for P6-005.
+
 - **Statutory report pack technical preview (P2-006):** Added one authorised,
   tenant-scoped posted-ledger pack for trial balance, P&L, balance sheet, aged
   receivables and supported-source aged payables, with exact tie-outs,

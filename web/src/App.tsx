@@ -213,8 +213,13 @@ export default function App() {
   // white-label: apply tenant brand to CSS variables
   useEffect(() => {
     const r = document.documentElement.style;
-    r.setProperty("--brand", me?.tenant?.brandPrimaryColor ?? "#14171F");
-    r.setProperty("--accent", me?.tenant?.brandSecondaryColor ?? "#C9A227");
+    if (me?.tenant) {
+      r.setProperty("--brand", me.tenant.brandPrimaryColor);
+      r.setProperty("--accent", me.tenant.brandSecondaryColor);
+    } else {
+      r.removeProperty("--brand");
+      r.removeProperty("--accent");
+    }
     document.title = me?.tenant ? `${me.tenant.companyName} — VAKA OS` : "VAKA OS";
   }, [me]);
 
@@ -355,7 +360,7 @@ function PlatformAdmin({ onLogout }: { onLogout: () => void }) {
         </nav>
         <div className="foot">
           Jonomi Digital Studio<br />
-          <a style={{ color: "rgba(255,255,255,.7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
+          <a style={{ color: "rgb(var(--vaka-workspace-white-rgb) / .7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
         </div>
       </aside>
       <main className="main">
@@ -576,7 +581,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         </nav>
         <div className="foot">
           Workspace: {t.subdomain} · Powered by VAKA OS<br />
-          <a style={{ color: "rgba(255,255,255,.7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
+          <a style={{ color: "rgb(var(--vaka-workspace-white-rgb) / .7)", cursor: "pointer" }} onClick={onLogout}>Sign out</a>
         </div>
       </aside>
       <main className="main">

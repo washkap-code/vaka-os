@@ -71,6 +71,9 @@ jobs:
       - name: Type-check server and web
         run: npm run typecheck
 
+      - name: Check design-token conformance
+        run: npm run test:design-tokens
+
       - name: Build web
         run: npm run build
 
