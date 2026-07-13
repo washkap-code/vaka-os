@@ -37,6 +37,7 @@ import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAda
 import { MetadataService } from "./platform/metadata/service.js";
 import type { MetadataProvider } from "./platform/metadata/interfaces.js";
 import { CanonicalMetadataProvider } from "./metadata.js";
+import { CustomerTimelineProjector, subscribeCustomerTimeline, type CustomerTimelineProjectorContract } from "./customer-timeline.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -80,6 +81,7 @@ export interface PlatformKernelOptions {
   eventSubscriberError?: (error: unknown, eventType: string) => void;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
+  customerTimelineProjector?: CustomerTimelineProjectorContract;
 }
 
 /**
@@ -152,6 +154,7 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
   subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
+  subscribeCustomerTimeline(kernel.container.get(EVENT_BUS), options.customerTimelineProjector ?? new CustomerTimelineProjector());
 
   return kernel;
 }

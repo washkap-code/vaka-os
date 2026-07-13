@@ -8,7 +8,7 @@
 | P0 Engineering Foundation | accepted / partial / partial / internal | Knowledge System and CI foundations; placeholder replacement, scans, E2E, migration pipeline and hosted evidence remain |
 | P1 Platform Foundation | accepted / partial / P1-008 full suite passed / internal | Kernel, identity/audit/localisation, notification, post-commit event, bounded search and read-only canonical metadata adapters exist; durable event/search operations, scale evidence, dynamic metadata, AI context/value access and broader consumption migration remain |
 | P2 Finance and Zimbabwe | accepted / partial / P2-003 full suite passed / internal pending professional approval | effective-dated country configuration, invoice VAT treatment evidence and a not-filing-ready posted-ledger VAT technical report exist; supplier input VAT, filing workflow, fiscalisation, legal entities and qualified Zimbabwe tax approval remain |
-| P3 CRM and sales | accepted / partial / critical-path tests documented / existing foundation | complete lead-to-cash and portal/analytics gaps remain |
+| P3 CRM and sales | accepted / partial / P3-003 full suite passed / internal customer timeline | manual CRM activity and invoice/payment milestones are unified; provider-backed communications, complete lead-to-cash, portal and analytics gaps remain |
 | P4 Procurement | accepted / partial / not fully assessed / existing PO foundation | source-to-pay, match and supplier controls remain |
 | P5 Inventory | accepted / partial / invariant foundations documented / existing foundation | advanced WMS and full reconciliation remain |
 | P6 Experience/shell/localisation | accepted / partial / web build passes / existing foundation | app-wide responsive/a11y/localisation/E2E gates remain |

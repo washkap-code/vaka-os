@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
@@ -44,6 +44,20 @@ type VatTechnicalReportView = {
     invoice: null | { number: string | null; taxTreatment: string | null };
   }>;
 };
+
+type CustomerTimelineItem = {
+  id: string;
+  kind: "activity.recorded" | "invoice.issued" | "invoice.voided" | "payment.recorded";
+  occurredAt: string;
+  actorUserId: string | null;
+  sourceId: string;
+  detail:
+    | { type: "activity"; activityType: "call" | "email" | "meeting" | "note" | "task"; body: string; dueAt: string | null; completedAt: string | null }
+    | { type: "invoice"; number: string | null; status: string; currency: "USD" | "ZWG"; totalCents: string }
+    | { type: "payment"; amountCents: string; currency: "USD" | "ZWG"; reference: string | null; invoiceId: string; invoiceNumber: string | null };
+};
+
+type ContactSummary = { id: string; name: string };
 
 type PlatformTenant = {
   id: string;
@@ -562,7 +576,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
-        {page === "contacts" && <Contacts readonly={suspended} />}
+        {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} />}
         {page === "products" && <Products readonly={suspended} />}
@@ -1753,9 +1767,10 @@ function Dashboard({ ccy }: { ccy: string }) {
 // ---------------------------------------------------------------------------
 // Contacts
 // ---------------------------------------------------------------------------
-function Contacts({ readonly }: { readonly: boolean }) {
+function Contacts({ readonly, canWrite }: { readonly: boolean; canWrite: boolean }) {
   const [rows, reload] = useLoad(() => api("/contacts"));
   const [show, setShow] = useState(false);
+  const [selected, setSelected] = useState<ContactSummary | null>(null);
   const [f, setF] = useState<any>({ type: "COMPANY", isCustomer: true, isVendor: false });
   const [err, setErr] = useState("");
   const save = async () => {
@@ -1765,12 +1780,12 @@ function Contacts({ readonly }: { readonly: boolean }) {
   return (<>
     <div className="row" style={{ justifyContent: "space-between" }}>
       <div><h1>Contacts</h1><div className="sub">Customers and vendors — shared by CRM, invoicing and purchasing</div></div>
-      {!readonly && <button className="btn" onClick={() => setShow(true)}>+ New contact</button>}
+      {!readonly && canWrite && <button className="btn" onClick={() => setShow(true)}>+ New contact</button>}
     </div>
     <div className="panel">
       <table><thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Phone</th><th>Tax / BP No.</th><th>Roles</th></tr></thead>
         <tbody>{(rows ?? []).map((c: any) => (
-          <tr key={c.id}><td><b>{c.name}</b></td><td>{c.type}</td><td>{c.email ?? "—"}</td><td>{c.phone ?? "—"}</td><td>{c.taxNumber ?? "—"}</td>
+          <tr key={c.id}><td><button className="link-button" onClick={() => setSelected(c)} aria-label={`${appEnglish.customerTimeline.open}: ${c.name}`}><b>{c.name}</b></button></td><td>{c.type}</td><td>{c.email ?? "—"}</td><td>{c.phone ?? "—"}</td><td>{c.taxNumber ?? "—"}</td>
             <td>{[c.isCustomer && "Customer", c.isVendor && "Vendor"].filter(Boolean).join(", ")}</td></tr>
         ))}</tbody></table>
       {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No contacts yet — add your first customer or vendor.</p>}
@@ -1794,7 +1809,120 @@ function Contacts({ readonly }: { readonly: boolean }) {
         <button className="btn" onClick={save}>Save contact</button>
       </div>
     </div></div>}
+    {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onClose={() => setSelected(null)} />}
   </>);
+}
+
+function centsToMoney(cents: string): string {
+  const value = BigInt(cents);
+  const negative = value < 0n;
+  const absolute = negative ? -value : value;
+  return `${negative ? "-" : ""}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, "0")}`;
+}
+
+function CustomerTimeline({ contact, canWrite, onClose }: { contact: ContactSummary; canWrite: boolean; onClose: () => void }) {
+  const copy = appEnglish.customerTimeline;
+  const dialogRef = useRef<HTMLElement>(null);
+  const [items, setItems] = useState<CustomerTimelineItem[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState("");
+  const [showActivity, setShowActivity] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [activityError, setActivityError] = useState("");
+  const [activity, setActivity] = useState({ type: "note", body: "", dueAt: "" });
+
+  const load = async (nextCursor?: string, append = false) => {
+    append ? setLoadingMore(true) : setLoading(true);
+    setError("");
+    try {
+      const query = new URLSearchParams({ limit: "20" });
+      if (nextCursor) query.set("cursor", nextCursor);
+      const response = await api(`/contacts/${contact.id}/timeline?${query}`) as { items: CustomerTimelineItem[]; nextCursor: string | null };
+      setItems((current) => append ? [...current, ...response.items] : response.items);
+      setCursor(response.nextCursor);
+    } catch {
+      setError(copy.loadError);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, [contact.id]);
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      previouslyFocused?.focus();
+    };
+  }, [contact.id]);
+
+  const saveActivity = async () => {
+    setSaving(true);
+    setActivityError("");
+    try {
+      await api("/activities", { method: "POST", body: {
+        contactId: contact.id,
+        type: activity.type,
+        body: activity.body,
+        dueAt: activity.dueAt || null,
+      } });
+      setActivity({ type: "note", body: "", dueAt: "" });
+      setShowActivity(false);
+      await load();
+    } catch (requestError: unknown) {
+      setActivityError(requestError instanceof Error ? requestError.message : copy.loadError);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const eventTitle = (item: CustomerTimelineItem): string => {
+    if (item.kind === "invoice.issued") return copy.invoiceIssued;
+    if (item.kind === "invoice.voided") return copy.invoiceVoided;
+    if (item.kind === "payment.recorded") return copy.paymentRecorded;
+    return copy[item.detail.type === "activity" ? item.detail.activityType : "note"];
+  };
+
+  return <div className="modalbg" onClick={onClose} role="presentation">
+    <section ref={dialogRef} tabIndex={-1} className="modal customer-timeline-modal" role="dialog" aria-modal="true" aria-labelledby="customer-timeline-title" onClick={(event) => event.stopPropagation()}>
+      <div className="timeline-heading">
+        <div><h2 id="customer-timeline-title">{contact.name} · {copy.title}</h2><p className="sub">{copy.subtitle}</p></div>
+        <button className="btn ghost sm" onClick={onClose}>{copy.close}</button>
+      </div>
+      {canWrite && <div className="timeline-actions">
+        <button className="btn" onClick={() => setShowActivity((value) => !value)}>{copy.addActivity}</button>
+      </div>}
+      {showActivity && <div className="timeline-activity-form">
+        <div className="grid2">
+          <div className="field"><label htmlFor="timeline-activity-type">{copy.activityType}</label><select id="timeline-activity-type" value={activity.type} onChange={(event) => setActivity({ ...activity, type: event.target.value })}>
+            {(["call", "email", "meeting", "note", "task"] as const).map((type) => <option value={type} key={type}>{copy[type]}</option>)}
+          </select></div>
+          <div className="field"><label htmlFor="timeline-due-at">{copy.dueAt}</label><input id="timeline-due-at" type="datetime-local" value={activity.dueAt} onChange={(event) => setActivity({ ...activity, dueAt: event.target.value })} /></div>
+        </div>
+        <div className="field"><label htmlFor="timeline-activity-body">{copy.activityBody}</label><textarea id="timeline-activity-body" rows={3} value={activity.body} onChange={(event) => setActivity({ ...activity, body: event.target.value })} /></div>
+        {activity.type === "email" && <p className="sub">{copy.manualEmailNotice}</p>}
+        {activityError && <div className="err-text" role="alert">{activityError}</div>}
+        <div className="row end"><button className="btn ghost" onClick={() => setShowActivity(false)}>{copy.cancel}</button><button className="btn" disabled={saving || !activity.body.trim()} onClick={saveActivity}>{saving ? copy.savingActivity : copy.saveActivity}</button></div>
+      </div>}
+      {loading ? <p className="sub" role="status">{copy.loading}</p> : error ? <div><div className="err-text" role="alert">{error}</div><button className="btn ghost sm" onClick={() => void load()}>{copy.retry}</button></div> : items.length === 0 ? <p className="sub">{copy.empty}</p> : <ol className="customer-timeline-list">
+        {items.map((item) => <li key={item.id}>
+          <div className="timeline-marker" aria-hidden="true" />
+          <article><div className="timeline-item-heading"><b>{eventTitle(item)}</b><time dateTime={item.occurredAt}>{new Date(item.occurredAt).toLocaleString()}</time></div>
+            {item.detail.type === "activity" && <><p>{item.detail.body}</p>{item.detail.dueAt && <small>{copy.due.replace("{date}", new Date(item.detail.dueAt).toLocaleString())}</small>}</>}
+            {item.detail.type === "invoice" && <p>{copy.invoice.replace("{number}", item.detail.number ?? "—")} · {fmt(centsToMoney(item.detail.totalCents), item.detail.currency)} · <span className={`pill ${item.detail.status}`}>{item.detail.status}</span></p>}
+            {item.detail.type === "payment" && <p>{copy.paymentFor.replace("{number}", item.detail.invoiceNumber ?? "—")} · {fmt(centsToMoney(item.detail.amountCents), item.detail.currency)}{item.detail.reference ? ` · ${item.detail.reference}` : ""}</p>}
+          </article>
+        </li>)}
+      </ol>}
+      {cursor && !loading && !error && <button className="btn ghost timeline-more" disabled={loadingMore} onClick={() => void load(cursor, true)}>{loadingMore ? copy.loadingMore : copy.loadMore}</button>}
+    </section>
+  </div>;
 }
 
 // ---------------------------------------------------------------------------

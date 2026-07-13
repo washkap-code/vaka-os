@@ -24,9 +24,9 @@ This is the single ordered list of engineering **missions** that takes VAKA OS f
 
 | Programme | Theme | Status |
 |---|---|---|
-| **P1** | Platform kernel & shared services | In progress (P1-001→005 implemented; P1-006 next) |
+| **P1** | Platform kernel & shared services | In progress (P1-001→006 and P1-008 implemented) |
 | **P2** | Finance, tax & localisation (Zimbabwe) | Foundation live; hardening |
-| **P3** | CRM & sales | Foundation live; completion |
+| **P3** | CRM & sales | Foundation live; P3-003 technically verified |
 | **P4** | Procurement & suppliers | Partial |
 | **P5** | Inventory & warehousing | Foundation live; completion |
 | **P6** | Application shell, navigation & workbench | Partial |
@@ -82,7 +82,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 |---|---|---|---|
 | P3-001 | Lead → opportunity → quote → sales-order pipeline with stages and audit | P1-002 | Foundation exists |
 | P3-002 | Contact & company records unified with finance customer (one canonical Customer) | — | Foundation exists |
-| P3-003 | Activity & communication timeline on every customer (calls, emails, invoices, payments) | P1-005 | Planned |
+| P3-003 | Activity & communication timeline on every customer (calls, emails, invoices, payments) | P1-005 | ✅ Technically verified for manual CRM activity and financial milestones; provider history gated |
 | P3-004 | Quote → invoice conversion with idempotency and document numbering | P2-001 | Foundation exists |
 | P3-005 | Sales dashboard (pipeline value, follow-ups, conversion) | P1-006 | Planned |
 
@@ -211,6 +211,8 @@ qualified review. P1-004 and P1-005 are implemented and verified as
 internal adapter foundations. P1-006 is implemented and full-suite verified as
 a bounded internal keyword-search adapter. P1-008 is implemented and
 full-suite verified as a read-only canonical metadata registry; it does not
-enable AI value access. The next ordered mission is **P3-003**;
+enable AI value access. P3-003 is implemented and full-suite verified for
+manual CRM activity plus VAKA-recorded invoice/payment milestones; it does not
+claim provider-backed omnichannel history. The next ordered mission is **P5-004**;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.
