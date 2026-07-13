@@ -74,11 +74,14 @@ describe("finance kernel - invoice document snapshots", () => {
     expect(pdf.status).toBe(200);
     expect(pdf.headers["content-type"]).toContain("application/pdf");
     expect(pdf.headers["cache-control"]).toBe("private, no-store");
+    expect(pdf.headers["x-content-type-options"]).toBe("nosniff");
+    expect(Number(pdf.headers["content-length"])).toBe(pdf.body.byteLength);
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
     expect(pdf.body.toString("latin1")).toContain("/Subtype /Image");
     expect(pdf.body.toString("latin1")).toContain("/Im1 Do");
     expect(pdf.body.toString("latin1")).toContain("VAT treatment: standard");
     expect(pdf.body.toString("latin1")).toContain("VAT: standard at 15.00% = USD 30.00");
+    expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const share = await request(app).post(`/api/v1/invoices/${issued.id}/share-links`).set(tenant.auth)
       .send({ expiresInDays: 7 });
@@ -92,6 +95,7 @@ describe("finance kernel - invoice document snapshots", () => {
     const publicPdf = await request(app).get(share.body.publicPath);
     expect(publicPdf.status).toBe(200);
     expect(publicPdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
+    expect(publicPdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
     const revoked = await request(app).delete(`/api/v1/invoices/${issued.id}/share-links/${share.body.id}`).set(tenant.auth);
     expect(revoked.status).toBe(200);
     const unavailable = await request(app).get(share.body.publicPath);

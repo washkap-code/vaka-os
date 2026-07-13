@@ -6,7 +6,9 @@ import { appEnglish } from "./locales/app.en";
 import { PlatformAdminGuide } from "./platform-admin-guide";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
+import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
 import { useListSelection } from "./records/use-list-selection";
+import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -237,9 +239,6 @@ type AgedReceivablesView = {
   asAt: string;
   currencies: CurrencyAgeingView[];
   items: AgedReceivableView[];
-};
-type DashboardReceivablesView = Pick<AgedReceivablesView, "asAt" | "currencies"> & {
-  attentionItems: AgedReceivableView[];
 };
 const AGEING_BUCKET_LABELS = Object.entries(appEnglish.dashboard.buckets) as Array<
   [AgeingBucketKey, string]
@@ -909,7 +908,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setRequestedPage("billing")} />
         )}
         {t.status === "TRIAL" && <div className="banner warn">Free onboarding period — {trialDays} days remaining. Your first invoice arrives when the trial ends.</div>}
-        {page === "dashboard" && <Dashboard ccy={t.baseCurrency} />}
+        {page === "dashboard" && <Dashboard ccy={t.baseCurrency} navigation={visibleNav} onNavigate={setRequestedPage} />}
         {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")} />}
@@ -2028,75 +2027,15 @@ function UsersActivity() {
 // ---------------------------------------------------------------------------
 // Dashboard — cross-module live view
 // ---------------------------------------------------------------------------
-function Dashboard({ ccy }: { ccy: string }) {
+function Dashboard({ ccy, navigation, onNavigate }: {
+  ccy: string;
+  navigation: ReturnType<typeof visibleWorkspaceNavigation>;
+  onNavigate: (page: WorkspacePage) => void;
+}) {
   const [d] = useLoad(() => api("/reports/dashboard"));
   const copy = appEnglish.dashboard;
   if (!d) return <p className="sub">{copy.loading}</p>;
-  const receivables = d.receivables as DashboardReceivablesView;
-  return (<>
-    <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
-    <div className="cards">
-      <div className="card"><div className="k">{copy.income}</div><div className="v ok">{fmt(d.monthToDate.income, ccy)}</div></div>
-      <div className="card"><div className="k">{copy.expenses}</div><div className="v">{fmt(d.monthToDate.expenses, ccy)}</div></div>
-      <div className="card"><div className="k">{copy.netProfit}</div><div className={`v ${Number(d.monthToDate.netProfit) >= 0 ? "ok" : "bad"}`}>{fmt(d.monthToDate.netProfit, ccy)}</div></div>
-    </div>
-    <div className="panel">
-      <div className="panel-heading">
-        <h2>{copy.receivablesTitle}</h2>
-        <span className="sub">{copy.receivablesAsAt} {new Date(receivables.asAt).toLocaleDateString("en-ZW")}</span>
-      </div>
-      {receivables.currencies.length === 0 ? <p className="sub">{copy.noReceivables}</p> : (
-        <div className="receivables-currencies">
-          {receivables.currencies.map((currency) => (
-            <section className="receivables-currency" key={currency.currency} aria-labelledby={`ageing-${currency.currency}`}>
-              <div className="row receivables-summary">
-                <h3 id={`ageing-${currency.currency}`}>{currency.currency}</h3>
-                <span>{copy.outstanding}: <b>{fmt(currency.outstanding, currency.currency)}</b></span>
-                <span>{copy.overdue}: <b className={Number(currency.overdue) > 0 ? "bad-text" : "ok-text"}>{fmt(currency.overdue, currency.currency)}</b></span>
-              </div>
-              <div className="ageing-grid">
-                {AGEING_BUCKET_LABELS.map(([key, label]) => (
-                  <div className="ageing-bucket" key={key}>
-                    <span>{label}</span>
-                    <b>{fmt(currency.buckets[key], currency.currency)}</b>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-      <h3 className="attention-heading">{copy.attentionTitle}</h3>
-      {receivables.attentionItems.length === 0 ? <p className="sub">{copy.noAttention}</p> : (
-        <div className="table-scroll">
-          <table><thead><tr><th>{copy.invoice}</th><th>{copy.customer}</th><th className="num">{copy.amount}</th><th className="num">{copy.daysOverdue}</th></tr></thead>
-            <tbody>{receivables.attentionItems.map((item) => (
-              <tr key={item.invoiceId}>
-                <td><b>{item.number}</b></td>
-                <td>{item.contact}</td>
-                <td className="num">{fmt(item.outstanding, item.currency)}</td>
-                <td className="num bad-text">{item.daysOverdue}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      )}
-    </div>
-    <div className="panel"><h2>Low / out-of-stock items</h2>
-      {d.lowStock.length === 0 ? <p className="sub">All stock above reorder levels.</p> :
-        <table><thead><tr><th>SKU</th><th>Product</th><th className="num">On hand</th><th className="num">Reorder level</th></tr></thead>
-          <tbody>{d.lowStock.map((r: any) => (
-            <tr key={r.id}><td>{r.sku}</td><td>{r.name}</td><td className="num" style={{ color: "var(--danger)", fontWeight: 700 }}>{Number(r.on_hand)}</td><td className="num">{r.reorder_level}</td></tr>
-          ))}</tbody></table>}
-    </div>
-    <div className="panel"><h2>Open pipeline</h2>
-      {d.pipeline.length === 0 ? <p className="sub">No open deals.</p> :
-        <table><thead><tr><th>Stage</th><th className="num">Deals</th><th className="num">Value</th></tr></thead>
-          <tbody>{d.pipeline.map((r: any) => (
-            <tr key={r.stage}><td><span className={`pill ${r.stage}`}>{r.stage}</span></td><td className="num">{r.n}</td><td className="num">{fmt(r.value, ccy)}</td></tr>
-          ))}</tbody></table>}
-    </div>
-  </>);
+  return <UniversalWorkbench data={d as WorkbenchData} currency={ccy} navigation={navigation} onNavigate={onNavigate} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -2447,6 +2386,11 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
+  const [pdfPreview, setPdfPreview] = useState<{
+    url: string;
+    invoice: { id: string; number: string | null };
+  } | null>(null);
   const empty = { description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard", productId: "" };
   const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
 
@@ -2474,24 +2418,35 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
   const act = async (path: string, body: any = {}) => {
     try { await api(path, { method: "POST", body }); reload(); } catch (e: any) { alert(e.message); }
   };
+  useEffect(() => () => {
+    if (pdfPreview?.url) URL.revokeObjectURL(pdfPreview.url);
+  }, [pdfPreview?.url]);
+
+  const loadPdf = async (invoice: { id: string; number: string | null }) => {
+    setPdfBusyId(invoice.id);
+    try {
+      return await fetchInvoicePdf(invoice.id, getToken());
+    } finally {
+      setPdfBusyId(null);
+    }
+  };
   const downloadPdf = async (invoice: { id: string; number: string | null }) => {
     try {
-      const response = await fetch(`/api/v1/invoices/${invoice.id}/pdf`, {
-        headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || appEnglish.invoices.pdfDownloadFailed);
-      }
-      const url = URL.createObjectURL(await response.blob());
+      const url = URL.createObjectURL(await loadPdf(invoice));
       const link = document.createElement("a");
       link.href = url;
-      link.download = `invoice-${invoice.number ?? invoice.id}.pdf`;
+      link.download = invoicePdfFilename(invoice.number, invoice.id);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
+  };
+  const previewPdf = async (invoice: { id: string; number: string | null }) => {
+    try {
+      const url = URL.createObjectURL(await loadPdf(invoice));
+      setPdfPreview({ url, invoice });
+    } catch (error: any) { alert(error.message || appEnglish.invoices.pdfPreviewFailed); }
   };
   const getShareLink = async (invoice: { id: string }) => {
     const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
@@ -2573,7 +2528,8 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
             <td><span className={`pill ${i.status}`}>{i.status}</span></td>
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
             <td><div className="row">
-              {i.status !== "DRAFT" && <button className="btn ghost sm" onClick={() => downloadPdf(i)}>{appEnglish.invoices.downloadPdf}</button>}
+              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => previewPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
+              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => downloadPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
               {!readonly && canPost && <>
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
               {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
@@ -2593,6 +2549,15 @@ function Invoices({ readonly, baseCcy, canPost }: { readonly: boolean; baseCcy: 
         ))}</tbody></table>
       {loadedRows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
+    {pdfPreview && <div className="modalbg invoice-preview-backdrop" onClick={() => setPdfPreview(null)}>
+      <section className="modal invoice-preview-modal" role="dialog" aria-modal="true" aria-labelledby="invoice-preview-title" onClick={(event) => event.stopPropagation()}>
+        <div className="invoice-preview-heading">
+          <div><h2 id="invoice-preview-title">{appEnglish.invoices.previewTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)}</h2><p className="sub">{appEnglish.invoices.previewHelp}</p></div>
+          <div className="row"><a className="btn ghost sm" href={pdfPreview.url} download={invoicePdfFilename(pdfPreview.invoice.number, pdfPreview.invoice.id)}>{appEnglish.invoices.downloadPdf}</a><button className="btn ghost sm" onClick={() => setPdfPreview(null)}>{appEnglish.invoices.closePreview}</button></div>
+        </div>
+        <iframe className="invoice-preview-frame" src={pdfPreview.url} title={appEnglish.invoices.previewFrameTitle.replace("{number}", pdfPreview.invoice.number ?? appEnglish.invoices.draft)} />
+      </section>
+    </div>}
     {linkInvoice && <div className="modalbg" onClick={() => setLinkInvoice(null)}><div className="modal" onClick={(e) => e.stopPropagation()}>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <h2>{appEnglish.invoices.shareLinksTitle}</h2>

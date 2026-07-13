@@ -1,4 +1,5 @@
 import type { StatutoryReportPack } from "./statutory-report-pack.js";
+import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
 
 function safeCsvCell(value: string): string {
   const trimmed = value.trimStart();
@@ -94,7 +95,8 @@ export function renderStatutoryReportPdf(report: StatutoryReportPack): Buffer {
     const pageId = pageIds[index]; const contentId = pageId + 1;
     const commands = ["BT /F1 12 Tf 40 760 Td (Statutory report pack - technical preview) Tj ET"];
     page.forEach((line, lineIndex) => commands.push(`BT /F1 7 Tf 30 ${738 - lineIndex * 17} Td (${pdfText(line)}) Tj ET`));
-    commands.push(`BT /F1 8 Tf 260 24 Td (Page ${index + 1} of ${pages.length}) Tj ET`);
+    commands.push(`BT /F1 7 Tf 30 22 Td (${pdfText(VAKA_DOCUMENT_FOOTER)}) Tj ET`);
+    commands.push(`BT /F1 8 Tf 500 22 Td (Page ${index + 1} of ${pages.length}) Tj ET`);
     const content = commands.join("\n");
     objects[pageId - 1] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`;
     objects[contentId - 1] = `<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`;

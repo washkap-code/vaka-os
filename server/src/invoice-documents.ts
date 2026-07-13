@@ -1,4 +1,5 @@
 import { deflateSync, inflateSync } from "node:zlib";
+import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
 
 export type InvoiceSnapshotDocument = {
   issuer: { companyName: string; logoUrl?: string | null; physicalAddress: string | null; registrationNumber: string | null; taxNumber: string | null; vatNumber: string | null };
@@ -192,6 +193,7 @@ export function renderInvoicePdf(document: InvoiceSnapshotDocument): Buffer {
   add(`Total: ${document.invoice.currency} ${document.invoice.total}`, 13);
   if (document.invoice.notes) add(`Notes: ${document.invoice.notes}`);
   add("Generated from the issued VAKA invoice record.", 8);
+  lines.push(`BT /F1 7 Tf 40 22 Td (${escapePdfText(VAKA_DOCUMENT_FOOTER)}) Tj ET`);
 
   if (logo) {
     const boxWidth = 110;

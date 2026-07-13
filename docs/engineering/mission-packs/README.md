@@ -30,12 +30,14 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-005 | Event bus: emit domain events from existing write paths | ✅ Implemented; full DB-backed suite verified; durable delivery gated |
 | P1-006 | Tenant-scoped Customer/Invoice/Product search adapter | ✅ Technically verified internal adapter; durable delivery, scale and UI gated |
 | P1-008 | Canonical Company/Customer/Invoice/Product metadata registry | ✅ Technically verified read-only registry; dynamic values and AI context gated |
-| P9-008 | Account recovery, optional MFA and governed platform workforce | Approved for implementation |
+| P9-008 | Account recovery, optional MFA and governed platform workforce | ✅ Released (PR #62–#64); email delivery and stable MFA key activation remain externally configured |
 | P3-003 | Customer activity and communication timeline | ✅ Technically verified for manual CRM activity and financial milestones; provider communications gated |
-| P3-004 | Customer records, bulk actions and controlled deletion | Implemented on branch; verification and release pending |
-| P2-007 | Invoice detail and draft amendment | Implemented on branch; verification and release pending |
+| P3-004 | Customer records, bulk actions and controlled deletion | ✅ Released (PR #61); physical privacy erasure and merge/deduplication remain gated |
+| P2-007 | Invoice detail and draft amendment | ✅ Released (PR #61); issued/posted history remains immutable |
 | P5-004 | Product reorder rules and in-app low-stock alerts | ✅ Technically verified; durable delivery, external channels and auto-replenishment gated |
 | P6-006 | Platform Admin Control Centre | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
+| P6-003 | Universal Workbench | Implemented on branch; focused web gates passed; DB-backed regression pending CI environment |
+| HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | Implemented on branch; focused gates passed; release pending |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; focused/browser verification passed; full suite environment-blocked |

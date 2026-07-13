@@ -5,6 +5,7 @@ const LIVE_SURFACES = [
   "src/styles.css", "src/landing.css", "src/App.tsx", "src/landing.tsx",
   "src/shell/notification-copy.ts", "src/shell/notification-menu.tsx",
   "src/shell/user-menu.tsx", "src/shell/workspace-shell.tsx",
+  "src/shell/universal-workbench.tsx", "src/shell/workbench-model.ts",
 ];
 
 function lineNumber(source, offset) {

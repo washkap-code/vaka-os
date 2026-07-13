@@ -159,8 +159,12 @@ The preview is a development-only page and includes light/dark switching, contro
 5. P6-002 extracted the authenticated shell into focused components using the
    governed compatibility roles and added every live shell TSX file to the
    conformance scan. Domain modules remain on their existing selectors.
-6. Migrate legacy selectors to shared React primitives gradually.
-7. Migrate module DOM/components only through scoped tasks with screenshots,
+6. P6-003 establishes the Universal Workbench data-visualisation pattern:
+   semantic surface/elevation roles, exact-value bar views with accessible text
+   equivalents, permission-filtered next actions and small-screen stacking. Chart
+   geometry is presentation only and never replaces authoritative report values.
+7. Migrate legacy selectors to shared React primitives gradually.
+8. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.

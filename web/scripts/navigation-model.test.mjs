@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveWorkspacePage, visibleWorkspaceNavigation } from "../src/shell/navigation.ts";
 import { notificationCopy } from "../src/shell/notification-copy.ts";
+import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "../src/shell/workbench-model.ts";
 
 const notificationCatalogue = {
   lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
@@ -30,6 +31,22 @@ test("a forbidden current page falls back to the first visible destination", () 
 
 test("billing and settings remain available without domain permissions", () => {
   assert.deepEqual(visibleWorkspaceNavigation([], false).map((item) => item.key), ["billing", "settings"]);
+});
+
+test("workbench actions expose only destinations already permitted by the shell", () => {
+  const navigation = visibleWorkspaceNavigation(["reports.read", "crm.read", "inventory.read"], false);
+  assert.deepEqual(visibleWorkbenchActions(navigation).map((action) => action.page), ["contacts", "products", "pipeline"]);
+});
+
+test("workbench chart geometry is bounded and handles empty or invalid values", () => {
+  assert.equal(safeChartPercent(50, [50, 100]), 50);
+  assert.equal(safeChartPercent(-100, [50, -100]), 100);
+  assert.equal(safeChartPercent(Number.NaN, [50]), 0);
+  assert.equal(safeChartPercent(0, []), 0);
+});
+
+test("workbench open-deal count ignores malformed and negative evidence", () => {
+  assert.equal(openPipelineDeals([{ n: "2" }, { n: 3 }, { n: "unknown" }, { n: -4 }]), 5);
 });
 
 test("known notifications use only their catalogue-owned display fields", () => {
