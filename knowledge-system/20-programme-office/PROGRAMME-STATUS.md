@@ -1,12 +1,12 @@
 # Programme status
 
-**As at:** 2026-07-11  
+**As at:** 2026-07-13
 **Legend:** definition / implementation / verification / availability
 
 | Programme | Status | Evidence and next gate |
 |---|---|---|
 | P0 Engineering Foundation | accepted / partial / partial / internal | Knowledge System and CI foundations; placeholder replacement, scans, E2E, migration pipeline and hosted evidence remain |
-| P1 Platform Foundation | accepted / partial / isolated foundations passed / internal | Kernel, adapters and contracts exist; durable providers and consumption migration remain |
+| P1 Platform Foundation | accepted / partial / P1-004 full suite passed / internal | Kernel, identity/audit/localisation and notification adapters exist; P1-005 event adoption, durable provider operations and broader consumption migration remain |
 | P2 Finance and Zimbabwe | accepted / partial / critical foundations exist / existing product scope only | authoritative architecture and country config; full test environment and professional approval remain |
 | P3 CRM and sales | accepted / partial / critical-path tests documented / existing foundation | complete lead-to-cash and portal/analytics gaps remain |
 | P4 Procurement | accepted / partial / not fully assessed / existing PO foundation | source-to-pay, match and supplier controls remain |

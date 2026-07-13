@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   databaseUrl,
+  emailProviderConfig,
   jwtSecret,
   platformAdminPassword,
 } from "../src/config.js";
@@ -56,5 +57,19 @@ describe("runtime configuration", () => {
         PLATFORM_ADMIN_PASSWORD: "local-seed-password-2026",
       }),
     ).toBe("local-seed-password-2026");
+  });
+
+  it("keeps email disabled in local development and fails closed on incomplete production config", () => {
+    expect(emailProviderConfig({ NODE_ENV: "development" })).toBeNull();
+    expect(() => emailProviderConfig({
+      NODE_ENV: "production",
+      EMAIL_PROVIDER_URL: "https://mail.example/send",
+    })).toThrow("must be configured together");
+    expect(() => emailProviderConfig({
+      NODE_ENV: "production",
+      EMAIL_PROVIDER_URL: "http://mail.example/send",
+      EMAIL_PROVIDER_TOKEN: "a".repeat(32),
+      EMAIL_FROM: "notifications@example.com",
+    })).toThrow("must use HTTPS");
   });
 });

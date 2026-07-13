@@ -215,10 +215,10 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
     "kernel.notifications",
     "Notifications",
     "partial",
-    "Typed notification contract and product-specific notices exist; provider delivery and operational assurance are not complete.",
-    "Implement consent-aware providers, retries, idempotency, delivery evidence and failover.",
+    "A kernel notification service, provider-neutral email adapter, persisted in-app records, tenant dedupe and delivery evidence exist. SMS/WhatsApp are non-transmitting placeholders.",
+    "Configure and assure an email provider, add consent/retry/failover operations, then adopt approved product call sites. SMS/WhatsApp remain unavailable.",
     "passed",
-    "Focused Platform Kernel notification tests passed.",
+    "P1-004 adapter, composition, persistence, audit, dedupe and tenant-isolation tests passed; product delivery adoption remains separate.",
   ),
   kernel(
     "kernel.security",

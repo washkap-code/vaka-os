@@ -21,6 +21,16 @@ import { identityServiceForAuth, type AuthSnapshot } from "./platform/identity/a
 import { LocalisationService } from "./platform/localisation/service.js";
 import type { CountryPack } from "./platform/localisation/types.js";
 import { ZIMBABWE } from "./countries/zw.js";
+import { NotificationService } from "./platform/notifications/service.js";
+import { emailGateway } from "./platform/notifications/adapters/email-gateway.js";
+import { inAppGateway } from "./platform/notifications/adapters/in-app-gateway.js";
+import { noopGateway } from "./platform/notifications/adapters/noop-gateway.js";
+import type {
+  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup, NotificationWriter,
+} from "./platform/notifications/index.js";
+import {
+  createHttpEmailTransport, findNotificationDuplicate, persistNotification,
+} from "./notifications.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -36,6 +46,9 @@ export const IDENTITY_FACTORY: ServiceToken<RequestIdentityFactory> =
 export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
   createServiceToken("platform.localisation.service");
 
+export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
+  createServiceToken("platform.notifications.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -44,6 +57,11 @@ export interface PlatformKernelOptions {
   auditWriter?: AuditRowWriter;
   /** Override the registered country packs (tests). Defaults to DEFAULT_COUNTRY_PACKS. */
   countryPacks?: readonly CountryPack[];
+  /** Notification adapter overrides keep tests and future providers transport-neutral. */
+  emailTransport?: EmailTransport;
+  notificationWriter?: NotificationWriter;
+  notificationDedupeLookup?: NotificationDedupeLookup;
+  notificationAuditRecorder?: NotificationAuditRecorder;
 }
 
 /**
@@ -71,6 +89,33 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   kernel.container.registerFactory(LOCALISATION_SERVICE, () =>
     new LocalisationService(countryPacks),
   );
+
+  kernel.container.registerFactory(NOTIFICATION_SERVICE, () => {
+    const persist = options.notificationWriter ?? persistNotification;
+    const recordAudit: NotificationAuditRecorder = options.notificationAuditRecorder
+      ?? (async (request, delivery) => kernel.container.get(AUDIT_SERVICE).record({
+        tenantId: request.tenantId,
+        actorUserId: request.actorUserId,
+        action: delivery.status === "failed"
+          ? "notification.failed"
+          : delivery.transmitted ? "notification.sent" : "notification.accepted",
+        entityType: "notification",
+        entityId: delivery.requestId,
+        metadata: {
+          channel: request.channel,
+          template: request.template,
+          status: delivery.status ?? "accepted",
+          transmitted: delivery.transmitted ?? false,
+          deduplicated: delivery.deduplicated ?? false,
+        },
+      }));
+    return new NotificationService({
+      EMAIL: emailGateway(options.emailTransport ?? createHttpEmailTransport(), persist),
+      IN_APP: inAppGateway(persist),
+      SMS: noopGateway("SMS", persist),
+      WHATSAPP: noopGateway("WHATSAPP", persist),
+    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit);
+  });
 
   return kernel;
 }

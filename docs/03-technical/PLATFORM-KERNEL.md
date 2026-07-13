@@ -19,7 +19,7 @@ rewrite and not a claim that every service is live in production.
 | `audit` | structured material-action evidence | injected sink contract |
 | `events` | tenant-aware domain events and subscriptions | in-memory reference bus for tests |
 | `workflow` | named orchestration handlers | in-process reference runner |
-| `notifications` | locale-aware delivery requests | injected provider contract |
+| `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | injected store contract |
 | `search` | tenant- and actor-scoped discovery | injected provider contract |
 | `metadata` | extensible typed entity metadata | injected provider contract |
@@ -90,3 +90,13 @@ instantiated by the existing application during this mission.
    backup, and recovery controls are approved.
 6. Remove duplicate module infrastructure only after production evidence and a
    documented rollback window.
+
+## Notification adoption seam (P1-004)
+
+The composition root exposes `NOTIFICATION_SERVICE`. New notification-producing
+modules resolve or receive this service rather than importing provider code.
+Email delivery uses an injected, provider-neutral HTTPS transport; in-app
+notifications are persisted; SMS and WhatsApp record non-transmitted intent
+only. Existing invoice and statement call sites are deliberately unchanged
+until P7-001. Tenant-scoped dedupe and read helpers live in the application
+adapter, while the Platform namespace remains independent of the database.

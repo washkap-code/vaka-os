@@ -80,3 +80,27 @@ export function platformAdminPassword(
   }
   return assertSafeSecret("PLATFORM_ADMIN_PASSWORD", configured, 16);
 }
+
+export interface EmailProviderConfig {
+  url: string;
+  token: string;
+  from: string;
+}
+
+/** Provider-neutral HTTP email transport. Missing production config fails closed. */
+export function emailProviderConfig(
+  env: RuntimeEnvironment = process.env,
+): EmailProviderConfig | null {
+  const url = valueOf(env, "EMAIL_PROVIDER_URL");
+  const token = valueOf(env, "EMAIL_PROVIDER_TOKEN");
+  const from = valueOf(env, "EMAIL_FROM");
+  if (!url && !token && !from && !isProduction(env)) return null;
+  if (!url || !token || !from) {
+    throw new Error("EMAIL_PROVIDER_URL, EMAIL_PROVIDER_TOKEN and EMAIL_FROM must be configured together");
+  }
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { throw new Error("EMAIL_PROVIDER_URL must be a valid HTTPS URL"); }
+  if (parsed.protocol !== "https:") throw new Error("EMAIL_PROVIDER_URL must use HTTPS");
+  if (isProduction(env)) assertSafeSecret("EMAIL_PROVIDER_TOKEN", token, 24);
+  return { url: parsed.toString(), token, from };
+}
