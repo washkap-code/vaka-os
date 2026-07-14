@@ -1,7 +1,7 @@
 # P4-002 — Completion Report
 
 **Implementation:** Complete for the controlled procurement lifecycle scope
-**Technical verification:** Local static/UI gates complete; hosted isolated-PostgreSQL gate pending
+**Technical verification:** Complete
 **Availability:** Authenticated tenant Procurement workspace and APIs
 **Production migration:** Pending separately authorised hand-application
 **Completed on:** 2026-07-14
@@ -66,9 +66,14 @@
 - Accessibility conformance and negative self-test: passed, including all seven
   procurement dialogs and the procurement tablist.
 - `git diff --check`: passed.
-- Guarded `test:db:prepare` and the full DB-backed server suite require the
-  isolated PostgreSQL runner and are pending on the hosted PR gate; no local
-  PostgreSQL service or test `DATABASE_URL` is available.
+- Guarded hosted `test:db:prepare`: passed against the isolated PostgreSQL
+  service; procurement migrations and required reference seed completed.
+- Full serial DB-backed server suite: 73 files / 247 tests passed, 0 failed,
+  including the P4-002 lifecycle, concurrent over-receipt, RBAC, tenant,
+  journal/GRNI and legacy supplier-integrity coverage.
+- Hosted Vercel preview: passed on the verified commit.
+- A local PostgreSQL service/test `DATABASE_URL` was not available; the
+  required database gate ran in the isolated hosted PR environment.
 - No production database command was run.
 
 ## Production migration
