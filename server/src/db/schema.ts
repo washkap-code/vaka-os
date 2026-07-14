@@ -920,6 +920,8 @@ export const subscriptionPaymentAttempts = pgTable("subscription_payment_attempt
     .on(t.tenantId, t.subscriptionInvoiceId, t.idempotencyKey),
   index("subscription_payment_attempts_tenant_invoice")
     .on(t.tenantId, t.subscriptionInvoiceId, t.createdAt),
+  index("subscription_payment_attempts_invoice").on(t.subscriptionInvoiceId),
+  index("subscription_payment_attempts_initiated_by").on(t.initiatedBy),
   check("subscription_payment_attempts_provider_check", sql`${t.provider} = 'PAYNOW'`),
   check("subscription_payment_attempts_status_check", sql`${t.status} IN ('CREATED', 'PENDING', 'PAID', 'FAILED', 'CANCELLED', 'DISPUTED', 'REFUNDED', 'REQUIRES_REVIEW')`),
 ]);

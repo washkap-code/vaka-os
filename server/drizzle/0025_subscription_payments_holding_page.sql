@@ -50,3 +50,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS "subscription_payment_attempts_idempotency_uni
   ON "subscription_payment_attempts" ("tenant_id", "subscription_invoice_id", "idempotency_key");
 CREATE INDEX IF NOT EXISTS "subscription_payment_attempts_tenant_invoice"
   ON "subscription_payment_attempts" ("tenant_id", "subscription_invoice_id", "created_at");
+CREATE INDEX IF NOT EXISTS "subscription_payment_attempts_invoice"
+  ON "subscription_payment_attempts" ("subscription_invoice_id");
+CREATE INDEX IF NOT EXISTS "subscription_payment_attempts_initiated_by"
+  ON "subscription_payment_attempts" ("initiated_by");
+
+-- VAKA's Express/RBAC boundary is authoritative. Prevent browser database
+-- roles from reaching provider references or encrypted polling evidence, and
+-- retain RLS as defence in depth for this public-schema tenant-owned table.
+ALTER TABLE "subscription_payment_attempts" ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE "subscription_payment_attempts" FROM anon, authenticated;
