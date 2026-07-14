@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
-import { PlatformAdminShell, type PlatformAdminNavigationItem } from "./platform/platform-admin-shell";
+import { PlatformAdminIcon, PlatformAdminShell, type PlatformAdminNavigationItem } from "./platform/platform-admin-shell";
 import { filterPlatformTenants, visiblePlatformAdminPages, type PlatformAdminPage } from "./platform/platform-admin-model";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
@@ -473,7 +473,8 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
       user={{ fullName: me.user.fullName, email: me.user.email }} role={me.platformRoleName ?? copy.platformStaffRole}
       labels={{ product: "VAKA OS", workspace: copy.controlCentre, navigation: copy.navigation,
         openMenu: copy.openMenu, closeMenu: copy.closeMenu, mobileNavigation: copy.mobileNavigation,
-        signedInAs: copy.signedInAs, signOut: copy.signOut, skipToContent: copy.skipToContent }}
+        skipToContent: copy.skipToContent,
+        workspaceGroup: copy.workspaceGroup, administrationGroup: copy.administrationGroup, supportGroup: copy.supportGroup }}
       onNavigate={setTab} onLogout={onLogout}>
         <div className="platform-admin-page-heading">
           <div><span>{copy.controlCentre}</span><h1>{currentAdminPage?.label}</h1><p>{currentAdminPage?.description}</p></div>
@@ -483,14 +484,22 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         {tab === "overview" && <section className="platform-admin-shortcuts" aria-labelledby="platform-shortcuts-heading">
           <div className="platform-admin-section-heading"><div><span>{copy.getThereFaster}</span><h2 id="platform-shortcuts-heading">{copy.commonDestinations}</h2></div></div>
           <div className="platform-admin-shortcut-grid">{adminNavigation.filter((item) => item.key !== "overview").slice(0, 4).map((item) =>
-            <button type="button" key={item.key} onClick={() => setTab(item.key)}><strong>{item.label}</strong><small>{item.description}</small><b aria-hidden="true">→</b></button>)}</div>
+            <button type="button" key={item.key} onClick={() => setTab(item.key)}><PlatformAdminIcon page={item.key} /><strong>{item.label}</strong><small>{item.description}</small><b aria-hidden="true">→</b></button>)}</div>
         </section>}
         {tab === "overview" && analytics && <>
           <div className="platform-admin-section-heading"><div><span>{copy.atAGlance}</span><h2>{copy.platformSignals}</h2></div><small>{copy.platformSignalsHelp}</small></div>
-          <div className="cards platform-admin-metrics">
-            {[[copy.totalTenants, analytics.summary.total_tenants], [copy.trialTenants, analytics.summary.trial_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users], [copy.invoicesIssued, analytics.summary.invoices_issued], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding]].map(([label, value], index) => <div className={`card platform-admin-metric metric-${index + 1}`} key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
+          <div className="platform-admin-signal-board">
+            <div className="cards platform-admin-metrics">
+              {[[copy.totalTenants, analytics.summary.total_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users]].map(([label, value], index) => <div className={`card platform-admin-metric metric-${index + 1}`} key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
+            </div>
+            <aside className="panel platform-admin-attention" aria-labelledby="platform-attention-heading">
+              <div className="platform-admin-attention-heading"><span aria-hidden="true">!</span><div><h2 id="platform-attention-heading">{copy.attentionHeading}</h2><p>{copy.attentionHelp}</p></div></div>
+              <dl>
+                {[[copy.trialTenants, analytics.summary.trial_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding], [copy.invoicesIssued, analytics.summary.invoices_issued]].map(([label, value], index) => <div className={`attention-${index + 1}`} key={String(label)}><dt>{label}</dt><dd>{value ?? 0}</dd></div>)}
+              </dl>
+            </aside>
           </div>
-          <div className="grid2">
+          <div className="grid2 platform-admin-insight-grid">
             <div className="panel"><h2>{copy.planMix}</h2><table><thead><tr><th>{copy.plan}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.planMix ?? []).map((row: any) => <tr key={row.plan}><td>{row.plan}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.planMix?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
             <div className="panel"><h2>{copy.tenantGrowth}</h2><table><thead><tr><th>{copy.month}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.tenantGrowth ?? []).map((row: any) => <tr key={row.month}><td>{row.month}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.tenantGrowth?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
           </div>
