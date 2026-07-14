@@ -17,6 +17,7 @@ import {
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
   issueAuthenticatedSession, renewSession, setRefreshCookie, clearRefreshCookie, readRefreshCookie,
 } from "./auth.js";
+import { assertStepUpProof, performStepUp, requireStepUp } from "./auth-step-up.js";
 import {
   beginMfaEnrollment, completePasswordReset, disableMfa, mfaStatus,
   replaceMfaRecoveryCodes, requestPasswordReset, verifyMfaEnrollment, verifyMfaLogin,
@@ -379,6 +380,22 @@ api.post("/auth/change-password", wrap(async (req) => {
   return changePassword({ userId: req.auth!.userId, ...body });
 }));
 
+// P9-011: fresh reauthentication for privileged destructive actions. The
+// returned proof is held in browser memory only and grants no permission of
+// its own; protected routes still run their normal permission checks first.
+api.post("/auth/step-up", wrap(async (req) => {
+  const body = z.object({
+    currentPassword: z.string().min(1).max(256),
+    code: z.string().trim().min(6).max(32).optional(),
+  }).parse(req.body);
+  return performStepUp({
+    userId: req.auth!.userId,
+    tenantId: req.auth!.tenantId,
+    sessionId: req.auth!.sessionId,
+    assuranceLevel: req.auth!.assuranceLevel,
+  }, body.currentPassword, body.code);
+}));
+
 api.post("/auth/logout", wrap(async (req, res) => {
   const body = z.object({ reason: z.enum(["EXPLICIT", "IDLE"]).default("EXPLICIT") })
     .parse(req.body ?? {});
@@ -552,7 +569,7 @@ api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
   };
 }));
 
-api.post("/security/users", requireTenantOwner as any, wrap(async (req) => {
+api.post("/security/users", requireTenantOwner as any, requireStepUp as any, wrap(async (req) => {
   const body = z.object({
     email: z.string().email(), fullName: z.string().trim().min(2).max(100),
     roleId: z.string().uuid(), initialPassword: z.string().min(12).max(256).optional(),
@@ -560,7 +577,7 @@ api.post("/security/users", requireTenantOwner as any, wrap(async (req) => {
   return createTenantUser({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...body });
 }));
 
-api.post("/security/users/:id/:status", requireTenantOwner as any, wrap(async (req) => {
+api.post("/security/users/:id/:status", requireTenantOwner as any, requireStepUp as any, wrap(async (req) => {
   const status = z.enum(["active", "disabled"]).parse(req.params.status);
   return setTenantUserStatus({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
@@ -1128,6 +1145,9 @@ api.post("/contacts/bulk", requirePermission("crm.write"), wrap(async (req) => {
 }));
 api.post("/contacts/deletions", requirePermission("crm.write"), wrap(async (req) => {
   const body = z.object({ ids: contactIdsSchema, reason: z.string().trim().min(3).max(500) }).strict().parse(req.body);
+  // P9-011: an Owner performs an immediate deletion, so a fresh step-up proof
+  // is required. Ordinary staff merely request deletion — no proof needed.
+  if (req.auth!.isTenantOwner) assertStepUpProof(req);
   return deleteOrRequestContacts({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
     isTenantOwner: req.auth!.isTenantOwner, ids: body.ids, reason: body.reason,
@@ -1143,6 +1163,9 @@ api.post("/contacts/deletion-requests/:requestId/decision",
       decision: z.enum(["APPROVE", "REJECT"]),
       reason: z.string().trim().min(3).max(500),
     }).strict().parse(req.body);
+    // P9-011: approval deletes data and requires a fresh step-up proof;
+    // rejection destroys nothing and does not.
+    if (body.decision === "APPROVE") assertStepUpProof(req);
     return decideContactDeletionRequest({
       tenantId: tenantId(req), actorUserId: req.auth!.userId, isTenantOwner: req.auth!.isTenantOwner,
       requestId: routeParam(req, "requestId"), ...body,
@@ -1958,18 +1981,18 @@ const platformStaffProfileSchema = z.object({
 
 api.get("/platform/staff/roles", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformRoles()));
 api.get("/platform/staff", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformStaff()));
-api.post("/platform/staff", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.post("/platform/staff", requirePlatformPermission("platform.staff.manage"), requireStepUp as any, wrap(async (req) => {
   const body = platformStaffProfileSchema.extend({
     email: z.string().email(),
     initialPassword: z.string().min(12).max(256).optional(),
   }).parse(req.body);
   return createPlatformStaff(req.auth!.userId, body);
 }));
-api.patch("/platform/staff/:id", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.patch("/platform/staff/:id", requirePlatformPermission("platform.staff.manage"), requireStepUp as any, wrap(async (req) => {
   const body = platformStaffProfileSchema.extend({ status: z.enum(["active", "disabled"]) }).parse(req.body);
   return updatePlatformStaff(req.auth!.userId, routeParam(req, "id"), body);
 }));
-api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("platform.staff.manage"), requireStepUp as any, wrap(async (req) => {
   const body = z.object({ temporaryPassword: z.string().min(12).max(256).optional() }).parse(req.body);
   return issuePlatformStaffTemporaryPassword(req.auth!.userId, routeParam(req, "id"), body.temporaryPassword);
 }));

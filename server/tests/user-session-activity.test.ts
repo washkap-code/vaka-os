@@ -32,8 +32,13 @@ describe("owner session visibility", () => {
 
     const stockRole = activity.body.roles.find((role: any) => role.name === "Stock Controller");
     expect(stockRole).toBeTruthy();
+    // P9-011: owner team management requires a fresh step-up proof.
+    const stepUpRes = await request(app).post("/api/v1/auth/step-up")
+      .set(auth(first.token)).send({ currentPassword: password });
+    expect(stepUpRes.status).toBe(200);
+    const stepUp = { "X-Vaka-Step-Up": stepUpRes.body.proof as string };
     const memberEmail = `session-member-${suffix}@test.zw`;
-    const created = await request(app).post("/api/v1/security/users").set(auth(first.token)).send({
+    const created = await request(app).post("/api/v1/security/users").set(auth(first.token)).set(stepUp).send({
       email: memberEmail, fullName: "Session Member", roleId: stockRole.id,
     });
     expect(created.status).toBe(200);
@@ -41,7 +46,7 @@ describe("owner session visibility", () => {
     const memberLogin = await login(memberEmail, created.body.temporaryPassword, tenant.subdomain);
     expect(memberLogin.user.mustChangePassword).toBe(true);
     const disabled = await request(app).post(`/api/v1/security/users/${created.body.user.id}/disabled`)
-      .set(auth(first.token)).send({});
+      .set(auth(first.token)).set(stepUp).send({});
     expect(disabled.status).toBe(200);
     expect((await request(app).get("/api/v1/me").set(auth(memberLogin.token))).status).toBe(401);
 
