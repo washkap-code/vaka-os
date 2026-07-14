@@ -35,7 +35,21 @@ function icon(name: string) {
 
 function ProductPreview({ copy, onInteraction }: { copy: HomeCopy; onInteraction: (name: string) => void }) {
   const [activeId, setActiveId] = useState<PreviewTab["id"]>("overview");
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const active = copy.preview.tabs.find((tab) => tab.id === activeId) ?? copy.preview.tabs[0];
+
+  const choose = (tab: PreviewTab, index: number) => {
+    setActiveId(tab.id);
+    tabRefs.current[index]?.focus();
+    onInteraction(`preview_${tab.id}`);
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const next = nextHomepageTabIndex(event.key, index, copy.preview.tabs.length);
+    if (next === null) return;
+    event.preventDefault();
+    choose(copy.preview.tabs[next], next);
+  };
 
   return (
     <div className="v-product" aria-label={copy.accessibility.productPreview}>
@@ -47,19 +61,19 @@ function ProductPreview({ copy, onInteraction }: { copy: HomeCopy; onInteraction
       </div>
       <div className="v-product-body">
         <div className="v-product-nav" role="tablist" aria-label={copy.accessibility.productViews}>
-          {copy.preview.tabs.map((tab) => (
+          {copy.preview.tabs.map((tab, index) => (
             <button
+              ref={(node) => { tabRefs.current[index] = node; }}
               id={`preview-${tab.id}-tab`}
               type="button"
               role="tab"
               aria-selected={tab.id === active.id}
               aria-controls={`preview-${tab.id}-panel`}
+              tabIndex={tab.id === active.id ? 0 : -1}
               className={tab.id === active.id ? "active" : ""}
               key={tab.id}
-              onClick={() => {
-                setActiveId(tab.id);
-                onInteraction(`preview_${tab.id}`);
-              }}
+              onClick={() => choose(tab, index)}
+              onKeyDown={(event) => onKeyDown(event, index)}
             >
               {tab.label}
             </button>
@@ -73,38 +87,81 @@ function ProductPreview({ copy, onInteraction }: { copy: HomeCopy; onInteraction
           key={active.id}
         >
           <div className="v-product-heading"><span>{active.heading}</span><span className="v-live">{copy.preview.live}</span></div>
-          <div className="v-metrics">
-            {active.metrics.map((metric) => (
-              <div key={metric.label}>
-                <small>{metric.label}</small>
-                <strong>{metric.value}</strong>
-                <em className={metric.tone === "warning" ? "warn" : ""}>{metric.note}</em>
+          <div className="v-product-grid">
+            <div className="v-product-overview">
+              <div className="v-metrics">
+                {active.metrics.map((metric) => (
+                  <div key={metric.label}>
+                    <small>{metric.label}</small>
+                    <strong>{metric.value}</strong>
+                    <em className={metric.tone === "warning" ? "warn" : ""}>{metric.note}</em>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="v-product-lower">
-            <div className="v-chart">
-              <div className="v-chart-title"><span>{copy.preview.chartTitle}</span><b>{copy.preview.chartValue}</b></div>
-              <svg viewBox="0 0 420 130" role="img" aria-label={copy.accessibility.chart}>
-                <defs>
-                  <linearGradient id="vaka-preview-area" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stopColor="currentColor" stopOpacity=".3" />
-                    <stop offset="1" stopColor="currentColor" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0 110 C45 100 55 80 92 88 S150 65 180 73 S230 42 270 54 S340 35 420 18 V130 H0Z" fill="url(#vaka-preview-area)" />
-                <path d="M0 110 C45 100 55 80 92 88 S150 65 180 73 S230 42 270 54 S340 35 420 18" fill="none" stroke="currentColor" strokeWidth="3" />
-              </svg>
+              <div className="v-product-lower">
+                <div className="v-chart">
+                  <div className="v-chart-title"><span>{copy.preview.chartTitle}</span><b>{copy.preview.chartValue}</b></div>
+                  <svg viewBox="0 0 420 130" role="img" aria-label={copy.accessibility.chart}>
+                    <defs>
+                      <linearGradient id="vaka-preview-area" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stopColor="currentColor" stopOpacity=".3" />
+                        <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0 110 C45 100 55 80 92 88 S150 65 180 73 S230 42 270 54 S340 35 420 18 V130 H0Z" fill="url(#vaka-preview-area)" />
+                    <path d="M0 110 C45 100 55 80 92 88 S150 65 180 73 S230 42 270 54 S340 35 420 18" fill="none" stroke="currentColor" strokeWidth="3" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <div className="v-ai-card">
-              <span className="v-ai-tag">{copy.preview.aiLabel}</span>
-              <p>{copy.preview.aiTextBefore}<b>{copy.preview.aiAmount}</b>.</p>
-              <span className="v-ai-link">{copy.preview.aiAction}</span>
-            </div>
+            <aside className="v-priority-rail" aria-label={copy.accessibility.productPriorities}>
+              <h3>{copy.preview.prioritiesTitle}</h3>
+              {copy.preview.priorities.map((priority) => (
+                <div className={`v-priority v-priority-${priority.tone}`} key={priority.label}>
+                  <span>{priority.label}</span><strong>{priority.value}</strong><small>{priority.note}</small>
+                </div>
+              ))}
+              <div className="v-ai-card">
+                <span className="v-ai-tag">{copy.preview.aiLabel}</span>
+                <p>{copy.preview.aiTextBefore}<b>{copy.preview.aiAmount}</b>.</p>
+                <span className="v-ai-link">{copy.preview.aiAction}</span>
+              </div>
+            </aside>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function ProductMenu({ copy, go }: { copy: HomeCopy; go: (id: string) => void }) {
+  const disclosureRef = useRef<HTMLDetailsElement | null>(null);
+
+  const choose = (id: string) => {
+    disclosureRef.current?.removeAttribute("open");
+    go(id === "ai" ? "ai" : "product");
+  };
+
+  return (
+    <details
+      className="v-product-menu"
+      ref={disclosureRef}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape" || !disclosureRef.current?.open) return;
+        event.preventDefault();
+        disclosureRef.current.open = false;
+        disclosureRef.current.querySelector("summary")?.focus();
+      }}
+    >
+      <summary>{copy.nav.product}<span aria-hidden="true">⌄</span></summary>
+      <div className="v-product-menu-panel" role="group" aria-label={copy.accessibility.productMenu}>
+        {copy.nav.productItems.map((item) => (
+          <button type="button" onClick={() => choose(item.id)} key={item.id}>
+            <span>{item.label}</span><small className={`v-status v-status-${item.tone}`}>{item.status}</small>
+          </button>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -211,7 +268,9 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
     onSignup();
   };
 
-  const navigation = HOME_NAVIGATION_IDS.map((id) => [id, copy.nav[id === "faq" ? "resources" : id]] as const);
+  const navigation = HOME_NAVIGATION_IDS
+    .filter((id) => id !== "product")
+    .map((id) => [id, copy.nav[id === "faq" ? "resources" : id]] as const);
 
   return (
     <div className="v-home">
@@ -221,6 +280,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
           <VakaLogo size={30} />
         </button>
         <nav className="v-nav-links" aria-label={copy.accessibility.primaryNavigation}>
+          <ProductMenu copy={copy} go={go} />
           {navigation.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}
         </nav>
         <div className="v-nav-actions">
@@ -238,6 +298,9 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
         </div>
         {menuOpen && (
           <nav id="mobile-navigation" className="v-mobile-nav" aria-label={copy.accessibility.mobileNavigation}>
+            <div className="v-mobile-availability" role="group" aria-label={copy.accessibility.productMenu}>
+              {copy.nav.productItems.map((item) => <span key={item.id}>{item.label}<small>{item.status}</small></span>)}
+            </div>
             {navigation.map(([id, label]) => <button key={id} onClick={() => go(id)}>{label}</button>)}
             <button onClick={onLogin}>{copy.nav.signIn}</button>
             <button className="v-button v-button-gold" onClick={signup}>{copy.hero.primary}</button>
@@ -255,6 +318,13 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
               <span>{copy.hero.origin}</span>
               <span aria-hidden="true">·</span>
               <span>{copy.hero.position}</span>
+            </div>
+            <div className="v-availability-rail" role="group" aria-label={copy.accessibility.heroAvailability}>
+              {copy.hero.availability.map((item) => (
+                <span className={`v-availability v-status-${item.tone}`} key={item.label}>
+                  <b>{item.label}</b><small>{item.status}</small>
+                </span>
+              ))}
             </div>
             <div className="v-cta-row">
               <button className="v-button v-button-gold" onClick={signup}>{copy.hero.primary}</button>

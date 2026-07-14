@@ -45,15 +45,24 @@ test("homepage source protects access, interaction and honest availability contr
       "onSignup();",
       'aria-expanded={menuOpen}',
       'aria-controls="mobile-navigation"',
+      "<ProductMenu copy={copy} go={go} />",
+      'className="v-availability-rail"',
+      'role="group" aria-label={copy.accessibility.heroAvailability}',
+      'role="group" aria-label={copy.accessibility.productMenu}',
+      'className="v-priority-rail"',
       'role="tablist"',
       'role="tabpanel"',
       "nextHomepageTabIndex(event.key",
+      "nextHomepageTabIndex(event.key, index, copy.preview.tabs.length)",
       "<details",
       "resolveHomeLocale(event.target.value",
     ]),
     ...missingContracts("src/locales/home.en.ts", copy, [
       'sample: "Illustrative product preview"',
       'live: "Sample view"',
+      '{ id: "payroll", label: "VAKA Payroll", status: "Coming soon"',
+      '{ id: "ai", label: "VAKA AI", status: "Concept preview"',
+      'prioritiesTitle: "What needs attention"',
       'notice: "Concept preview only. VAKA AI is not available in the live product."',
       'question: "Does VAKA include payroll?"',
       "Payroll is planned and is not yet available in the live product.",
@@ -71,9 +80,17 @@ test("homepage source protects access, interaction and honest availability contr
       "@media (max-width: 1050px)",
       "@media (max-width: 760px)",
       "@media (max-width: 460px)",
+      ".v-product-menu-panel",
+      ".v-availability-rail",
+      ".v-product-grid",
+      ".v-priority-rail",
       "@media (prefers-reduced-motion: reduce)",
     ]),
   ];
+
+  for (const forbidden of ["min-width: 650px", "translateX(-17%)", "translateX(-23%)"]) {
+    if (styles.includes(forbidden)) issues.push(`src/landing.css retains cropped mobile preview contract: ${forbidden}`);
+  }
 
   assert.deepEqual(issues, []);
 });

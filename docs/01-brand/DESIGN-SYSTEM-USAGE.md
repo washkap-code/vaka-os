@@ -177,8 +177,15 @@ The preview is a development-only page and includes light/dark switching, contro
    creation. Repeating purchase lines use fieldsets and line-qualified control
    names; operational tables remain native HTML tables inside labelled local
    scroll regions; narrow forms stack without changing domain behavior.
-10. Migrate legacy selectors to shared React primitives gradually.
-11. Migrate module DOM/components only through scoped tasks with screenshots,
+10. P6-015 protects the public homepage with typed locale/navigation/tab models,
+    a negative-self-testing regression gate and browser evidence for auth entry,
+    disclosure, status, reduced-motion and 320/640/1440-pixel reflow contracts.
+11. P6-016 establishes the public product-disclosure, availability-badge and
+    executive product-proof patterns. It uses native disclosure semantics,
+    textual available/planned/preview states, roving-focus tabs, exact-value
+    evidence and true responsive stacking without fixed-width mobile cropping.
+12. Migrate legacy selectors to shared React primitives gradually.
+13. Migrate module DOM/components only through scoped tasks with screenshots,
    rollback, localisation and regression evidence.
 
 Do not replace legacy components in bulk. Preserve behaviour first, then migrate component by component.

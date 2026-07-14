@@ -1,5 +1,34 @@
 # VAKA Homepage Gap Analysis
 
+## Implementation addendum — 2026-07-14
+
+P6-015 added a permanent negative-self-testing homepage regression gate for
+access callbacks, locale fallback, tabs, mobile navigation, FAQ disclosure,
+availability truth, trial/pricing copy and responsive contracts. P6-016 then
+implemented the first visible v2.0 design wave:
+
+- an asymmetric product-led desktop hero and intentional mobile/tablet stack;
+- a desktop Product disclosure with textual CRM, Finance, Inventory, Payroll
+  and VAKA AI availability plus an inline mobile equivalent;
+- a visible hero availability rail separating available, coming-soon and
+  concept-preview capabilities;
+- a fully responsive representative executive composition with exact values,
+  priorities, synthetic-data labels and a non-operational AI concept; and
+- shared keyboard selection for both preview and module tabs.
+
+The earlier fixed-width translated mobile preview is no longer current. The
+page now keeps the full product composition inside the viewport at 320, 640,
+1024 and 1440 CSS pixels. Sign-in, signup, the 30-day trial and package values
+remain unchanged. Supported self-service CSV imports, branded invoice preview/
+download, bank reconciliation and owner session controls are now described as
+current capability; external document delivery, bank feeds, payroll, native
+apps and VAKA AI remain labelled as planned or not live.
+
+This addendum does not close the whole gap analysis. Lower-page consolidation,
+complete ten-section hierarchy, approved legal/resource destinations, native-
+reviewed ChiShona/isiNdebele, governed analytics, social media assets, field
+Core Web Vitals, formal WCAG certification and later visual waves remain open.
+
 **Status:** Implementation planning baseline
 **Specification reviewed:** `HOMEPAGE-SPEC.md` v2.0
 **Implementation reviewed:** `web/src/landing.tsx`, `web/src/landing.css`, `web/src/App.tsx`, `web/src/main.tsx`, and `web/index.html`

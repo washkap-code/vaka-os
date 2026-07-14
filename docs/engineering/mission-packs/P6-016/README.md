@@ -1,6 +1,6 @@
 # P6-016 — Homepage Visual Modernisation I: Navigation, Hero and Product Proof
 
-**Status:** Defined; implementation pending
+**Status:** Implementation complete; all local release gates passed; remote release pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Public homepage visual, responsive and accessibility redesign
 **Depends on:** P6-001 design system; P6-015 released regression baseline; approved Homepage Specification v2.0
