@@ -1,6 +1,6 @@
 # P9-009 — Explicit Tenant Ownership Foundation
 
-**Status:** Approved for implementation
+**Status:** Implementation complete; legacy migration, fresh schema, focused security and full local domain gates passed; remote migration and production release pending
 **Programme:** 9 — Security, assurance and platform operations
 **Type:** Identity security hardening, additive schema migration and authority correction
 **Depends on:** P1-002 identity/audit adapters; P9-008 account security; P3-004 owner-approved deletion; USER-SESSION-ACTIVITY-SPEC

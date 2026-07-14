@@ -6,7 +6,7 @@
 // =============================================================================
 import {
   pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb, date,
-  pgEnum, uniqueIndex, index, check,
+  pgEnum, unique, uniqueIndex, index, check, foreignKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -75,7 +75,24 @@ export const users = pgTable("users", {
 }, (t) => [
   uniqueIndex("users_tenant_email").on(t.tenantId, t.email),
   uniqueIndex("platform_users_email_unique").on(t.email).where(sql`${t.tenantId} IS NULL`),
+  unique("users_id_tenant_unique").on(t.id, t.tenantId),
   index("users_platform_role").on(t.platformRoleKey),
+]);
+
+// Accountable workspace ownership is an identity invariant, not a role name.
+// The composite foreign key prevents a user from owning a different tenant.
+export const tenantOwnerships = pgTable("tenant_ownerships", {
+  tenantId: uuid("tenant_id").primaryKey().references(() => tenants.id, { onDelete: "restrict" }),
+  ownerUserId: uuid("owner_user_id").notNull(),
+  establishedAt: timestamp("established_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("tenant_ownerships_owner_unique").on(t.ownerUserId),
+  foreignKey({
+    name: "tenant_ownerships_owner_membership_fk",
+    columns: [t.ownerUserId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
 ]);
 
 export const passwordResetRequests = pgTable("password_reset_requests", {
