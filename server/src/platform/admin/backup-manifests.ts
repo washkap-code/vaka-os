@@ -98,9 +98,11 @@ const secretPatterns = [
   /:\/\/[^/\s]+:[^@\s]+@/,
 ];
 
-const opaqueReferenceKeys = new Set(["databaseSnapshotRef", "objectSnapshotRef", "encryptionRef"]);
+const opaqueReferenceKeys = new Set([
+  "databaseSnapshotRef", "objectSnapshotRef", "encryptionRef", "isolatedTargetRef",
+]);
 
-export function findUnsafeManifestStrings(value: BackupManifestInput): Array<{ path: Array<string | number>; message: string }> {
+export function findUnsafeEvidenceStrings(value: unknown): Array<{ path: Array<string | number>; message: string }> {
   const issues: Array<{ path: Array<string | number>; message: string }> = [];
   const visit = (current: unknown, path: Array<string | number>) => {
     if (typeof current === "string") {
@@ -120,4 +122,8 @@ export function findUnsafeManifestStrings(value: BackupManifestInput): Array<{ p
   };
   visit(value, []);
   return issues;
+}
+
+export function findUnsafeManifestStrings(value: BackupManifestInput): Array<{ path: Array<string | number>; message: string }> {
+  return findUnsafeEvidenceStrings(value);
 }

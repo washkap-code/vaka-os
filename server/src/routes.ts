@@ -48,6 +48,9 @@ import {
 } from "./bank-reconciliation.js";
 import { buildControlCenterSnapshot } from "./platform/admin/control-center.js";
 import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js";
+import {
+  listRestoreDrills, recordRestoreDrill, reviewRestoreDrill,
+} from "./platform/admin/restore-drills.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
@@ -1756,6 +1759,7 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
     audit_events_24h: number;
     past_due_tenants: number;
     suspended_tenants: number;
+    accepted_restore_drills: number;
   };
   const result = await db.execute(sql`
     SELECT
@@ -1766,7 +1770,9 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
       (SELECT COUNT(*)::int FROM audit_logs a
         WHERE a.created_at >= NOW() - INTERVAL '24 hours') AS audit_events_24h,
       (SELECT COUNT(*)::int FROM tenants t WHERE t.status = 'PAST_DUE') AS past_due_tenants,
-      (SELECT COUNT(*)::int FROM tenants t WHERE t.status = 'SUSPENDED') AS suspended_tenants`);
+      (SELECT COUNT(*)::int FROM tenants t WHERE t.status = 'SUSPENDED') AS suspended_tenants,
+      (SELECT COUNT(*)::int FROM platform_restore_drill_reviews r
+        WHERE r.decision = 'ACCEPTED') AS accepted_restore_drills`);
   const [row] = (result as unknown as { rows: ControlCenterRow[] }).rows;
   if (!row) throw new Error("Control centre did not return an operational snapshot");
   return buildControlCenterSnapshot({
@@ -1775,6 +1781,7 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
     auditEvents24h: row.audit_events_24h,
     pastDueTenants: row.past_due_tenants,
     suspendedTenants: row.suspended_tenants,
+    acceptedRestoreDrills: row.accepted_restore_drills,
   });
 }));
 api.get("/platform/backup-manifests", requirePlatformPermission("platform.backups.read"), wrap(async () =>
@@ -1824,6 +1831,13 @@ api.post("/platform/backup-manifests", requirePlatformPermission("platform.backu
     return recorded;
   });
 }));
+api.get("/platform/restore-drills", requirePlatformPermission("platform.backups.read"), wrap(async () =>
+  listRestoreDrills()));
+api.post("/platform/restore-drills", requirePlatformPermission("platform.backups.write"), wrap(async (req) =>
+  recordRestoreDrill(req.auth!.userId, req.body)));
+api.post("/platform/restore-drills/:id/review",
+  requirePlatformPermission("platform.security.manage"), wrap(async (req) =>
+    reviewRestoreDrill(req.auth!.userId, routeParam(req, "id"), req.body)));
 api.post("/platform/referral-codes", requirePlatformPermission("platform.referrals.manage"), wrap(async (req) => {
   const body = z.object({
     code: z.string().min(5).max(32),

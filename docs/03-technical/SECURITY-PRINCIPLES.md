@@ -184,6 +184,13 @@ access, exports, and session revocations are themselves audited.
 - Incident and reconciliation procedures.
 - Secure expiration/disposal.
 
+Current implementation evidence (OPS-016) can record append-only restore-drill
+assertions linked to a successful backup manifest, calculate achieved RPO/RTO,
+enforce recorder/Principal-reviewer segregation and surface accepted evidence
+in the control centre. It does not execute restores or prove that production
+backup scheduling, provider isolation, PITR, object replication or recovery is
+operational. Those remain infrastructure and witnessed launch gates.
+
 ## 14. Secure development lifecycle
 
 - Threat model high-risk features.

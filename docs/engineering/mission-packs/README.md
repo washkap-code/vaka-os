@@ -49,12 +49,12 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P6-012 | Dashboard and Secondary Evidence Accessibility | Implemented; local frontend and browser verification passed; remote release pending behind P6-008 through P6-011 |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
-| OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |
-| OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; focused/browser verification passed; full suite environment-blocked |
-| OPS-012 | Backup manifest contract foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
-| OPS-013 | Backup manifest registry and recording API | Implemented; focused/browser verification passed; full suite environment-blocked |
-| OPS-014 | Backup job adapter foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
-| OPS-016 | Controlled restore-drill evidence and review | Approved; implementation in progress (OPS-015 remains provider-gated) |
+| OPS-010 | Super Admin control centre and in-product user guide | Implemented; full DB-backed suite verified green (2026-07-14) |
+| OPS-011 | Backup, restore and disaster-recovery evidence gates | Implemented; full DB-backed suite verified green (2026-07-14) |
+| OPS-012 | Backup manifest contract foundation | Implemented; full DB-backed suite verified green (2026-07-14) |
+| OPS-013 | Backup manifest registry and recording API | Implemented; full DB-backed suite verified green (2026-07-14) |
+| OPS-014 | Backup job adapter foundation | Implemented; full DB-backed suite verified green (2026-07-14); scheduler/provider remains unbound |
+| OPS-016 | Controlled restore-drill evidence and review | Implemented; append-only migration, permissions, evidence and full local gates verified; remote release pending (OPS-015 remains provider-gated) |
 
 ## Standards
 

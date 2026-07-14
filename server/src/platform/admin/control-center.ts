@@ -414,10 +414,20 @@ export type ControlCenterSignals = {
   auditEvents24h: number;
   pastDueTenants: number;
   suspendedTenants: number;
+  acceptedRestoreDrills?: number;
 };
 
 export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
-  const evidenceSummary = OPERATIONS_EVIDENCE_GATES.reduce((acc, gate) => {
+  const operationsEvidenceGates = OPERATIONS_EVIDENCE_GATES.map((gate) =>
+    gate.id === "ops.restore-test" && (signals.acceptedRestoreDrills ?? 0) > 0
+      ? {
+        ...gate,
+        state: "recorded" as const,
+        evidence: `${signals.acceptedRestoreDrills} accepted restore drill record${signals.acceptedRestoreDrills === 1 ? "" : "s"} linked to immutable backup evidence.`,
+        nextGate: "Maintain the approved drill cadence and complete independent launch/DR sign-off.",
+      }
+      : gate);
+  const evidenceSummary = operationsEvidenceGates.reduce((acc, gate) => {
     acc[gate.state] += 1;
     return acc;
   }, {
@@ -443,11 +453,12 @@ export function buildControlCenterSnapshot(signals: ControlCenterSignals) {
       auditEvents24h: signals.auditEvents24h,
       pastDueTenants: signals.pastDueTenants,
       suspendedTenants: signals.suspendedTenants,
+      acceptedRestoreDrills: signals.acceptedRestoreDrills ?? 0,
     },
     catalogue: CONTROL_CENTER_CATALOGUE,
     operationsEvidence: {
       summary: evidenceSummary,
-      gates: OPERATIONS_EVIDENCE_GATES,
+      gates: operationsEvidenceGates,
     },
     backupManifest: BACKUP_MANIFEST_CONTRACT,
     backupJobAdapter: BACKUP_JOB_ADAPTER_STATUS,

@@ -1,6 +1,6 @@
 # OPS-016 — Controlled restore-drill evidence and review
 
-**Status:** Approved for implementation
+**Status:** Implementation complete; local schema, security, server and web gates passed; remote release pending
 **Programme:** Operations and launch readiness
 **Type:** Immutable recovery-evidence workflow
 **Depends on:** OPS-011 through OPS-014; approved RPO/RTO policy remains an
