@@ -12,7 +12,7 @@ import {
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
 import {
-  AuthedRequest, authenticate, lifecycleGate, requirePermission,
+  AuthedRequest, authenticate, lifecycleGate, requireAnyPermission, requirePermission,
   requirePlatformPermission, tenantId, signupTenant, login, changePassword,
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
   issueAuthenticatedSession,
@@ -87,6 +87,10 @@ import {
   postGoodsReceipt, purchaseOrderApprovalSchema, purchaseRequisitionCreateSchema,
   requestForQuoteAwardSchema, requestForQuoteCreateSchema, requisitionDecisionSchema,
 } from "./procurement.js";
+import {
+  createSupplierBill, evaluateSupplierBillMatch, getSupplierBill, listSupplierBills,
+  postSupplierBill, supplierBillCreateSchema, supplierBillPostSchema, supplierBillUpdateSchema, updateSupplierBill,
+} from "./supplier-bills.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1447,6 +1451,22 @@ api.post("/purchase-orders/:id/receipts", requirePermission("procurement.receive
   })));
 api.get("/goods-receipts", requirePermission("procurement.read"), wrap(async (req) =>
   listGoodsReceipts(tenantId(req))));
+
+api.get("/supplier-bills", requireAnyPermission("procurement.read", "accounting.read"), wrap(async (req) =>
+  listSupplierBills(tenantId(req))));
+api.get("/supplier-bills/:id", requireAnyPermission("procurement.read", "accounting.read"), wrap(async (req) =>
+  getSupplierBill(tenantId(req), uuidRouteParam(req, "id"))));
+api.get("/supplier-bills/:id/match", requireAnyPermission("procurement.read", "accounting.read"), wrap(async (req) =>
+  evaluateSupplierBillMatch(tenantId(req), uuidRouteParam(req, "id"))));
+api.post("/supplier-bills", requirePermission("accounting.post"), wrap(async (req) =>
+  createSupplierBill({ tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: supplierBillCreateSchema.parse(req.body) })));
+api.put("/supplier-bills/:id", requirePermission("accounting.post"), wrap(async (req) =>
+  updateSupplierBill({ tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    billId: uuidRouteParam(req, "id"), input: supplierBillUpdateSchema.parse(req.body) })));
+api.post("/supplier-bills/:id/post", requirePermission("accounting.post"), wrap(async (req) =>
+  postSupplierBill({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...supplierBillPostSchema.parse(req.body),
+    billId: uuidRouteParam(req, "id"), idempotencyKey: requireIdempotencyKey(req.header("Idempotency-Key")) })));
 
 // ---------------------------------------------------------------------------
 // Accounting

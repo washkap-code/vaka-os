@@ -67,6 +67,17 @@ is identification only and does not determine registration or tax treatment.
 
 Supplier master, requisition/RFQ/PO, receipt, bill, three-way match, approvals, payment proposal, payment and supplier statement reconciliation connect source-to-pay. Receiving may affect inventory; supplier bill acceptance affects AP/tax; payment affects cash/AP. Each effect has an explicit event and atomic boundary.
 
+P4-003 implements the controlled PO-backed supplier-bill slice. Draft bills
+derive supplier and currency from one approved purchase order and snapshot
+effective-dated country-pack tax evidence. Accounts Payable can post only after
+an in-transaction strict three-way match proves exact price and cumulative
+quantities within both ordered and received evidence. The balanced journal is
+routed through the ledger service (GRNI, eligible input VAT, AP and explicit
+bill-versus-receipt FX difference), while the numbered bill, match evidence,
+journal, audit and post-commit event commit atomically. Posted bills are
+immutable. Payment allocation, credit/debit notes, non-PO bills and
+registration-aware tax eligibility remain future controlled work.
+
 ## 6. Banking, cash and treasury
 
 Bank accounts, statement imports, normalized transactions, matching, reconciliation, cash positioning, transfers and payment integrations are provider-neutral. Browser scraping and stored internet-banking credentials are prohibited. Read-only ingestion and deterministic reconciliation precede outbound payment capability. Payment initiation requires step-up/approval, idempotency, signed provider evidence and reconciliation.
@@ -82,8 +93,10 @@ jurisdiction, effective-dated standard-rate resolution, distinct standard,
 zero-rated and exempt line evidence, mixed document evidence and immutable
 snapshots. P2-003 adds a read-only, tenant-scoped technical report over posted
 `VAT_OUTPUT` and `VAT_INPUT` ledger evidence, with exact period totals and
-audited CSV/PDF exports. It is not a filed VAT return: supplier input-VAT,
-filing workflow, fiscalisation, registration-aware determination, legal-entity
+audited CSV/PDF exports. P4-003 adds input-VAT ledger evidence for strictly
+matched PO-backed supplier bills. It is not a filed VAT return: complete
+supplier input-tax coverage, filing workflow, fiscalisation,
+registration-aware determination, legal-entity
 isolation and professional approval remain open. Neither mission may be
 presented as compliant market availability until those gates pass.
 

@@ -32,7 +32,7 @@ export function renderStatutoryReportCsv(report: StatutoryReportPack): string {
     ["Control balance", "", "", "", "", "", report.agedReceivables.controlBalance],
     ["Scheduled balance", "", "", "", "", "", report.agedReceivables.scheduledBalance],
     ["Unallocated balance", "", "", "", "", "", report.agedReceivables.unallocatedBalance], [],
-    ["AGED PAYABLES - SUPPORTED SOURCES ONLY"], ["Source ID", "Number", "Counterparty", "Source date", "Days outstanding", "Bucket", "Balance"],
+    ["AGED PAYABLES - SUPPLIER BILLS"], ["Source ID", "Number", "Counterparty", "Source date", "Days outstanding", "Bucket", "Balance"],
     ...report.agedPayables.items.map((row) => [row.sourceId, row.number ?? "", row.counterparty, row.sourceDate, String(row.daysOutstanding), row.bucket, row.balance]),
     ["Control balance", "", "", "", "", "", report.agedPayables.controlBalance],
     ["Scheduled balance", "", "", "", "", "", report.agedPayables.scheduledBalance],
@@ -79,7 +79,7 @@ export function renderStatutoryReportPdf(report: StatutoryReportPack): Buffer {
     "AGED RECEIVABLES", "Number       Counterparty                         Date       Days      Balance",
     ...report.agedReceivables.items.map((row) => `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`),
     `Control ${report.agedReceivables.controlBalance}; scheduled ${report.agedReceivables.scheduledBalance}; unallocated ${report.agedReceivables.unallocatedBalance}`, "",
-    "AGED PAYABLES - SUPPORTED SOURCES ONLY", "Number       Counterparty                         Date       Days      Balance",
+    "AGED PAYABLES - SUPPLIER BILLS", "Number       Counterparty                         Date       Days      Balance",
     ...report.agedPayables.items.map((row) => `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`),
     `Control ${report.agedPayables.controlBalance}; scheduled ${report.agedPayables.scheduledBalance}; unallocated ${report.agedPayables.unallocatedBalance}`,
   ];

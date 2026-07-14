@@ -32,6 +32,7 @@ originating request or prevent sibling subscribers from receiving the event.
 | `invoice.changed` | Invoice draft creation | `invoiceId`, `change` |
 | `activity.recorded` | Manual CRM activity creation | `activityId`, `customerId` |
 | `procurement.approval_requested` | Submitted requisition or draft purchase order | `kind`, `entityId`, `number`, `requesterUserId` |
+| `supplier_bill.posted` | Matched supplier bill accepted into Accounts Payable | `supplierBillId`, `purchaseOrderId`, `supplierId`, `number`, `currency`, `totalCents` |
 
 Money values use integer-cent strings. Quantity deltas remain exact decimal
 strings. Stable event identifiers are derived from the event type and committed

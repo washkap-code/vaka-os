@@ -10,6 +10,7 @@ const LIVE_SURFACES = [
   "src/shell/universal-workbench.tsx", "src/shell/workbench-model.ts",
   "src/shell/command-palette.tsx", "src/shell/command-search-model.ts",
   "src/platform/platform-admin-shell.tsx", "src/platform/platform-admin-model.ts",
+  "src/procurement/procurement-workspace.tsx",
 ];
 
 function lineNumber(source, offset) {

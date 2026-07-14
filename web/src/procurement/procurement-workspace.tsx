@@ -41,6 +41,25 @@ type GoodsReceipt = {
   id: string; number: string; purchaseOrderId: string; receivedAt: string; deliveryNote: string | null;
   lines: Array<{ id: string; productId: string; warehouseId: string; quantityReceived: string }>;
 };
+type SupplierBillLine = {
+  id: string; purchaseOrderLineItemId: string; productId: string; quantity: string;
+  unitPrice: string; taxTreatment: "standard" | "zero-rated" | "exempt";
+  taxRate: string; netAmount: string; taxAmount: string; lineTotal: string;
+};
+type SupplierBill = {
+  id: string; purchaseOrderId: string; vendorContactId: string; number: string | null;
+  supplierInvoiceNumber: string; status: "DRAFT" | "POSTED"; billDate: string;
+  taxDate: string; dueDate: string; currency: Currency; rateToBase: string;
+  subtotal: string; taxTotal: string; total: string; matchStatus: "PENDING" | "MATCHED" | "BLOCKED";
+  lines: SupplierBillLine[];
+};
+type MatchReasonCode = "SUPPLIER_MISMATCH" | "CURRENCY_MISMATCH" | "LINE_NOT_ON_PO" | "PRICE_MISMATCH"
+  | "QUANTITY_EXCEEDS_RECEIVED" | "QUANTITY_EXCEEDS_ORDERED" | "DUPLICATE_SUPPLIER_INVOICE" | "NO_RECEIPT_EVIDENCE";
+type MatchResult = {
+  status: "MATCHED" | "BLOCKED";
+  reasons: Array<{ code: MatchReasonCode; message: string; purchaseOrderLineItemId?: string }>;
+  evaluatedAt: string;
+};
 type EntryLine = { productId: string; warehouseId: string; quantity: string; unitCost: string };
 type Dialog =
   | { kind: "requisition" }
@@ -50,6 +69,7 @@ type Dialog =
   | { kind: "direct-po" }
   | { kind: "approve-po"; order: PurchaseOrder }
   | { kind: "receipt"; order: PurchaseOrder }
+  | { kind: "bill"; bill?: SupplierBill }
   | null;
 
 const blankLine = (warehouseId = ""): EntryLine => ({ productId: "", warehouseId, quantity: "1", unitCost: "" });
@@ -61,12 +81,14 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
   readonly: boolean; permissions: readonly string[]; currentUserId: string; baseCurrency: Currency;
 }) {
   const copy = appEnglish.procurement;
-  const [tab, setTab] = useState<"requisitions" | "rfqs" | "orders" | "receipts">("requisitions");
+  const [tab, setTab] = useState<"requisitions" | "rfqs" | "orders" | "receipts" | "bills">("requisitions");
   const [reference, setReference] = useState<ReferenceData | null>(null);
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [rfqs, setRfqs] = useState<RequestForQuote[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [receipts, setReceipts] = useState<GoodsReceipt[]>([]);
+  const [bills, setBills] = useState<SupplierBill[]>([]);
+  const [matches, setMatches] = useState<Record<string, MatchResult>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -76,20 +98,22 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
   const canWrite = !readonly && permissions.includes("procurement.write");
   const canApprove = !readonly && permissions.includes("procurement.approve");
   const canReceive = !readonly && permissions.includes("procurement.receive");
+  const canPostBills = !readonly && permissions.includes("accounting.post");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [nextReference, nextRequisitions, nextRfqs, nextOrders, nextReceipts] = await Promise.all([
+      const [nextReference, nextRequisitions, nextRfqs, nextOrders, nextReceipts, nextBills] = await Promise.all([
         api("/procurement/reference-data") as Promise<ReferenceData>,
         api("/purchase-requisitions") as Promise<Requisition[]>,
         api("/request-for-quotes") as Promise<RequestForQuote[]>,
         api("/purchase-orders") as Promise<PurchaseOrder[]>,
         api("/goods-receipts") as Promise<GoodsReceipt[]>,
+        api("/supplier-bills") as Promise<SupplierBill[]>,
       ]);
       setReference(nextReference); setRequisitions(nextRequisitions); setRfqs(nextRfqs);
-      setOrders(nextOrders); setReceipts(nextReceipts);
+      setOrders(nextOrders); setReceipts(nextReceipts); setBills(nextBills);
     } catch (loadError) { setError(messageOf(loadError)); }
     finally { setLoading(false); }
   }, []);
@@ -107,12 +131,21 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
     catch (actionError) { setError(messageOf(actionError)); }
     finally { setBusy(false); }
   };
+  const inspectMatch = async (billId: string) => {
+    setBusy(true); setError("");
+    try {
+      const result = await api(`/supplier-bills/${billId}/match`) as MatchResult;
+      setMatches((current) => ({ ...current, [billId]: result }));
+    } catch (matchError) { setError(messageOf(matchError)); }
+    finally { setBusy(false); }
+  };
 
   const tabs = [
     ["requisitions", copy.tabs.requisitions, requisitions.length],
     ["rfqs", copy.tabs.rfqs, rfqs.length],
     ["orders", copy.tabs.orders, orders.length],
     ["receipts", copy.tabs.receipts, receipts.length],
+    ["bills", copy.tabs.bills, bills.length],
   ] as const;
 
   return <section className="procurement-workspace">
@@ -121,6 +154,7 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
       <div className="procurement-header-actions">
         {canRequest && <button className="btn" onClick={() => setDialog({ kind: "requisition" })}>{copy.newRequisition}</button>}
         {canWrite && <button className="btn ghost" onClick={() => setDialog({ kind: "direct-po" })}>{copy.newDirectPo}</button>}
+        {canPostBills && <button className="btn ghost" onClick={() => setDialog({ kind: "bill" })}>{copy.newSupplierBill}</button>}
       </div>
     </header>
     <div className="procurement-control-note" role="note"><strong>{copy.controlTitle}</strong><span>{copy.controlDetail}</span></div>
@@ -167,6 +201,33 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
           <LineSummary lines={row.lines} productName={productName} warehouseName={warehouseName} receivedOnly />
         </article>;
       })}</RecordGrid>}
+      {tab === "bills" && <RecordGrid empty={copy.empty.bills}>{bills.map((row) => {
+        const match = matches[row.id];
+        const order = orders.find((candidate) => candidate.id === row.purchaseOrderId);
+        return <article className="procurement-card" key={row.id}>
+          <RecordHeading number={row.number ?? copy.draftBillNumber} status={row.status} meta={supplierName(row.vendorContactId)} />
+          <dl className="procurement-bill-facts">
+            <div><dt>{copy.supplierInvoice}</dt><dd>{row.supplierInvoiceNumber}</dd></div>
+            <div><dt>{copy.purchaseOrder}</dt><dd>{order?.number ?? copy.unknownPurchaseOrder}</dd></div>
+            <div><dt>{copy.dueDate}</dt><dd>{new Date(row.dueDate).toLocaleDateString()}</dd></div>
+          </dl>
+          <div className="procurement-total"><span>{copy.billTotal}</span><strong>{fmt(row.total, row.currency)}</strong></div>
+          <ul className="procurement-lines">{row.lines.map((line) => <li key={line.id}>
+            <span><strong>{productName(line.productId)}</strong><small>{copy.billTax.replace("{rate}", line.taxRate)}</small></span>
+            <span className="procurement-quantity">{line.quantity} {copy.units}<small>{fmt(line.lineTotal, row.currency)}</small></span>
+          </li>)}</ul>
+          {match && <MatchEvidence match={match} />}
+          <div className="procurement-actions">
+            <button className="btn ghost sm" disabled={busy} onClick={() => void inspectMatch(row.id)}>{copy.checkMatch}</button>
+            {canPostBills && row.status === "DRAFT" && <button className="btn ghost sm" onClick={() => setDialog({ kind: "bill", bill: row })}>{copy.editDraftBill}</button>}
+            {canPostBills && row.status === "DRAFT" && <button className="btn sm" disabled={busy} onClick={() => {
+              if (window.confirm(copy.postBillConfirmation.replace("{reference}", row.supplierInvoiceNumber))) {
+                void finish(() => api(`/supplier-bills/${row.id}/post`, { method: "POST", body: { confirmed: true }, headers: { "Idempotency-Key": crypto.randomUUID() } }));
+              }
+            }}>{copy.postBill}</button>}
+          </div>
+        </article>;
+      })}</RecordGrid>}
     </>}
     {dialog?.kind === "requisition" && reference && <RequisitionDialog reference={reference} baseCurrency={baseCurrency} busy={busy} error={error}
       onClose={() => setDialog(null)} onSave={(body) => finish(() => api("/purchase-requisitions", { method: "POST", body }))} />}
@@ -183,6 +244,11 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
     {dialog?.kind === "receipt" && <ReceiptDialog order={dialog.order} productName={productName} busy={busy} error={error} onClose={() => setDialog(null)}
       onSave={(body) => finish(() => api(`/purchase-orders/${dialog.order.id}/receipts`, { method: "POST", body,
         headers: { "Idempotency-Key": crypto.randomUUID() } }))} />}
+    {dialog?.kind === "bill" && reference && <SupplierBillDialog bill={dialog.bill} orders={orders} reference={reference}
+      busy={busy} error={error} onClose={() => setDialog(null)} onSave={(body) => finish(() => api(
+        dialog.bill ? `/supplier-bills/${dialog.bill.id}` : "/supplier-bills",
+        { method: dialog.bill ? "PUT" : "POST", body },
+      ))} />}
   </section>;
 }
 
@@ -234,9 +300,117 @@ function EntryLines({ lines, setLines, reference, costLabel }: {
 
 function DialogActions({ busy, valid, onClose, save }: { busy: boolean; valid: boolean; onClose: () => void; save: string }) {
   const copy = appEnglish.procurement;
-  return <div className="row end modal-actions"><button className="btn ghost" onClick={onClose}>{copy.cancel}</button><button className="btn" disabled={busy || !valid} type="submit">{busy ? copy.saving : save}</button></div>;
+  return <div className="row end modal-actions"><button type="button" className="btn ghost" onClick={onClose}>{copy.cancel}</button><button className="btn" disabled={busy || !valid} type="submit">{busy ? copy.saving : save}</button></div>;
 }
 function DialogError({ error }: { error: string }) { return error ? <div className="err-text" role="alert">{error}</div> : null; }
+
+function MatchEvidence({ match }: { match: MatchResult }) {
+  const copy = appEnglish.procurement;
+  return <section className={`procurement-match ${match.status}`} role="status" aria-live="polite">
+    <h3>{match.status === "MATCHED" ? copy.matchPassed : copy.matchBlocked}</h3>
+    <p>{match.status === "MATCHED" ? copy.matchPassedHelp : copy.matchBlockedHelp}</p>
+    {match.reasons.length > 0 && <ul>{match.reasons.map((reason, index) =>
+      <li key={`${reason.code}-${reason.purchaseOrderLineItemId ?? index}`}><strong>{reason.code}</strong> — {copy.matchReasons[reason.code]}</li>)}</ul>}
+  </section>;
+}
+
+type BillEntryLine = {
+  purchaseOrderLineItemId: string;
+  selected: boolean;
+  quantity: string;
+  unitPrice: string;
+  taxTreatment: "standard" | "zero-rated" | "exempt";
+};
+
+function SupplierBillDialog({ bill, orders, reference, busy, error, onClose, onSave }: {
+  bill?: SupplierBill; orders: PurchaseOrder[]; reference: ReferenceData; busy: boolean; error: string;
+  onClose: () => void; onSave: (body: unknown) => void;
+}) {
+  const copy = appEnglish.procurement;
+  const eligibleOrders = useMemo(() => orders.filter((row) => row.number && (row.status === "ORDERED" || row.status === "RECEIVED")), [orders]);
+  const [purchaseOrderId, setPurchaseOrderId] = useState(bill?.purchaseOrderId ?? eligibleOrders[0]?.id ?? "");
+  const order = eligibleOrders.find((row) => row.id === purchaseOrderId);
+  const [supplierInvoiceNumber, setSupplierInvoiceNumber] = useState(bill?.supplierInvoiceNumber ?? "");
+  const [billDate, setBillDate] = useState(bill?.billDate.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
+  const [taxDate, setTaxDate] = useState(bill?.taxDate.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState(bill?.dueDate.slice(0, 10) ?? new Date().toISOString().slice(0, 10));
+  const [rateToBase, setRateToBase] = useState(bill?.rateToBase ?? order?.rateToBase ?? "1");
+  const buildLines = useCallback((selectedOrder?: PurchaseOrder): BillEntryLine[] => selectedOrder?.lines.map((poLine) => {
+    const existing = bill?.lines.find((line) => line.purchaseOrderLineItemId === poLine.id);
+    return {
+      purchaseOrderLineItemId: poLine.id,
+      selected: Boolean(existing) || (!bill && toUnits(poLine.quantityReceived) > 0),
+      quantity: existing?.quantity ?? (toUnits(poLine.quantityReceived) > 0 ? poLine.quantityReceived : poLine.quantity),
+      unitPrice: existing?.unitPrice ?? poLine.unitCost,
+      taxTreatment: existing?.taxTreatment ?? "standard",
+    };
+  }) ?? [], [bill]);
+  const [lines, setLines] = useState<BillEntryLine[]>(() => buildLines(order));
+  const chooseOrder = (nextId: string) => {
+    const nextOrder = eligibleOrders.find((row) => row.id === nextId);
+    setPurchaseOrderId(nextId); setRateToBase(nextOrder?.rateToBase ?? "1"); setLines(buildLines(nextOrder));
+  };
+  const selectedLines = lines.filter((line) => line.selected);
+  const valid = Boolean(order && supplierInvoiceNumber.trim() && billDate && taxDate && dueDate >= billDate
+    && Number(rateToBase) > 0 && selectedLines.length > 0
+    && selectedLines.every((line) => Number(line.quantity) > 0 && Number(line.unitPrice) > 0));
+  const updateLine = <K extends keyof BillEntryLine>(id: string, field: K, value: BillEntryLine[K]) =>
+    setLines((current) => current.map((line) => line.purchaseOrderLineItemId === id ? { ...line, [field]: value } : line));
+
+  return <LegacyModal labelledBy="supplier-bill-title" onClose={onClose} className="procurement-modal">
+    <form onSubmit={(event) => {
+      event.preventDefault();
+      if (!valid) return;
+      const body = {
+        ...(!bill ? { purchaseOrderId } : {}), supplierInvoiceNumber, billDate, taxDate, dueDate, rateToBase,
+        lines: selectedLines.map(({ purchaseOrderLineItemId, quantity, unitPrice, taxTreatment }) =>
+          ({ purchaseOrderLineItemId, quantity, unitPrice, taxTreatment })),
+      };
+      onSave(body);
+    }}>
+      <h2 id="supplier-bill-title" tabIndex={-1} data-modal-initial-focus>{bill ? copy.editSupplierBillTitle : copy.newSupplierBillTitle}</h2>
+      <p className="sub">{copy.supplierBillHelp}</p>
+      {eligibleOrders.length === 0 ? <p className="procurement-error" role="alert">{copy.noEligiblePurchaseOrders}</p> : <>
+        <div className="grid3">
+          <LegacyField label={copy.purchaseOrder}><select value={purchaseOrderId} disabled={Boolean(bill)} onChange={(event) => chooseOrder(event.target.value)}>
+            <option value="">{copy.selectPurchaseOrder}</option>
+            {eligibleOrders.map((row) => <option key={row.id} value={row.id}>{row.number} — {productLabelForSupplier(reference, row.vendorContactId)}</option>)}
+          </select></LegacyField>
+          <LegacyField label={copy.supplierInvoice}><input value={supplierInvoiceNumber} maxLength={120} onChange={(event) => setSupplierInvoiceNumber(event.target.value)} /></LegacyField>
+          <LegacyField label={copy.rateToBase}><input type="number" min="0.000001" step="0.000001" inputMode="decimal" value={rateToBase} onChange={(event) => setRateToBase(event.target.value)} /></LegacyField>
+          <LegacyField label={copy.billDate}><input type="date" value={billDate} onChange={(event) => setBillDate(event.target.value)} /></LegacyField>
+          <LegacyField label={copy.taxDate}><input type="date" value={taxDate} onChange={(event) => setTaxDate(event.target.value)} /></LegacyField>
+          <LegacyField label={copy.dueDate}><input type="date" min={billDate} value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></LegacyField>
+        </div>
+        {order && <div className="procurement-derived" role="note"><strong>{copy.derivedBillControls}</strong><span>{copy.derivedBillSummary
+          .replace("{supplier}", productLabelForSupplier(reference, order.vendorContactId)).replace("{currency}", order.currency)}</span></div>}
+        <fieldset className="supplier-bill-lines"><legend>{copy.billLines}</legend>{order?.lines.map((poLine, index) => {
+          const line = lines.find((candidate) => candidate.purchaseOrderLineItemId === poLine.id);
+          if (!line) return null;
+          return <div className="supplier-bill-line" key={poLine.id}>
+            <label className="supplier-bill-select"><input type="checkbox" checked={line.selected}
+              onChange={(event) => updateLine(poLine.id, "selected", event.target.checked)} />
+              <span><strong>{copy.line.replace("{number}", String(index + 1))}: {productLabel(reference, poLine.productId)}</strong>
+                <small>{copy.poLineEvidence.replace("{ordered}", poLine.quantity).replace("{received}", poLine.quantityReceived).replace("{price}", fmt(poLine.unitCost, order.currency))}</small></span>
+            </label>
+            {line.selected && <div className="supplier-bill-line-fields">
+              <LegacyField label={`${copy.billQuantity} — ${productLabel(reference, poLine.productId)}`}><input type="number" min="0.001" step="0.001" inputMode="decimal" value={line.quantity} onChange={(event) => updateLine(poLine.id, "quantity", event.target.value)} /></LegacyField>
+              <LegacyField label={`${copy.billUnitPrice} — ${productLabel(reference, poLine.productId)}`}><input type="number" min="0.01" step="0.01" inputMode="decimal" value={line.unitPrice} onChange={(event) => updateLine(poLine.id, "unitPrice", event.target.value)} /></LegacyField>
+              <LegacyField label={`${copy.taxTreatment} — ${productLabel(reference, poLine.productId)}`}><select value={line.taxTreatment} onChange={(event) => updateLine(poLine.id, "taxTreatment", event.target.value as BillEntryLine["taxTreatment"])}>
+                <option value="standard">{copy.standardTax}</option><option value="zero-rated">{copy.zeroRatedTax}</option><option value="exempt">{copy.exemptTax}</option>
+              </select></LegacyField>
+            </div>}
+          </div>;
+        })}</fieldset>
+      </>}
+      <DialogError error={error} /><DialogActions busy={busy} valid={valid} onClose={onClose} save={bill ? copy.saveDraftBill : copy.createDraftBill} />
+    </form>
+  </LegacyModal>;
+}
+
+function productLabelForSupplier(reference: ReferenceData, supplierId: string) {
+  return reference.suppliers.find((row) => row.id === supplierId)?.name ?? appEnglish.procurement.unknownSupplier;
+}
 
 function RequisitionDialog({ reference, baseCurrency, busy, error, onClose, onSave }: {
   reference: ReferenceData; baseCurrency: Currency; busy: boolean; error: string; onClose: () => void; onSave: (body: unknown) => void;

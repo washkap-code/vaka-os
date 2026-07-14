@@ -138,8 +138,12 @@ for (const expected of [
   'labelledBy="new-direct-po-title"',
   'labelledBy="approve-po-title"',
   'labelledBy="receive-po-title"',
+  'labelledBy="supplier-bill-title"',
   '<LegacyField label={copy.product}>',
   '<LegacyField label={copy.warehouse}>',
+  '<LegacyField label={copy.purchaseOrder}>',
+  'role="status" aria-live="polite"',
+  'className="supplier-bill-select"',
   "data-modal-initial-focus",
   'role="alert"',
 ]) requireContract(issues, "src/procurement/procurement-workspace.tsx", procurement, expected);

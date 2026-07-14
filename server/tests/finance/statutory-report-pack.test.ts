@@ -44,11 +44,20 @@ describe("P2-006 statutory report pack", () => {
       tenantId: tenant.tenantId, vendorContactId: vendor.id, number: `PO-${Date.now()}`,
       status: "RECEIVED", currency: "USD", total: "40.00", receivedAt: new Date(), createdBy: tenant.userId,
     }).returning();
+    const [bill] = await db.insert(schema.supplierBills).values({
+      tenantId: tenant.tenantId, purchaseOrderId: po.id, vendorContactId: vendor.id,
+      number: `BILL-${Date.now()}`, supplierInvoiceNumber: `VENDOR-${Date.now()}`,
+      status: "POSTED", billDate: new Date(), taxDate: today(), dueDate: new Date(),
+      currency: "USD", rateToBase: "1", taxJurisdiction: "ZW", taxTreatment: "exempt",
+      subtotal: "40.00", taxTotal: "0.00", total: "40.00", matchStatus: "MATCHED",
+      matchEvidence: { status: "MATCHED", reasons: [] }, matchedAt: new Date(),
+      createdBy: tenant.userId, updatedBy: tenant.userId, postedBy: tenant.userId, postedAt: new Date(),
+    }).returning();
     const ap = await systemAccountId(tenant.tenantId, "AP");
     const inventory = await systemAccountId(tenant.tenantId, "INVENTORY");
     const expense = await systemAccountId(tenant.tenantId, "COGS");
     await db.transaction((tx) => postJournal(tx, {
-      tenantId: tenant.tenantId, date: new Date(), memo: "Supported PO liability", sourceType: "po_receipt", sourceId: po.id, createdBy: tenant.userId,
+      tenantId: tenant.tenantId, date: new Date(), memo: "Supported supplier bill liability", sourceType: "supplier_bill", sourceId: bill.id, createdBy: tenant.userId,
       lines: [{ accountId: inventory, debit: "40.00" }, { accountId: ap, credit: "40.00" }],
     }));
     await db.transaction((tx) => postJournal(tx, {
@@ -67,14 +76,14 @@ describe("P2-006 statutory report pack", () => {
       availability: "TECHNICAL_PREVIEW", notFilingReady: true, currency: "USD",
       checks: { trialBalanceBalances: true, profitAndLossTies: true, balanceSheetBalances: true },
       agedReceivables: { controlBalance: "115.00", scheduledBalance: "115.00", unallocatedBalance: "0.00" },
-      agedPayables: { controlBalance: "45.00", scheduledBalance: "40.00", unallocatedBalance: "5.00", requiresReconciliation: true, completeOpenItemSubledger: false },
+      agedPayables: { basis: "SUPPLIER_BILL_DUE_DATE", controlBalance: "45.00", scheduledBalance: "40.00", unallocatedBalance: "5.00", requiresReconciliation: true, completeOpenItemSubledger: false },
     });
     expect(report.trialBalance.find((row) => row.accountId === ap)?.credit).toBe("45.00");
     expect(report.agedPayables.items).toHaveLength(1);
     expect(report.review.blockerCodes).toContain("AP_OPEN_ITEM_SUBLEDGER_INCOMPLETE");
     const csv = renderStatutoryReportCsv(report);
     expect(csv).toContain("'=Unsafe Customer");
-    expect(csv).toContain('"AGED PAYABLES - SUPPORTED SOURCES ONLY"');
+    expect(csv).toContain('"AGED PAYABLES - SUPPLIER BILLS"');
   });
 
   it("serves tenant-safe private exports, audits them, and enforces reports.read", async () => {
