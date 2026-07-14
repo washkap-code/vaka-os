@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { audit, badRequest, conflict, db, forbidden, notFound, schema } from "./lib.js";
-import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
-import type { DomainEventPayloads } from "./platform/events/registry.js";
+import { queuePartyRoleEvents } from "./party-events.js";
+import { runWithPostCommitEvents } from "./platform/events/index.js";
 
 const MAX_BULK_RECORDS = 100;
 
@@ -39,21 +39,6 @@ async function activeContactsForUpdate(
   return rows;
 }
 
-function customerChangedEvent(
-  tenantId: string,
-  actorUserId: string,
-  contactId: string,
-  change: DomainEventPayloads["customer.changed"]["change"],
-) {
-  return {
-    id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${contactId}:${change}:${Date.now()}`,
-    type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
-    tenantId,
-    actorUserId,
-    payload: { customerId: contactId, change },
-  } as const;
-}
-
 export async function bulkUpdateContacts(opts: {
   tenantId: string;
   actorUserId: string;
@@ -76,7 +61,17 @@ export async function bulkUpdateContacts(opts: {
       } else {
         await tx.update(schema.contacts).set({ isVendor: true }).where(eq(schema.contacts.id, contact.id));
       }
-      queue(customerChangedEvent(opts.tenantId, opts.actorUserId, contact.id, "bulk-updated"));
+      queuePartyRoleEvents(queue, {
+        tenantId: opts.tenantId,
+        actorUserId: opts.actorUserId,
+        contactId: contact.id,
+        change: "bulk-updated",
+        before: contact,
+        after: {
+          isCustomer: contact.isCustomer || opts.operation.action === "MARK_CUSTOMER",
+          isVendor: contact.isVendor || opts.operation.action === "MARK_VENDOR",
+        },
+      });
     }
     await audit(tx, opts.tenantId, opts.actorUserId, "contact.bulk_updated", "contact_batch", undefined, {
       action: opts.operation.action,
@@ -140,7 +135,10 @@ export async function deleteOrRequestContacts(opts: {
           contactId: request.entityId,
         });
       }
-      for (const contact of contacts) queue(customerChangedEvent(opts.tenantId, opts.actorUserId, contact.id, "removed"));
+      for (const contact of contacts) queuePartyRoleEvents(queue, {
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId, contactId: contact.id,
+        change: "removed", before: contact, after: null,
+      });
       return { outcome: "REMOVED" as const, count: contacts.length };
     }
 
@@ -228,7 +226,13 @@ export async function decideContactDeletionRequest(opts: {
         reason,
         requestId: request.id,
       });
-      queue(customerChangedEvent(opts.tenantId, opts.actorUserId, request.entityId, "removed"));
+      const [removed] = await tx.select().from(schema.contacts).where(and(
+        eq(schema.contacts.id, request.entityId), eq(schema.contacts.tenantId, opts.tenantId),
+      ));
+      queuePartyRoleEvents(queue, {
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId, contactId: request.entityId,
+        change: "removed", before: removed ?? null, after: null,
+      });
     }
     const status = opts.decision === "APPROVE" ? "APPROVED" : "REJECTED";
     await tx.update(schema.recordDeletionRequests).set({

@@ -5,9 +5,9 @@ import type {
   MetadataFieldDefinition, MetadataObjectDefinition, MetadataRecord,
 } from "./platform/metadata/types.js";
 
-export const METADATA_OBJECT_KEYS = ["company", "customer", "invoice", "product"] as const;
+export const METADATA_OBJECT_KEYS = ["company", "customer", "supplier", "invoice", "product"] as const;
 export type MetadataObjectKey = typeof METADATA_OBJECT_KEYS[number];
-export const METADATA_REGISTRY_VERSION = "2026-07-13.1" as const;
+export const METADATA_REGISTRY_VERSION = "2026-07-14.1" as const;
 
 export const metadataQuerySchema = z.object({
   keys: z.preprocess(
@@ -93,6 +93,39 @@ export const CANONICAL_METADATA_OBJECTS: readonly MetadataObjectDefinition[] = [
       field("name", "contacts.name", "string", "text", "confidential", { required: true, searchable: true, result: true, aiExposure: "allowed" }),
       field("type", "contacts.type", "choice", "enum", "internal", { required: true, choices: ["INDIVIDUAL", "COMPANY"], result: true, aiExposure: "allowed" }),
       field("tags", "contacts.tags", "string", "string-list", "confidential", { searchable: true }),
+      field("email", "contacts.email", "string", "text", "restricted"),
+      field("phone", "contacts.phone", "string", "text", "restricted"),
+      field("address", "contacts.address", "string", "text", "restricted"),
+      field("taxNumber", "contacts.taxNumber", "string", "text", "restricted"),
+    ],
+  },
+  {
+    key: "supplier",
+    version: METADATA_REGISTRY_VERSION,
+    canonicalName: "SupplierAccount",
+    sourceTable: "contacts",
+    tenantScoped: true,
+    surrogateNote: "Supplier is the isVendor role on the same contacts record used by procurement and finance; no separate supplier identity is stored.",
+    titleField: "name",
+    lifecycleField: null,
+    readPermission: "inventory.read",
+    writePermission: "inventory.write",
+    labelKey: "metadata.objects.supplier.label",
+    pluralLabelKey: "metadata.objects.supplier.plural",
+    fallbackLabel: "Supplier",
+    fallbackPluralLabel: "Suppliers",
+    navigation: { section: "procurement", recordView: "supplier" },
+    searchable: true,
+    aiContext: "future-read-only",
+    fields: [
+      field("id", "contacts.id", "string", "uuid", "internal", { required: true, result: true }),
+      field("name", "contacts.name", "string", "text", "confidential", { required: true, searchable: true, result: true, aiExposure: "allowed" }),
+      field("type", "contacts.type", "choice", "enum", "internal", { required: true, choices: ["INDIVIDUAL", "COMPANY"], result: true, aiExposure: "allowed" }),
+      field("supplierCode", "contacts.supplierCode", "string", "text", "internal", { searchable: true, result: true, aiExposure: "allowed" }),
+      field("tags", "contacts.tags", "string", "string-list", "confidential", { searchable: true }),
+      field("supplierCurrency", "contacts.supplierCurrency", "choice", "currency", "internal", { choices: ["USD", "ZWG"], result: true, aiExposure: "allowed" }),
+      field("supplierPaymentTermsDays", "contacts.supplierPaymentTermsDays", "number", "integer", "confidential", { result: true, aiExposure: "allowed" }),
+      field("supplierLeadTimeDays", "contacts.supplierLeadTimeDays", "number", "integer", "confidential", { result: true, aiExposure: "allowed" }),
       field("email", "contacts.email", "string", "text", "restricted"),
       field("phone", "contacts.phone", "string", "text", "restricted"),
       field("address", "contacts.address", "string", "text", "restricted"),

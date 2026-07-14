@@ -58,6 +58,9 @@ Important current mappings include:
 
 - `tenants`, `users`, `user_sessions`, `roles`, `audit_logs`, `platform_audit_logs`;
 - `contacts`, `deals`, `activities`;
+- Supplier is currently the `contacts.is_vendor` role projection, with nullable
+  procurement defaults on that same record; there is no separate supplier
+  identity table.
 - `accounts`, `exchange_rates`, `invoices`, `invoice_line_items`, `invoice_document_snapshots`, `invoice_share_links`, `payments`, `journal_entries`, `journal_lines`, `expenses`;
 - `bank_accounts`, `bank_transactions`, `bank_reconciliations`;
 - `products`, `warehouses`, `stock_levels`, `stock_movements`, `purchase_orders`, `purchase_order_line_items`;

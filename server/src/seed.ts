@@ -36,20 +36,32 @@ async function main() {
       platformRoleKey: "PRINCIPAL_ADMIN",
       mustChangePassword: true,
     });
-  } else if (existingAdmin.email !== PLATFORM_ADMIN_EMAIL
-    || existingAdmin.fullName !== PLATFORM_ADMIN_NAME
-    || existingAdmin.platformRoleKey !== "PRINCIPAL_ADMIN") {
-    await db.update(schema.users).set({
-      email: PLATFORM_ADMIN_EMAIL,
-      fullName: PLATFORM_ADMIN_NAME,
-      status: "active",
-      platformRoleKey: "PRINCIPAL_ADMIN",
-    }).where(eq(schema.users.id, existingAdmin.id));
-    await db.insert(schema.platformAuditLogs).values({
-      userId: existingAdmin.id,
-      action: "platform_admin.identity_corrected",
-      metadata: { previousEmail: existingAdmin.email, newEmail: PLATFORM_ADMIN_EMAIL, source: "seed" },
-    });
+  } else {
+    if (process.env.NODE_ENV === "test") {
+      // Keep test:db:prepare deterministic after the administrator first-login
+      // test rotates this fixture's password. Production credentials are never
+      // rewritten by a repeat seed.
+      await db.update(schema.users).set({
+        passwordHash: await bcrypt.hash(adminPassword, 12),
+        mustChangePassword: true,
+        status: "active",
+      }).where(eq(schema.users.id, existingAdmin.id));
+    }
+    if (existingAdmin.email !== PLATFORM_ADMIN_EMAIL
+      || existingAdmin.fullName !== PLATFORM_ADMIN_NAME
+      || existingAdmin.platformRoleKey !== "PRINCIPAL_ADMIN") {
+      await db.update(schema.users).set({
+        email: PLATFORM_ADMIN_EMAIL,
+        fullName: PLATFORM_ADMIN_NAME,
+        status: "active",
+        platformRoleKey: "PRINCIPAL_ADMIN",
+      }).where(eq(schema.users.id, existingAdmin.id));
+      await db.insert(schema.platformAuditLogs).values({
+        userId: existingAdmin.id,
+        action: "platform_admin.identity_corrected",
+        metadata: { previousEmail: existingAdmin.email, newEmail: PLATFORM_ADMIN_EMAIL, source: "seed" },
+      });
+    }
   }
   const [platformAdmin] = await db.select().from(schema.users).where(and(
     isNull(schema.users.tenantId),

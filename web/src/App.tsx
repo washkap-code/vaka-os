@@ -109,6 +109,8 @@ type ContactSummary = {
   website: string | null; industry: string | null; registrationNumber: string | null;
   notes: string | null; taxNumber: string | null; tags: string[];
   isCustomer: boolean; isVendor: boolean;
+  supplierCode: string | null; supplierCurrency: "USD" | "ZWG" | null;
+  supplierPaymentTermsDays: number | null; supplierLeadTimeDays: number | null;
 };
 
 type ContactDeletionRequest = {
@@ -1067,6 +1069,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
         {page === "dashboard" && <Dashboard ccy={t.baseCurrency} navigation={visibleNav} onNavigate={setRequestedPage} />}
         {page === "contacts" && <Contacts readonly={suspended} canWrite={me.permissions.includes("crm.write")} isTenantOwner={me.isTenantOwner}
           searchTarget={searchTarget?.entityType === "customer" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
+        {page === "suppliers" && <Suppliers readonly={suspended} canWrite={me.permissions.includes("inventory.write")}
+          searchTarget={searchTarget?.entityType === "supplier" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")}
           searchTarget={searchTarget?.entityType === "invoice" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
@@ -2379,8 +2383,8 @@ function Dashboard({ ccy, navigation, onNavigate }: {
 const emptyContact = { type: "COMPANY", isCustomer: true, isVendor: false, tags: [] as string[] };
 const nullableText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : null;
 
-function ContactFields({ value, onChange, disabled = false }: {
-  value: any; onChange: (next: any) => void; disabled?: boolean;
+function ContactFields({ value, onChange, disabled = false, showRoles = true, notesLabel }: {
+  value: any; onChange: (next: any) => void; disabled?: boolean; showRoles?: boolean; notesLabel?: string;
 }) {
   const copy = appEnglish.contacts;
   const set = (key: string) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -2402,12 +2406,42 @@ function ContactFields({ value, onChange, disabled = false }: {
       <LegacyField label={copy.postalCode}><input disabled={disabled} autoComplete="postal-code" value={value.postalCode ?? ""} onChange={set("postalCode")} /></LegacyField>
       <LegacyField label={copy.countryCode}><input disabled={disabled} autoComplete="country" maxLength={2} placeholder="ZW" value={value.countryCode ?? ""} onChange={set("countryCode")} /></LegacyField>
       <LegacyField label={copy.tags}><input disabled={disabled} value={Array.isArray(value.tags) ? value.tags.join(", ") : value.tags ?? ""} onChange={(event) => onChange({ ...value, tags: event.target.value })} /></LegacyField>
-      <fieldset className="field record-role-fieldset"><legend>{copy.roles}</legend><div className="row record-role-options">
+      {showRoles && <fieldset className="field record-role-fieldset"><legend>{copy.roles}</legend><div className="row record-role-options">
         <label><input disabled={disabled} type="checkbox" checked={!!value.isCustomer} onChange={(event) => onChange({ ...value, isCustomer: event.target.checked })} />{copy.customer}</label>
         <label><input disabled={disabled} type="checkbox" checked={!!value.isVendor} onChange={(event) => onChange({ ...value, isVendor: event.target.checked })} />{copy.vendor}</label>
-      </div></fieldset>
+      </div></fieldset>}
     </div>
-    <LegacyField label={copy.notes}><textarea disabled={disabled} rows={4} value={value.notes ?? ""} onChange={set("notes")} /></LegacyField>
+    <LegacyField label={notesLabel ?? copy.notes}><textarea disabled={disabled} rows={4} value={value.notes ?? ""} onChange={set("notes")} /></LegacyField>
+  </>;
+}
+
+function supplierPayload(form: any) {
+  const { isVendor: _isVendor, ...party } = contactPayload({ ...form, isVendor: true });
+  const days = (value: unknown) => String(value ?? "").trim() === "" ? null : Number(value);
+  return {
+    ...party,
+    supplierCode: nullableText(form.supplierCode),
+    supplierCurrency: form.supplierCurrency || null,
+    supplierPaymentTermsDays: days(form.supplierPaymentTermsDays),
+    supplierLeadTimeDays: days(form.supplierLeadTimeDays),
+  };
+}
+
+function SupplierFields({ value, onChange, disabled = false }: {
+  value: any; onChange: (next: any) => void; disabled?: boolean;
+}) {
+  const copy = appEnglish.suppliers;
+  const set = (key: string) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    onChange({ ...value, [key]: event.target.value });
+  return <>
+    <ContactFields value={value} onChange={onChange} disabled={disabled} showRoles={false} notesLabel={copy.notes} />
+    <h3>{copy.supplierDetails}</h3>
+    <div className="grid2 record-form-grid">
+      <LegacyField label={copy.supplierCode} hint={copy.supplierCodeHelp}><input disabled={disabled} maxLength={50} value={value.supplierCode ?? ""} onChange={set("supplierCode")} /></LegacyField>
+      <LegacyField label={copy.preferredCurrency}><select disabled={disabled} value={value.supplierCurrency ?? ""} onChange={set("supplierCurrency")}><option value="">{copy.noPreferredCurrency}</option><option value="USD">USD</option><option value="ZWG">ZWG</option></select></LegacyField>
+      <LegacyField label={copy.paymentTermsDays}><input disabled={disabled} type="number" inputMode="numeric" min="0" max="3650" step="1" value={value.supplierPaymentTermsDays ?? ""} onChange={set("supplierPaymentTermsDays")} /></LegacyField>
+      <LegacyField label={copy.leadTimeDays}><input disabled={disabled} type="number" inputMode="numeric" min="0" max="3650" step="1" value={value.supplierLeadTimeDays ?? ""} onChange={set("supplierLeadTimeDays")} /></LegacyField>
+    </div>
   </>;
 }
 
@@ -2519,6 +2553,91 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
     </LegacyModal>}
     {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onDelete={() => remove([selected.id])} onSaved={(contact) => { setSelected(contact); reload(); }} onClose={() => setSelected(null)} />}
   </>);
+}
+
+function Suppliers({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: {
+  readonly: boolean; canWrite: boolean;
+  searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
+}) {
+  const copy = appEnglish.suppliers;
+  const emptySupplier = { type: "COMPANY", isCustomer: false, isVendor: true, tags: [] as string[] };
+  const [rows, setRows] = useState<ContactSummary[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [selected, setSelected] = useState<ContactSummary | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState<any>({ ...emptySupplier });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoadError(false);
+    try { setRows(await api("/suppliers") as ContactSummary[]); }
+    catch { setRows([]); setLoadError(true); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!searchTarget || !rows) return;
+    const supplier = rows.find((row) => row.id === searchTarget.recordId);
+    if (supplier) {
+      setSelected(supplier); setForm(supplier); setError("");
+      void api(`/suppliers/${supplier.id}`).then((detail) => setForm(detail)).catch(() => undefined);
+    }
+    onSearchTargetConsumed();
+  }, [onSearchTargetConsumed, rows, searchTarget]);
+
+  const openSupplier = (supplier: ContactSummary) => {
+    setSelected(supplier); setForm(supplier); setError("");
+    void api(`/suppliers/${supplier.id}`).then((detail) => setForm(detail)).catch((requestError: unknown) => {
+      setError(requestError instanceof Error ? requestError.message : copy.loadError);
+    });
+  };
+  const openCreate = () => { setCreating(true); setSelected(null); setForm({ ...emptySupplier }); setError(""); };
+  const close = () => { setCreating(false); setSelected(null); setError(""); };
+  const validDays = (value: unknown) => String(value ?? "").trim() === ""
+    || (/^\d+$/.test(String(value)) && Number(value) <= 3650);
+  const formValid = String(form.name ?? "").trim().length > 0
+    && validDays(form.supplierPaymentTermsDays) && validDays(form.supplierLeadTimeDays);
+  const save = async () => {
+    if (!formValid) return;
+    setSaving(true); setError("");
+    try {
+      const saved = selected
+        ? await api(`/suppliers/${selected.id}`, { method: "PATCH", body: supplierPayload(form) })
+        : await api("/suppliers", { method: "POST", body: supplierPayload(form) });
+      setSelected(saved as ContactSummary); setForm(saved); setCreating(false);
+      await load();
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : copy.loadError);
+    } finally { setSaving(false); }
+  };
+
+  return <>
+    <div className="row page-heading">
+      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
+      {!readonly && canWrite && <button className="btn" onClick={openCreate}>{copy.newSupplier}</button>}
+    </div>
+    {rows === null ? <p className="sub" role="status">{copy.loading}</p>
+      : loadError ? <div className="panel"><div className="err-text" role="alert">{copy.loadError}</div><button className="btn ghost sm" onClick={() => void load()}>{copy.retry}</button></div>
+        : rows.length === 0 ? <div className="panel"><p className="sub record-empty">{copy.empty}</p></div>
+          : <ul className="supplier-record-grid" aria-label={copy.title}>{rows.map((supplier) => <li key={supplier.id}>
+            <button type="button" className="supplier-record-card" onClick={() => openSupplier(supplier)} aria-label={copy.openSupplier.replace("{name}", supplier.name)}>
+              <span className="supplier-record-heading"><strong>{supplier.name}</strong><small>{supplier.supplierCode ?? copy.codeNotSet}</small></span>
+              <span><b>{copy.contact}</b>{supplier.email ?? supplier.phone ?? "—"}</span>
+              <span><b>{copy.location}</b>{[supplier.city, supplier.countryCode].filter(Boolean).join(", ") || "—"}</span>
+              <span><b>{copy.procurementDefaults}</b>{[
+                supplier.supplierCurrency,
+                supplier.supplierPaymentTermsDays === null ? copy.termsNotSet : copy.terms.replace("{days}", String(supplier.supplierPaymentTermsDays)),
+                supplier.supplierLeadTimeDays === null ? copy.leadTimeNotSet : copy.leadTime.replace("{days}", String(supplier.supplierLeadTimeDays)),
+              ].filter(Boolean).join(" · ")}</span>
+            </button>
+          </li>)}</ul>}
+    {(creating || selected) && <LegacyModal labelledBy="supplier-record-title" onClose={close} className="record-modal">
+      <div className="timeline-heading"><h2 id="supplier-record-title" tabIndex={-1} data-modal-initial-focus>{creating ? copy.newSupplierTitle : copy.editSupplierTitle}</h2><button className="btn ghost sm" onClick={close}>{copy.close}</button></div>
+      <SupplierFields value={form} onChange={setForm} disabled={readonly || !canWrite} />
+      {error && <div className="err-text" role="alert">{error}</div>}
+      {!readonly && canWrite && <div className="row end modal-actions"><button className="btn ghost" onClick={close}>{copy.cancel}</button><button className="btn" disabled={saving || !formValid} onClick={save}>{saving ? copy.saving : selected ? copy.saveChanges : copy.saveSupplier}</button></div>}
+    </LegacyModal>}
+  </>;
 }
 
 function centsToMoney(cents: string): string {
@@ -3206,7 +3325,7 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
 function PurchaseOrders({ readonly }: { readonly: boolean }) {
   const copy = appEnglish.purchaseOrders;
   const [rows, reload] = useLoad(() => api("/purchase-orders"));
-  const [contacts] = useLoad(() => api("/contacts"));
+  const [suppliers] = useLoad(() => api("/suppliers"));
   const [products] = useLoad(() => api("/products"));
   const [warehouses] = useLoad(() => api("/warehouses"));
   const [show, setShow] = useState(false);
@@ -3241,7 +3360,7 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
     <div className="panel">
       <div className="table-scroll" role="region" aria-label={copy.listLabel} tabIndex={0}><table><thead><tr><th>{copy.number}</th><th>{copy.vendor}</th><th>{copy.status}</th><th className="num">{copy.total}</th><th>{copy.actions}</th></tr></thead>
         <tbody>{(rows ?? []).map((po: any) => {
-          const vendor = (contacts ?? []).find((c: any) => c.id === po.vendorContactId);
+          const vendor = (suppliers ?? []).find((c: any) => c.id === po.vendorContactId);
           return (<tr key={po.id}>
             <td><b>{po.number}</b></td><td>{vendor?.name ?? "—"}</td>
             <td><span className={`pill ${po.status}`}>{po.status}</span></td>
@@ -3254,7 +3373,7 @@ function PurchaseOrders({ readonly }: { readonly: boolean }) {
     {show && <LegacyModal labelledBy="new-purchase-order-title" onClose={closeCreate}>
       <h2 id="new-purchase-order-title" tabIndex={-1} data-modal-initial-focus>{copy.newPurchaseOrderTitle}</h2>
       <LegacyField label={copy.vendor}><select value={f.vendorContactId ?? ""} onChange={(e) => setF({ ...f, vendorContactId: e.target.value })}>
-        <option value="">{copy.selectVendor}</option>{(contacts ?? []).filter((c: any) => c.isVendor).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
+        <option value="">{copy.selectVendor}</option>{(suppliers ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
       {f.lines.map((l: any, i: number) => (
         <fieldset className="purchase-line-create" key={i}>
           <legend>{copy.line.replace("{number}", String(i + 1))}</legend>

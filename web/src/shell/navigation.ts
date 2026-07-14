@@ -1,6 +1,7 @@
 export type WorkspacePage =
   | "dashboard"
   | "contacts"
+  | "suppliers"
   | "pipeline"
   | "invoices"
   | "products"
@@ -14,24 +15,24 @@ export type WorkspacePage =
 
 export type WorkspaceNavigationItem = {
   key: WorkspacePage;
-  label: string;
   permission?: string;
   ownerOnly?: boolean;
 };
 
 export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
-  { key: "dashboard", label: "Dashboard", permission: "reports.read" },
-  { key: "contacts", label: "Contacts", permission: "crm.read" },
-  { key: "pipeline", label: "Sales Pipeline", permission: "crm.read" },
-  { key: "invoices", label: "Invoices", permission: "accounting.read" },
-  { key: "products", label: "Products & Stock", permission: "inventory.read" },
-  { key: "pos", label: "Purchase Orders", permission: "inventory.read" },
-  { key: "reports", label: "Reports", permission: "reports.read" },
-  { key: "imports", label: "Imports", permission: "imports.create" },
-  { key: "usersActivity", label: "Users & Activity", ownerOnly: true },
-  { key: "billing", label: "Billing & Plan" },
-  { key: "upgrade", label: "Upgrade", permission: "billing.manage" },
-  { key: "settings", label: "Settings" },
+  { key: "dashboard", permission: "reports.read" },
+  { key: "contacts", permission: "crm.read" },
+  { key: "suppliers", permission: "inventory.read" },
+  { key: "pipeline", permission: "crm.read" },
+  { key: "invoices", permission: "accounting.read" },
+  { key: "products", permission: "inventory.read" },
+  { key: "pos", permission: "inventory.read" },
+  { key: "reports", permission: "reports.read" },
+  { key: "imports", permission: "imports.create" },
+  { key: "usersActivity", ownerOnly: true },
+  { key: "billing" },
+  { key: "upgrade", permission: "billing.manage" },
+  { key: "settings" },
 ] as const;
 
 export function visibleWorkspaceNavigation(

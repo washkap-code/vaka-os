@@ -10,13 +10,18 @@ import {
   type WorkspaceSearchTarget,
 } from "./command-search-model";
 
-const entityOrder: readonly WorkspaceSearchResult["entityType"][] = ["customer", "invoice", "product"];
+const entityOrder: readonly WorkspaceSearchResult["entityType"][] = ["customer", "supplier", "invoice", "product"];
 
 function resultDetail(result: WorkspaceSearchResult): string {
   if (result.document.entityType === "customer") {
     return result.document.contactType === "COMPANY"
       ? appEnglish.shell.search.company
       : appEnglish.shell.search.individual;
+  }
+  if (result.document.entityType === "supplier") {
+    return result.document.supplierCode
+      ? appEnglish.shell.search.supplierCode.replace("{code}", result.document.supplierCode)
+      : appEnglish.shell.search.supplier;
   }
   if (result.document.entityType === "invoice") {
     return `${result.document.customerName} · ${fmt(result.document.total, result.document.currency)}`;

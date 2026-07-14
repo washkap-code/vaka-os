@@ -58,11 +58,11 @@ export function WorkspaceShell({ tenant, user, navigation, currentPage, onNaviga
       {navigation.map((item) => <button key={item.key} type="button"
         className={currentPage === item.key ? "active" : ""}
         aria-current={currentPage === item.key ? "page" : undefined}
-        onClick={() => navigate(item.key)}>{item.label}</button>)}
+        onClick={() => navigate(item.key)}>{copy.navigation[item.key]}</button>)}
     </nav>
     <div className="workspace-foot">{copy.workspace.replace("{subdomain}", tenant.subdomain)}<br />{copy.poweredBy}</div>
   </>;
-  const searchAvailable = navigation.some((item) => ["contacts", "invoices", "products"].includes(item.key));
+  const searchAvailable = navigation.some((item) => ["contacts", "suppliers", "invoices", "products"].includes(item.key));
 
   return <div className="shell">
     <a className="skip-link" href="#workspace-main">{copy.skipToContent}</a>

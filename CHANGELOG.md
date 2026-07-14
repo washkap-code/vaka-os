@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- **Repeatable guarded DB verification:** `test:db:prepare` now restores the
+  platform-administrator fixture password only under `NODE_ENV=test`, after the
+  first-login test rotates it. Production seeds never reset credentials. The
+  serial DB-backed suite now uses a 15-second integration-test ceiling for
+  stable verification on slower hosts.
+
 - **Test DB preparation now seeds reference data.** `test:db:prepare` runs the
   plan/platform-admin seed (`src/seed.ts`) as its final step, so a freshly
   prepared test database no longer fails tenant-signup tests with
@@ -11,6 +17,16 @@
   tests pass (see `docs/engineering/verification/2026-07-12-full-db-suite-green.md`).
 
 ### Added
+
+- **Canonical supplier records (P4-001):** Added an inventory-authorised
+  Supplier workspace and APIs over the existing `contacts.is_vendor` role,
+  with supplier code/currency/payment-term/lead-time defaults, atomic audit,
+  role-aware events, metadata and tenant-safe search. Purchase orders and
+  expenses now reject removed, cross-tenant and non-vendor contacts before any
+  number, document, journal or audit side effect. Added additive migration
+  `0026_canonical_supplier_fields.sql`; exact production DDL is recorded in the
+  completion report for separate hand-application. No supplier table,
+  accounting change or production database push was introduced.
 
 - **Operational record accessibility and reflow (P6-007):** Extended the
   governed P6-005 labelled-field and modal-focus patterns to deal, product,

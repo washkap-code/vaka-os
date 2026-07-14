@@ -10,7 +10,7 @@ import { DOMAIN_EVENTS, type DomainEventPayloads } from "./platform/events/regis
 import type { MetadataServiceContract } from "./platform/metadata/interfaces.js";
 import type { MetadataObjectDefinition } from "./platform/metadata/types.js";
 
-export const SEARCH_ENTITY_TYPES = ["customer", "invoice", "product"] as const;
+export const SEARCH_ENTITY_TYPES = ["customer", "supplier", "invoice", "product"] as const;
 export type SearchEntityType = typeof SEARCH_ENTITY_TYPES[number];
 type SearchPermission = "crm.read" | "accounting.read" | "inventory.read";
 
@@ -26,6 +26,7 @@ export const searchQuerySchema = z.object({
 
 export type SearchResultDocument =
   | { id: string; entityType: "customer"; name: string; contactType: "INDIVIDUAL" | "COMPANY" }
+  | { id: string; entityType: "supplier"; name: string; contactType: "INDIVIDUAL" | "COMPANY"; supplierCode: string | null; supplierCurrency: "USD" | "ZWG" | null }
   | { id: string; entityType: "invoice"; number: string | null; status: string; currency: "USD" | "ZWG"; total: string; customerName: string }
   | { id: string; entityType: "product"; sku: string; name: string; currency: "USD" | "ZWG"; salePrice: string; isActive: boolean; trackStock: boolean };
 
@@ -86,6 +87,30 @@ function customerDocument(row: typeof schema.contacts.$inferSelect, definition: 
     searchText: normalizeSearchText(searchableValues(definition, { name: row.name, tags: row.tags })),
     permission: searchPermission(definition),
     document: { id: row.id, entityType: "customer", name: row.name, contactType: row.type },
+  };
+}
+
+function supplierDocument(row: typeof schema.contacts.$inferSelect, definition: MetadataObjectDefinition): IndexedDocument | null {
+  if (!row.isVendor) return null;
+  return {
+    tenantId: row.tenantId,
+    entityType: "supplier",
+    entityId: row.id,
+    title: row.name,
+    searchText: normalizeSearchText(searchableValues(definition, {
+      name: row.name,
+      supplierCode: row.supplierCode,
+      tags: row.tags,
+    })),
+    permission: searchPermission(definition),
+    document: {
+      id: row.id,
+      entityType: "supplier",
+      name: row.name,
+      contactType: row.type,
+      supplierCode: row.supplierCode,
+      supplierCurrency: row.supplierCurrency,
+    },
   };
 }
 
@@ -164,6 +189,7 @@ function encodeCursor(offset: number, fingerprint: string): string {
 export interface SearchApplicationAdapter extends SearchProvider {
   reconcileTenant(tenantId: string): Promise<void>;
   reindexCustomer(tenantId: string, customerId: string): Promise<void>;
+  reindexSupplier(tenantId: string, supplierId: string): Promise<void>;
   reindexInvoice(tenantId: string, invoiceId: string): Promise<void>;
   reindexProduct(tenantId: string, productId: string): Promise<void>;
 }
@@ -195,14 +221,18 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   private async rebuildTenant(tenantId: string): Promise<void> {
-    const [customerDefinition, invoiceDefinition, productDefinition] = await Promise.all([
+    const [customerDefinition, supplierDefinition, invoiceDefinition, productDefinition] = await Promise.all([
       this.definition(tenantId, "customer"),
+      this.definition(tenantId, "supplier"),
       this.definition(tenantId, "invoice"),
       this.definition(tenantId, "product"),
     ]);
     await db.transaction(async (tx) => {
       const customers = await tx.select().from(schema.contacts)
         .where(and(eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.isCustomer, true),
+          isNull(schema.contacts.deletedAt)));
+      const suppliers = await tx.select().from(schema.contacts)
+        .where(and(eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.isVendor, true),
           isNull(schema.contacts.deletedAt)));
       const invoices = await tx.select({
         id: schema.invoices.id,
@@ -220,6 +250,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
         .where(eq(schema.products.tenantId, tenantId));
       const documents = [
         ...customers.map((row) => customerDocument(row, customerDefinition)).filter((row): row is IndexedDocument => row !== null),
+        ...suppliers.map((row) => supplierDocument(row, supplierDefinition)).filter((row): row is IndexedDocument => row !== null),
         ...invoices.map((row) => invoiceDocument(row, invoiceDefinition)),
         ...products.map((row) => productDocument(row, productDefinition)),
       ];
@@ -248,6 +279,21 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       eq(schema.invoices.tenantId, tenantId), eq(schema.invoices.contactId, customerId),
     ));
     for (const invoice of invoices) await this.reindexInvoice(tenantId, invoice.id);
+  }
+
+  async reindexSupplier(tenantId: string, supplierId: string): Promise<void> {
+    const definition = await this.definition(tenantId, "supplier");
+    const [row] = await db.select().from(schema.contacts).where(and(
+      eq(schema.contacts.tenantId, tenantId), eq(schema.contacts.id, supplierId),
+      isNull(schema.contacts.deletedAt),
+    ));
+    const document = row ? supplierDocument(row, definition) : null;
+    if (document) await upsertDocument(db, document);
+    else await db.delete(schema.searchDocuments).where(and(
+      eq(schema.searchDocuments.tenantId, tenantId),
+      eq(schema.searchDocuments.entityType, "supplier"),
+      eq(schema.searchDocuments.entityId, supplierId),
+    ));
   }
 
   async reindexInvoice(tenantId: string, invoiceId: string): Promise<void> {
@@ -357,6 +403,8 @@ export function subscribeSearchIndex(bus: EventBusContract, adapter: SearchAppli
   };
   bus.subscribe<DomainEventPayloads["customer.changed"]>(DOMAIN_EVENTS.CUSTOMER_CHANGED, (event) =>
     reindex(event, event.payload.customerId, adapter.reindexCustomer.bind(adapter)));
+  bus.subscribe<DomainEventPayloads["supplier.changed"]>(DOMAIN_EVENTS.SUPPLIER_CHANGED, (event) =>
+    reindex(event, event.payload.supplierId, adapter.reindexSupplier.bind(adapter)));
   bus.subscribe<DomainEventPayloads["product.changed"]>(DOMAIN_EVENTS.PRODUCT_CHANGED, (event) =>
     reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)));
   bus.subscribe<DomainEventPayloads["invoice.changed"]>(DOMAIN_EVENTS.INVOICE_CHANGED, (event) =>
