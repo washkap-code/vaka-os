@@ -10,9 +10,10 @@ const app = createApp();
 const unique = Date.now().toString(36);
 
 async function createBillingAccount(label: string) {
+  const ownerEmail = `pay-${unique}-${label.toLowerCase()}@test.zw`;
   const response = await request(app).post("/api/v1/auth/signup").send({
     companyName: `${label} Company`, subdomain: `pay${unique}${label.toLowerCase()}`,
-    baseCurrency: "USD", ownerEmail: `pay-${unique}-${label}@test.zw`,
+    baseCurrency: "USD", ownerEmail,
     ownerPassword: "Subscription-Payment-Password-123!", ownerName: `${label} Owner`, planName: "Starter",
   });
   expect(response.status).toBe(200);
@@ -20,7 +21,7 @@ async function createBillingAccount(label: string) {
     .where(eq(schema.subscriptions.tenantId, response.body.tenant.id));
   const [user] = await db.select().from(schema.users).where(and(
     eq(schema.users.tenantId, response.body.tenant.id),
-    eq(schema.users.email, `pay-${unique}-${label}@test.zw`),
+    eq(schema.users.email, ownerEmail),
   ));
   const now = new Date();
   const [invoice] = await db.insert(schema.subscriptionInvoices).values({
