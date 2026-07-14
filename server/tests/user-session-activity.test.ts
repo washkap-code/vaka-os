@@ -4,7 +4,10 @@ import { createApp } from "../src/app.js";
 import { login, signupTenant } from "../src/auth.js";
 
 const app = createApp();
-const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
+const auth = (token: string, proof?: string) => ({
+  Authorization: `Bearer ${token}`,
+  ...(proof ? { "X-Vaka-Step-Up": proof } : {}),
+});
 const sessionIdFrom = (token: string) => JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()).sid as string;
 
 describe("owner session visibility", () => {
@@ -23,6 +26,10 @@ describe("owner session visibility", () => {
     });
     const first = await login(email, password, tenant.subdomain);
     const second = await login(email, password, tenant.subdomain);
+    const proofResponse = await request(app).post("/api/v1/auth/step-up").set(auth(first.token))
+      .send({ currentPassword: password });
+    expect(proofResponse.status).toBe(200);
+    const proof = proofResponse.body.stepUpToken as string;
     const activity = await request(app).get("/api/v1/security/activity").set(auth(first.token));
     expect(activity.status).toBe(200);
     expect(activity.body.summary.registered_users).toBe(1);
@@ -33,7 +40,7 @@ describe("owner session visibility", () => {
     const stockRole = activity.body.roles.find((role: any) => role.name === "Stock Controller");
     expect(stockRole).toBeTruthy();
     const memberEmail = `session-member-${suffix}@test.zw`;
-    const created = await request(app).post("/api/v1/security/users").set(auth(first.token)).send({
+    const created = await request(app).post("/api/v1/security/users").set(auth(first.token, proof)).send({
       email: memberEmail, fullName: "Session Member", roleId: stockRole.id,
     });
     expect(created.status).toBe(200);
@@ -41,7 +48,7 @@ describe("owner session visibility", () => {
     const memberLogin = await login(memberEmail, created.body.temporaryPassword, tenant.subdomain);
     expect(memberLogin.user.mustChangePassword).toBe(true);
     const disabled = await request(app).post(`/api/v1/security/users/${created.body.user.id}/disabled`)
-      .set(auth(first.token)).send({});
+      .set(auth(first.token, proof)).send({});
     expect(disabled.status).toBe(200);
     expect((await request(app).get("/api/v1/me").set(auth(memberLogin.token))).status).toBe(401);
 

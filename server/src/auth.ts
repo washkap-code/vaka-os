@@ -10,7 +10,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
-import { db, schema, unauthorized, forbidden, badRequest, conflict, notFound, DEFAULT_ROLES, audit, Permission } from "./lib.js";
+import { AppError, db, schema, unauthorized, forbidden, badRequest, conflict, notFound, DEFAULT_ROLES, audit, Permission } from "./lib.js";
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
@@ -481,6 +481,33 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
     };
     next();
   } catch (e) { next(e); }
+}
+
+export function assertRecentStepUp(req: AuthedRequest) {
+  if (!req.auth?.sessionId) throw new AppError(428, "Recent reauthentication is required", "STEP_UP_REQUIRED");
+  const proof = req.header("X-Vaka-Step-Up");
+  if (!proof) throw new AppError(428, "Recent reauthentication is required", "STEP_UP_REQUIRED");
+  try {
+    const verified = jwt.verify(proof, JWT_SECRET, { algorithms: ["HS256"] });
+    if (typeof verified === "string"
+      || verified.purpose !== "privileged-step-up"
+      || verified.sub !== req.auth.userId
+      || verified.sid !== req.auth.sessionId
+      || verified.tenantId !== req.auth.tenantId) {
+      throw new Error("Step-up proof context mismatch");
+    }
+  } catch {
+    throw new AppError(428, "Recent reauthentication is required", "STEP_UP_REQUIRED");
+  }
+}
+
+export function requireRecentStepUp(req: AuthedRequest, _res: Response, next: NextFunction) {
+  try {
+    assertRecentStepUp(req);
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 export async function revokeSession(opts: {

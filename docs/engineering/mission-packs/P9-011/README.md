@@ -1,6 +1,6 @@
 # P9-011 — Privileged recent reauthentication
 
-**Status:** Approved for implementation
+**Status:** Implemented and locally verified; remote review and release pending
 **Priority:** P0 identity and destructive-action protection
 **Depends on:** P9-008 MFA/session controls; P9-009 explicit ownership;
 P9-010 refresh rotation; P3-004 governed contact deletion; OPS-016 restore
@@ -151,3 +151,20 @@ two-actor tests, deployment and live owner/Principal smoke evidence. Roll back
 protected-route middleware and UI prompts together; the additive audit events
 may remain. Never bypass proof with client-only checks or a broad emergency
 role. Incident access follows the documented recovery process.
+
+## Implementation evidence — 2026-07-14
+
+- The authenticated endpoint issues a ten-minute, purpose-, user-, session- and
+  tenant-bound HS256 proof after password and enrolled-MFA verification.
+- Selected tenant-owner and platform-administrator routes enforce proof on the
+  server without weakening their existing permission or audit boundaries.
+- The web client holds proof only for the initiating in-memory action and uses
+  the governed accessible modal and password visibility control.
+- Focused regression: 4 files, 12 tests passed.
+- Full server regression: 70 files passed, 1 skipped; 241 tests passed, 1
+  skipped. The existing skipped test remains outside this mission.
+- Server and web typechecks, production web build, design-token,
+  accessibility, shell, invoice-PDF and session-renewal gates passed.
+- Server and web production dependency audits reported zero vulnerabilities.
+- Remote review, deployment and live two-actor evidence are not claimed and
+  remain mandatory release gates.

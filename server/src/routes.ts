@@ -17,10 +17,12 @@ import {
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
   issueAuthenticatedSession,
   clearRefreshCookie, refreshAuthenticatedSession, refreshCredentialFromCookie, setRefreshCookie,
+  assertRecentStepUp, requireRecentStepUp,
 } from "./auth.js";
 import {
   beginMfaEnrollment, completePasswordReset, disableMfa, mfaStatus,
   replaceMfaRecoveryCodes, requestPasswordReset, verifyMfaEnrollment, verifyMfaLogin,
+  createStepUpProof,
 } from "./auth-security.js";
 import {
   createPlatformStaff, issuePlatformStaffTemporaryPassword, listPlatformRoles,
@@ -299,6 +301,21 @@ api.post("/auth/logout", wrap(async (req, res) => {
 
 api.use(requireCompletedPasswordChange as any);
 
+api.post("/auth/step-up", wrap(async (req, res) => {
+  if (!req.auth!.sessionId) throw unauthorized("An active server session is required");
+  const body = z.object({
+    currentPassword: z.string().min(1).max(256),
+    code: z.string().trim().min(6).max(32).optional(),
+  }).strict().parse(req.body);
+  res.setHeader("Cache-Control", "private, no-store");
+  return createStepUpProof({
+    userId: req.auth!.userId,
+    sessionId: req.auth!.sessionId,
+    currentPassword: body.currentPassword,
+    code: body.code,
+  });
+}));
+
 api.patch("/me/profile", wrap(async (req) => {
   const body = z.object({
     fullName: z.string().trim().min(2).max(120),
@@ -457,7 +474,7 @@ api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
   };
 }));
 
-api.post("/security/users", requireTenantOwner as any, wrap(async (req) => {
+api.post("/security/users", requireTenantOwner as any, requireRecentStepUp as any, wrap(async (req) => {
   const body = z.object({
     email: z.string().email(), fullName: z.string().trim().min(2).max(100),
     roleId: z.string().uuid(), initialPassword: z.string().min(12).max(256).optional(),
@@ -465,7 +482,7 @@ api.post("/security/users", requireTenantOwner as any, wrap(async (req) => {
   return createTenantUser({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...body });
 }));
 
-api.post("/security/users/:id/:status", requireTenantOwner as any, wrap(async (req) => {
+api.post("/security/users/:id/:status", requireTenantOwner as any, requireRecentStepUp as any, wrap(async (req) => {
   const status = z.enum(["active", "disabled"]).parse(req.params.status);
   return setTenantUserStatus({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
@@ -965,6 +982,7 @@ api.post("/contacts/bulk", requirePermission("crm.write"), wrap(async (req) => {
 }));
 api.post("/contacts/deletions", requirePermission("crm.write"), wrap(async (req) => {
   const body = z.object({ ids: contactIdsSchema, reason: z.string().trim().min(3).max(500) }).strict().parse(req.body);
+  if (req.auth!.isTenantOwner) assertRecentStepUp(req);
   return deleteOrRequestContacts({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
     isTenantOwner: req.auth!.isTenantOwner, ids: body.ids, reason: body.reason,
@@ -980,6 +998,7 @@ api.post("/contacts/deletion-requests/:requestId/decision",
       decision: z.enum(["APPROVE", "REJECT"]),
       reason: z.string().trim().min(3).max(500),
     }).strict().parse(req.body);
+    if (body.decision === "APPROVE") assertRecentStepUp(req);
     return decideContactDeletionRequest({
       tenantId: tenantId(req), actorUserId: req.auth!.userId, isTenantOwner: req.auth!.isTenantOwner,
       requestId: routeParam(req, "requestId"), ...body,
@@ -1697,18 +1716,18 @@ const platformStaffProfileSchema = z.object({
 
 api.get("/platform/staff/roles", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformRoles()));
 api.get("/platform/staff", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformStaff()));
-api.post("/platform/staff", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.post("/platform/staff", requirePlatformPermission("platform.staff.manage"), requireRecentStepUp as any, wrap(async (req) => {
   const body = platformStaffProfileSchema.extend({
     email: z.string().email(),
     initialPassword: z.string().min(12).max(256).optional(),
   }).parse(req.body);
   return createPlatformStaff(req.auth!.userId, body);
 }));
-api.patch("/platform/staff/:id", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.patch("/platform/staff/:id", requirePlatformPermission("platform.staff.manage"), requireRecentStepUp as any, wrap(async (req) => {
   const body = platformStaffProfileSchema.extend({ status: z.enum(["active", "disabled"]) }).parse(req.body);
   return updatePlatformStaff(req.auth!.userId, routeParam(req, "id"), body);
 }));
-api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("platform.staff.manage"), wrap(async (req) => {
+api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("platform.staff.manage"), requireRecentStepUp as any, wrap(async (req) => {
   const body = z.object({ temporaryPassword: z.string().min(12).max(256).optional() }).parse(req.body);
   return issuePlatformStaffTemporaryPassword(req.auth!.userId, routeParam(req, "id"), body.temporaryPassword);
 }));
@@ -1836,7 +1855,7 @@ api.get("/platform/restore-drills", requirePlatformPermission("platform.backups.
 api.post("/platform/restore-drills", requirePlatformPermission("platform.backups.write"), wrap(async (req) =>
   recordRestoreDrill(req.auth!.userId, req.body)));
 api.post("/platform/restore-drills/:id/review",
-  requirePlatformPermission("platform.security.manage"), wrap(async (req) =>
+  requirePlatformPermission("platform.security.manage"), requireRecentStepUp as any, wrap(async (req) =>
     reviewRestoreDrill(req.auth!.userId, routeParam(req, "id"), req.body)));
 api.post("/platform/referral-codes", requirePlatformPermission("platform.referrals.manage"), wrap(async (req) => {
   const body = z.object({

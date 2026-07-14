@@ -8,6 +8,14 @@ import { db, schema } from "../src/lib.js";
 import { createContact, signupFinanceTenant } from "./finance/helpers.js";
 
 const app = createApp();
+const ownerPassword = "Finance-Test-123!";
+
+async function ownerStepUp(tenant: { token: string; auth: { Authorization: string } }) {
+  const response = await request(app).post("/api/v1/auth/step-up").set(tenant.auth)
+    .send({ currentPassword: ownerPassword });
+  expect(response.status).toBe(200);
+  return { ...tenant.auth, "X-Vaka-Step-Up": response.body.stepUpToken as string };
+}
 
 async function userAuth(tenantId: string, permissions: string[], label: string) {
   const [tenant] = await db.select({ subdomain: schema.tenants.subdomain })
@@ -76,10 +84,10 @@ describe("P3-004 customer record management", () => {
     const requestId = requests.body[0].id as string;
     expect((await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(staff.auth)
       .send({ decision: "APPROVE", reason: "Not my authority" })).status).toBe(403);
-    expect((await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(tenantB.auth)
+    expect((await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(await ownerStepUp(tenantB))
       .send({ decision: "APPROVE", reason: "Cross-tenant attempt" })).status).toBe(404);
 
-    const approved = await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(tenantA.auth)
+    const approved = await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(await ownerStepUp(tenantA))
       .send({ decision: "APPROVE", reason: "Confirmed duplicate after review" });
     expect(approved.status).toBe(200);
     expect(approved.body.status).toBe("APPROVED");
@@ -110,7 +118,7 @@ describe("P3-004 customer record management", () => {
       ids: [first.id, second.id], operation: { action: "ADD_TAG", tag: "priority" },
     });
     expect(tagged.body.updated).toBe(2);
-    const removed = await request(app).post("/api/v1/contacts/deletions").set(tenant.auth).send({
+    const removed = await request(app).post("/api/v1/contacts/deletions").set(await ownerStepUp(tenant)).send({
       ids: [first.id, second.id], reason: "Owner-approved test cleanup",
     });
     expect(removed.body).toEqual({ outcome: "REMOVED", count: 2 });

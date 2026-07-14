@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import bcrypt from "bcryptjs";
 import request from "supertest";
 import { and, eq } from "drizzle-orm";
 import { createApp } from "../src/app.js";
@@ -10,24 +11,37 @@ import {
 
 const app = createApp();
 const unique = () => `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
-const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
+const auth = (token: string, proof?: string) => ({
+  Authorization: `Bearer ${token}`,
+  ...(proof ? { "X-Vaka-Step-Up": proof } : {}),
+});
+const principalPassword = "Restore-Principal-Test-2026!";
 
 let principalId = "";
 let principalToken = "";
+let principalProof = "";
 let operatorId = "";
 let operatorToken = "";
 let tenantToken = "";
 
 beforeAll(async () => {
-  const [principal] = await db.select().from(schema.users)
-    .where(eq(schema.users.platformRoleKey, "PRINCIPAL_ADMIN"));
-  if (!principal) throw new Error("Seeded principal administrator is required");
-  principalId = principal.id;
-  await db.update(schema.users).set({ status: "active", mustChangePassword: false })
-    .where(eq(schema.users.id, principal.id));
-  principalToken = (await issueAuthenticatedSession(principal.id)).token;
-
   const suffix = unique();
+  const [principal] = await db.insert(schema.users).values({
+    tenantId: null,
+    email: `restore-principal-${suffix}@test.zw`,
+    passwordHash: await bcrypt.hash(principalPassword, 4),
+    fullName: "Restore Drill Principal Reviewer",
+    isPlatformAdmin: true,
+    platformRoleKey: "PRINCIPAL_ADMIN",
+    status: "active",
+  }).returning();
+  principalId = principal.id;
+  principalToken = (await issueAuthenticatedSession(principal.id)).token;
+  const proofResponse = await request(app).post("/api/v1/auth/step-up").set(auth(principalToken))
+    .send({ currentPassword: principalPassword });
+  if (proofResponse.status !== 200) throw new Error("Principal reauthentication setup failed");
+  principalProof = proofResponse.body.stepUpToken;
+
   const [operator] = await db.insert(schema.users).values({
     tenantId: null,
     email: `restore-operator-${suffix}@test.zw`,
@@ -123,14 +137,14 @@ describe("OPS-016 restore drill evidence", () => {
       .set(auth(operatorToken)).send({ decision: "ACCEPTED", reason: "Operator cannot approve their own evidence." })).status).toBe(403);
 
     const accepted = await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
-      .set(auth(principalToken)).send({
+      .set(auth(principalToken, principalProof)).send({
         decision: "ACCEPTED",
         reason: "Independent review confirms every recorded recovery control passed.",
       });
     expect(accepted.status).toBe(200);
     expect(accepted.body.decision).toBe("ACCEPTED");
     const duplicate = await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
-      .set(auth(principalToken)).send({ decision: "REJECTED", reason: "A second decision must never replace evidence." });
+      .set(auth(principalToken, principalProof)).send({ decision: "REJECTED", reason: "A second decision must never replace evidence." });
     expect(duplicate.status).toBe(409);
 
     const controlCenter = await request(app).get("/api/v1/platform/control-center").set(auth(principalToken));

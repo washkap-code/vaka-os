@@ -13,6 +13,7 @@ import { AppError, badRequest, db, schema, unauthorized, type DB } from "./lib.j
 const SECRET = jwtSecret();
 const SECURITY_SECRET = mfaEncryptionSecret();
 const RESET_TTL_MS = 30 * 60_000;
+const STEP_UP_TTL_SECONDS = 10 * 60;
 const TOTP_STEP_SECONDS = 30;
 const TOTP_DIGITS = 6;
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -302,6 +303,94 @@ export async function verifyMfaLogin(challengeToken: string, code: string) {
       : "platform_admin.mfa_login_verified", { method });
     return { userId: user.id };
   });
+}
+
+export async function createStepUpProof(opts: {
+  userId: string;
+  sessionId: string;
+  currentPassword: string;
+  code?: string;
+}) {
+  const [user] = await db.select().from(schema.users).where(and(
+    eq(schema.users.id, opts.userId),
+    eq(schema.users.status, "active"),
+  ));
+  if (!user || !await bcrypt.compare(opts.currentPassword, user.passwordHash)) {
+    if (user) {
+      await securityAudit(db, user, user.tenantId
+        ? "security.step_up_failed"
+        : "platform_admin.step_up_failed", {
+        sessionId: opts.sessionId,
+        failureClass: "credential_mismatch",
+      });
+    }
+    throw unauthorized("Reauthentication failed");
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const now = new Date();
+    const [session] = await tx.select({ id: schema.userSessions.id })
+      .from(schema.userSessions).where(and(
+        eq(schema.userSessions.id, opts.sessionId),
+        eq(schema.userSessions.userId, user.id),
+        isNull(schema.userSessions.revokedAt),
+        gt(schema.userSessions.idleExpiresAt, now),
+        gt(schema.userSessions.absoluteExpiresAt, now),
+      ));
+    if (!session) return { denied: "session_unavailable" as const };
+
+    const lock = await tx.execute(sql`
+      SELECT id FROM user_mfa_factors
+      WHERE user_id = ${user.id} AND status = 'VERIFIED'
+      FOR UPDATE
+    `);
+    const factorId = (lock as unknown as { rows: Array<{ id: string }> }).rows[0]?.id;
+    let method: "password" | "totp" | "recovery" = "password";
+    let assuranceLevel: "aal1" | "aal2" = "aal1";
+    if (factorId) {
+      const [factor] = await tx.select().from(schema.userMfaFactors)
+        .where(eq(schema.userMfaFactors.id, factorId));
+      const verifiedMethod = opts.code ? await verifyFactorCode(tx, factor, opts.code) : null;
+      if (!verifiedMethod) {
+        await securityAudit(tx, user, user.tenantId
+          ? "security.step_up_failed"
+          : "platform_admin.step_up_failed", {
+          sessionId: session.id,
+          failureClass: opts.code ? "mfa_mismatch" : "mfa_required",
+        });
+        return { denied: opts.code ? "mfa_mismatch" as const : "mfa_required" as const };
+      }
+      method = verifiedMethod;
+      assuranceLevel = "aal2";
+    }
+    await securityAudit(tx, user, user.tenantId
+      ? "security.step_up_completed"
+      : "platform_admin.step_up_completed", {
+      sessionId: session.id,
+      assuranceLevel,
+      method,
+    });
+    return { sessionId: session.id, assuranceLevel, method };
+  });
+
+  if ("denied" in result) {
+    if (result.denied === "mfa_required") throw unauthorized("Authenticator or recovery code required");
+    throw unauthorized("Reauthentication failed");
+  }
+  const expiresAt = new Date(Date.now() + STEP_UP_TTL_SECONDS * 1_000);
+  const stepUpToken = jwt.sign({
+    purpose: "privileged-step-up",
+    sub: user.id,
+    sid: result.sessionId,
+    tenantId: user.tenantId,
+    aal: result.assuranceLevel,
+    jti: randomUUID(),
+  }, SECRET, { algorithm: "HS256", expiresIn: STEP_UP_TTL_SECONDS });
+  return {
+    stepUpToken,
+    expiresAt: expiresAt.toISOString(),
+    assuranceLevel: result.assuranceLevel,
+  };
 }
 
 export async function mfaStatus(userId: string) {

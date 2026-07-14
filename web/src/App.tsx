@@ -366,6 +366,46 @@ function PasswordField({ label, value, onChange, autoComplete, disabled = false,
   </div>{hint && <small className="field-help" id={hintId}>{hint}</small>}</div>;
 }
 
+function useStepUpAction() {
+  const [pending, setPending] = useState<null | { title: string; action: (proof: string) => Promise<void> }>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const close = () => {
+    if (busy) return;
+    setPending(null); setCurrentPassword(""); setCode(""); setError("");
+  };
+  const request = (title: string, action: (proof: string) => Promise<void>) => {
+    setCurrentPassword(""); setCode(""); setError(""); setPending({ title, action });
+  };
+  const confirm = async () => {
+    if (!pending || !currentPassword) return;
+    setBusy(true); setError("");
+    try {
+      const result = await api("/auth/step-up", {
+        method: "POST", body: { currentPassword, code: code || undefined },
+      });
+      await pending.action(result.stepUpToken);
+      setPending(null); setCurrentPassword(""); setCode("");
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : appEnglish.platformAdmin.unexpectedError);
+    } finally { setBusy(false); }
+  };
+  const dialog = pending ? <LegacyModal labelledBy="step-up-dialog-title" onClose={close} className="record-modal">
+    <h2 id="step-up-dialog-title" tabIndex={-1} data-modal-initial-focus>{pending.title || appEnglish.auth.recentReauthentication}</h2>
+    <p className="sub">{appEnglish.auth.stepUpHelp}</p>
+    <PasswordField label={appEnglish.auth.currentPassword} value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" />
+    <LegacyField label={appEnglish.auth.optionalAuthenticationCode} hint={appEnglish.auth.optionalAuthenticationCodeHelp}>
+      <input inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
+    </LegacyField>
+    {error && <div className="err-text" role="alert">{error}</div>}
+    <div className="row end modal-actions"><button type="button" className="btn ghost" disabled={busy} onClick={close}>{appEnglish.auth.cancelIdentityCheck}</button>
+      <button type="button" className="btn accent" disabled={busy || !currentPassword} onClick={() => void confirm()}>{busy ? appEnglish.auth.confirmingIdentity : appEnglish.auth.confirmIdentity}</button></div>
+  </LegacyModal> : null;
+  return { request, dialog };
+}
+
 function PasswordReset({ token, onDone }: { token: string; onDone: () => void }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -464,6 +504,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   };
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
+  const stepUp = useStepUpAction();
   const can = (permission: string) => me.platformPermissions.includes(permission);
   const load = async () => {
     try {
@@ -535,16 +576,18 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
     } catch (error: unknown) { showMessage(error instanceof Error ? error.message : copy.unexpectedError, "error"); }
     setBusy(false);
   };
-  const submitRestoreReview = async () => {
+  const submitRestoreReview = () => {
     if (!restoreReview) return;
-    setBusy(true); setMsg("");
-    try {
-      await api(`/platform/restore-drills/${restoreReview.drill.id}/review`, {
-        method: "POST", body: { decision: restoreReview.decision, reason: restoreReview.reason },
-      });
-      setRestoreReview(null); showMessage(copy.restoreReviewRecorded, "status"); await load();
-    } catch (error: unknown) { showMessage(error instanceof Error ? error.message : copy.unexpectedError, "error"); }
-    setBusy(false);
+    const review = restoreReview;
+    stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
+      setBusy(true); setMsg("");
+      try {
+        await api(`/platform/restore-drills/${review.drill.id}/review`, {
+          method: "POST", body: { decision: review.decision, reason: review.reason }, stepUpToken: proof,
+        });
+        setRestoreReview(null); showMessage(copy.restoreReviewRecorded, "status"); await load();
+      } finally { setBusy(false); }
+    });
   };
   const runBilling = async () => {
     if (!window.confirm(copy.billingConfirm)) return;
@@ -764,6 +807,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         {tab === "staff" && <PlatformWorkforce me={me} staff={staff} roles={platformRoles} onReload={load} />}
         {tab === "settings" && <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />}
         {tab === "guide" && <PlatformAdminGuide />}
+        {stepUp.dialog}
       </main>
     </div>
   );
@@ -788,7 +832,8 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busy, setBusy] = useState(false);
-  const create = async () => {
+  const stepUp = useStepUpAction();
+  const create = () => stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
     setBusy(true); setMessage("");
     try {
       const result = await api("/platform/staff", { method: "POST", body: {
@@ -797,14 +842,13 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
         startDate: editing.startDate || null,
         endDate: editing.endDate || null,
         initialPassword: editing.initialPassword || undefined,
-      } });
+      }, stepUpToken: proof });
       setMessage(copy.staffCreated.replace("{password}", result.temporaryPassword));
       setMessageTone("status");
       setEditing(null); await onReload();
-    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
-    setBusy(false);
-  };
-  const save = async () => {
+    } finally { setBusy(false); }
+  });
+  const save = () => stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
     setBusy(true); setMessage("");
     try {
       await api(`/platform/staff/${editing.id}`, { method: "PATCH", body: {
@@ -812,19 +856,18 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
         managerUserId: editing.managerUserId || null,
         startDate: editing.startDate || null,
         endDate: editing.endDate || null,
-      } });
+      }, stepUpToken: proof });
       setEditing(null); await onReload();
-    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
-    setBusy(false);
-  };
-  const issueTemporaryPassword = async (staffId: string) => {
+    } finally { setBusy(false); }
+  });
+  const issueTemporaryPassword = (staffId: string) => {
     if (!window.confirm(copy.temporaryPasswordConfirm)) return;
-    try {
-      const result = await api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {} });
+    stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
+      const result = await api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {}, stepUpToken: proof });
       setMessage(copy.temporaryPasswordIssued.replace("{password}", result.temporaryPassword));
       setMessageTone("status");
       await onReload();
-    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
+    });
   };
   const openEditor = (value: any) => { setMessage(""); setEditing(value); };
   const closeEditor = () => setEditing(null);
@@ -865,6 +908,7 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
       {!editing.id && <PasswordField label={copy.initialPassword} value={editing.initialPassword ?? ""} onChange={(value) => setEditing({ ...editing, initialPassword: value })} autoComplete="new-password" />}
       <div className="row end modal-actions"><button className="btn ghost" onClick={closeEditor}>{copy.cancel}</button><button className="btn accent" disabled={busy} onClick={editing.id ? save : create}>{editing.id ? copy.saveStaff : copy.createStaff}</button></div>
     </LegacyModal>}
+    {stepUp.dialog}
   </>;
 }
 
@@ -2140,6 +2184,7 @@ function UsersActivity() {
   const [message, setMessage] = useState("");
   const [newUser, setNewUser] = useState({ fullName: "", email: "", roleId: "", initialPassword: "" });
   const copy = appEnglish.activity;
+  const stepUp = useStepUpAction();
   const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : "—";
   const sessionState = (session: any) => {
     if (session.revoked_at) return copy.revoked;
@@ -2161,24 +2206,24 @@ function UsersActivity() {
     setNewUser({ fullName: "", email: "", roleId: defaultRole?.id ?? "", initialPassword: "" });
     setShowAdd(true);
   };
-  const createUser = async () => {
+  const createUser = () => stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
     setBusy(true); setMessage("");
     try {
       const result = await api("/security/users", { method: "POST", body: {
         ...newUser, initialPassword: newUser.initialPassword || undefined,
-      } });
+      }, stepUpToken: proof });
       setCreatedPassword(result.temporaryPassword);
       setNewUser({ fullName: "", email: "", roleId: "", initialPassword: "" });
       reload();
-    } catch (error: any) { setMessage(error.message || copy.createUserFailed); }
-    finally { setBusy(false); }
-  };
-  const updateUserStatus = async (user: any) => {
+    } finally { setBusy(false); }
+  });
+  const updateUserStatus = (user: any) => {
     if (!window.confirm(copy.statusUpdatePrompt)) return;
-    setBusy(true);
-    try { await api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST" }); reload(); }
-    catch (error: any) { setMessage(error.message || copy.statusUpdateFailed); }
-    finally { setBusy(false); }
+    stepUp.request(appEnglish.auth.recentReauthentication, async (proof) => {
+      setBusy(true);
+      try { await api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST", stepUpToken: proof }); reload(); }
+      finally { setBusy(false); }
+    });
   };
   if (!data) return <p className="sub">{appEnglish.dashboard.loading}</p>;
   const summary = data.summary ?? {};
@@ -2237,6 +2282,7 @@ function UsersActivity() {
       {createdPassword && <div className="banner warn security-sensitive-message" role="status">{copy.userCreated.replace("{password}", createdPassword)}</div>}
       <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
     </LegacyModal>}
+    {stepUp.dialog}
   </>);
 }
 
@@ -2322,6 +2368,7 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.contacts;
+  const stepUp = useStepUpAction();
   useEffect(() => {
     if (!searchTarget || !loadedRows) return;
     const contact = rows.find((row) => row.id === searchTarget.recordId);
@@ -2346,21 +2393,27 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
   const remove = async (ids: string[]) => {
     const reason = window.prompt(isTenantOwner ? copy.deleteReasonOwner : copy.deleteReasonRequest);
     if (!reason) return;
-    setBusy(true);
-    try {
-      const result = await api("/contacts/deletions", { method: "POST", body: { ids, reason } });
-      alert(result.outcome === "REMOVED" ? copy.deleted : copy.requestSubmitted);
-      setSelected(null); refresh();
-    } catch (error: any) { alert(error.message); }
-    finally { setBusy(false); }
+    const execute = async (proof?: string) => {
+      setBusy(true);
+      try {
+        const result = await api("/contacts/deletions", { method: "POST", body: { ids, reason }, stepUpToken: proof });
+        alert(result.outcome === "REMOVED" ? copy.deleted : copy.requestSubmitted);
+        setSelected(null); refresh();
+      } finally { setBusy(false); }
+    };
+    if (isTenantOwner) stepUp.request(appEnglish.auth.recentReauthentication, execute);
+    else try { await execute(); } catch (error: any) { alert(error.message); }
   };
   const decide = async (requestId: string, decision: "APPROVE" | "REJECT") => {
     const reason = window.prompt(decision === "APPROVE" ? copy.approvalReason : copy.rejectionReason);
     if (!reason) return;
-    setBusy(true);
-    try { await api(`/contacts/deletion-requests/${requestId}/decision`, { method: "POST", body: { decision, reason } }); refresh(); }
-    catch (error: any) { alert(error.message); }
-    finally { setBusy(false); }
+    const execute = async (proof?: string) => {
+      setBusy(true);
+      try { await api(`/contacts/deletion-requests/${requestId}/decision`, { method: "POST", body: { decision, reason }, stepUpToken: proof }); refresh(); }
+      finally { setBusy(false); }
+    };
+    if (decision === "APPROVE") stepUp.request(appEnglish.auth.recentReauthentication, execute);
+    else try { await execute(); } catch (error: any) { alert(error.message); }
   };
   const selectedIds = [...selection.selectedIds];
   return (<>
@@ -2399,6 +2452,7 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
       <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShow(false)}>{copy.cancel}</button><button className="btn" disabled={busy || !String(f.name ?? "").trim()} onClick={save}>{busy ? copy.saving : copy.saveContact}</button></div>
     </LegacyModal>}
     {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onDelete={() => remove([selected.id])} onSaved={(contact) => { setSelected(contact); reload(); }} onClose={() => setSelected(null)} />}
+    {stepUp.dialog}
   </>);
 }
 

@@ -4,7 +4,7 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (t: string | null) =>
   t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
 
-type ApiOptions = { method?: string; body?: unknown; signal?: AbortSignal };
+type ApiOptions = { method?: string; body?: unknown; signal?: AbortSignal; stepUpToken?: string };
 let refreshInFlight: Promise<boolean> | null = null;
 
 async function renewSession(): Promise<boolean> {
@@ -31,6 +31,7 @@ async function request(path: string, opts: ApiOptions) {
     headers: {
       "Content-Type": "application/json",
       ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+      ...(opts.stepUpToken ? { "X-Vaka-Step-Up": opts.stepUpToken } : {}),
     },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     signal: opts.signal,
