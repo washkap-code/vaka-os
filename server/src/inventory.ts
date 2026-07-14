@@ -104,6 +104,53 @@ export async function recordStockMovement(
   return { movementId: movement.id, quantityOnHand: next };
 }
 
+export async function recordOpeningStock(
+  tx: DB,
+  opts: {
+    tenantId: string; productId: string; warehouseId: string;
+    quantity: string; unitCost: string; createdBy: string;
+    sourceType?: string; sourceId?: string;
+  },
+) {
+  const movement = await recordStockMovement(tx, {
+    tenantId: opts.tenantId,
+    productId: opts.productId,
+    warehouseId: opts.warehouseId,
+    quantityDelta: opts.quantity,
+    unitCost: opts.unitCost,
+    reason: "OPENING",
+    sourceType: opts.sourceType ?? "manual",
+    sourceId: opts.sourceId,
+    createdBy: opts.createdBy,
+    requireZeroCurrent: true,
+    requireNoHistory: true,
+  });
+  const value = fromCents(mulRate(toCents(opts.unitCost), Number(opts.quantity).toFixed(6)));
+  const inventory = await systemAccount(tx, opts.tenantId, "INVENTORY");
+  const opening = await systemAccount(tx, opts.tenantId, "OPENING_EQUITY");
+  const journalEntryId = await postJournal(tx, {
+    tenantId: opts.tenantId,
+    date: new Date(),
+    memo: "Opening stock balance",
+    sourceType: "stock_adjustment",
+    sourceId: movement.movementId,
+    createdBy: opts.createdBy,
+    lines: [
+      { accountId: inventory.id, debit: value },
+      { accountId: opening.id, credit: value },
+    ],
+  });
+  await audit(tx, opts.tenantId, opts.createdBy, "stock.opening_recorded", "stock_movement", movement.movementId, {
+    productId: opts.productId,
+    warehouseId: opts.warehouseId,
+    quantity: opts.quantity,
+    unitCost: opts.unitCost,
+    inventoryValue: value,
+    journalEntryId,
+  });
+  return { ...movement, journalEntryId, inventoryValue: value };
+}
+
 /**
  * Manual stock adjustment (count correction, damage, shrinkage) with GL sync:
  * write-down => Dr General Expenses / Cr Inventory; write-up => reverse.

@@ -9,6 +9,7 @@
     "test": "npm run test --workspace server",
     "test:design-tokens": "npm run test:design-tokens --workspace web",
     "test:accessibility": "npm run test:accessibility --workspace web",
+    "test:product-entry": "npm run test:product-entry --workspace web",
     "test:homepage": "npm run test:homepage --workspace web",
     "test:ai-evaluation": "npm run test:ai-evaluation --workspace server"
   }

@@ -4,6 +4,15 @@
 
 ### Fixed
 
+- **Company-settings field spacing and stock setup:** Removed the shared
+  negative help-text margin that caused settings guidance to overlap logo,
+  payment-term, inactivity and holding-page controls. Product creation now
+  offers readable collision-aware SKU suggestions and can record warehouse,
+  opening quantity and unit cost in the same transaction as the product. The
+  append-only stock movement, balanced opening-equity journal, audit and domain
+  event roll back together on failure. The existing opening-stock action now
+  uses a labelled dialog instead of browser prompts. No migration was added.
+
 - **Repeatable guarded DB verification:** `test:db:prepare` now restores the
   platform-administrator fixture password only under `NODE_ENV=test`, after the
   first-login test rotates it. Production seeds never reset credentials. The

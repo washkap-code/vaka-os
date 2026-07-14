@@ -77,6 +77,9 @@ jobs:
       - name: Check accessibility conformance
         run: npm run test:accessibility
 
+      - name: Check product-entry contracts
+        run: npm run test:product-entry
+
       - name: Check homepage regression contracts
         run: npm run test:homepage
 
