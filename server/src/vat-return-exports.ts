@@ -93,7 +93,7 @@ export function renderVatReportPdf(report: VatTechnicalReport): Buffer {
     `Net VAT: ${report.currency} ${report.totals.netVat} (${report.totals.position})`,
     "",
     "Technical preview only - not filing-ready. Qualified accountant/tax approval is required.",
-    "Input VAT includes posted VAT_INPUT ledger lines only; supplier input-VAT workflow is incomplete.",
+    "Input VAT includes posted VAT_INPUT ledger lines, including matched supplier bills; eligibility still requires professional review.",
     "",
     `Evidence rows: ${report.evidence.length}`,
   ];

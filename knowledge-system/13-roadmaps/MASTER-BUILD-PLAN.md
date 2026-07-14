@@ -94,7 +94,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 |---|---|---|---|
 | P4-001 | Supplier records unified with finance vendor (one canonical Supplier) | — | ✅ Technically verified; production DDL hand-apply pending |
 | P4-002 | Purchase requisition → RFQ → purchase order → goods receipt with approvals | P1-002 | ✅ Technically verified; production DDL hand-apply pending |
-| P4-003 | Three-way match (PO ↔ receipt ↔ bill) before posting AP | P4-002, P2-001 | Planned |
+| P4-003 | Three-way match (PO ↔ receipt ↔ bill) before posting AP | P4-002, P2-001 | Implementation complete; full gate in progress; production DDL hand-apply pending |
 | P4-004 | Supplier performance & spend analytics | P1-006 | Planned |
 
 ---

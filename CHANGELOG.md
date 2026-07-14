@@ -27,6 +27,19 @@
 
 ### Added
 
+- **Supplier bills and enforced three-way match (P4-003):** Added tenant-scoped
+  supplier-bill drafts against approved purchase orders, effective-dated input
+  tax snapshots, deterministic PO/receipt/bill match evidence and
+  concurrency-safe posting. Only an exact match can allocate an immutable BILL
+  number and post balanced GRNI, VAT Input, Accounts Payable and explicit FX
+  difference lines through the journal service. A responsive Supplier Bills
+  workspace exposes permission-aware draft editing, match explanations and
+  confirmed posting. Aged payables now reads posted bill/journal evidence rather
+  than the obsolete receipt-to-AP assumption. Added migration
+  `0028_supplier_bill_three_way_match.sql`, full finance/RBAC/tenant/concurrency
+  coverage and exact hand-apply production DDL in the completion report. No
+  production database command was run.
+
 - **Controlled procurement lifecycle (P4-002):** Added tenant-scoped purchase
   requisitions, independent approval/rejection, RFQs to canonical suppliers,
   supplier award into draft purchase orders, independent PO approval, and
@@ -95,7 +108,8 @@
   receivables and supported-source aged payables, with exact tie-outs,
   formula-safe CSV, multi-page PDF and minimised export audits. Corrected the
   trial-balance as-at cutoff so later journals cannot leak into a selected
-  position. AP control entries without a supported PO receipt source remain
+  position. P4-003 now supplies the supported AP open-item source from posted
+  supplier bills and their journal lineage; other AP control entries remain
   visible as unallocated reconciliation exceptions. The Reports workspace now
   includes labelled period/as-at controls and typed English preview copy. This
   remains explicitly not filing-ready: legal-entity scope, complete AP open-

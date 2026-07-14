@@ -413,6 +413,15 @@ export function requirePermission(...perms: Permission[]) {
   };
 }
 
+export function requireAnyPermission(...perms: Permission[]) {
+  return (req: AuthedRequest, _res: Response, next: NextFunction) => {
+    const a = req.auth!;
+    if (!a.tenantId) return next(forbidden("This endpoint requires a tenant workspace"));
+    if (perms.some((permission) => a.permissions.includes(permission))) return next();
+    next(forbidden(`Missing one of permissions: ${perms.join(", ")}`));
+  };
+}
+
 export function requirePlatformAdmin(req: AuthedRequest, _res: Response, next: NextFunction) {
   if (req.auth?.isPlatformAdmin && req.auth.platformRoleKey) return next();
   next(forbidden("Platform administrator access required"));

@@ -11,6 +11,7 @@ export const DOMAIN_EVENTS = {
   INVOICE_CHANGED: "invoice.changed",
   ACTIVITY_RECORDED: "activity.recorded",
   PROCUREMENT_APPROVAL_REQUESTED: "procurement.approval_requested",
+  SUPPLIER_BILL_POSTED: "supplier_bill.posted",
 } as const;
 
 export type DomainEventPayloads = {
@@ -30,6 +31,14 @@ export type DomainEventPayloads = {
     entityId: string;
     number: string | null;
     requesterUserId: string;
+  };
+  "supplier_bill.posted": {
+    supplierBillId: string;
+    purchaseOrderId: string;
+    supplierId: string;
+    number: string;
+    currency: string;
+    totalCents: string;
   };
 };
 

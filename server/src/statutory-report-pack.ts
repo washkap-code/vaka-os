@@ -64,7 +64,7 @@ export type StatutoryReportPack = {
   profitAndLoss: ProfitAndLossReport;
   balanceSheet: BalanceSheetReport;
   agedReceivables: AgeingSchedule & { basis: "INVOICE_DUE_DATE_OR_ISSUE_DATE" };
-  agedPayables: AgeingSchedule & { basis: "SUPPORTED_PO_POSTING_DATE"; completeOpenItemSubledger: false };
+  agedPayables: AgeingSchedule & { basis: "SUPPLIER_BILL_DUE_DATE"; completeOpenItemSubledger: false };
   checks: { trialBalanceBalances: boolean; profitAndLossTies: boolean; balanceSheetBalances: boolean; receivablesReconcile: true; payablesReconcile: true };
   review: { required: true; blockerCodes: readonly ["PROFESSIONAL_APPROVAL_REQUIRED", "LEGAL_ENTITY_MODEL_INCOMPLETE", "AP_OPEN_ITEM_SUBLEDGER_INCOMPLETE"] };
 };
@@ -161,19 +161,19 @@ async function receivableSources(tenantId: string, asAtExclusive: Date): Promise
 
 async function payableSources(tenantId: string, asAtExclusive: Date): Promise<SourceRow[]> {
   const result = await db.execute(sql`
-    SELECT po.id::text AS source_id, po.number, c.name AS counterparty,
-      COALESCE(po.received_at, MIN(je.date), po.created_at) AS source_date,
+    SELECT sb.id::text AS source_id, sb.number, c.name AS counterparty,
+      COALESCE(sb.due_date, sb.bill_date, sb.created_at) AS source_date,
       SUM(jl.credit - jl.debit)::text AS balance
-    FROM purchase_orders po
-    JOIN contacts c ON c.id = po.vendor_contact_id AND c.tenant_id = ${tenantId}
-    JOIN journal_entries je ON je.tenant_id = ${tenantId} AND je.source_id = po.id::text
-      AND je.source_type = 'po_receipt' AND je.date < ${asAtExclusive}
+    FROM supplier_bills sb
+    JOIN contacts c ON c.id = sb.vendor_contact_id AND c.tenant_id = ${tenantId}
+    JOIN journal_entries je ON je.tenant_id = ${tenantId} AND je.source_id = sb.id::text
+      AND je.source_type = 'supplier_bill' AND je.date < ${asAtExclusive}
     JOIN journal_lines jl ON jl.journal_entry_id = je.id
     JOIN accounts a ON a.id = jl.account_id AND a.tenant_id = ${tenantId} AND a.system_key = 'AP'
-    WHERE po.tenant_id = ${tenantId}
-    GROUP BY po.id, po.number, c.name, po.received_at, po.created_at
+    WHERE sb.tenant_id = ${tenantId} AND sb.status = 'POSTED'
+    GROUP BY sb.id, sb.number, c.name, sb.due_date, sb.bill_date, sb.created_at
     HAVING SUM(jl.credit - jl.debit) <> 0
-    ORDER BY source_date, po.id
+    ORDER BY source_date, sb.id
   `);
   return result.rows as SourceRow[];
 }
@@ -207,7 +207,7 @@ export async function getStatutoryReportPack(opts: { tenantId: string; period: S
     entity: { tenantId: tenant.id, companyName: tenant.companyName, legalEntityScope: "TENANT_PROVISIONAL_SCOPE" },
     period, currency: tenant.baseCurrency, trialBalance: tb, profitAndLoss: pl, balanceSheet: bs,
     agedReceivables: { ...schedule(arRows, arControl, asAt), basis: "INVOICE_DUE_DATE_OR_ISSUE_DATE" },
-    agedPayables: { ...schedule(apRows, apControl, asAt), basis: "SUPPORTED_PO_POSTING_DATE", completeOpenItemSubledger: false },
+    agedPayables: { ...schedule(apRows, apControl, asAt), basis: "SUPPLIER_BILL_DUE_DATE", completeOpenItemSubledger: false },
     checks: { trialBalanceBalances: true, profitAndLossTies: true, balanceSheetBalances: true, receivablesReconcile: true, payablesReconcile: true },
     review: { required: true, blockerCodes: ["PROFESSIONAL_APPROVAL_REQUIRED", "LEGAL_ENTITY_MODEL_INCOMPLETE", "AP_OPEN_ITEM_SUBLEDGER_INCOMPLETE"] },
   };
