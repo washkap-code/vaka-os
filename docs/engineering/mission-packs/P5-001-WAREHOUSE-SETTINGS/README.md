@@ -57,8 +57,9 @@ preview.
 2. Add a tenant-scoped settings read model returning canonical warehouses,
    current plan name, used count and a finite allowance or an explicit
    contract-scaled state.
-3. Accept an optional location name and a required address. When the name is
-   blank, derive it deterministically from the first non-empty address line.
+3. Accept an optional location name and address while preserving existing API
+   compatibility. Require at least one of them; when the name is blank, derive
+   it deterministically from the first non-empty address line.
 4. Enforce finite plan allowances inside the create transaction after locking
    the tenant, so concurrent requests cannot exceed the limit.
 5. Permit creation and amendment to callers with `settings.manage` or the
@@ -172,4 +173,3 @@ must not delete locations created while this capability was enabled.
 - Server/web typechecks, relevant tests, web production build, design-token and
   accessibility conformance and `git diff --check` pass. Full DB-backed suite
   remains the merge gate.
-

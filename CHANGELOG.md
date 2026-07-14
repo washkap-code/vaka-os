@@ -37,6 +37,17 @@
 
 ### Added
 
+- **Tier-governed warehouse/store settings (P5-001 extension):** Company
+  Settings now lists and amends the canonical stock locations used by product,
+  inventory, invoice and procurement selectors. Starter, Growth and Business
+  creation is enforced server-side at 1, 2 and 5 locations with tenant locking,
+  permission/tenant checks and transactional audit evidence; Enterprise remains
+  honestly contract-scaled pending governed overrides. Blank names derive from
+  the first address line, default-location changes are atomic, downgrades retain
+  all records and deletion is excluded. Primary/accent controls now pair an
+  accessible colour picker with the exact hex value and a readable preview.
+  No migration or production database command was introduced.
+
 - **Supplier bills and enforced three-way match (P4-003):** Added tenant-scoped
   supplier-bill drafts against approved purchase orders, effective-dated input
   tax snapshots, deterministic PO/receipt/bill match evidence and

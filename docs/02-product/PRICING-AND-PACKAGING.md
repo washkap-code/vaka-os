@@ -1,6 +1,6 @@
 # VAKA Pricing and Packaging
 
-**Status:** Approved list prices and standard trial for new workspaces; entitlement implementation remains staged
+**Status:** Approved list prices and standard trial for new workspaces; finite location enforcement implemented, broader entitlement architecture remains staged
 
 **Owner:** Product, Commercial, Finance, and Engineering
 **Last reviewed:** 2026-07-13
@@ -58,8 +58,11 @@ or continued development.
 ## 3. Current implementation warning
 
 The repository currently stores a plan name, monthly price, user limit, and a
-small JSON feature object. Most application routes do not enforce feature
-entitlements, and existing seed logic does not update an already-created plan.
+small JSON feature object. Location creation now enforces the finite
+`inventoryLocations` value server-side for Starter, Growth and Business while
+preserving existing locations after a downgrade. Enterprise remains explicitly
+contract-scaled until tenant-specific contract/override persistence ships.
+Most other application routes do not yet enforce feature entitlements.
 
 Therefore:
 

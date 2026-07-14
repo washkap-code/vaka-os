@@ -104,7 +104,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 
 | ID | Outcome | Depends on | Status |
 |---|---|---|---|
-| P5-001 | Product/SKU/category with multi-warehouse quantities | — | Foundation exists |
+| P5-001 | Product/SKU/category with multi-warehouse quantities | — | Foundation + tier-governed canonical location settings implemented; hosted DB/merge gate pending |
 | P5-002 | Auditable stock movements (receipt/issue/transfer/adjustment), append-only | — | Foundation exists |
 | P5-003 | Valuation layer (weighted-average) feeding COGS journals | P2-001 | Partial |
 | P5-004 | Reorder rules + low-stock alerts via notification service | P1-004 | ✅ Technically verified for persisted in-app alerts; durable/external delivery gated |
