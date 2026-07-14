@@ -482,6 +482,44 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .invoice-preview-heading .sub { margin-bottom: var(--vaka-space-4); }
 .invoice-preview-heading a { text-decoration: none; }
 .invoice-preview-frame { background: var(--vaka-color-surface-subtle); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-md); height: 100%; min-height: 32rem; width: 100%; }
+.invoice-table-region { padding: var(--vaka-space-4); }
+.invoice-table { min-width: 62rem; table-layout: fixed; }
+.invoice-table th:nth-child(1) { width: 3rem; }
+.invoice-table th:nth-child(2) { width: 9rem; }
+.invoice-table th:nth-child(3) { width: 19rem; }
+.invoice-table th:nth-child(4) { width: 8rem; }
+.invoice-table th:nth-child(5),
+.invoice-table th:nth-child(6) { width: 9rem; }
+.invoice-table th:nth-child(7) { width: 7rem; }
+.invoice-table :is(th, td):nth-child(2),
+.invoice-table :is(th, td):nth-child(4),
+.invoice-table :is(th, td):nth-child(5),
+.invoice-table :is(th, td):nth-child(6) { white-space: nowrap; }
+.invoice-table :is(th, td):nth-child(5),
+.invoice-table :is(th, td):nth-child(6) { font-variant-numeric: tabular-nums; }
+.invoice-action-menu summary {
+  align-items: center;
+  display: inline-flex;
+  justify-content: space-between;
+  min-height: var(--vaka-control-height-md);
+  min-width: 6.25rem;
+  padding: var(--vaka-space-2) var(--vaka-space-3);
+}
+.invoice-action-menu summary::after { content: "\25BE"; margin-left: var(--vaka-space-2); }
+.invoice-action-menu[open] .vds-dropdown-menu {
+  margin-top: var(--vaka-space-2);
+  min-width: 13.5rem;
+  position: static;
+}
+.invoice-action-menu .vds-dropdown-menu button:disabled { cursor: wait; opacity: .62; }
+.settings-document-section {
+  border-top: 1px solid var(--vaka-color-border);
+  margin-top: var(--vaka-space-5);
+  padding-top: var(--vaka-space-5);
+}
+.settings-document-section h3 { margin: var(--vaka-space-4) 0 var(--vaka-space-2); }
+.checkbox-line { align-items: center; display: flex; gap: var(--vaka-space-3); margin: var(--vaka-space-4) 0; }
+.checkbox-line input { min-height: 1.25rem; width: 1.25rem; }
 @media (max-width: 760px) {
   .invoice-preview-backdrop { padding: 0; }
   .invoice-preview-modal { border-radius: 0; height: 100vh; max-height: none; padding: var(--vaka-space-3); width: 100vw; }

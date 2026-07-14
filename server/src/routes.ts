@@ -206,6 +206,14 @@ api.get("/me", wrap(async (req) => {
       brandPrimaryColor: t.brandPrimaryColor, brandSecondaryColor: t.brandSecondaryColor,
       logoUrl: t.logoUrl, taxNumber: t.taxNumber, vatNumber: t.vatNumber,
       registrationNumber: t.registrationNumber, physicalAddress: t.physicalAddress,
+      invoicePaymentTerms: t.invoicePaymentTerms,
+      invoiceBankName: t.invoiceBankName,
+      invoiceBankAccountName: t.invoiceBankAccountName,
+      invoiceBankAccountNumber: t.invoiceBankAccountNumber,
+      invoiceBankBranch: t.invoiceBankBranch,
+      invoiceBankSwiftCode: t.invoiceBankSwiftCode,
+      invoiceBankCurrency: t.invoiceBankCurrency,
+      showVatNumberOnInvoices: t.showVatNumberOnInvoices,
     } : null,
   };
 }));
@@ -481,10 +489,23 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
     vatNumber: z.string().trim().max(100).optional(),
     registrationNumber: z.string().trim().max(100).optional(),
     physicalAddress: z.string().trim().max(500).optional(),
+    invoicePaymentTerms: z.string().trim().max(1000).optional(),
+    invoiceBankName: z.string().trim().max(160).optional(),
+    invoiceBankAccountName: z.string().trim().max(160).optional(),
+    invoiceBankAccountNumber: z.string().trim().max(100).optional(),
+    invoiceBankBranch: z.string().trim().max(160).optional(),
+    invoiceBankSwiftCode: z.string().trim().max(50).optional(),
+    invoiceBankCurrency: z.union([z.enum(["USD", "ZWG"]), z.literal("")]).optional().nullable()
+      .transform((value) => value === "" ? null : value),
+    showVatNumberOnInvoices: z.boolean().optional(),
   }).parse(req.body);
   const tid = tenantId(req);
   const [updated] = await db.update(schema.tenants).set(body).where(eq(schema.tenants.id, tid)).returning();
-  await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, body);
+  const changedFields = Object.keys(body);
+  await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, {
+    changedFields,
+    documentPaymentDetailsChanged: changedFields.some((field) => field.startsWith("invoiceBank") || field === "invoicePaymentTerms"),
+  });
   return updated;
 }));
 api.post("/settings/logo", requirePermission("settings.manage"), wrap(async (req) => {

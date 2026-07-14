@@ -56,6 +56,13 @@ tax evidence and exact totals are revalidated and audited. Once issued, the
 invoice remains immutable and corrections continue through controlled
 void/reversal documents; invoice deletion is not supported.
 
+P2-008 adds presentation-only company document settings and professional A4
+invoice template v3. Seller, customer, tax-identification, payment-term and
+remittance inputs are frozen into the existing issue-time document snapshot.
+The renderer consumes authoritative invoice values and does not recalculate,
+edit or post accounting, tax, stock or payment effects. VAT-number visibility
+is identification only and does not determine registration or tax treatment.
+
 ## 5. Accounts payable and procurement
 
 Supplier master, requisition/RFQ/PO, receipt, bill, three-way match, approvals, payment proposal, payment and supplier statement reconciliation connect source-to-pay. Receiving may affect inventory; supplier bill acceptance affects AP/tax; payment affects cash/AP. Each effect has an explicit event and atomic boundary.

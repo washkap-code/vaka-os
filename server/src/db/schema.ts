@@ -48,6 +48,14 @@ export const tenants = pgTable("tenants", {
   vatNumber: text("vat_number"),
   registrationNumber: text("registration_number"),
   physicalAddress: text("physical_address"),
+  invoicePaymentTerms: text("invoice_payment_terms"),
+  invoiceBankName: text("invoice_bank_name"),
+  invoiceBankAccountName: text("invoice_bank_account_name"),
+  invoiceBankAccountNumber: text("invoice_bank_account_number"),
+  invoiceBankBranch: text("invoice_bank_branch"),
+  invoiceBankSwiftCode: text("invoice_bank_swift_code"),
+  invoiceBankCurrency: currency("invoice_bank_currency"),
+  showVatNumberOnInvoices: boolean("show_vat_number_on_invoices").default(true).notNull(),
   createdAt: createdAt(),
 });
 
