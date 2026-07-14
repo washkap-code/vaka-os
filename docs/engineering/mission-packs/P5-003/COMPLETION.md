@@ -2,7 +2,7 @@
 
 **Implementation:** Complete
 **Local static verification:** Complete
-**Database-backed verification:** Pending hosted isolated-PostgreSQL quality gate
+**Database-backed verification:** Complete — hosted isolated-PostgreSQL quality gate passed
 **Availability:** Technical preview only
 **Professional gate:** Qualified Zimbabwean accountant sign-off required before GA
 **Completed on:** 2026-07-14
@@ -80,17 +80,23 @@ Passed locally:
   non-failing warning).
 - Design-token conformance: passed.
 - Accessibility conformance: passed.
-- `git diff --check`: passed at the implementation checkpoint.
+- `git diff --check`: passed at the implementation checkpoint and after the
+  final verification fixes.
 
-Not run locally:
+Passed in GitHub's isolated PostgreSQL 16 quality environment:
 
-- `cd server && npm run test:db:prepare && npm test` could not start because the
-  guarded finance test harness correctly requires `NODE_ENV=test` and an
-  explicit safe `DATABASE_URL`; this workspace has no local PostgreSQL/test URL.
-  No fallback, default, remote or production database was used. The pull request
-  must remain unmerged until GitHub's quality workflow provisions its isolated
-  PostgreSQL 16 service, runs `test:db:prepare`, the full serial DB-backed suite,
-  both typechecks and web build with zero failures.
+- Quality workflow run `29355188297`, job `87160930383`: passed in 3m38s.
+- `npm run test:db:prepare`: passed, including guarded test-database validation,
+  schema creation, finance/procurement integrity controls and reference seeding.
+- Full serial PostgreSQL and foundation test suite: passed.
+- Server and web TypeScript typechecks: passed.
+- Design-token, accessibility, product-entry, invoice-workspace and homepage
+  regression contracts: passed.
+- Web production build: passed.
+- Intentionally gated AI evaluation evidence generation/upload: passed.
+
+The local workspace still has no explicit safe PostgreSQL test URL, so no local
+database fallback, remote database or production database was used.
 
 ## Accounting event and controls
 
