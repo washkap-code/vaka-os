@@ -28,6 +28,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P2-003 | VAT technical return report and evidence export | ✅ Technically verified; qualified accountant/tax approval pending |
 | P2-008 | Branded finance report preview | Implemented and locally verified; remote review and release pending |
 | P7-002 | Immutable finance report snapshots | Implemented and locally verified; remote review and release pending |
+| P7-003 | Secure finance report email delivery | Approved; implementation in progress |
 | P1-004 | Notification service adapter (email + persisted in-app) | ✅ Implemented; full DB-backed suite verified; provider/product adoption gated |
 | P1-005 | Event bus: emit domain events from existing write paths | ✅ Implemented; full DB-backed suite verified; durable delivery gated |
 | P1-006 | Tenant-scoped Customer/Invoice/Product search adapter | ✅ Technically verified internal adapter; durable delivery, scale and UI gated |
