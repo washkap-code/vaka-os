@@ -1,6 +1,6 @@
 # P6-015 — Homepage Regression and Redesign Baseline
 
-**Status:** Defined; implementation pending
+**Status:** Implementation complete; all local release gates passed; remote release pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Public homepage regression, accessibility and responsive baseline
 **Depends on:** P6-001 design system; approved Homepage Specification v2.0; current governed 30-day trial and package catalogue
