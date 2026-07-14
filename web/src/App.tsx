@@ -19,6 +19,7 @@ import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
 import { Dropdown } from "./design-system/primitives";
 import { isPositiveMoney, isPositiveStockQuantity, suggestProductSku } from "./inventory/product-entry-model";
+import { isLightBrandColour, warehouseSettingsAccess } from "./settings/warehouse-settings-model";
 
 const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
 const ProcurementWorkspace = lazy(() => import("./procurement/procurement-workspace")
@@ -63,6 +64,24 @@ type HoldingPageConfig = {
   brandPrimaryColor: string; brandSecondaryColor: string;
   heading: string | null; message: string | null;
   offer: null | { title: string | null; body: string | null; ctaLabel: string | null; ctaUrl: string | null };
+};
+type WarehouseSetting = {
+  id: string;
+  name: string;
+  address: string | null;
+  isDefault: boolean;
+};
+type WarehouseSettingsView = {
+  warehouses: WarehouseSetting[];
+  capacity: {
+    planName: string;
+    mode: "FINITE" | "CONTRACTED";
+    used: number;
+    limit: number | null;
+    remaining: number | null;
+    atLimit: boolean;
+    overLimit: boolean;
+  };
 };
 type BillingRunResult = { invoiced: number; movedPastDue: number; suspended: number; activatedFromTrial: number };
 type ArrearsStatus = {
@@ -2057,6 +2076,213 @@ function ImportCenter({
   </div>);
 }
 
+function BrandColourControl({ label, description, pickerLabel, valueLabel, invalidMessage, value, disabled, onChange }: {
+  label: string;
+  description: string;
+  pickerLabel: string;
+  valueLabel: string;
+  invalidMessage: string;
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value.toUpperCase());
+  const valid = /^#[0-9A-F]{6}$/.test(draft);
+  useEffect(() => setDraft(value.toUpperCase()), [value]);
+  const choose = (nextValue: string) => {
+    const next = nextValue.toUpperCase();
+    setDraft(next);
+    if (/^#[0-9A-F]{6}$/.test(next)) onChange(next);
+  };
+
+  return <fieldset className="brand-colour-control" disabled={disabled}>
+    <legend>{label}</legend>
+    <p>{description}</p>
+    <div className="brand-colour-inputs">
+      <LegacyField label={pickerLabel}>
+        <input className="brand-colour-picker" type="color" value={value}
+          onChange={(event) => choose(event.target.value)} />
+      </LegacyField>
+      <LegacyField label={valueLabel} error={valid ? undefined : invalidMessage}>
+        <input type="text" inputMode="text" maxLength={7} pattern="#[0-9A-Fa-f]{6}"
+          spellCheck={false} value={draft}
+          onChange={(event) => choose(event.target.value)}
+          onBlur={() => { if (!valid) setDraft(value.toUpperCase()); }} />
+      </LegacyField>
+    </div>
+  </fieldset>;
+}
+
+function WarehouseSettingsPanel({ me, readonly }: { me: Me; readonly: boolean }) {
+  const copy = appEnglish.settings.locations;
+  const { canView, canManage } = warehouseSettingsAccess(me.permissions, readonly);
+  const [view, setView] = useState<WarehouseSettingsView | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, { name: string; address: string }>>({});
+  const [createDraft, setCreateDraft] = useState({ name: "", address: "" });
+  const [loading, setLoading] = useState(canView);
+  const [loadError, setLoadError] = useState("");
+  const [status, setStatus] = useState("");
+  const [statusTone, setStatusTone] = useState<"success" | "error">("success");
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+
+  useEffect(() => {
+    if (!canView) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setLoadError("");
+    api("/settings/warehouses", { signal: controller.signal }).then((response) => {
+      const next = response as WarehouseSettingsView;
+      setView(next);
+      setDrafts(Object.fromEntries(next.warehouses.map((warehouse) => [warehouse.id, {
+        name: warehouse.name,
+        address: warehouse.address ?? "",
+      }])));
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) setLoadError(error instanceof Error ? error.message : copy.loadFailed);
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [canView, copy.loadFailed, reloadTick]);
+
+  const reload = () => setReloadTick((value) => value + 1);
+  const fail = (error: unknown) => {
+    setStatus(error instanceof Error ? error.message : copy.saveFailed);
+    setStatusTone("error");
+  };
+  const create = async () => {
+    setBusyKey("create");
+    setStatus("");
+    try {
+      await api("/settings/warehouses", { method: "POST", body: createDraft });
+      setCreateDraft({ name: "", address: "" });
+      setStatus(copy.created);
+      setStatusTone("success");
+      reload();
+    } catch (error: unknown) {
+      fail(error);
+    } finally {
+      setBusyKey(null);
+    }
+  };
+  const save = async (warehouseId: string) => {
+    const draft = drafts[warehouseId];
+    if (!draft) return;
+    setBusyKey(warehouseId);
+    setStatus("");
+    try {
+      await api(`/settings/warehouses/${warehouseId}`, { method: "PATCH", body: draft });
+      setStatus(copy.updated);
+      setStatusTone("success");
+      reload();
+    } catch (error: unknown) {
+      fail(error);
+    } finally {
+      setBusyKey(null);
+    }
+  };
+  const makeDefault = async (warehouseId: string) => {
+    setBusyKey(`default:${warehouseId}`);
+    setStatus("");
+    try {
+      await api(`/settings/warehouses/${warehouseId}`, { method: "PATCH", body: { isDefault: true } });
+      setStatus(copy.defaultUpdated);
+      setStatusTone("success");
+      reload();
+    } catch (error: unknown) {
+      fail(error);
+    } finally {
+      setBusyKey(null);
+    }
+  };
+  const setDraftField = (warehouseId: string, field: "name" | "address", value: string) => {
+    setDrafts((current) => ({
+      ...current,
+      [warehouseId]: { ...current[warehouseId], [field]: value },
+    }));
+  };
+
+  return <section className="panel warehouse-settings" aria-labelledby="warehouse-settings-title">
+    <div className="panel-heading warehouse-settings-heading">
+      <div>
+        <h2 id="warehouse-settings-title">{copy.title}</h2>
+        <p className="sub">{copy.help}</p>
+      </div>
+      {view && <div className="warehouse-capacity" aria-label={copy.capacityLabel}>
+        <span className="pill">{view.capacity.planName}</span>
+        <strong>{view.capacity.mode === "FINITE"
+          ? copy.finiteCapacity.replace("{used}", String(view.capacity.used)).replace("{limit}", String(view.capacity.limit))
+          : copy.contractedCapacity.replace("{used}", String(view.capacity.used))}</strong>
+      </div>}
+    </div>
+    {!canView && <div className="banner warn">{copy.readPermission}</div>}
+    {loading && <div className="warehouse-loading" role="status">{copy.loading}</div>}
+    {loadError && <div className="banner err warehouse-load-error" role="alert">
+      <span>{loadError}</span>
+      <button type="button" className="btn ghost sm" onClick={reload}>{copy.retry}</button>
+    </div>}
+    {!loading && view && <>
+      {view.capacity.overLimit && <div className="banner warn" role="status">{copy.overLimit}</div>}
+      {view.capacity.atLimit && !view.capacity.overLimit && <p className="warehouse-limit-note">{copy.atLimit}</p>}
+      {view.warehouses.length === 0
+        ? <p className="empty">{copy.empty}</p>
+        : <div className="warehouse-card-grid">
+          {view.warehouses.map((warehouse) => {
+            const draft = drafts[warehouse.id] ?? { name: warehouse.name, address: warehouse.address ?? "" };
+            const busy = busyKey === warehouse.id || busyKey === `default:${warehouse.id}`;
+            return <article className="warehouse-card" key={warehouse.id}>
+              <div className="warehouse-card-heading">
+                <div><span>{copy.location}</span><strong>{warehouse.name}</strong></div>
+                {warehouse.isDefault && <span className="pill APPROVED">{copy.defaultLocation}</span>}
+              </div>
+              <LegacyField label={copy.name} hint={copy.nameHelp}>
+                <input disabled={!canManage || busy} maxLength={160} value={draft.name}
+                  onChange={(event) => setDraftField(warehouse.id, "name", event.target.value)} />
+              </LegacyField>
+              <LegacyField label={copy.address} hint={copy.addressHelp}>
+                <textarea disabled={!canManage || busy} maxLength={500} rows={3} value={draft.address}
+                  onChange={(event) => setDraftField(warehouse.id, "address", event.target.value)} />
+              </LegacyField>
+              {canManage && <div className="row warehouse-card-actions">
+                <button type="button" className="btn sm" disabled={busy || busyKey !== null}
+                  onClick={() => save(warehouse.id)}>{busyKey === warehouse.id ? copy.saving : copy.saveLocation}</button>
+                {!warehouse.isDefault && <button type="button" className="btn ghost sm"
+                  disabled={busy || busyKey !== null}
+                  onClick={() => makeDefault(warehouse.id)}>{busyKey === `default:${warehouse.id}` ? copy.saving : copy.makeDefault}</button>}
+              </div>}
+            </article>;
+          })}
+        </div>}
+      <div className="warehouse-create">
+        <div>
+          <h3>{copy.addTitle}</h3>
+          <p className="sub">{copy.addHelp}</p>
+        </div>
+        <div className="grid2">
+          <LegacyField label={copy.nameOptional} hint={copy.nameDefaultHelp}>
+            <input disabled={!canManage || busyKey !== null || view.capacity.atLimit} maxLength={160}
+              value={createDraft.name}
+              onChange={(event) => setCreateDraft({ ...createDraft, name: event.target.value })} />
+          </LegacyField>
+          <LegacyField label={copy.address} hint={copy.addressCreateHelp}>
+            <textarea disabled={!canManage || busyKey !== null || view.capacity.atLimit} maxLength={500} rows={3}
+              value={createDraft.address}
+              onChange={(event) => setCreateDraft({ ...createDraft, address: event.target.value })} />
+          </LegacyField>
+        </div>
+        <button type="button" className="btn accent" disabled={!canManage || busyKey !== null || view.capacity.atLimit
+          || (!createDraft.name.trim() && !createDraft.address.trim())} onClick={create}>
+          {busyKey === "create" ? copy.adding : copy.add}
+        </button>
+        {!canManage && <p className="field-help">{copy.managePermission}</p>}
+      </div>
+    </>}
+    {status && <div className={statusTone === "error" ? "banner err" : "banner success"}
+      role={statusTone === "error" ? "alert" : "status"}>{status}</div>}
+  </section>;
+}
+
 function Settings({ me, readonly, onSaved }: {
   me: Me;
   readonly: boolean;
@@ -2148,7 +2374,7 @@ function Settings({ me, readonly, onSaved }: {
           <LegacyField label={appEnglish.settings.email}>
             <input type="email" autoComplete="email" value={me.user.email} disabled /></LegacyField>
         </div>
-        <div className="panel brand-preview" style={{
+        <div className={`panel brand-preview ${isLightBrandColour(company.brandPrimaryColor) ? "light" : "dark"}`} style={{
           borderTopColor: company.brandSecondaryColor,
           background: company.brandPrimaryColor,
         }}>
@@ -2178,12 +2404,20 @@ function Settings({ me, readonly, onSaved }: {
                 reader.readAsDataURL(file);
               }} />
           </LegacyField>
-          <LegacyField label={appEnglish.settings.primaryColour}>
-            <input type="color" disabled={!canManageCompany} value={company.brandPrimaryColor}
-              onChange={setCompanyField("brandPrimaryColor")} /></LegacyField>
-          <LegacyField label={appEnglish.settings.accentColour}>
-            <input type="color" disabled={!canManageCompany} value={company.brandSecondaryColor}
-              onChange={setCompanyField("brandSecondaryColor")} /></LegacyField>
+          <BrandColourControl label={appEnglish.settings.primaryColour}
+            description={appEnglish.settings.primaryColourHelp}
+            pickerLabel={appEnglish.settings.colourPicker}
+            valueLabel={appEnglish.settings.hexValue}
+            invalidMessage={appEnglish.settings.invalidHexColour}
+            disabled={!canManageCompany} value={company.brandPrimaryColor}
+            onChange={(value) => setCompany({ ...company, brandPrimaryColor: value })} />
+          <BrandColourControl label={appEnglish.settings.accentColour}
+            description={appEnglish.settings.accentColourHelp}
+            pickerLabel={appEnglish.settings.colourPicker}
+            valueLabel={appEnglish.settings.hexValue}
+            invalidMessage={appEnglish.settings.invalidHexColour}
+            disabled={!canManageCompany} value={company.brandSecondaryColor}
+            onChange={(value) => setCompany({ ...company, brandSecondaryColor: value })} />
           <LegacyField label={appEnglish.settings.registrationNumber}>
             <input disabled={!canManageCompany} value={company.registrationNumber}
               onChange={setCompanyField("registrationNumber")} /></LegacyField>
@@ -2282,6 +2516,7 @@ function Settings({ me, readonly, onSaved }: {
         {busy ? appEnglish.settings.saving : appEnglish.settings.save}
       </button>
       {message && <div className="banner warn" role={messageTone === "error" ? "alert" : "status"} style={{ marginTop: 12 }}>{message}</div>}
+      <WarehouseSettingsPanel me={me} readonly={readonly} />
     </>
   );
 }

@@ -104,7 +104,7 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 
 | ID | Outcome | Depends on | Status |
 |---|---|---|---|
-| P5-001 | Product/SKU/category with multi-warehouse quantities | — | Foundation exists |
+| P5-001 | Product/SKU/category with multi-warehouse quantities | — | Foundation + tier-governed canonical location settings implemented; hosted DB/merge gate pending |
 | P5-002 | Auditable stock movements (receipt/issue/transfer/adjustment), append-only | — | Foundation exists |
 | P5-003 | Valuation layer (weighted-average) feeding COGS journals | P2-001 | Implementation complete; hosted DB gate and Zimbabwean accountant sign-off pending |
 | P5-004 | Reorder rules + low-stock alerts via notification service | P1-004 | ✅ Technically verified for persisted in-app alerts; durable/external delivery gated |
@@ -222,3 +222,70 @@ claim external or guaranteed delivery or automatic replenishment. The supplied
 P2-003 → P1-006 → P1-008 → P3-003 → P5-004 sequence is complete;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.
+
+---
+
+## 14. Phased roadmap to launch and beyond (authoritative status — 2026-07-14)
+
+This section is the single source of truth for "what is left." It supersedes
+older status prose above where they conflict. Phases run roughly in parallel but
+are ordered by dependency and launch value.
+
+### Done (foundations merged & on `main`)
+Platform kernel + all shared services (P1-001…008: identity, audit,
+notifications, events, search, metadata, documents). Finance/tax: P2-001/002/003/
+006/007/008. CRM: P3-003/004. Procurement: P4-001/002/003. Inventory alerts:
+P5-004. Experience P6 (design tokens, app shell, universal workbench, command
+palette, accessibility waves, homepage modernisation). Communications delivery
+P7-001/002/003. Security: MFA, password reset, refresh-token rotation, privileged
+step-up, rate limiting, transport hardening. Subscription payments (Paynow,
+CO-006). Admin control centre (P6-006/OPS-010). Backup/DR evidence foundation
+(P9-003/OPS-011…014).
+
+### In flight (current Codex prompt)
+- **P4-004** — Supplier performance & spend analytics.
+- **P5-003** — Weighted-average inventory valuation feeding COGS (finance-critical; accountant sign-off gate).
+- **P2-004** — Effective-dated exchange-rate register.
+
+### Phase A — Finish the core ERP (Zimbabwe launch scope)
+- **P2-005** — Financial period close (lock posted periods; corrections as offsetting entries). *Accountant gate.*
+- **P3-001 / P3-002 / P3-005** — CRM completion: pipeline, one canonical Customer across CRM+finance, sales dashboard.
+- **P5-005** — Barcode/QR mobile capture into stock movements.
+- **P2-007-GA** — Payroll (PAYE + NSSA), effective-dated. *Must not ship without a Zimbabwean accountant's sign-off; "Coming Soon" until then.*
+- **P7-004** — Live comms providers: governed WhatsApp Business + SMS (replace placeholders); confirm live email provider config.
+
+### Phase B — Reliability & infrastructure (pull forward; some block launch)
+- **DB-SEPARATION** — move VAKA off the GENFIN-shared Supabase project to its own DB (`docs/engineering/DATABASE-SEPARATION-PLAN.md`). **Top infra item** — ends recurring production schema-drift 500s; unblocks normal migrations. *Owner + Cowork.*
+- **P9-002** — Secrets management + rotation runbook.
+- **P9-005** — Incident-response plan + audit-log forensic queries.
+- **P9-006** — CI security scanning (dependency/secret/SAST) + SBOM.
+- **P9-007** — Penetration-test checklist + tenant-isolation fuzz tests.
+- **P10-002** — Observability end-to-end (health, structured logs, metrics, error reporting).
+
+### Phase C — Intelligence (VAKA AI)
+- **P8-001 / P8-002** — Read-model + evaluation/safety foundation (largely exists — confirm/complete).
+- **P8-003** — Bounded, read-only, permission-aware Q&A over business data; human confirmation before any action.
+- **P8-004** — Executive daily briefing (cash, receivables, compliance deadlines).
+  AI never mutates ledgers or bypasses permissions; live AI is a release gate.
+
+### Phase D — Pilot & production launch (Zimbabwe) — the gate
+- **P10-001** — Pilot onboarding runbook + support process.
+- **Legal pages approved** — Privacy, Terms, Data Processing (counsel sign-off).
+- **Compliance readiness** — POTRAZ registration/DPO (Cyber & Data Protection Act); VAT/CoA accountant sign-off.
+- **P10-003** — Production launch checklist: accountant + legal sign-off recorded, `ALLOWED_ORIGINS` set, backups/restore drill verified, observability live.
+- **Definition of Zimbabwe-complete met → controlled launch.**
+
+### Phase E — Post-launch platform programmes (see §12)
+Business Network (PN), Black Book (PB), Store (PS), Verify (PV), Capital (PC),
+Documents (PD), Workflow (PW), Developer Platform (PX) — each its own programme,
+same mission discipline.
+
+### Phase F — Expansion
+- Native mobile apps (iOS/Android) beyond the current PWA.
+- Additional country packs (PL): South Africa, Zambia, Botswana, Namibia, Malawi,
+  Mozambique, Kenya, Tanzania, Nigeria, Ghana — additive via the P2-001 engine.
+
+### Standing guardrail (until DB-SEPARATION ships)
+Every schema-changing mission lists its exact additive production DDL in its
+`COMPLETION.md` under a "Production migration" heading for hand-apply; production
+must never take `drizzle-kit push`/`db:push` while co-located with GENFIN.
