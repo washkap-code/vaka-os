@@ -15,6 +15,7 @@ import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
 import { Dropdown } from "./design-system/primitives";
+import { isPositiveMoney, isPositiveStockQuantity, suggestProductSku } from "./inventory/product-entry-model";
 
 const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
 
@@ -1074,7 +1075,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
         {page === "pipeline" && <Pipeline readonly={suspended} />}
         {page === "invoices" && <Invoices readonly={suspended} baseCcy={t.baseCurrency} canPost={me.permissions.includes("accounting.post")}
           searchTarget={searchTarget?.entityType === "invoice" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
-        {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")}
+        {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")} baseCcy={t.baseCurrency}
           searchTarget={searchTarget?.entityType === "product" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
         {page === "pos" && <PurchaseOrders readonly={suspended} />}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
@@ -3183,8 +3184,8 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
 // ---------------------------------------------------------------------------
 // Products & stock
 // ---------------------------------------------------------------------------
-function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: {
-  readonly: boolean; canWrite: boolean;
+function Products({ readonly, canWrite, baseCcy, searchTarget, onSearchTargetConsumed }: {
+  readonly: boolean; canWrite: boolean; baseCcy: "USD" | "ZWG";
   searchTarget: WorkspaceSearchTarget | null; onSearchTargetConsumed: () => void;
 }) {
   const copy = appEnglish.products;
@@ -3195,9 +3196,25 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
   const [ruleLevel, setRuleLevel] = useState("0");
   const [ruleBusy, setRuleBusy] = useState(false);
   const [ruleError, setRuleError] = useState("");
-  const [f, setF] = useState<any>({ currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0", reorderLevel: 0, trackStock: true, unitOfMeasure: "unit" });
+  const [f, setF] = useState<any>({
+    currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0",
+    reorderLevel: 0, trackStock: true, unitOfMeasure: "unit", openingStockEnabled: false,
+    openingWarehouseId: "", openingQuantity: "", openingUnitCost: "0",
+  });
   const [err, setErr] = useState("");
-  const openCreate = () => { setErr(""); setShow(true); };
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [openingProduct, setOpeningProduct] = useState<any | null>(null);
+  const [openingForm, setOpeningForm] = useState({ warehouseId: "", quantity: "", unitCost: "0" });
+  const [openingError, setOpeningError] = useState("");
+  const [openingBusy, setOpeningBusy] = useState(false);
+  const skuInputId = useId();
+  const skuHelpId = `${skuInputId}-help`;
+  const freshProductForm = () => ({
+    currency: "USD", taxTreatment: "standard", costPrice: "0", salePrice: "0",
+    reorderLevel: 0, trackStock: true, unitOfMeasure: "unit", openingStockEnabled: false,
+    openingWarehouseId: warehouses?.[0]?.id ?? "", openingQuantity: "", openingUnitCost: "0",
+  });
+  const openCreate = () => { setErr(""); setF(freshProductForm()); setShow(true); };
   const closeCreate = () => { setErr(""); setShow(false); };
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
   useEffect(() => {
@@ -3214,14 +3231,61 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
     onSearchTargetConsumed();
   }, [onSearchTargetConsumed, rows, searchTarget]);
   const save = async () => {
-    try { await api("/products", { method: "POST", body: { ...f, reorderLevel: Number(f.reorderLevel) } }); closeCreate(); reload(); }
-    catch (e: any) { setErr(e.message); }
+    setSavingProduct(true);
+    setErr("");
+    try {
+      const {
+        openingStockEnabled, openingWarehouseId, openingQuantity, openingUnitCost, ...product
+      } = f;
+      await api("/products", {
+        method: "POST",
+        body: {
+          ...product,
+          sku: product.sku?.trim(),
+          name: product.name?.trim(),
+          reorderLevel: Number(product.reorderLevel),
+          ...(openingStockEnabled ? {
+            openingStock: {
+              warehouseId: openingWarehouseId,
+              quantity: openingQuantity.trim(),
+              unitCost: openingUnitCost.trim(),
+            },
+          } : {}),
+        },
+      });
+      closeCreate();
+      reload();
+    } catch (error: unknown) {
+      setErr(error instanceof Error ? error.message : copy.saveError);
+    } finally {
+      setSavingProduct(false);
+    }
   };
-  const opening = async (p: any) => {
-    const quantity = prompt(`Opening stock quantity for ${p.name}:`); if (!quantity) return;
-    const unitCost = prompt("Unit cost:", p.cost_price ?? p.costPrice ?? "0"); if (!unitCost) return;
-    try { await api("/stock/opening", { method: "POST", body: { productId: p.id, warehouseId: warehouses[0].id, quantity, unitCost } }); reload(); }
-    catch (e: any) { alert(e.message); }
+  const openOpeningStock = (product: any) => {
+    setOpeningProduct(product);
+    setOpeningError("");
+    setOpeningForm({
+      warehouseId: warehouses?.[0]?.id ?? "",
+      quantity: "",
+      unitCost: product.cost_price ?? product.costPrice ?? "0",
+    });
+  };
+  const saveOpeningStock = async () => {
+    if (!openingProduct) return;
+    setOpeningBusy(true);
+    setOpeningError("");
+    try {
+      await api("/stock/opening", {
+        method: "POST",
+        body: { productId: openingProduct.id, ...openingForm },
+      });
+      setOpeningProduct(null);
+      reload();
+    } catch (error: unknown) {
+      setOpeningError(error instanceof Error ? error.message : copy.openingStockError);
+    } finally {
+      setOpeningBusy(false);
+    }
   };
   const adjust = async (p: any) => {
     const quantityDelta = prompt(`Adjustment for ${p.name} (e.g. -2 for damage, +5 for count correction):`); if (!quantityDelta) return;
@@ -3280,7 +3344,7 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
             <td className="num" style={p.reorder_level > 0 && Number(p.on_hand) <= p.reorder_level ? { color: "var(--danger)", fontWeight: 700 } : {}}>{Number(p.on_hand)}</td>
             <td>{p.reorder_level > 0 ? `${appEnglish.lowStockAlerts.enabled} · ≤ ${p.reorder_level}` : appEnglish.lowStockAlerts.disabled}</td>
             <td>{!readonly && canWrite && <div className="row">
-              <button className="btn ghost sm" onClick={() => opening(p)}>{copy.openingStock}</button>
+              <button className="btn ghost sm" onClick={() => openOpeningStock(p)}>{copy.openingStock}</button>
               <button className="btn ghost sm" onClick={() => adjust(p)}>{copy.adjust}</button>
               <button className="btn ghost sm" onClick={() => openRule(p)}>{appEnglish.lowStockAlerts.rule}</button>
             </div>}</td>
@@ -3292,22 +3356,78 @@ function Products({ readonly, canWrite, searchTarget, onSearchTargetConsumed }: 
     {show && <LegacyModal labelledBy="new-product-title" onClose={closeCreate}>
       <h2 id="new-product-title" tabIndex={-1} data-modal-initial-focus>{copy.newProductTitle}</h2>
       <div className="grid2">
-        <LegacyField label={copy.sku}><input value={f.sku ?? ""} onChange={(e) => setF({ ...f, sku: e.target.value })} /></LegacyField>
+        <div className="field">
+          <label htmlFor={skuInputId}>{copy.sku}</label>
+          <div className="sku-entry-control">
+          <input id={skuInputId} aria-describedby={skuHelpId} value={f.sku ?? ""} onChange={(e) => setF({ ...f, sku: e.target.value.toUpperCase() })} />
+          <button className="btn ghost" type="button" onClick={() => setF({
+            ...f,
+            sku: suggestProductSku(f.name ?? "", (rows ?? []).map((product: any) => product.sku)),
+          })}>{copy.generateSku}</button>
+          </div>
+          <small className="field-help" id={skuHelpId}>{copy.skuHelp}</small>
+        </div>
         <LegacyField label={copy.name}><input value={f.name ?? ""} onChange={(e) => setF({ ...f, name: e.target.value })} /></LegacyField>
-        <LegacyField label={copy.costPrice}><input inputMode="decimal" value={f.costPrice} onChange={(e) => setF({ ...f, costPrice: e.target.value })} /></LegacyField>
+        <LegacyField label={copy.costPrice}><input inputMode="decimal" value={f.costPrice} onChange={(e) => {
+          const previousCost = f.costPrice;
+          setF({
+            ...f,
+            costPrice: e.target.value,
+            openingUnitCost: f.currency === baseCcy && (f.openingUnitCost === "0" || f.openingUnitCost === previousCost) ? e.target.value : f.openingUnitCost,
+          });
+        }} /></LegacyField>
         <LegacyField label={copy.salePrice}><input inputMode="decimal" value={f.salePrice} onChange={(e) => setF({ ...f, salePrice: e.target.value })} /></LegacyField>
-        <LegacyField label={copy.currency}><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
+        <LegacyField label={copy.currency}><select value={f.currency} onChange={(e) => {
+          const currency = e.target.value;
+          setF({
+            ...f,
+            currency,
+            openingUnitCost: currency === baseCcy && f.openingUnitCost === "0" ? f.costPrice : f.openingUnitCost,
+          });
+        }}><option>USD</option><option>ZWG</option></select></LegacyField>
         <LegacyField label={appEnglish.invoices.taxTreatment}><select value={f.taxTreatment} onChange={(e) => setF({ ...f, taxTreatment: e.target.value })}>
           <option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option>
           <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
           <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
         </select></LegacyField>
         <LegacyField label={copy.reorderLevel}><input type="number" min="0" step="1" value={f.reorderLevel} onChange={(e) => setF({ ...f, reorderLevel: e.target.value })} /></LegacyField>
-        <LegacyField label={copy.trackStock}><select value={String(f.trackStock)} onChange={(e) => setF({ ...f, trackStock: e.target.value === "true" })}>
+        <LegacyField label={copy.trackStock}><select value={String(f.trackStock)} onChange={(e) => {
+          const trackStock = e.target.value === "true";
+          setF({ ...f, trackStock, openingStockEnabled: trackStock ? f.openingStockEnabled : false });
+        }}>
           <option value="true">{copy.physicalStock}</option><option value="false">{copy.serviceItem}</option></select></LegacyField>
       </div>
+      {f.trackStock && <div className="opening-stock-fields">
+        <LegacyField label={copy.addOpeningStock} hint={copy.addOpeningStockHelp}><select value={String(f.openingStockEnabled)} onChange={(event) => setF({ ...f, openingStockEnabled: event.target.value === "true" })}>
+          <option value="false">{copy.addOpeningStockLater}</option>
+          <option value="true">{copy.addOpeningStockNow}</option>
+        </select></LegacyField>
+        {f.openingStockEnabled && <div className="grid3">
+          <LegacyField label={copy.warehouse}><select value={f.openingWarehouseId} onChange={(event) => setF({ ...f, openingWarehouseId: event.target.value })}>
+            <option value="">{copy.selectWarehouse}</option>
+            {(warehouses ?? []).map((warehouse: any) => <option value={warehouse.id} key={warehouse.id}>{warehouse.name}</option>)}
+          </select></LegacyField>
+          <LegacyField label={copy.openingQuantity} hint={copy.openingQuantityHelp}><input type="number" inputMode="decimal" min="0.001" max="1000000" step="0.001" value={f.openingQuantity} onChange={(event) => setF({ ...f, openingQuantity: event.target.value })} /></LegacyField>
+          <LegacyField label={copy.openingUnitCost.replace("{currency}", baseCcy)} hint={copy.openingUnitCostHelp}><input type="number" inputMode="decimal" min="0.01" max="1000000000" step="0.01" value={f.openingUnitCost} onChange={(event) => setF({ ...f, openingUnitCost: event.target.value })} /></LegacyField>
+        </div>}
+        {f.openingStockEnabled && (warehouses ?? []).length === 0 && <div className="err-text" role="alert">{copy.warehouseRequired}</div>}
+      </div>}
       {err && <div className="err-text" role="alert">{err}</div>}
-      <div className="row end modal-actions"><button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button><button className="btn" onClick={save}>{copy.save}</button></div>
+      <div className="row end modal-actions"><button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button><button className="btn" disabled={savingProduct || !f.sku?.trim() || !f.name?.trim() || (f.openingStockEnabled && (!f.openingWarehouseId || !isPositiveStockQuantity(f.openingQuantity) || !isPositiveMoney(f.openingUnitCost)))} onClick={save}>{savingProduct ? copy.saving : copy.save}</button></div>
+    </LegacyModal>}
+    {openingProduct && <LegacyModal labelledBy="opening-stock-title" onClose={() => setOpeningProduct(null)}>
+      <h2 id="opening-stock-title" tabIndex={-1} data-modal-initial-focus>{copy.openingStockFor.replace("{name}", openingProduct.name)}</h2>
+      <p className="sub">{copy.openingStockDialogHelp}</p>
+      <div className="grid2">
+        <LegacyField label={copy.warehouse}><select value={openingForm.warehouseId} onChange={(event) => setOpeningForm({ ...openingForm, warehouseId: event.target.value })}>
+          <option value="">{copy.selectWarehouse}</option>
+          {(warehouses ?? []).map((warehouse: any) => <option value={warehouse.id} key={warehouse.id}>{warehouse.name}</option>)}
+        </select></LegacyField>
+        <LegacyField label={copy.openingQuantity} hint={copy.openingQuantityHelp}><input type="number" inputMode="decimal" min="0.001" max="1000000" step="0.001" value={openingForm.quantity} onChange={(event) => setOpeningForm({ ...openingForm, quantity: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.openingUnitCost.replace("{currency}", baseCcy)} hint={copy.openingUnitCostHelp}><input type="number" inputMode="decimal" min="0.01" max="1000000000" step="0.01" value={openingForm.unitCost} onChange={(event) => setOpeningForm({ ...openingForm, unitCost: event.target.value })} /></LegacyField>
+      </div>
+      {openingError && <div className="err-text" role="alert">{openingError}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={() => setOpeningProduct(null)}>{copy.cancel}</button><button className="btn" disabled={openingBusy || !openingForm.warehouseId || !isPositiveStockQuantity(openingForm.quantity) || !isPositiveMoney(openingForm.unitCost)} onClick={saveOpeningStock}>{openingBusy ? copy.saving : copy.recordOpeningStock}</button></div>
     </LegacyModal>}
     {ruleProduct && <LegacyModal labelledBy="reorder-rule-title" onClose={() => setRuleProduct(null)} className="reorder-rule-modal">
       <h2 id="reorder-rule-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.lowStockAlerts.ruleFor.replace("{name}", ruleProduct.name)}</h2>

@@ -26,7 +26,7 @@ import {
   listPlatformStaff, updatePlatformStaff,
 } from "./platform-staff.js";
 import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, voidInvoice } from "./invoicing.js";
-import { adjustStock, receivePurchaseOrder, recordStockMovement } from "./inventory.js";
+import { adjustStock, receivePurchaseOrder, recordOpeningStock } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
@@ -1222,14 +1222,32 @@ api.post("/activities", requirePermission("crm.write"), wrap(async (req) => {
 // ---------------------------------------------------------------------------
 // Inventory
 // ---------------------------------------------------------------------------
+const positiveStockQuantitySchema = z.string().trim()
+  .regex(/^(?:0*[1-9]\d*)(?:\.\d{1,3})?$|^0*\.\d{1,3}$/, "Quantity must be positive with no more than 3 decimal places")
+  .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 1_000_000,
+    "Quantity must be between 0.001 and 1,000,000");
+const positiveMoneySchema = z.string().trim()
+  .regex(/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/, "Unit cost must use no more than 2 decimal places")
+  .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 1_000_000_000,
+    "Unit cost must be between 0.01 and 1,000,000,000");
+const openingStockSchema = z.object({
+  warehouseId: z.string().uuid(),
+  quantity: positiveStockQuantitySchema,
+  unitCost: positiveMoneySchema,
+}).strict();
 const productSchema = z.object({
-  sku: z.string().min(1), name: z.string().min(1), description: z.string().optional().nullable(),
-  unitOfMeasure: z.string().default("unit"),
+  sku: z.string().trim().min(1).max(64), name: z.string().trim().min(1).max(200), description: z.string().max(5000).optional().nullable(),
+  unitOfMeasure: z.string().trim().min(1).max(40).default("unit"),
   costPrice: z.string().default("0"), salePrice: z.string().default("0"),
   currency: z.enum(["USD", "ZWG"]).default("USD"),
   taxTreatment: z.enum(["standard", "zero-rated", "exempt"]).default("standard"),
   taxRate: z.string().optional(),
   reorderLevel: z.number().int().min(0).default(0), trackStock: z.boolean().default(true),
+  openingStock: openingStockSchema.optional(),
+}).strict().superRefine((body, context) => {
+  if (body.openingStock && !body.trackStock) {
+    context.addIssue({ code: "custom", path: ["openingStock"], message: "Opening stock is only available for physical stock products" });
+  }
 });
 api.get("/products", requirePermission("inventory.read"), wrap(async (req) => {
   const rows = await db.execute(sql`
@@ -1246,8 +1264,9 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
     if (!tenant) throw notFound("Tenant not found");
     const resolution = resolveTax(tenant.countryCode, body.taxTreatment, todayIsoDate());
     assertCompatibleTaxRate(body.taxRate, resolution);
+    const { openingStock, ...productInput } = body;
     const [p] = await tx.insert(schema.products).values({
-      ...body,
+      ...productInput,
       tenantId: tid,
       taxRate: taxRateString(resolution),
       taxTreatment: body.taxTreatment,
@@ -1259,6 +1278,31 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
     });
     queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${p.id}:created`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
       tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id, change: "created" } });
+    if (openingStock) {
+      const opening = await recordOpeningStock(tx, {
+        tenantId: tid,
+        productId: p.id,
+        warehouseId: openingStock.warehouseId,
+        quantity: openingStock.quantity,
+        unitCost: openingStock.unitCost,
+        createdBy: req.auth!.userId,
+        sourceType: "product_setup",
+        sourceId: p.id,
+      });
+      queue({
+        id: `${DOMAIN_EVENTS.STOCK_MOVED}:${opening.movementId}`,
+        type: DOMAIN_EVENTS.STOCK_MOVED,
+        tenantId: tid,
+        actorUserId: req.auth!.userId,
+        payload: {
+          movementId: opening.movementId,
+          productId: p.id,
+          warehouseId: openingStock.warehouseId,
+          quantityDelta: openingStock.quantity,
+          kind: "OPENING",
+        },
+      });
+    }
     return p;
   }));
 }));
@@ -1323,30 +1367,19 @@ api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req)
 }));
 api.post("/stock/opening", requirePermission("inventory.write"), wrap(async (req) => {
   // Opening balances: stock in + Dr Inventory / Cr Opening Balance Equity
-  const body = z.object({
-    productId: z.string().uuid(), warehouseId: z.string().uuid(),
-    quantity: z.string(), unitCost: z.string(),
-  }).parse(req.body);
+  const body = openingStockSchema.extend({ productId: z.string().uuid() }).strict().parse(req.body);
   const tid = tenantId(req);
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
-    const r = await recordStockMovement(tx, {
-      tenantId: tid, productId: body.productId, warehouseId: body.warehouseId,
-      quantityDelta: body.quantity, unitCost: body.unitCost, reason: "OPENING",
-      sourceType: "manual", createdBy: req.auth!.userId,
-      requireZeroCurrent: true, requireNoHistory: true,
+    const r = await recordOpeningStock(tx, {
+      tenantId: tid,
+      productId: body.productId,
+      warehouseId: body.warehouseId,
+      quantity: body.quantity,
+      unitCost: body.unitCost,
+      createdBy: req.auth!.userId,
     });
     queue({ id: `${DOMAIN_EVENTS.STOCK_MOVED}:${r.movementId}`, type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: tid, actorUserId: req.auth!.userId,
       payload: { movementId: r.movementId, productId: body.productId, warehouseId: body.warehouseId, quantityDelta: body.quantity, kind: "OPENING" } });
-    const { toCents, fromCents, mulRate } = await import("./lib.js");
-    const { systemAccount, postJournal } = await import("./accounting.js");
-    const value = fromCents(mulRate(toCents(body.unitCost), Number(body.quantity).toFixed(6)));
-    const inventory = await systemAccount(tx, tid, "INVENTORY");
-    const opening = await systemAccount(tx, tid, "OPENING_EQUITY");
-    await postJournal(tx, {
-      tenantId: tid, date: new Date(), memo: "Opening stock balance",
-      sourceType: "stock_adjustment", sourceId: r.movementId, createdBy: req.auth!.userId,
-      lines: [{ accountId: inventory.id, debit: value }, { accountId: opening.id, credit: value }],
-    });
     return r;
   }));
 }));

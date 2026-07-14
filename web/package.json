@@ -9,6 +9,7 @@
     "test:accessibility": "node scripts/check-accessibility-conformance.mjs",
     "test:homepage": "node --experimental-strip-types --test scripts/homepage-regression.test.mjs",
     "test:shell": "node --experimental-strip-types --test scripts/navigation-model.test.mjs",
+    "test:product-entry": "node --experimental-strip-types --test scripts/product-entry-model.test.mjs",
     "test:invoice-pdf": "node --experimental-strip-types --test scripts/invoice-pdf.test.mjs",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
