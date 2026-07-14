@@ -852,8 +852,8 @@ export const inventoryValuationLayers = pgTable("inventory_valuation_layers", {
   productId: uuid("product_id").notNull().references(() => products.id),
   warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
   quantityOnHand: qty("quantity_on_hand").default("0").notNull(),
-  totalCostCents: pgBigint("total_cost_cents", { mode: "bigint" }).default(0n).notNull(),
-  version: pgBigint("version", { mode: "bigint" }).default(0n).notNull(),
+  totalCostCents: pgBigint("total_cost_cents", { mode: "bigint" }).default(sql`0`).notNull(),
+  version: pgBigint("version", { mode: "bigint" }).default(sql`0`).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   uniqueIndex("inventory_valuation_layer_tenant_product_wh").on(t.tenantId, t.productId, t.warehouseId),
