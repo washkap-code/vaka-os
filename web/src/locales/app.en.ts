@@ -770,6 +770,7 @@ export const appEnglish = {
   reports: {
     title: "Reports",
     subtitle: "Every figure is computed live from the double-entry ledger — in {currency}.",
+    loading: "Loading report evidence…",
     navigation: "Financial reports",
     tabs: {
       pl: "Profit & Loss",

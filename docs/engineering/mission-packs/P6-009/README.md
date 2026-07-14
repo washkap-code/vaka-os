@@ -1,6 +1,6 @@
 # P6-009 — Financial Reporting and Billing Accessibility
 
-**Status:** Implemented; local frontend and browser verification passed; remote release pending behind P6-008
+**Status:** Implementation complete; all local release gates passed; remote release pending
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and localisation adoption
 **Depends on:** P6-001 design system; P6-005 legacy field and modal patterns; P2-003 VAT technical report; statutory report-pack foundation

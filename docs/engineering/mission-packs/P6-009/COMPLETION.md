@@ -1,7 +1,7 @@
 # P6-009 Completion Report
 
 **Date:** 2026-07-14
-**Status:** Implementation complete; local frontend and browser gates passed; remote quality and production release pending behind P6-008
+**Status:** Implementation complete; all local release gates passed; remote quality and production release pending
 
 ## Delivered
 
@@ -17,6 +17,10 @@
 - Added two-column mobile report-tab reflow and readable minimum widths for
   dense financial/billing tables so they scroll locally instead of widening the
   page.
+- Kept the selected core-report panel mounted with a named live loading state,
+  preserving its tab relationship throughout simulated network latency.
+- Raised report tabs and mobile report actions to the governed 44px minimum
+  touch target.
 - Extended the permanent accessibility conformance gate for report tabs,
   panels, keyboard navigation, table regions, action groups and feedback.
 
@@ -25,12 +29,15 @@
 - Web TypeScript: passed.
 - Accessibility conformance check and negative fixture: passed.
 - Design-token conformance: passed with 236 governed tokens.
-- Shell/navigation permission tests: 11/11 passed.
+- Shell/navigation permission tests: 13/13 passed.
 - Invoice PDF regression tests: 3/3 passed.
-- Web production build: passed.
+- Web production build: 45 modules; 458.08 kB main JavaScript / 123.32 kB
+  gzip; 102.31 kB CSS / 18.82 kB gzip; no size warning.
 - Report navigation: exactly one tab exposed `aria-selected="true"`; its panel
   was labelled by that tab. Arrow Right moved focus and selection from Profit &
-  Loss to Balance Sheet.
+  Loss to Balance Sheet; Home and End selected the first and final tabs. Under
+  simulated 350ms report latency, the selected panel and its live loading
+  status remained present.
 - VAT preview: period controls, Report actions group and posted-evidence region
   were named; synthetic posted-ledger evidence rendered without errors.
 - Statutory pack: all three period controls and the Report pack actions group
@@ -41,12 +48,19 @@
   remained visible.
 - Browser reflow: document width equalled viewport width at 320 and 640 CSS
   pixels. Report tabs used two equal columns; dense financial and billing tables
-  retained a 672-pixel local scroll surface inside 250/570-pixel regions.
-- Browser console: no error-level logs during selected journeys.
+  retained a 672-pixel local scroll surface inside 214–250-pixel mobile regions.
+  All six report tabs and all three mobile VAT actions measured 44px high.
+- Upgrade feedback: successful interest was announced as status and a
+  deliberately failed second request was announced as alert. The simulated 500
+  produced the expected browser resource message; there were no unexpected
+  console errors or runtime overlays.
+- Focused database-backed VAT, statutory reporting, billing, upgrade and
+  arrears regressions: 6 files / 29 tests passed.
+- Complete database-backed server suite: 66 files passed, 1 intentionally
+  skipped; 226 tests passed, 1 intentionally skipped.
+- Server TypeScript and production runtime-schema compatibility: passed.
 - `git diff --check`: passed.
-- No server files changed. The full local DB-backed server suite remains
-  environment-blocked because the configured PostgreSQL instance lacks the
-  expected `jonomi` role; remote DB-backed gates remain authoritative.
+- No server files changed.
 
 ## Finance and product invariants preserved
 
@@ -68,7 +82,9 @@ gated.
 
 ## Release evidence
 
-P6-009 is dependent on the safely published P6-008 branch. Remote checks, merge,
-deployment and production smoke evidence will be retained in the PR and
-deployment records after GitHub authentication is restored. Rollback requires
-only reverting the scoped frontend and documentation commits.
+P6-008 and the refined Platform Administration release are live prerequisites.
+P6-009 remains unreleased until its GitHub quality gate, Vercel preview,
+approved merge, post-merge main gate, Production deployment and live-bundle
+verification pass. Release evidence will be retained in the PR and deployment
+records. Rollback requires only reverting the scoped frontend and documentation
+commits.

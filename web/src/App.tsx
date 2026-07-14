@@ -3117,19 +3117,19 @@ function Reports({ ccy }: { ccy: string }) {
         </button>
       ))}
     </div>
-    {tab === "pl" && pl && <div className="panel" role="tabpanel" id="report-panel-pl" aria-labelledby="report-tab-pl" tabIndex={0}>
+    {tab === "pl" && <div className="panel" role="tabpanel" id="report-panel-pl" aria-labelledby="report-tab-pl" tabIndex={0}>
       <h2>{reportsCopy.profitLossTitle}</h2>
-      <div className="table-scroll" role="region" aria-label={reportsCopy.profitLossTableLabel} tabIndex={0}><table><tbody>
+      {!pl ? <p className="sub" role="status">{reportsCopy.loading}</p> : <div className="table-scroll" role="region" aria-label={reportsCopy.profitLossTableLabel} tabIndex={0}><table><tbody>
         {pl.income.map((r: any) => <tr key={r.code}><td>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
         <tr><td><b>{reportsCopy.totalIncome}</b></td><td className="num"><b>{fmt(pl.totalIncome, ccy)}</b></td></tr>
         {pl.expenses.map((r: any) => <tr key={r.code}><td>{r.code} {r.name}</td><td className="num">({fmt(r.amount, ccy)})</td></tr>)}
         <tr><td><b>{reportsCopy.totalExpenses}</b></td><td className="num"><b>({fmt(pl.totalExpenses, ccy)})</b></td></tr>
         <tr><td><b>{reportsCopy.netProfit}</b></td><td className="num" style={{ color: Number(pl.netProfit) >= 0 ? "var(--ok)" : "var(--danger)" }}><b>{fmt(pl.netProfit, ccy)}</b></td></tr>
-      </tbody></table></div>
+      </tbody></table></div>}
     </div>}
-    {tab === "bs" && bs && <div className="panel" role="tabpanel" id="report-panel-bs" aria-labelledby="report-tab-bs" tabIndex={0}>
-      <h2>{reportsCopy.balanceSheetTitle} — {bs.balances ? reportsCopy.balanceSheetBalances : reportsCopy.balanceSheetDoesNotBalance}</h2>
-      <div className="table-scroll" role="region" aria-label={reportsCopy.balanceSheetTableLabel} tabIndex={0}><table><tbody>
+    {tab === "bs" && <div className="panel" role="tabpanel" id="report-panel-bs" aria-labelledby="report-tab-bs" tabIndex={0}>
+      <h2>{reportsCopy.balanceSheetTitle}{bs ? ` — ${bs.balances ? reportsCopy.balanceSheetBalances : reportsCopy.balanceSheetDoesNotBalance}` : ""}</h2>
+      {!bs ? <p className="sub" role="status">{reportsCopy.loading}</p> : <div className="table-scroll" role="region" aria-label={reportsCopy.balanceSheetTableLabel} tabIndex={0}><table><tbody>
         <tr><td colSpan={2}><b>{reportsCopy.assets}</b></td></tr>
         {bs.assets.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
         <tr><td><b>{reportsCopy.totalAssets}</b></td><td className="num"><b>{fmt(bs.totalAssets, ccy)}</b></td></tr>
@@ -3139,10 +3139,11 @@ function Reports({ ccy }: { ccy: string }) {
         {bs.equity.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
         <tr><td style={{ paddingLeft: 24 }}>{reportsCopy.currentEarnings}</td><td className="num">{fmt(bs.currentEarnings, ccy)}</td></tr>
         <tr><td><b>{reportsCopy.totalLiabilitiesEquity}</b></td><td className="num"><b>{fmt(bs.totalLiabilitiesAndEquity, ccy)}</b></td></tr>
-      </tbody></table></div>
+      </tbody></table></div>}
     </div>}
-    {tab === "ar" && ar && <div className="panel" role="tabpanel" id="report-panel-ar" aria-labelledby="report-tab-ar" tabIndex={0}>
+    {tab === "ar" && <div className="panel" role="tabpanel" id="report-panel-ar" aria-labelledby="report-tab-ar" tabIndex={0}>
       <h2>{reportsCopy.agedReceivablesTitle}</h2>
+      {!ar ? <p className="sub" role="status">{reportsCopy.loading}</p> : <>
       {(ar as AgedReceivablesView).currencies.map((currency) => (
         <div key={currency.currency}>
           <h3>{currency.currency}</h3>
@@ -3156,11 +3157,11 @@ function Reports({ ccy }: { ccy: string }) {
       <div className="table-scroll" role="region" aria-label={reportsCopy.agedReceivablesTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{reportsCopy.invoice}</th><th>{reportsCopy.customer}</th><th className="num">{reportsCopy.outstanding}</th><th className="num">{reportsCopy.daysOverdue}</th></tr></thead>
         <tbody>{(ar as AgedReceivablesView).items.map((r) => (
           <tr key={r.invoiceId}><td>{r.number}</td><td>{r.contact}</td><td className="num">{fmt(r.outstanding, r.currency)}</td><td className="num">{r.daysOverdue}</td></tr>
-        ))}</tbody></table></div>
+        ))}</tbody></table></div></>}
     </div>}
-    {tab === "journal" && journal && <div className="panel" role="tabpanel" id="report-panel-journal" aria-labelledby="report-tab-journal" tabIndex={0}>
+    {tab === "journal" && <div className="panel" role="tabpanel" id="report-panel-journal" aria-labelledby="report-tab-journal" tabIndex={0}>
       <h2>{reportsCopy.journalTitle}</h2>
-      {journal.map((e: any) => (
+      {!journal ? <p className="sub" role="status">{reportsCopy.loading}</p> : journal.map((e: any) => (
         <div key={e.id} style={{ marginBottom: 14, borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
           <b>{new Date(e.date).toLocaleDateString()} — {e.memo}</b> <span className="sub" style={{ display: "inline" }}>({e.source_type})</span>
           <div className="table-scroll" role="region" aria-label={reportsCopy.journalEntryTable.replace("{date}", new Date(e.date).toLocaleDateString()).replace("{memo}", e.memo)} tabIndex={0}><table><tbody>{e.lines.map((l: any, i: number) => (
