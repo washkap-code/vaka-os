@@ -80,6 +80,9 @@ jobs:
       - name: Check product-entry contracts
         run: npm run test:product-entry
 
+      - name: Check invoice-workspace lifecycle contracts
+        run: npm run test:invoice-workspace
+
       - name: Check homepage regression contracts
         run: npm run test:homepage
 

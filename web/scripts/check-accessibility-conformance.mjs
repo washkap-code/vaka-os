@@ -84,6 +84,9 @@ for (const expected of [
   'labelledBy="invoice-preview-title"',
   'ariaLabel={appEnglish.invoices.actionsFor.replace',
   'className="invoice-action-menu"',
+  'role="group" aria-label={copy.recordActions}',
+  'className="invoice-line-card"',
+  'customersState.error && <div className="invoice-resource-state danger" role="alert">',
   'labelledBy="new-deal-title"',
   'labelledBy="new-product-title"',
   'labelledBy="reorder-rule-title"',
@@ -176,6 +179,8 @@ for (const expected of [
   ".capture-review-modal",
   ".invoice-table { min-width: 62rem; table-layout: fixed; }",
   ".invoice-action-menu[open] .vds-dropdown-menu",
+  ".invoice-line-grid { align-items: end; display: grid;",
+  ".invoice-record-actions { background: var(--vaka-workspace-info-surface);",
   "@media (forced-colors: active)",
   "@media (prefers-reduced-motion: reduce)",
 ]) requireContract(issues, "src/styles.css", styles, expected);

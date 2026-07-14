@@ -12,6 +12,9 @@ import type { WorkspaceSearchTarget } from "./shell/command-search-model";
 import { idleSignOutPhase, normalizeIdleSignOutMinutes } from "./shell/idle-signout-model";
 import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
+import {
+  invoiceRecordActions, type InvoiceLifecycleStatus, type InvoiceRecordAction,
+} from "./invoices/invoice-workspace-model";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
 import { Dropdown } from "./design-system/primitives";
@@ -138,6 +141,14 @@ type InvoiceDetailView = {
   contact: { id: string; name: string; email: string | null; phone: string | null } | null;
   lines: InvoiceLineView[];
   payments: Array<{ id: string; amount: string; date: string; reference: string | null }>;
+};
+
+type InvoiceCustomer = {
+  id: string; name: string; email: string | null; phone: string | null;
+};
+
+type InvoiceDocumentTarget = {
+  id: string; number: string | null; contactEmail: string | null;
 };
 
 type PlatformTenant = {
@@ -2261,6 +2272,29 @@ const useLoad = (fn: () => Promise<any>, deps: any[] = []) => {
   return [data, () => setTick((x) => x + 1)] as const;
 };
 
+const useLoadState = <T,>(fn: () => Promise<T>, deps: unknown[] = []) => {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    fn().then((next) => {
+      if (active) setData(next);
+    }).catch((requestError: unknown) => {
+      if (!active) return;
+      setData(null);
+      setError(requestError instanceof Error ? requestError.message : "Request failed");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, [...deps, tick]);
+  return { data, loading, error, reload: () => setTick((value) => value + 1) };
+};
+
 function UsersActivity() {
   const [data, reload] = useLoad(() => api("/security/activity"));
   const [busy, setBusy] = useState(false);
@@ -2846,10 +2880,12 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
   const [loadedRows, reload] = useLoad(() => api("/invoices"));
   const rows = (loadedRows ?? []) as any[];
   const selection = useListSelection(rows);
-  const [contacts] = useLoad(() => api("/contacts"));
+  const customersState = useLoadState<InvoiceCustomer[]>(() => api("/invoice-customers"));
+  const customers = customersState.data ?? [];
   const [products] = useLoad(() => api("/products"));
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
+  const [savingDraft, setSavingDraft] = useState(false);
   const [linkInvoice, setLinkInvoice] = useState<{ id: string; number: string | null } | null>(null);
   const [linkRows, setLinkRows] = useState<any[]>([]);
   const [linkBusy, setLinkBusy] = useState(false);
@@ -2865,7 +2901,12 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
     invoice: { id: string; number: string | null };
   } | null>(null);
   const empty = { description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard", productId: "" };
-  const [f, setF] = useState<any>({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] });
+  const freshDraft = () => ({
+    contactId: "", currency: baseCcy, rateToBase: "1", dueDate: "", taxDate: "", notes: "",
+    lines: [{ ...empty }],
+  });
+  const [f, setF] = useState<any>(freshDraft);
+  const openCreate = () => { setErr(""); setF(freshDraft()); setShow(true); };
 
   const setLine = (i: number, k: string, v: string) => {
     const lines = [...f.lines]; lines[i] = { ...lines[i], [k]: v };
@@ -2882,11 +2923,25 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
   };
   const save = async () => {
     setErr("");
+    if (!f.contactId) { setErr(appEnglish.invoices.customerRequired); return; }
+    if (f.lines.some((line: any) => !line.description.trim() || !(Number(line.quantity) > 0)
+      || !Number.isFinite(Number(line.unitPrice)) || Number(line.unitPrice) < 0)) {
+      setErr(appEnglish.invoices.lineRequired); return;
+    }
+    setSavingDraft(true);
     try {
-      const body = { ...f, lines: f.lines.map((l: any) => ({ ...l, productId: l.productId || undefined })) };
+      const body = {
+        ...f,
+        dueDate: f.dueDate || undefined,
+        taxDate: f.taxDate || undefined,
+        notes: nullableText(f.notes),
+        lines: f.lines.map((l: any) => ({ ...l, productId: l.productId || undefined })),
+      };
       await api("/invoices", { method: "POST", body }); setShow(false);
-      setF({ currency: baseCcy, rateToBase: "1", lines: [{ ...empty }] }); reload();
-    } catch (e: any) { setErr(e.message); }
+      setF(freshDraft()); reload();
+    } catch (error: unknown) {
+      setErr(error instanceof Error ? error.message : appEnglish.invoices.createFailed);
+    } finally { setSavingDraft(false); }
   };
   const act = async (path: string, body: any = {}) => {
     try { await api(path, { method: "POST", body }); reload(); } catch (e: any) { alert(e.message); }
@@ -2904,40 +2959,34 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
     }
   };
   const downloadPdf = async (invoice: { id: string; number: string | null }) => {
-    try {
-      const url = URL.createObjectURL(await loadPdf(invoice));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = invoicePdfFilename(invoice.number, invoice.id);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (error: any) { alert(error.message || appEnglish.invoices.pdfDownloadFailed); }
+    const url = URL.createObjectURL(await loadPdf(invoice));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = invoicePdfFilename(invoice.number, invoice.id);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
   const previewPdf = async (invoice: { id: string; number: string | null }) => {
-    try {
-      const url = URL.createObjectURL(await loadPdf(invoice));
-      setPdfPreview({ url, invoice });
-    } catch (error: any) { alert(error.message || appEnglish.invoices.pdfPreviewFailed); }
+    const url = URL.createObjectURL(await loadPdf(invoice));
+    setPdfPreview({ url, invoice });
   };
   const getShareLink = async (invoice: { id: string }) => {
     const result = await api(`/invoices/${invoice.id}/share-links`, { method: "POST", body: { expiresInDays: 14 } });
     return new URL(result.publicPath, window.location.origin).toString();
   };
   const createShareLink = async (invoice: { id: string }) => {
-    try {
-      window.prompt(appEnglish.invoices.shareLinkPrompt, await getShareLink(invoice));
-    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+    window.prompt(appEnglish.invoices.shareLinkPrompt, await getShareLink(invoice));
   };
   const manageShareLinks = async (invoice: { id: string; number: string | null }) => {
     setLinkInvoice(invoice);
     setLinkBusy(true);
     try {
       setLinkRows(await api(`/invoices/${invoice.id}/share-links`));
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLinkInvoice(null);
-      alert(error.message || appEnglish.invoices.shareLinkFailed);
+      throw error;
     } finally { setLinkBusy(false); }
   };
   const revokeShareLink = async (linkId: string) => {
@@ -2953,22 +3002,39 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
     if (new Date(link.expiresAt).getTime() <= Date.now()) return appEnglish.invoices.shareLinkExpired;
     return appEnglish.invoices.shareLinkActive;
   };
-  const openEmailComposer = async (invoice: { id: string; number: string | null; contact_email: string | null }) => {
-    if (!invoice.contact_email) { alert(appEnglish.invoices.emailUnavailable); return; }
-    try {
-      const link = await getShareLink(invoice);
-      const number = invoice.number ?? "VAKA";
-      const subject = appEnglish.invoices.emailSubject.replace("{number}", number);
-      const body = appEnglish.invoices.emailBody.replace("{number}", number).replace("{link}", link);
-      window.location.href = `mailto:${encodeURIComponent(invoice.contact_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+  const openEmailComposer = async (invoice: InvoiceDocumentTarget) => {
+    if (!invoice.contactEmail) throw new Error(appEnglish.invoices.emailUnavailable);
+    const link = await getShareLink(invoice);
+    const number = invoice.number ?? "VAKA";
+    const subject = appEnglish.invoices.emailSubject.replace("{number}", number);
+    const body = appEnglish.invoices.emailBody.replace("{number}", number).replace("{link}", link);
+    window.location.href = `mailto:${encodeURIComponent(invoice.contactEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
   const openWhatsAppShare = async (invoice: { id: string; number: string | null }) => {
+    const link = await getShareLink(invoice);
+    const text = appEnglish.invoices.whatsappBody.replace("{number}", invoice.number ?? "VAKA").replace("{link}", link);
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+  const sendInvoiceEmail = async (invoice: InvoiceDocumentTarget) => {
+    if (!invoice.contactEmail) throw new Error(appEnglish.invoices.emailUnavailable);
+    const number = invoice.number ?? appEnglish.invoices.draft;
+    const confirmed = window.confirm(appEnglish.invoices.sendEmailPrompt
+      .replace("{number}", number).replace("{email}", invoice.contactEmail));
+    if (!confirmed) return null;
+    await api(`/invoices/${invoice.id}/send`, {
+      method: "POST",
+      body: { confirm: true },
+      headers: { "Idempotency-Key": idempotencyKey(`invoice-delivery:${invoice.id}`) },
+    });
+    return appEnglish.invoices.sendEmailSuccess.replace("{number}", number);
+  };
+  const runRowAction = async (action: Promise<unknown>, fallback: string) => {
     try {
-      const link = await getShareLink(invoice);
-      const text = appEnglish.invoices.whatsappBody.replace("{number}", invoice.number ?? "VAKA").replace("{link}", link);
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-    } catch (error: any) { alert(error.message || appEnglish.invoices.shareLinkFailed); }
+      const message = await action;
+      if (typeof message === "string" && message) alert(message);
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : fallback);
+    }
   };
   const exportSelected = () => {
     const selected = rows.filter((invoice) => selection.selectedIds.has(invoice.id));
@@ -2984,7 +3050,7 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
   return (<>
     <div className="row page-heading">
       <div><h1>Invoices</h1><div className="sub">Issuing posts revenue &amp; VAT to the ledger and moves stock — in one step</div></div>
-      {!readonly && canPost && <button className="btn" onClick={() => setShow(true)}>+ New invoice</button>}
+      {!readonly && canPost && <button className="btn" onClick={openCreate}>+ New invoice</button>}
     </div>
     {selection.selectedCount > 0 && <div className="bulk-action-bar" role="region" aria-label={appEnglish.invoices.bulkActions}>
       <b>{appEnglish.invoices.selected.replace("{count}", String(selection.selectedCount))}</b>
@@ -2995,7 +3061,11 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
     <div className="panel table-scroll invoice-table-region" role="region" aria-label={appEnglish.invoices.listLabel} tabIndex={0}>
       <table className="invoice-table"><thead><tr><th className="select-column"><input type="checkbox" aria-label={appEnglish.invoices.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>{appEnglish.invoices.actions}</th></tr></thead>
         <tbody>{rows.map((i: any) => {
-          const hasActions = i.status !== "DRAFT" || (!readonly && canPost);
+          const availableActions = invoiceRecordActions(i.status as InvoiceLifecycleStatus, !readonly && canPost);
+          const hasActions = availableActions.length > 0;
+          const target: InvoiceDocumentTarget = {
+            id: i.id, number: i.number, contactEmail: i.contact_email ?? null,
+          };
           return <tr key={i.id}>
             <td><input type="checkbox" aria-label={appEnglish.invoices.selectInvoice.replace("{number}", i.number ?? appEnglish.invoices.draft)} checked={selection.selectedIds.has(i.id)} onChange={() => selection.toggle(i.id)} /></td>
             <td><button className="link-button" onClick={() => setSelectedInvoiceId(i.id)}><b>{i.number ?? `(${appEnglish.invoices.draft})`}</b></button></td><td>{i.contact_name}</td>
@@ -3003,22 +3073,21 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
             <td>{hasActions ? <Dropdown label={appEnglish.invoices.actions} align="end" className="invoice-action-menu"
               ariaLabel={appEnglish.invoices.actionsFor.replace("{number}", i.number ?? appEnglish.invoices.draft)}>
-              {i.status !== "DRAFT" && <button disabled={pdfBusyId === i.id} onClick={() => previewPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
-              {i.status !== "DRAFT" && <button disabled={pdfBusyId === i.id} onClick={() => downloadPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
-              {!readonly && canPost && <>
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => openWhatsAppShare(i)}>{appEnglish.invoices.whatsappInvoice}</button>}
-              {i.status === "DRAFT" && <button onClick={() => act(`/invoices/${i.id}/issue`)}>{appEnglish.invoices.issue}</button>}
-              {(i.status === "ISSUED" || i.status === "PARTIAL") && <button onClick={() => {
+              {availableActions.includes("preview") && <button disabled={pdfBusyId === i.id} onClick={() => runRowAction(previewPdf(target), appEnglish.invoices.pdfPreviewFailed)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
+              {availableActions.includes("download") && <button disabled={pdfBusyId === i.id} onClick={() => runRowAction(downloadPdf(target), appEnglish.invoices.pdfDownloadFailed)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
+              {availableActions.includes("sendEmail") && <button onClick={() => runRowAction(sendInvoiceEmail(target), appEnglish.invoices.actionFailed)}>{appEnglish.invoices.sendEmail}</button>}
+              {availableActions.includes("createShareLink") && <button onClick={() => runRowAction(createShareLink(target), appEnglish.invoices.shareLinkFailed)}>{appEnglish.invoices.createShareLink}</button>}
+              {availableActions.includes("manageShareLinks") && <button onClick={() => runRowAction(manageShareLinks(target), appEnglish.invoices.shareLinkFailed)}>{appEnglish.invoices.manageShareLinks}</button>}
+              {availableActions.includes("emailLink") && <button onClick={() => runRowAction(openEmailComposer(target), appEnglish.invoices.shareLinkFailed)}>{appEnglish.invoices.emailInvoice}</button>}
+              {availableActions.includes("whatsAppLink") && <button onClick={() => runRowAction(openWhatsAppShare(target), appEnglish.invoices.shareLinkFailed)}>{appEnglish.invoices.whatsappInvoice}</button>}
+              {availableActions.includes("issue") && <button onClick={() => act(`/invoices/${i.id}/issue`)}>{appEnglish.invoices.issue}</button>}
+              {availableActions.includes("recordPayment") && <button onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));
                 if (amount) act(`/invoices/${i.id}/payments`, { amount, idempotencyKey: idempotencyKey(`payment:${i.id}`) });
               }}>{appEnglish.invoices.recordPayment}</button>}
-              {i.status !== "VOID" && i.status !== "PAID" && <button onClick={() => {
+              {availableActions.includes("void") && <button onClick={() => {
                 const reason = prompt("Reason for voiding:"); if (reason) act(`/invoices/${i.id}/void`, { reason });
               }}>{appEnglish.invoices.void}</button>}
-              </>}
             </Dropdown> : "—"}</td>
           </tr>;
         })}</tbody></table>
@@ -3048,59 +3117,106 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
         </div>)}
       </div>}
     </LegacyModal>}
-    {selectedInvoiceId && <InvoiceRecordDialog invoiceId={selectedInvoiceId} contacts={(contacts ?? []) as ContactSummary[]} products={products ?? []} baseCcy={baseCcy} canEdit={!readonly && canPost} onSaved={() => reload()} onClose={() => setSelectedInvoiceId(null)} />}
-    {show && <LegacyModal labelledBy="new-invoice-title" onClose={() => setShow(false)}>
-      <h2 id="new-invoice-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.invoices.newInvoice}</h2>
-      <div className="grid3">
-        <LegacyField label={appEnglish.invoices.customer}><select value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
-          <option value="">{appEnglish.invoices.select}</option>{(contacts ?? []).filter((c: any) => c.isCustomer).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
-        <LegacyField label={appEnglish.invoices.currency}><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
-        {f.currency !== baseCcy && <LegacyField label={appEnglish.invoices.rateToBase.replace("{currency}", baseCcy)}>
-          <input inputMode="decimal" value={f.rateToBase} onChange={(e) => setF({ ...f, rateToBase: e.target.value })} />
-        </LegacyField>}
-      </div>
-      <h3>{appEnglish.invoices.lines}</h3>
-      {f.lines.map((l: any, i: number) => (
-        <fieldset className="invoice-line-create" key={i}>
-          <legend className="vds-visually-hidden">{appEnglish.invoices.lines} {i + 1}</legend>
-          <select aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.freeTextLine).replace("{number}", String(i + 1))} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
-            <option value="">{appEnglish.invoices.freeTextLine}</option>
-            {(products ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.sku} — {p.name} ({Number(p.on_hand)} on hand)</option>)}
-          </select>
-          <input aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.description).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.description} value={l.description} onChange={(e) => setLine(i, "description", e.target.value)} />
-          <input inputMode="decimal" aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.quantity).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.quantity} value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
-          <input inputMode="decimal" aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.unitPrice).replace("{number}", String(i + 1))} placeholder={appEnglish.invoices.unitPrice} value={l.unitPrice} onChange={(e) => setLine(i, "unitPrice", e.target.value)} />
-          <select
-            aria-label={appEnglish.invoices.lineField.replace("{field}", appEnglish.invoices.taxTreatment).replace("{number}", String(i + 1))}
-            value={l.taxTreatment}
-            onChange={(e) => setLine(i, "taxTreatment", e.target.value)}
-          >
-            <option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option>
-            <option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option>
-            <option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option>
-          </select>
-        </fieldset>
-      ))}
-      <p className="sub">{appEnglish.invoices.taxTreatmentHelp}</p>
-      <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...empty }] })}>+ Add line</button>
-      {err && <div className="err-text" role="alert">{err}</div>}
-      <div className="row end" style={{ marginTop: 14 }}>
-        <button className="btn ghost" onClick={() => setShow(false)}>{appEnglish.invoices.cancel}</button>
-        <button className="btn" onClick={save}>{appEnglish.invoices.saveDraft}</button>
-      </div>
+    {selectedInvoiceId && <InvoiceRecordDialog
+      invoiceId={selectedInvoiceId} customers={customers}
+      products={products ?? []} baseCcy={baseCcy} canEdit={!readonly && canPost}
+      customersLoading={customersState.loading} customersError={customersState.error}
+      onRetryCustomers={customersState.reload} pdfBusyId={pdfBusyId}
+      onPreviewPdf={async (target) => { await previewPdf(target); setSelectedInvoiceId(null); }} onDownloadPdf={downloadPdf}
+      onSendEmail={sendInvoiceEmail} onCreateShareLink={createShareLink}
+      onManageShareLinks={async (target) => { await manageShareLinks(target); setSelectedInvoiceId(null); }} onEmailLink={openEmailComposer}
+      onWhatsAppLink={openWhatsAppShare} onSaved={() => reload()}
+      onClose={() => setSelectedInvoiceId(null)}
+    />}
+    {show && <LegacyModal labelledBy="new-invoice-title" onClose={() => setShow(false)} className="invoice-entry-modal">
+      <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
+        <div className="invoice-entry-heading">
+          <div><h2 id="new-invoice-title" tabIndex={-1} data-modal-initial-focus>{appEnglish.invoices.newInvoice}</h2><p className="sub">{appEnglish.invoices.newInvoiceHelp}</p></div>
+          <button type="button" className="btn ghost sm" onClick={() => setShow(false)}>{appEnglish.invoices.cancel}</button>
+        </div>
+        <section className="invoice-form-section" aria-labelledby="invoice-details-heading">
+          <h3 id="invoice-details-heading">{appEnglish.invoices.invoiceDetails}</h3>
+          {customersState.error && <div className="invoice-resource-state danger" role="alert">
+            <div><b>{appEnglish.invoices.customerLoadFailed}</b><span>{appEnglish.invoices.noCustomersHelp}</span></div>
+            <button type="button" className="btn ghost sm" onClick={customersState.reload}>{appEnglish.invoices.retryCustomers}</button>
+          </div>}
+          {!customersState.loading && !customersState.error && customers.length === 0 && <div className="invoice-resource-state" role="status">
+            <div><b>{appEnglish.invoices.noCustomers}</b><span>{appEnglish.invoices.noCustomersHelp}</span></div>
+          </div>}
+          <div className="grid3 invoice-header-fields">
+            <LegacyField label={appEnglish.invoices.customer} hint={customersState.loading ? appEnglish.invoices.customerLoading : undefined}>
+              <select required disabled={customersState.loading || Boolean(customersState.error) || customers.length === 0} value={f.contactId ?? ""} onChange={(e) => setF({ ...f, contactId: e.target.value })}>
+                <option value="">{customersState.loading ? appEnglish.invoices.customerLoading : appEnglish.invoices.selectCustomer}</option>
+                {customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}</option>)}
+              </select>
+            </LegacyField>
+            <LegacyField label={appEnglish.invoices.currency}><select value={f.currency} onChange={(e) => setF({ ...f, currency: e.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
+            {f.currency !== baseCcy && <LegacyField label={appEnglish.invoices.rateToBase.replace("{currency}", baseCcy)}>
+              <input required type="number" min="0.000001" step="0.000001" inputMode="decimal" value={f.rateToBase} onChange={(e) => setF({ ...f, rateToBase: e.target.value })} />
+            </LegacyField>}
+          </div>
+        </section>
+        <section className="invoice-form-section" aria-labelledby="invoice-dates-heading">
+          <h3 id="invoice-dates-heading">{appEnglish.invoices.datesAndNotes}</h3>
+          <div className="grid2">
+            <LegacyField label={appEnglish.invoices.dueDate} hint={appEnglish.invoices.dueDateHelp}><input type="date" value={f.dueDate} onChange={(event) => setF({ ...f, dueDate: event.target.value })} /></LegacyField>
+            <LegacyField label={appEnglish.invoices.taxDate} hint={appEnglish.invoices.taxDateHelp}><input type="date" value={f.taxDate} onChange={(event) => setF({ ...f, taxDate: event.target.value })} /></LegacyField>
+          </div>
+          <LegacyField label={appEnglish.invoices.notes}><textarea rows={3} value={f.notes} onChange={(event) => setF({ ...f, notes: event.target.value })} /></LegacyField>
+        </section>
+        <section className="invoice-form-section" aria-labelledby="invoice-lines-heading">
+          <div className="invoice-section-heading"><div><h3 id="invoice-lines-heading">{appEnglish.invoices.lines}</h3><p className="sub">{appEnglish.invoices.taxTreatmentHelp}</p></div><button type="button" className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...empty }] })}>{appEnglish.invoices.addLine}</button></div>
+          <div className="invoice-line-cards">
+            {f.lines.map((line: any, index: number) => <fieldset className="invoice-line-card" key={index}>
+              <legend>{appEnglish.invoices.lineTitle.replace("{number}", String(index + 1))}</legend>
+              <div className="invoice-line-grid">
+                <LegacyField label={appEnglish.invoices.productOrService}><select value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}>
+                  <option value="">{appEnglish.invoices.freeTextLine}</option>
+                  {(products ?? []).map((product: any) => <option key={product.id} value={product.id}>{product.sku} — {product.name} ({Number(product.on_hand ?? product.onHand ?? 0)} on hand)</option>)}
+                </select></LegacyField>
+                <LegacyField label={appEnglish.invoices.description}><input required value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} /></LegacyField>
+                <LegacyField label={appEnglish.invoices.quantity}><input required type="number" min="0.001" step="0.001" inputMode="decimal" value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} /></LegacyField>
+                <LegacyField label={appEnglish.invoices.unitPrice}><input required type="number" min="0" step="0.01" inputMode="decimal" value={line.unitPrice} onChange={(event) => setLine(index, "unitPrice", event.target.value)} /></LegacyField>
+                <LegacyField label={appEnglish.invoices.taxTreatment}><select value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{appEnglish.invoices.taxTreatmentStandard}</option><option value="zero-rated">{appEnglish.invoices.taxTreatmentZeroRated}</option><option value="exempt">{appEnglish.invoices.taxTreatmentExempt}</option></select></LegacyField>
+                {f.lines.length > 1 && <button type="button" className="btn ghost sm invoice-remove-line" onClick={() => setF({ ...f, lines: f.lines.filter((_: any, itemIndex: number) => itemIndex !== index) })}>{appEnglish.invoices.remove}</button>}
+              </div>
+            </fieldset>)}
+          </div>
+        </section>
+        {err && <div className="err-text" role="alert">{err}</div>}
+        <div className="row end modal-actions">
+          <button type="button" className="btn ghost" onClick={() => setShow(false)}>{appEnglish.invoices.cancel}</button>
+          <button type="submit" className="btn" disabled={savingDraft || customersState.loading || Boolean(customersState.error) || customers.length === 0}>{savingDraft ? appEnglish.invoices.savingChanges : appEnglish.invoices.saveDraft}</button>
+        </div>
+      </form>
     </LegacyModal>}
   </>);
 }
 
-function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, onSaved, onClose }: {
-  invoiceId: string; contacts: ContactSummary[]; products: any[]; baseCcy: string;
-  canEdit: boolean; onSaved: () => void; onClose: () => void;
+function InvoiceRecordDialog({
+  invoiceId, customers, customersLoading, customersError, onRetryCustomers, products, baseCcy, canEdit,
+  pdfBusyId, onPreviewPdf, onDownloadPdf, onSendEmail, onCreateShareLink, onManageShareLinks,
+  onEmailLink, onWhatsAppLink, onSaved, onClose,
+}: {
+  invoiceId: string; customers: InvoiceCustomer[]; customersLoading: boolean; customersError: string;
+  onRetryCustomers: () => void; products: any[]; baseCcy: string; canEdit: boolean; pdfBusyId: string | null;
+  onPreviewPdf: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onDownloadPdf: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onSendEmail: (invoice: InvoiceDocumentTarget) => Promise<string | null>;
+  onCreateShareLink: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onManageShareLinks: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onEmailLink: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onWhatsAppLink: (invoice: InvoiceDocumentTarget) => Promise<void>;
+  onSaved: () => void; onClose: () => void;
 }) {
   const [invoice, setInvoice] = useState<InvoiceDetailView | null>(null);
   const [form, setForm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [actionBusy, setActionBusy] = useState<InvoiceRecordAction | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
   const copy = appEnglish.invoices;
   const load = async () => {
     setLoading(true); setError("");
@@ -3123,6 +3239,43 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
   };
   useEffect(() => { void load(); }, [invoiceId]);
   const editable = canEdit && invoice?.status === "DRAFT";
+  const availableActions = invoice ? invoiceRecordActions(invoice.status, canEdit) : [];
+  const actionTarget: InvoiceDocumentTarget | null = invoice ? {
+    id: invoice.id, number: invoice.number, contactEmail: invoice.contact?.email ?? null,
+  } : null;
+  const runAction = async (
+    key: InvoiceRecordAction,
+    action: () => Promise<unknown>,
+    options: { refresh?: boolean; success?: string } = {},
+  ) => {
+    setActionBusy(key); setActionMessage(""); setActionError("");
+    try {
+      const result = await action();
+      if (options.refresh) { await load(); onSaved(); }
+      const message = typeof result === "string" ? result : options.success;
+      if (message) setActionMessage(message);
+    } catch (requestError: unknown) {
+      setActionError(requestError instanceof Error ? requestError.message : copy.actionFailed);
+    } finally { setActionBusy(null); }
+  };
+  const issue = () => runAction("issue", () => api(`/invoices/${invoiceId}/issue`, { method: "POST", body: {} }), {
+    refresh: true, success: copy.issueSuccess,
+  });
+  const recordPaymentFromDialog = () => {
+    if (!invoice) return;
+    const amount = window.prompt(copy.paymentAmountPrompt, String(Number(invoice.total) - Number(invoice.amountPaid)));
+    if (!amount) return;
+    void runAction("recordPayment", () => api(`/invoices/${invoiceId}/payments`, {
+      method: "POST", body: { amount, idempotencyKey: idempotencyKey(`payment:${invoiceId}`) },
+    }), { refresh: true, success: copy.paymentSuccess });
+  };
+  const voidFromDialog = () => {
+    const reason = window.prompt(copy.voidReasonPrompt);
+    if (!reason) return;
+    void runAction("void", () => api(`/invoices/${invoiceId}/void`, { method: "POST", body: { reason } }), {
+      refresh: true, success: copy.voidSuccess,
+    });
+  };
   const setLine = (index: number, key: string, value: string) => {
     const lines = [...form.lines]; lines[index] = { ...lines[index], [key]: value };
     if (key === "productId" && value) {
@@ -3157,8 +3310,30 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
     {loading ? <p className="sub" role="status">{copy.loadingDetail}</p> : error && !form ? <div className="err-text" role="alert">{error}</div> : invoice && form && <>
       {invoice.status !== "DRAFT" && <div className="banner warn">{copy.historicalLocked}</div>}
       {invoice.status === "DRAFT" && !canEdit && <div className="banner warn">{copy.draftReadOnly}</div>}
+      {availableActions.length > 0 && actionTarget && <div className="invoice-record-actions" role="group" aria-label={copy.recordActions}>
+        <div className="invoice-record-action-heading"><div><b>{copy.recordActions}</b><span>{copy.recordActionsHelp}</span></div>{actionBusy && <span role="status">{copy.actionInProgress}</span>}</div>
+        <div className="invoice-record-action-buttons">
+          {availableActions.includes("preview") && <button className="btn ghost" disabled={Boolean(actionBusy) || pdfBusyId === invoice.id} onClick={() => void runAction("preview", () => onPreviewPdf(actionTarget))}>{pdfBusyId === invoice.id ? copy.preparingPdf : copy.previewPdf}</button>}
+          {availableActions.includes("download") && <button className="btn ghost" disabled={Boolean(actionBusy) || pdfBusyId === invoice.id} onClick={() => void runAction("download", () => onDownloadPdf(actionTarget))}>{pdfBusyId === invoice.id ? copy.preparingPdf : copy.downloadPdf}</button>}
+          {availableActions.some((key) => ["sendEmail", "createShareLink", "manageShareLinks", "emailLink", "whatsAppLink"].includes(key)) && <Dropdown label={copy.sharingActions} ariaLabel={copy.sharingActions}>
+            {availableActions.includes("sendEmail") && <button disabled={Boolean(actionBusy)} onClick={() => void runAction("sendEmail", () => onSendEmail(actionTarget))}>{copy.sendEmail}</button>}
+            {availableActions.includes("createShareLink") && <button disabled={Boolean(actionBusy)} onClick={() => void runAction("createShareLink", () => onCreateShareLink(actionTarget))}>{copy.createShareLink}</button>}
+            {availableActions.includes("manageShareLinks") && <button disabled={Boolean(actionBusy)} onClick={() => void runAction("manageShareLinks", () => onManageShareLinks(actionTarget))}>{copy.manageShareLinks}</button>}
+            {availableActions.includes("emailLink") && <button disabled={Boolean(actionBusy)} onClick={() => void runAction("emailLink", () => onEmailLink(actionTarget))}>{copy.emailInvoice}</button>}
+            {availableActions.includes("whatsAppLink") && <button disabled={Boolean(actionBusy)} onClick={() => void runAction("whatsAppLink", () => onWhatsAppLink(actionTarget))}>{copy.whatsappInvoice}</button>}
+          </Dropdown>}
+          {availableActions.some((key) => ["issue", "recordPayment", "void"].includes(key)) && <Dropdown label={copy.lifecycleActions} ariaLabel={copy.lifecycleActions}>
+            {availableActions.includes("issue") && <button disabled={Boolean(actionBusy)} onClick={() => void issue()}>{copy.issue}</button>}
+            {availableActions.includes("recordPayment") && <button disabled={Boolean(actionBusy)} onClick={recordPaymentFromDialog}>{copy.recordPayment}</button>}
+            {availableActions.includes("void") && <button disabled={Boolean(actionBusy)} onClick={voidFromDialog}>{copy.void}</button>}
+          </Dropdown>}
+        </div>
+      </div>}
+      {actionMessage && <div className="banner success" role="status">{actionMessage}</div>}
+      {actionError && <div className="err-text" role="alert">{actionError}</div>}
+      {editable && customersError && <div className="invoice-resource-state danger" role="alert"><div><b>{copy.customerLoadFailed}</b><span>{copy.noCustomersHelp}</span></div><button className="btn ghost sm" onClick={onRetryCustomers}>{copy.retryCustomers}</button></div>}
       <div className="grid3 record-form-grid">
-        <LegacyField label={copy.customer}>{editable ? <select value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })}><option value="">{copy.selectCustomer}</option>{contacts.filter((contact) => contact.isCustomer).map((contact) => <option value={contact.id} key={contact.id}>{contact.name}</option>)}</select> : <input disabled value={invoice.contact?.name ?? "—"} />}</LegacyField>
+        <LegacyField label={copy.customer} hint={editable && customersLoading ? copy.customerLoading : undefined}>{editable ? <select disabled={customersLoading || Boolean(customersError)} value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })}><option value="">{copy.selectCustomer}</option>{customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name}</option>)}</select> : <input disabled value={invoice.contact?.name ?? "—"} />}</LegacyField>
         <LegacyField label={copy.currency}><select disabled={!editable} value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })}><option>USD</option><option>ZWG</option></select></LegacyField>
         <LegacyField label={copy.dueDate}><input disabled={!editable} type="date" value={form.dueDate} onChange={(event) => setForm({ ...form, dueDate: event.target.value })} /></LegacyField>
         <LegacyField label={copy.taxDate}><input disabled={!editable} type="date" value={form.taxDate} onChange={(event) => setForm({ ...form, taxDate: event.target.value })} /></LegacyField>
@@ -3166,18 +3341,20 @@ function InvoiceRecordDialog({ invoiceId, contacts, products, baseCcy, canEdit, 
         <LegacyField label={copy.taxJurisdiction}><input disabled value={invoice.taxJurisdiction ?? "—"} /></LegacyField>
       </div>
       <LegacyField label={copy.notes}><textarea disabled={!editable} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></LegacyField>
-      <h3>{copy.lines}</h3>
-      <div className="invoice-lines-editor">
-        {form.lines.map((line: any, index: number) => <div className="invoice-line-editor" key={`${index}-${line.productId}`}>
-          <select disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.freeTextLine).replace("{number}", String(index + 1))} value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}><option value="">{copy.freeTextLine}</option>{products.map((product) => <option value={product.id} key={product.id}>{product.sku} — {product.name}</option>)}</select>
-          <input disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.description).replace("{number}", String(index + 1))} value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} />
-          <input disabled={!editable} inputMode="decimal" aria-label={copy.lineField.replace("{field}", copy.quantity).replace("{number}", String(index + 1))} value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} />
-          <input disabled={!editable} inputMode="decimal" aria-label={copy.lineField.replace("{field}", copy.unitPrice).replace("{number}", String(index + 1))} value={line.unitPrice} onChange={(event) => setLine(index, "unitPrice", event.target.value)} />
-          <select disabled={!editable} aria-label={copy.lineField.replace("{field}", copy.taxTreatment).replace("{number}", String(index + 1))} value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{copy.taxTreatmentStandard}</option><option value="zero-rated">{copy.taxTreatmentZeroRated}</option><option value="exempt">{copy.taxTreatmentExempt}</option></select>
-          {editable && form.lines.length > 1 && <button className="btn ghost sm" aria-label={copy.removeLine.replace("{number}", String(index + 1))} onClick={() => setForm({ ...form, lines: form.lines.filter((_: any, itemIndex: number) => itemIndex !== index) })}>{copy.remove}</button>}
-        </div>)}
+      <div className="invoice-section-heading"><div><h3>{copy.lines}</h3><p className="sub">{copy.taxTreatmentHelp}</p></div>{editable && <button className="btn ghost sm" onClick={() => setForm({ ...form, lines: [...form.lines, { productId: "", description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard" }] })}>{copy.addLine}</button>}</div>
+      <div className="invoice-line-cards">
+        {form.lines.map((line: any, index: number) => <fieldset className="invoice-line-card" key={index}>
+          <legend>{copy.lineTitle.replace("{number}", String(index + 1))}</legend>
+          <div className="invoice-line-grid">
+            <LegacyField label={copy.productOrService}><select disabled={!editable} value={line.productId} onChange={(event) => setLine(index, "productId", event.target.value)}><option value="">{copy.freeTextLine}</option>{products.map((product) => <option value={product.id} key={product.id}>{product.sku} — {product.name}</option>)}</select></LegacyField>
+            <LegacyField label={copy.description}><input disabled={!editable} required value={line.description} onChange={(event) => setLine(index, "description", event.target.value)} /></LegacyField>
+            <LegacyField label={copy.quantity}><input disabled={!editable} required type={editable ? "number" : "text"} min={editable ? "0.001" : undefined} step={editable ? "0.001" : undefined} inputMode={editable ? "decimal" : undefined} value={line.quantity} onChange={(event) => setLine(index, "quantity", event.target.value)} /></LegacyField>
+            <LegacyField label={copy.unitPrice}><input disabled={!editable} required type={editable ? "number" : "text"} min={editable ? "0" : undefined} step={editable ? "0.01" : undefined} inputMode={editable ? "decimal" : undefined} value={editable ? line.unitPrice : fmt(line.unitPrice, invoice.currency)} onChange={(event) => setLine(index, "unitPrice", event.target.value)} /></LegacyField>
+            <LegacyField label={copy.taxTreatment}><select disabled={!editable} value={line.taxTreatment} onChange={(event) => setLine(index, "taxTreatment", event.target.value)}><option value="standard">{copy.taxTreatmentStandard}</option><option value="zero-rated">{copy.taxTreatmentZeroRated}</option><option value="exempt">{copy.taxTreatmentExempt}</option></select></LegacyField>
+            {editable && form.lines.length > 1 && <button className="btn ghost sm invoice-remove-line" aria-label={copy.removeLine.replace("{number}", String(index + 1))} onClick={() => setForm({ ...form, lines: form.lines.filter((_: any, itemIndex: number) => itemIndex !== index) })}>{copy.remove}</button>}
+          </div>
+        </fieldset>)}
       </div>
-      {editable && <button className="btn ghost sm" onClick={() => setForm({ ...form, lines: [...form.lines, { productId: "", description: "", quantity: "1", unitPrice: "0", taxTreatment: "standard" }] })}>{copy.addLine}</button>}
       <div className="invoice-detail-totals"><span>{copy.subtotal}: <b>{fmt(invoice.subtotal, invoice.currency)}</b></span><span>{copy.tax}: <b>{fmt(invoice.taxTotal, invoice.currency)}</b></span><span>{copy.total}: <b>{fmt(invoice.total, invoice.currency)}</b></span><span>{copy.paid}: <b>{fmt(invoice.amountPaid, invoice.currency)}</b></span></div>
       {invoice.payments.length > 0 && <section><h3>{copy.payments}</h3><div className="table-scroll"><table><thead><tr><th>{copy.paymentDate}</th><th>{copy.reference}</th><th className="num">{copy.amount}</th></tr></thead><tbody>{invoice.payments.map((payment) => <tr key={payment.id}><td>{new Date(payment.date).toLocaleDateString()}</td><td>{payment.reference ?? "—"}</td><td className="num">{fmt(payment.amount, invoice.currency)}</td></tr>)}</tbody></table></div></section>}
       {error && <div className="err-text" role="alert">{error}</div>}

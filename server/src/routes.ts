@@ -1027,6 +1027,17 @@ api.get("/contacts", requirePermission("crm.read"), wrap(async (req) =>
   db.select().from(schema.contacts).where(and(
     eq(schema.contacts.tenantId, tenantId(req)), isNull(schema.contacts.deletedAt),
   )).orderBy(schema.contacts.name)));
+api.get("/invoice-customers", requirePermission("accounting.read"), wrap(async (req) =>
+  db.select({
+    id: schema.contacts.id,
+    name: schema.contacts.name,
+    email: schema.contacts.email,
+    phone: schema.contacts.phone,
+  }).from(schema.contacts).where(and(
+    eq(schema.contacts.tenantId, tenantId(req)),
+    eq(schema.contacts.isCustomer, true),
+    isNull(schema.contacts.deletedAt),
+  )).orderBy(schema.contacts.name)));
 api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.parse(req.body);
   const tid = tenantId(req);
