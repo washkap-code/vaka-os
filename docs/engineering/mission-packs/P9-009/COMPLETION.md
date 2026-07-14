@@ -24,9 +24,12 @@
 
 - Clean pre-change baseline: 67 files and 227 tests passed on a recreated,
   guarded `vaka_os_test` PostgreSQL database.
-- Legacy migration path: 109 existing tenants produced exactly 109 ownership
-  records and 109 ownership audit events.
-- Migration idempotency: a second run retained the same 109/109/109 counts.
+- Legacy migration path: a guarded database with 1,136 tenants and 1,027
+  previously established ownership rows backfilled the 109 missing tenants,
+  finishing with exactly 1,136 ownership rows and zero tenant mismatches. The
+  backfill recorded exactly 109 migration-source ownership audit events.
+- Migration idempotency: a second run retained the same 1,136 tenant/ownership
+  and 109 migration-audit counts.
 - Migration ambiguity: a temporary tenant with no active system Owner was
   rejected with the required fail-closed exception and then removed.
 - Fresh schema: guarded Drizzle schema preparation, finance integrity controls
@@ -35,11 +38,13 @@
 - Server TypeScript: passed.
 - Focused owner/session/deletion/platform identity suite: 4 files, 13 tests
   passed.
-- Complete server suite: 68 files, 230 tests passed, including finance, stock,
-  tenant isolation, authentication, MFA, recovery, billing, imports, audit and
-  rollback paths.
+- Complete server suite passed twice: 68 files and 230 tests against both the
+  migrated legacy state and a newly recreated empty test database, including
+  finance, stock, tenant isolation, authentication, MFA, recovery, billing,
+  imports, audit and rollback paths. One intentionally skipped test remained
+  unchanged in each run.
 - Web TypeScript, accessibility negative scanner, 236-token design-system
-  conformance, 11 shell tests, 3 invoice-PDF tests and production build passed.
+  conformance, 13 shell tests, 3 invoice-PDF tests and production build passed.
 - `git diff --check`: passed.
 
 ## Security and abuse review
@@ -72,7 +77,8 @@ security certification or penetration-test result.
 
 ## Release evidence
 
-P9-009 is stacked on safely published P6-012 through P6-008 branches. Production
-preflight, backup review, migration application, remote CI, ordered merge,
+P9-009 has been reconstructed as a clean two-commit release branch from current
+`main`; it does not include the unreleased P6-008 through P6-012 stack.
+Production preflight, backup review, migration application, remote CI, merge,
 deployment and explicit owner/non-owner live smoke evidence remain mandatory.
 The branch must not be described as live until every gate passes.
