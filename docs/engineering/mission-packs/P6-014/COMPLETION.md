@@ -1,7 +1,7 @@
 # P6-014 Completion Report
 
 **Date:** 2026-07-14
-**Status:** Implementation complete; all local release gates passed; remote quality and production release pending
+**Status:** Released (PR #75); local, remote, production and live-bundle gates passed
 
 ## Delivered
 
@@ -74,8 +74,15 @@ VoiceOver/device matrix and qualified professional approval remain gated.
 
 ## Release evidence
 
-P6-014 remains unreleased until its GitHub quality gate, Vercel preview,
-approved merge, post-merge main gate, Production deployment and live-bundle
-verification pass. Release evidence will be retained in the PR and deployment
-records. Rollback requires only reverting the scoped frontend and documentation
-commits; no database rollback is required.
+P6-014 was squash-merged through [PR #75](https://github.com/washkap-code/vaka-os/pull/75)
+at commit `6730cb7efc8710c90ffba7ba286dae20090ce60e` after the GitHub quality gate,
+Vercel preview and preview-comment checks passed. The post-merge `main` quality
+gate [run 29313770609](https://github.com/washkap-code/vaka-os/actions/runs/29313770609)
+passed. GitHub deployment `5436736117` recorded the exact commit in the
+Production environment with state `success`. The public site served the exact
+matching production assets `/assets/index-C3tw0GFb.js` and
+`/assets/index-DZGhws9Y.css` over HTTPS with status 200, correct JavaScript and
+CSS media types, and HSTS enabled.
+
+Rollback requires only reverting the scoped frontend and documentation commit;
+no database rollback is required.
