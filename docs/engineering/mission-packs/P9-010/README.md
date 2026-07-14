@@ -1,6 +1,6 @@
 # P9-010 — Refresh-token rotation and replay containment
 
-**Status:** Approved for implementation  
+**Status:** Implementation complete; local security and regression gates passed; remote release pending
 **Priority:** P0 security and sign-in reliability  
 **Depends on:** P9-008 account security and server sessions; P9-009 explicit tenant ownership  
 **Authority:** VAKA Constitution; User Session & Activity Specification; Security Principles

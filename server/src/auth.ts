@@ -8,8 +8,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { createHash, randomUUID } from "node:crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { createHash, createHmac, randomBytes, randomUUID } from "node:crypto";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db, schema, unauthorized, forbidden, badRequest, conflict, notFound, DEFAULT_ROLES, audit, Permission } from "./lib.js";
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
@@ -21,6 +21,9 @@ import type { PlatformPermission } from "./platform-staff.js";
 
 const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
+const REFRESH_COOKIE = "vaka_refresh";
+const REFRESH_COOKIE_PATH = "/api/v1/auth";
+const REFRESH_IDLE_MS = 30 * 86_400_000;
 
 export interface AuthedRequest extends Request {
   auth?: {
@@ -111,6 +114,38 @@ export async function signupTenant(opts: {
 type LoginContext = { clientType?: string; appVersion?: string; userAgent?: string; ip?: string };
 
 const hashSessionValue = (value: string) => createHash("sha256").update(`${JWT_SECRET}:${value}`).digest("hex");
+const hashRefreshValue = (value: string) => createHmac("sha256", JWT_SECRET).update(`refresh:${value}`).digest("hex");
+const newRefreshCredential = () => randomBytes(32).toString("base64url");
+
+type SessionUser = typeof schema.users.$inferSelect;
+
+function signAccessToken(user: SessionUser, sessionId: string, assuranceLevel: "aal1" | "aal2") {
+  return jwt.sign(
+    {
+      sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin,
+      sid: sessionId, aal: assuranceLevel, jti: randomUUID(),
+    },
+    JWT_SECRET, { expiresIn: ACCESS_TTL },
+  );
+}
+
+export function setRefreshCookie(res: Response, credential: string) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  res.setHeader("Set-Cookie", `${REFRESH_COOKIE}=${credential}; Path=${REFRESH_COOKIE_PATH}; Max-Age=${REFRESH_IDLE_MS / 1000}; HttpOnly; SameSite=Strict${secure}`);
+}
+
+export function clearRefreshCookie(res: Response) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  res.setHeader("Set-Cookie", `${REFRESH_COOKIE}=; Path=${REFRESH_COOKIE_PATH}; Max-Age=0; HttpOnly; SameSite=Strict${secure}`);
+}
+
+export function refreshCredentialFromCookie(cookieHeader?: string): string | null {
+  if (!cookieHeader) return null;
+  const raw = cookieHeader.split(";").map((part) => part.trim())
+    .find((part) => part.startsWith(`${REFRESH_COOKIE}=`))?.slice(REFRESH_COOKIE.length + 1);
+  if (!raw || !/^[A-Za-z0-9_-]{43}$/.test(raw)) return null;
+  return raw;
+}
 
 export async function createTenantUser(opts: {
   tenantId: string; actorUserId: string; email: string; fullName: string; roleId: string; initialPassword?: string;
@@ -225,10 +260,8 @@ export async function issueAuthenticatedSession(
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
 
   const sessionId = randomUUID();
-  const token = jwt.sign(
-    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId, aal: assuranceLevel },
-    JWT_SECRET, { expiresIn: ACCESS_TTL },
-  );
+  const token = signAccessToken(user, sessionId, assuranceLevel);
+  const refreshCredential = newRefreshCredential();
   const now = new Date();
   const idleExpiresAt = new Date(now.getTime() + 30 * 86_400_000);
   const absoluteExpiresAt = new Date(now.getTime() + 90 * 86_400_000);
@@ -237,6 +270,8 @@ export async function issueAuthenticatedSession(
     tenantId: user.tenantId,
     userId: user.id,
     tokenHash: hashSessionValue(token),
+    refreshTokenHash: hashRefreshValue(refreshCredential),
+    assuranceLevel,
     clientType: context.clientType?.trim().slice(0, 32) || "web",
     appVersion: context.appVersion?.trim().slice(0, 80) || null,
     deviceDescription: context.userAgent?.trim().slice(0, 160) || null,
@@ -253,11 +288,125 @@ export async function issueAuthenticatedSession(
   } else {
     await db.insert(schema.platformAuditLogs).values({ userId: user.id, action: "platform_admin.session_created", metadata: { sessionId } });
   }
-  return { mfaRequired: false as const, token, user: {
+  return { mfaRequired: false as const, token, refreshCredential, user: {
     id: user.id, email: user.email, fullName: user.fullName,
     tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
     mustChangePassword: user.mustChangePassword,
   } };
+}
+
+type RefreshOutcome =
+  | { status: "invalid" | "replay" }
+  | { status: "refreshed"; token: string; refreshCredential: string; user: {
+    id: string; email: string; fullName: string; tenantId: string | null;
+    isPlatformAdmin: boolean; mustChangePassword: boolean;
+  } };
+
+export async function refreshAuthenticatedSession(credential: string) {
+  const credentialHash = hashRefreshValue(credential);
+  const outcome: RefreshOutcome = await db.transaction(async (tx) => {
+    const result = await tx.execute(sql`
+      SELECT s.id, s.tenant_id, s.user_id, s.refresh_token_hash,
+        s.previous_refresh_token_hash, s.idle_expires_at, s.absolute_expires_at,
+        s.revoked_at, s.assurance_level, u.email, u.full_name,
+        u.is_platform_admin, u.must_change_password, u.status
+      FROM user_sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.refresh_token_hash = ${credentialHash}
+         OR s.previous_refresh_token_hash = ${credentialHash}
+      FOR UPDATE OF s
+    `);
+    const row = (result as unknown as { rows: Array<{
+      id: string; tenant_id: string | null; user_id: string;
+      refresh_token_hash: string | null; previous_refresh_token_hash: string | null;
+      idle_expires_at: Date; absolute_expires_at: Date; revoked_at: Date | null;
+      assurance_level: string; email: string; full_name: string;
+      is_platform_admin: boolean; must_change_password: boolean; status: string;
+    }> }).rows[0];
+    if (!row) return { status: "invalid" };
+
+    if (row.previous_refresh_token_hash === credentialHash) {
+      const now = new Date();
+      await tx.update(schema.userSessions).set({
+        revokedAt: now,
+        revokedBy: row.user_id,
+        revokedReason: "refresh_token_replay",
+        refreshTokenHash: null,
+        previousRefreshTokenHash: null,
+      }).where(eq(schema.userSessions.id, row.id));
+      if (row.tenant_id) {
+        await audit(tx, row.tenant_id, row.user_id, "security.session_refresh_replay", "session", row.id, {
+          action: "session_revoked",
+        });
+      } else {
+        await tx.insert(schema.platformAuditLogs).values({
+          userId: row.user_id,
+          action: "platform_admin.session_refresh_replay",
+          metadata: { sessionId: row.id, action: "session_revoked" },
+        });
+      }
+      return { status: "replay" };
+    }
+
+    const now = new Date();
+    if (row.revoked_at || row.status !== "active"
+      || new Date(row.idle_expires_at) <= now || new Date(row.absolute_expires_at) <= now
+      || (row.assurance_level !== "aal1" && row.assurance_level !== "aal2")) {
+      return { status: "invalid" };
+    }
+    const [verifiedFactor] = await tx.select({ id: schema.userMfaFactors.id })
+      .from(schema.userMfaFactors).where(and(
+        eq(schema.userMfaFactors.userId, row.user_id),
+        eq(schema.userMfaFactors.status, "VERIFIED"),
+      ));
+    if (verifiedFactor && row.assurance_level !== "aal2") return { status: "invalid" };
+
+    const user = {
+      id: row.user_id,
+      tenantId: row.tenant_id,
+      email: row.email,
+      fullName: row.full_name,
+      isPlatformAdmin: row.is_platform_admin,
+      mustChangePassword: row.must_change_password,
+      status: row.status,
+    } as SessionUser;
+    const assuranceLevel = row.assurance_level as "aal1" | "aal2";
+    const token = signAccessToken(user, row.id, assuranceLevel);
+    const refreshCredential = newRefreshCredential();
+    const idleExpiresAt = new Date(Math.min(now.getTime() + REFRESH_IDLE_MS, new Date(row.absolute_expires_at).getTime()));
+    await tx.update(schema.userSessions).set({
+      tokenHash: hashSessionValue(token),
+      previousRefreshTokenHash: row.refresh_token_hash,
+      refreshTokenHash: hashRefreshValue(refreshCredential),
+      refreshRotatedAt: now,
+      lastSeenAt: now,
+      idleExpiresAt,
+    }).where(eq(schema.userSessions.id, row.id));
+    if (row.tenant_id) {
+      await audit(tx, row.tenant_id, row.user_id, "security.session_refreshed", "session", row.id);
+    } else {
+      await tx.insert(schema.platformAuditLogs).values({
+        userId: row.user_id,
+        action: "platform_admin.session_refreshed",
+        metadata: { sessionId: row.id },
+      });
+    }
+    return {
+      status: "refreshed",
+      token,
+      refreshCredential,
+      user: {
+        id: row.user_id,
+        email: row.email,
+        fullName: row.full_name,
+        tenantId: row.tenant_id,
+        isPlatformAdmin: row.is_platform_admin,
+        mustChangePassword: row.must_change_password,
+      },
+    };
+  });
+  if (outcome.status !== "refreshed") throw unauthorized("Session renewal failed");
+  return outcome;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,13 +1,17 @@
 # VAKA OS Codebase Audit
 
-## Implementation addendum — 2026-07-10
+## Implementation addendum — 2026-07-14
 
 Since the original audit, VAKA has added immutable invoice document snapshots,
 secure expiring invoice links, branded PDF logo embedding, and a first
 server-side session foundation. New sessions store only a token hash, record
 last-seen/idle/absolute expiry data, and can be revoked by the tenant Owner
-through the Users & Activity view. Refresh-token rotation, MFA, explicit owner
-identity, and complete activity coverage remain open hardening work.
+through the Users & Activity view. Subsequent P9-008 through P9-010 work added
+optional authenticator MFA, explicit tenant ownership, provider-neutral account
+recovery, governed platform workforce access, HttpOnly refresh credentials,
+single-use rotation and replay-triggered session containment. Complete activity
+coverage, trusted-device/risk policy, ownership recovery and production provider
+evidence remain open hardening work.
 
 The platform-admin console now also exposes aggregate tenant, plan, user,
 session, billing, growth and recent-audit metrics. The analytics endpoint is
@@ -51,7 +55,7 @@ No functionality was changed. Tests were not executed because the task was a sta
 | Validation | Zod 4 | Route request bodies are generally validated inline. |
 | Database | PostgreSQL 16 | Local service is defined in Docker Compose. |
 | ORM/query layer | Drizzle ORM + `pg` | Uses schema definitions, query builder calls, and parameterised SQL templates. |
-| Authentication | JWT + bcrypt | One-hour bearer access token; bcrypt cost 12. |
+| Authentication | JWT + bcrypt | One-hour bearer access token, server-side revocable session and single-use HttpOnly refresh rotation; bcrypt cost 12. |
 | Testing | Vitest + Supertest | Integration-oriented critical-path tests against PostgreSQL. |
 | Styling | Plain global CSS | CSS custom properties provide tenant brand colours. |
 | Local orchestration | Docker Compose | PostgreSQL and API services are defined. |
@@ -225,12 +229,25 @@ Strengths:
 
 Gaps and concerns:
 
-- The server falls back to `"dev-secret"` when `JWT_SECRET` is missing. A production process could start with a known signing secret.
+- The original audit found a development signing-secret fallback. Current
+  configuration rejects missing or unsafe production JWT secrets; deployment
+  secret rotation evidence remains an operational gate.
 - The browser stores the bearer token in `localStorage`, making token theft possible if an XSS vulnerability is introduced.
-- There are no refresh tokens, server-side sessions, token revocation records, device/session management, or secure logout invalidation.
-- Login and signup have no rate limiting, progressive delay, account lockout, bot protection, or abuse monitoring.
-- MFA, password reset, email verification, invitation, user management, and role management flows are absent.
-- Login without a subdomain searches by email globally even though email uniqueness is tenant-scoped. This can be ambiguous and increases platform-admin authentication risk.
+- The original audit found no refresh tokens, server-side sessions, token
+  revocation records, device/session management, or secure logout invalidation.
+  P9-008 through P9-010 now provide revocable server sessions, self/owner
+  session management, sign-out invalidation and single-use HttpOnly refresh
+  rotation; trusted-device/risk policy and complete activity coverage remain.
+- Credential and public-link endpoints now have per-process rate limits. Shared
+  edge limiting, progressive risk controls and bot/credential-stuffing telemetry
+  remain deployment work.
+- Optional authenticator MFA, password reset, tenant-user creation/status
+  management and governed platform workforce profiles now exist. Email
+  verification, provider-managed invitations, tenant role editing and mandatory
+  privileged-MFA policy remain incomplete.
+- Login without a subdomain still searches tenant-scoped duplicate emails, but
+  now refuses an ambiguous password match and asks for the company subdomain.
+  Dedicated identity discovery and stronger platform-admin entry policy remain.
 - JWT issuer, audience, algorithm allow-list, and token version controls are not explicit.
 - Authentication and authorisation events are not comprehensively audited.
 

@@ -34,8 +34,7 @@ The current repository has:
 
 The current foundation still does not yet have:
 
-- refresh-token rotation/revocation;
-- device inventory;
+- a complete trusted-device inventory or risk model;
 - reliable current-presence state;
 - comprehensive authentication/activity audit coverage;
 - a controlled ownership-transfer/recovery workflow and step-up policy.
@@ -45,9 +44,12 @@ recorded accountable owner. It reports tenant-scoped users, valid sessions,
 approximate active-now presence, material audit events and per-session
 revocation. The `Owner` role remains the seeded full-permission compatibility
 role, but its mutable name no longer confers owner-only authority. Controlled
-ownership transfer/recovery, MFA/step-up for selected actions, refresh-token
-rotation, bounded exports and richer activity filters remain required before
-this is considered a complete security centre.
+ownership transfer/recovery, MFA/step-up for selected actions, bounded exports
+and richer activity filters remain required before
+this is considered a complete security centre. P9-010 now provides compatible
+server-side refresh sessions, HttpOnly cookie delivery, single-use rotation,
+replay containment and tenant/platform renewal audit evidence. Trusted-device
+policy, risk scoring and the remaining activity-event catalogue are still open.
 
 The same area now provides a controlled team-access foundation: an Owner can
 create a non-owner member with a one-time temporary password, select an
@@ -261,13 +263,15 @@ Implement incrementally:
 1. Add explicit tenant ownership and versioned session/event schemas.
    Explicit ownership is implemented; session/event versioning remains staged.
 2. Introduce server-side refresh sessions while preserving a compatible access
-   token migration.
-3. Rotate refresh tokens and detect replay.
+   token migration. **Implemented in P9-010.**
+3. Rotate refresh tokens and detect replay. **Implemented in P9-010.**
 4. Record sign-in, renewal, sign-out, expiry, revocation, and failure events.
-5. Add self-session management.
-6. Add owner-only tenant session queries and revocation.
+   Renewal, sign-out and revocation have evidence; the catalogue remains partial.
+5. Add self-session management. **Foundation implemented in P9-008.**
+6. Add owner-only tenant session queries and revocation. **Implemented in
+   P9-008/P9-009.**
 7. Expand the existing audit catalogue module by module.
-8. Build the Users & Activity interface.
+8. Build the Users & Activity interface. **Foundation implemented in P9-008.**
 9. Add retention, archival, export, alerts, and operational monitoring.
 
 Rollback must preserve existing valid access during staged migration where

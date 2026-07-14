@@ -159,6 +159,10 @@ export const userSessions = pgTable("user_sessions", {
   tenantId: uuid("tenant_id").references(() => tenants.id),
   userId: uuid("user_id").notNull().references(() => users.id),
   tokenHash: text("token_hash").notNull(),
+  refreshTokenHash: text("refresh_token_hash"),
+  previousRefreshTokenHash: text("previous_refresh_token_hash"),
+  refreshRotatedAt: timestamp("refresh_rotated_at", { withTimezone: true }),
+  assuranceLevel: text("assurance_level").default("aal1").notNull(),
   clientType: text("client_type").default("web").notNull(),
   appVersion: text("app_version"),
   deviceDescription: text("device_description"),
@@ -172,6 +176,11 @@ export const userSessions = pgTable("user_sessions", {
   revokedReason: text("revoked_reason"),
 }, (t) => [
   uniqueIndex("user_sessions_token_hash").on(t.tokenHash),
+  uniqueIndex("user_sessions_refresh_token_hash").on(t.refreshTokenHash)
+    .where(sql`${t.refreshTokenHash} IS NOT NULL`),
+  uniqueIndex("user_sessions_previous_refresh_token_hash").on(t.previousRefreshTokenHash)
+    .where(sql`${t.previousRefreshTokenHash} IS NOT NULL`),
+  check("user_sessions_assurance_level_check", sql`${t.assuranceLevel} IN ('aal1', 'aal2')`),
   index("user_sessions_tenant_activity").on(t.tenantId, t.lastSeenAt),
   index("user_sessions_user_activity").on(t.userId, t.lastSeenAt),
 ]);
