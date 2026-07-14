@@ -28,7 +28,10 @@ import {
 import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, voidInvoice } from "./invoicing.js";
 import { adjustStock, recordOpeningStock } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
-import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
+import {
+  trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
+  inventoryValuationReconciliation,
+} from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
 import { businessSummaryQuerySchema, getBusinessSummary } from "./ai/business-summary.js";
 import { createReferralCode, recordReferralReview } from "./referrals.js";
@@ -1729,6 +1732,8 @@ api.get("/reports/balance-sheet", requirePermission("reports.read"), wrap(async 
   balanceSheet(tenantId(req), req.query.asAt ? new Date(String(req.query.asAt)) : new Date())));
 api.get("/reports/aged-receivables", requirePermission("reports.read"), wrap(async (req) =>
   agedReceivables(tenantId(req))));
+api.get("/reports/inventory-valuation", requirePermission("reports.read"), wrap(async (req) =>
+  inventoryValuationReconciliation(tenantId(req))));
 api.get("/reports/vat", requirePermission("reports.read"), wrap(async (req) =>
   getVatTechnicalReport({ tenantId: tenantId(req), period: vatReportPeriodSchema.parse(req.query) })));
 api.get("/reports/vat.csv", requirePermission("reports.read"), async (req, res, next) => {

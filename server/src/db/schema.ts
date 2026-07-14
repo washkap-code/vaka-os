@@ -6,7 +6,7 @@
 // =============================================================================
 import {
   pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb, date,
-  pgEnum, uniqueIndex, index, check,
+  pgEnum, uniqueIndex, index, check, bigint as pgBigint,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -842,6 +842,49 @@ export const stockMovements = pgTable("stock_movements", {
 }, (t) => [
   index("sm_tenant_product").on(t.tenantId, t.productId, t.warehouseId),
   uniqueIndex("stock_movements_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+]);
+
+// Rebuildable current weighted-average valuation cache. Append-only movement
+// history and stock_movement_valuations remain the evidence trail.
+export const inventoryValuationLayers = pgTable("inventory_valuation_layers", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  quantityOnHand: qty("quantity_on_hand").default("0").notNull(),
+  totalCostCents: pgBigint("total_cost_cents", { mode: "bigint" }).default(sql`0`).notNull(),
+  version: pgBigint("version", { mode: "bigint" }).default(sql`0`).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("inventory_valuation_layer_tenant_product_wh").on(t.tenantId, t.productId, t.warehouseId),
+  index("inventory_valuation_layer_tenant_product").on(t.tenantId, t.productId),
+  check("inventory_valuation_layer_quantity_check", sql`${t.quantityOnHand} >= 0`),
+  check("inventory_valuation_layer_cost_check", sql`${t.totalCostCents} >= 0`),
+  check("inventory_valuation_layer_zero_check", sql`${t.quantityOnHand} <> 0 OR ${t.totalCostCents} = 0`),
+]);
+
+// Append-only exact base-currency allocation evidence for every stock movement.
+// Never update or delete; corrections create an offsetting stock movement.
+export const stockMovementValuations = pgTable("stock_movement_valuations", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  stockMovementId: uuid("stock_movement_id").notNull().references(() => stockMovements.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  quantityBefore: qty("quantity_before").notNull(),
+  quantityAfter: qty("quantity_after").notNull(),
+  costBeforeCents: pgBigint("cost_before_cents", { mode: "bigint" }).notNull(),
+  movementCostCents: pgBigint("movement_cost_cents", { mode: "bigint" }).notNull(),
+  costAfterCents: pgBigint("cost_after_cents", { mode: "bigint" }).notNull(),
+  valuationMethod: text("valuation_method").default("WEIGHTED_AVERAGE").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("stock_movement_valuation_movement").on(t.stockMovementId),
+  index("stock_movement_valuation_tenant_product_wh").on(t.tenantId, t.productId, t.warehouseId, t.createdAt),
+  check("stock_movement_valuation_quantity_check", sql`${t.quantityBefore} >= 0 AND ${t.quantityAfter} >= 0`),
+  check("stock_movement_valuation_cost_check", sql`${t.costBeforeCents} >= 0 AND ${t.movementCostCents} >= 0 AND ${t.costAfterCents} >= 0`),
+  check("stock_movement_valuation_method_check", sql`${t.valuationMethod} = 'WEIGHTED_AVERAGE'`),
+  check("stock_movement_valuation_zero_check", sql`${t.quantityAfter} <> 0 OR ${t.costAfterCents} = 0`),
 ]);
 
 export const purchaseRequisitions = pgTable("purchase_requisitions", {

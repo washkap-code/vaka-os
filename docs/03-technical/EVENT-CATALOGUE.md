@@ -25,6 +25,7 @@ originating request or prevent sibling subscribers from receiving the event.
 | `invoice.voided` | Invoice void/reversal | `invoiceId`, `reason` |
 | `stock.moved` | Sale, void reversal, adjustment, opening stock, purchase receipt and opening-stock import | `movementId`, `productId`, `warehouseId`, `quantityDelta`, `kind` |
 | `stock.adjusted` | Manual stock adjustment | `movementId`, `productId`, `warehouseId`, `quantityDelta` |
+| `inventory.valued` | Weighted-average stock issue valued and its COGS journal committed | `movementId`, `valuationId`, `journalEntryId` |
 | `tenant.lifecycle_changed` | Billing lifecycle transition | `tenantId`, `from`, `to` |
 | `customer.changed` | Customer create/update and committed contact import | `customerId`, `change` |
 | `supplier.changed` | Supplier create/update, vendor-role contact changes and committed contact import | `supplierId`, `change` |
@@ -37,7 +38,9 @@ originating request or prevent sibling subscribers from receiving the event.
 Money values use integer-cent strings. Quantity deltas remain exact decimal
 strings. Stable event identifiers are derived from the event type and committed
 fact identifier; lifecycle identifiers also include the transition context.
-The three `*.changed` index-refresh facts contain identifiers and bounded
+`inventory.valued` is identifier-only; `journalEntryId` is null only for a
+zero-value issue for which the journal service correctly refuses a zero-value
+entry. The three `*.changed` index-refresh facts contain identifiers and bounded
 change labels; `activity.recorded` contains identifiers only. Consumers always
 re-read the canonical tenant-owned record rather than treating an event payload
 as business-record authority.
