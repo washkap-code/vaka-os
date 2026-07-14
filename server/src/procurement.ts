@@ -315,7 +315,7 @@ export async function createRequestForQuote(opts: {
       responseDueAt: opts.input.responseDueAt ?? null,
       createdBy: opts.actorUserId,
     }).returning();
-    await tx.insert(schema.requestForQuoteLineItems).values(requisitionLines.map((line) => ({
+    const rfqLines = await tx.insert(schema.requestForQuoteLineItems).values(requisitionLines.map((line) => ({
       tenantId: opts.tenantId,
       requestForQuoteId: rfq.id,
       purchaseRequisitionLineItemId: line.id,
@@ -323,7 +323,7 @@ export async function createRequestForQuote(opts: {
       warehouseId: line.warehouseId,
       position: line.position,
       quantity: line.quantity,
-    })));
+    }))).returning();
     await tx.insert(schema.requestForQuoteSuppliers).values(opts.input.supplierContactIds.map((supplierContactId) => ({
       tenantId: opts.tenantId,
       requestForQuoteId: rfq.id,
@@ -335,7 +335,7 @@ export async function createRequestForQuote(opts: {
       supplierCount: opts.input.supplierContactIds.length,
       lineCount: requisitionLines.length,
     });
-    return { ...rfq, lines: requisitionLines, supplierContactIds: opts.input.supplierContactIds };
+    return { ...rfq, lines: rfqLines, supplierContactIds: opts.input.supplierContactIds };
   });
 }
 

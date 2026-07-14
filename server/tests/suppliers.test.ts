@@ -146,7 +146,7 @@ describe("P4-001 canonical supplier records", () => {
     ));
     const [poCountAfter] = await db.select({ value: count() }).from(schema.purchaseOrders)
       .where(eq(schema.purchaseOrders.tenantId, tenantA.tenantId));
-    expect(sequenceAfter.nextVal).toBe(sequenceBefore.nextVal);
+    expect(sequenceAfter?.nextVal ?? null).toBe(sequenceBefore?.nextVal ?? null);
     expect(Number(poCountAfter.value)).toBe(Number(poCountBefore.value));
 
     const [expenseAccount] = await db.select().from(schema.accounts).where(and(
