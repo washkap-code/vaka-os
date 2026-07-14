@@ -25,6 +25,8 @@ or personal content.
 The current repository has:
 
 - tenant users with status and `lastLoginAt`;
+- an explicit one-owner-per-tenant identity record with same-tenant database
+  enforcement, atomic signup establishment and server-derived owner authority;
 - JWT access tokens with server-side hashed session records, idle/absolute
   expiry, last-seen presence and owner-triggered revocation;
 - server-side user/role reload on authenticated requests; and
@@ -36,15 +38,16 @@ The current foundation still does not yet have:
 - device inventory;
 - reliable current-presence state;
 - comprehensive authentication/activity audit coverage;
-- a durable tenant-owner identity separate from broad role permissions.
+- a controlled ownership-transfer/recovery workflow and step-up policy.
 
-The owner-only **Users & Activity** area is now available to the user holding
-the system `Owner` role. It reports tenant-scoped users, valid sessions,
+The owner-only **Users & Activity** area is now available to the explicitly
+recorded accountable owner. It reports tenant-scoped users, valid sessions,
 approximate active-now presence, material audit events and per-session
-revocation. The owner-role check is an incremental compatibility measure;
-explicit owner identity, MFA/step-up authentication, refresh-token rotation,
-bounded exports and richer activity filters remain required before this is
-considered a complete security centre.
+revocation. The `Owner` role remains the seeded full-permission compatibility
+role, but its mutable name no longer confers owner-only authority. Controlled
+ownership transfer/recovery, MFA/step-up for selected actions, refresh-token
+rotation, bounded exports and richer activity filters remain required before
+this is considered a complete security centre.
 
 The same area now provides a controlled team-access foundation: an Owner can
 create a non-owner member with a one-time temporary password, select an
@@ -256,6 +259,7 @@ endpoints without gaining access to other users’ activity.
 Implement incrementally:
 
 1. Add explicit tenant ownership and versioned session/event schemas.
+   Explicit ownership is implemented; session/event versioning remains staged.
 2. Introduce server-side refresh sessions while preserving a compatible access
    token migration.
 3. Rotate refresh tokens and detect replay.

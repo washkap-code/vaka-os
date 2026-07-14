@@ -31,7 +31,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-006 | Tenant-scoped Customer/Invoice/Product search adapter | ✅ Technically verified internal adapter; durable delivery, scale and UI gated |
 | P1-008 | Canonical Company/Customer/Invoice/Product metadata registry | ✅ Technically verified read-only registry; dynamic values and AI context gated |
 | P9-008 | Account recovery, optional MFA and governed platform workforce | ✅ Released (PR #62–#64); email delivery and stable MFA key activation remain externally configured |
-| P9-009 | Explicit Tenant Ownership Foundation | Approved for implementation |
+| P9-009 | Explicit Tenant Ownership Foundation | Implemented; migration and full local security/domain suite verified; remote migration/release gates pending behind P6-008 through P6-012 |
 | P3-003 | Customer activity and communication timeline | ✅ Technically verified for manual CRM activity and financial milestones; provider communications gated |
 | P3-004 | Customer records, bulk actions and controlled deletion | ✅ Released (PR #61); physical privacy erasure and merge/deduplication remain gated |
 | P2-007 | Invoice detail and draft amendment | ✅ Released (PR #61); issued/posted history remains immutable |

@@ -15,6 +15,8 @@ const required = [
   ["tenants", "country_code"],
   ["users", "must_change_password"],
   ["users", "platform_role_key"],
+  ["tenant_ownerships", "tenant_id"],
+  ["tenant_ownerships", "owner_user_id"],
   ["user_sessions", "id"],
   ["platform_roles", "key"],
   ["password_reset_requests", "token_hash"],
