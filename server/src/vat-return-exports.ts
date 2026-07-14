@@ -1,5 +1,10 @@
 import type { VatTechnicalReport } from "./vat-return-report.js";
-import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
+import {
+  renderBrandedReportPdf,
+  type BrandedReport,
+  type ReportBranding,
+  type ReportSectionRow,
+} from "./report-pdf.js";
 
 function safeCsvCell(value: string): string {
   const trimmed = value.trimStart();
@@ -45,109 +50,76 @@ export function renderVatReportCsv(report: VatTechnicalReport): string {
   return `\uFEFF${rows.map((row) => row.map(safeCsvCell).join(",")).join("\r\n")}\r\n`;
 }
 
-function pdfText(value: string): string {
-  return value.replace(/[^\x20-\x7E]/g, "?")
-    .replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+function shortId(value: string | null | undefined): string {
+  if (!value) return "-";
+  return value.length > 8 ? value.slice(0, 8) : value;
 }
 
-function wrap(value: string, maxLength = 92): string[] {
-  const words = value.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let current = "";
-  for (const word of words) {
-    if (!current) current = word;
-    else if (`${current} ${word}`.length <= maxLength) current += ` ${word}`;
-    else { lines.push(current); current = word; }
+function friendlySource(sourceType: string): string {
+  return sourceType.replace(/[_:]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+}
+
+// Human evidence reference: prefer the invoice number, else a readable source
+// label — never a raw UUID in the primary column.
+function referenceLabel(row: VatTechnicalReport["evidence"][number]): string {
+  if (row.invoice?.number) return row.invoice.number;
+  return friendlySource(row.sourceType);
+}
+
+export function renderVatReportPdf(report: VatTechnicalReport, branding: ReportBranding): Buffer {
+  const rows: ReportSectionRow[] = [{
+    kind: "columns",
+    text: `${"Date".padEnd(11)} ${"Account".padEnd(11)} ${"Reference".padEnd(20)} ${"Debit".padStart(12)} ${"Credit".padStart(12)} ${"Impact".padStart(12)}`,
+  }];
+
+  if (report.evidence.length === 0) {
+    rows.push({ kind: "note", text: "No VAT ledger activity in this period." });
   }
-  if (current) lines.push(current);
-  return lines.length ? lines : [""];
-}
-
-function buildPdf(objects: string[]): Buffer {
-  let output = "%PDF-1.4\n%\xFF\xFF\xFF\xFF\n";
-  const offsets = [0];
-  objects.forEach((object, index) => {
-    offsets.push(Buffer.byteLength(output, "latin1"));
-    output += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-  const xrefOffset = Buffer.byteLength(output, "latin1");
-  output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  for (let index = 1; index <= objects.length; index++) {
-    output += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  }
-  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  return Buffer.from(output, "latin1");
-}
-
-export function renderVatReportPdf(report: VatTechnicalReport): Buffer {
-  const evidenceHeading = "Date       Account     Source              Debit        Credit       Impact";
-  const introLines = [
-    report.entity.companyName,
-    `Period: ${report.period.from} to ${report.period.to}`,
-    `Jurisdiction: ${report.entity.countryCode} - ${report.entity.countryName}`,
-    `Currency: ${report.currency}`,
-    `Generated: ${report.generatedAt}`,
-    "",
-    `Output VAT: ${report.currency} ${report.totals.outputVat}`,
-    `Input VAT: ${report.currency} ${report.totals.inputVat}`,
-    `Net VAT: ${report.currency} ${report.totals.netVat} (${report.totals.position})`,
-    "",
-    "Technical preview only - not filing-ready. Qualified accountant/tax approval is required.",
-    "Input VAT includes posted VAT_INPUT ledger lines, including matched supplier bills; eligibility still requires professional review.",
-    "",
-    `Evidence rows: ${report.evidence.length}`,
-  ];
-  const linesPerPage = 38;
-  const pages: string[][] = [[...introLines, evidenceHeading]];
 
   for (const row of report.evidence) {
-    const source = `${row.sourceType}:${row.invoice?.number ?? row.sourceId ?? "-"}`.slice(0, 18).padEnd(18);
-    const main = `${row.date.slice(0, 10)} ${row.account.padEnd(11)} ${source} ${row.debit.padStart(11)} ${row.credit.padStart(11)} ${row.impact.padStart(11)}`;
-    const trace = `  Journal ${row.journalEntryId}; line ${row.journalLineId}; source ${row.sourceId ?? "-"}`;
-    const invoiceTax = row.invoice
-      ? `  Invoice ${row.invoice.number ?? row.invoice.id}; ${row.invoice.currency}; jurisdiction ${row.invoice.taxJurisdiction ?? "unclassified"}; tax date ${row.invoice.taxDate ?? "unclassified"}; treatment ${row.invoice.taxTreatment ?? "unclassified"}; tax ${row.invoice.taxTotal}`
-      : null;
-    const block = [main, ...wrap(trace, 90), ...(invoiceTax ? wrap(invoiceTax, 90) : []), ...wrap(`  ${row.memo}`, 90)];
-    let currentPage = pages[pages.length - 1];
-
-    if (currentPage.length + block.length > linesPerPage) {
-      currentPage = ["Evidence continued", evidenceHeading];
-      pages.push(currentPage);
+    const reference = referenceLabel(row).slice(0, 20).padEnd(20);
+    rows.push({
+      kind: "row",
+      text: `${row.date.slice(0, 10).padEnd(11)} ${row.account.padEnd(11)} ${reference} ${row.debit.padStart(12)} ${row.credit.padStart(12)} ${row.impact.padStart(12)}`,
+    });
+    if (row.invoice) {
+      rows.push({
+        kind: "note",
+        text: `Invoice ${row.invoice.number ?? row.invoice.id} — ${row.invoice.currency} — jurisdiction ${row.invoice.taxJurisdiction ?? "unclassified"} — tax date ${row.invoice.taxDate ?? "unclassified"} — treatment ${row.invoice.taxTreatment ?? "unclassified"} — tax ${row.invoice.taxTotal}`,
+      });
     }
-
-    // A pathological memo can exceed a whole page. Preserve every line while
-    // repeating the evidence context on each continuation page.
-    for (const line of block) {
-      if (currentPage.length >= linesPerPage) {
-        currentPage = ["Evidence continued", evidenceHeading];
-        pages.push(currentPage);
-      }
-      currentPage.push(line);
+    if (row.memo && row.memo.trim()) {
+      rows.push({ kind: "note", text: `Memo: ${row.memo.trim()}` });
     }
+    // Technical trace kept for auditors, de-emphasised and abbreviated so the
+    // figures — not the identifiers — lead the page.
+    rows.push({
+      kind: "reference",
+      text: `ref  journal ${shortId(row.journalEntryId)}  ·  line ${shortId(row.journalLineId)}  ·  source ${shortId(row.sourceId)}`,
+    });
   }
 
-  const objects: string[] = [];
-  objects.push("<< /Type /Catalog /Pages 2 0 R >>");
-  const pageIds = pages.map((_, index) => 4 + index * 2);
-  objects.push(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`);
-  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
+  const model: BrandedReport = {
+    documentKind: "VAT Technical Preview",
+    notFilingReady: true,
+    branding,
+    meta: [
+      { label: "Period", value: `${report.period.from} to ${report.period.to}` },
+      { label: "Jurisdiction", value: `${report.entity.countryCode} - ${report.entity.countryName}` },
+      { label: "Currency", value: report.currency },
+      { label: "Generated", value: report.generatedAt },
+    ],
+    summary: [
+      { label: "Output VAT", value: `${report.currency} ${report.totals.outputVat}` },
+      { label: "Input VAT", value: `${report.currency} ${report.totals.inputVat}` },
+      { label: "Net VAT", value: `${report.currency} ${report.totals.netVat} (${report.totals.position})`, strong: true },
+    ],
+    notices: [
+      "Technical preview only - not filing-ready. Qualified accountant/tax approval is required.",
+      "Input VAT includes posted VAT_INPUT ledger lines, including matched supplier bills; eligibility still requires professional review.",
+    ],
+    sections: [{ heading: `Evidence (${report.evidence.length} rows)`, rows }],
+  };
 
-  pages.forEach((page, index) => {
-    const pageId = pageIds[index];
-    const contentId = pageId + 1;
-    const commands: string[] = [
-      "BT /F1 13 Tf 40 760 Td (VAT technical preview - not filing-ready) Tj ET",
-    ];
-    page.forEach((line, lineIndex) => {
-      const y = 735 - lineIndex * 17;
-      commands.push(`BT /F1 8 Tf 40 ${y} Td (${pdfText(line)}) Tj ET`);
-    });
-    commands.push(`BT /F1 7 Tf 40 22 Td (${pdfText(VAKA_DOCUMENT_FOOTER)}) Tj ET`);
-    commands.push(`BT /F1 8 Tf 500 22 Td (Page ${index + 1} of ${pages.length}) Tj ET`);
-    const content = commands.join("\n");
-    objects[pageId - 1] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`;
-    objects[contentId - 1] = `<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`;
-  });
-
-  return buildPdf(objects);
+  return renderBrandedReportPdf(model);
 }

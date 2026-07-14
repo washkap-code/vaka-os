@@ -1,5 +1,10 @@
 import type { StatutoryReportPack } from "./statutory-report-pack.js";
-import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
+import {
+  renderBrandedReportPdf,
+  type BrandedReport,
+  type ReportBranding,
+  type ReportSectionRow,
+} from "./report-pdf.js";
 
 function safeCsvCell(value: string): string {
   const trimmed = value.trimStart();
@@ -44,62 +49,87 @@ export function renderStatutoryReportCsv(report: StatutoryReportPack): string {
   return `\uFEFF${rows.map((row) => row.map(safeCsvCell).join(",")).join("\r\n")}\r\n`;
 }
 
-function pdfText(value: string): string {
-  return value.replace(/[^\x20-\x7E]/g, "?").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-}
-
-function buildPdf(objects: string[]): Buffer {
-  let output = "%PDF-1.4\n%\xFF\xFF\xFF\xFF\n";
-  const offsets = [0];
-  objects.forEach((object, index) => { offsets.push(Buffer.byteLength(output, "latin1")); output += `${index + 1} 0 obj\n${object}\nendobj\n`; });
-  const xrefOffset = Buffer.byteLength(output, "latin1");
-  output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  for (let index = 1; index <= objects.length; index++) output += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  return Buffer.from(output, "latin1");
-}
-
 function clipped(value: string, length: number): string { return value.length <= length ? value : `${value.slice(0, length - 1)}~`; }
 
-export function renderStatutoryReportPdf(report: StatutoryReportPack): Buffer {
-  const lines: string[] = [
-    report.entity.companyName, `Period: ${report.period.from} to ${report.period.to}; as at ${report.period.asAt}`,
-    `Currency: ${report.currency}; scope: ${report.entity.legalEntityScope}`, `Generated: ${report.generatedAt}`, "",
-    "TECHNICAL PREVIEW ONLY - NOT FILING-READY. Qualified accountant approval required.",
-    "Payables covers supported PO receipt sources only; no complete AP open-item subledger.", "",
-    "TRIAL BALANCE", "Code     Account                                  Debit        Credit       Balance",
-    ...report.trialBalance.map((row) => `${row.code.padEnd(8)} ${clipped(row.name, 36).padEnd(36)} ${row.debit.padStart(12)} ${row.credit.padStart(12)} ${row.balance.padStart(12)}`), "",
-    "PROFIT AND LOSS", ...report.profitAndLoss.income.map((row) => `Income  ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`),
-    ...report.profitAndLoss.expenses.map((row) => `Expense ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`),
-    `Total income ${report.profitAndLoss.totalIncome}; expenses ${report.profitAndLoss.totalExpenses}; net profit ${report.profitAndLoss.netProfit}`, "",
-    "BALANCE SHEET", ...report.balanceSheet.assets.map((row) => `Asset     ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`),
-    ...report.balanceSheet.liabilities.map((row) => `Liability ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`),
-    ...report.balanceSheet.equity.map((row) => `Equity    ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`),
-    `Assets ${report.balanceSheet.totalAssets}; liabilities and equity ${report.balanceSheet.totalLiabilitiesAndEquity}; balances ${report.balanceSheet.balances}`, "",
-    "AGED RECEIVABLES", "Number       Counterparty                         Date       Days      Balance",
-    ...report.agedReceivables.items.map((row) => `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`),
-    `Control ${report.agedReceivables.controlBalance}; scheduled ${report.agedReceivables.scheduledBalance}; unallocated ${report.agedReceivables.unallocatedBalance}`, "",
-    "AGED PAYABLES - SUPPLIER BILLS", "Number       Counterparty                         Date       Days      Balance",
-    ...report.agedPayables.items.map((row) => `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`),
-    `Control ${report.agedPayables.controlBalance}; scheduled ${report.agedPayables.scheduledBalance}; unallocated ${report.agedPayables.unallocatedBalance}`,
+export function renderStatutoryReportPdf(report: StatutoryReportPack, branding: ReportBranding): Buffer {
+  const trialBalance: ReportSectionRow[] = [
+    { kind: "columns", text: `${"Code".padEnd(8)} ${"Account".padEnd(36)} ${"Debit".padStart(12)} ${"Credit".padStart(12)} ${"Balance".padStart(12)}` },
+    ...report.trialBalance.map((row): ReportSectionRow => ({
+      kind: "row",
+      text: `${row.code.padEnd(8)} ${clipped(row.name, 36).padEnd(36)} ${row.debit.padStart(12)} ${row.credit.padStart(12)} ${row.balance.padStart(12)}`,
+    })),
   ];
-  const linesPerPage = 39;
-  const pages: string[][] = [];
-  for (let index = 0; index < lines.length; index += linesPerPage) pages.push(lines.slice(index, index + linesPerPage));
-  if (pages.length === 0) pages.push([]);
-  const objects: string[] = ["<< /Type /Catalog /Pages 2 0 R >>"];
-  const pageIds = pages.map((_, index) => 4 + index * 2);
-  objects.push(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`);
-  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>");
-  pages.forEach((page, index) => {
-    const pageId = pageIds[index]; const contentId = pageId + 1;
-    const commands = ["BT /F1 12 Tf 40 760 Td (Statutory report pack - technical preview) Tj ET"];
-    page.forEach((line, lineIndex) => commands.push(`BT /F1 7 Tf 30 ${738 - lineIndex * 17} Td (${pdfText(line)}) Tj ET`));
-    commands.push(`BT /F1 7 Tf 30 22 Td (${pdfText(VAKA_DOCUMENT_FOOTER)}) Tj ET`);
-    commands.push(`BT /F1 8 Tf 500 22 Td (Page ${index + 1} of ${pages.length}) Tj ET`);
-    const content = commands.join("\n");
-    objects[pageId - 1] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`;
-    objects[contentId - 1] = `<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`;
-  });
-  return buildPdf(objects);
+
+  const profitAndLoss: ReportSectionRow[] = [
+    { kind: "columns", text: `${"Section".padEnd(8)} ${"Code".padEnd(8)} ${"Account".padEnd(50)} ${"Amount".padStart(12)}` },
+    ...report.profitAndLoss.income.map((row): ReportSectionRow => ({
+      kind: "row", text: `${"Income".padEnd(8)} ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`,
+    })),
+    ...report.profitAndLoss.expenses.map((row): ReportSectionRow => ({
+      kind: "row", text: `${"Expense".padEnd(8)} ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`,
+    })),
+    { kind: "note", text: `Total income ${report.profitAndLoss.totalIncome} — total expenses ${report.profitAndLoss.totalExpenses} — net profit ${report.profitAndLoss.netProfit}` },
+  ];
+
+  const balanceSheet: ReportSectionRow[] = [
+    { kind: "columns", text: `${"Section".padEnd(9)} ${"Code".padEnd(8)} ${"Account".padEnd(50)} ${"Amount".padStart(12)}` },
+    ...report.balanceSheet.assets.map((row): ReportSectionRow => ({
+      kind: "row", text: `${"Asset".padEnd(9)} ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`,
+    })),
+    ...report.balanceSheet.liabilities.map((row): ReportSectionRow => ({
+      kind: "row", text: `${"Liability".padEnd(9)} ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`,
+    })),
+    ...report.balanceSheet.equity.map((row): ReportSectionRow => ({
+      kind: "row", text: `${"Equity".padEnd(9)} ${row.code.padEnd(8)} ${clipped(row.name, 50).padEnd(50)} ${row.amount.padStart(12)}`,
+    })),
+    { kind: "note", text: `Total assets ${report.balanceSheet.totalAssets} — liabilities and equity ${report.balanceSheet.totalLiabilitiesAndEquity} — balances ${report.balanceSheet.balances}` },
+  ];
+
+  const agedColumns: ReportSectionRow = {
+    kind: "columns", text: `${"Number".padEnd(12)} ${"Counterparty".padEnd(36)} ${"Date".padEnd(10)} ${"Days".padStart(5)} ${"Balance".padStart(12)}`,
+  };
+  const agedReceivables: ReportSectionRow[] = [
+    agedColumns,
+    ...report.agedReceivables.items.map((row): ReportSectionRow => ({
+      kind: "row", text: `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate.padEnd(10)} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`,
+    })),
+    { kind: "note", text: `Control ${report.agedReceivables.controlBalance} — scheduled ${report.agedReceivables.scheduledBalance} — unallocated ${report.agedReceivables.unallocatedBalance}` },
+  ];
+  const agedPayables: ReportSectionRow[] = [
+    agedColumns,
+    ...report.agedPayables.items.map((row): ReportSectionRow => ({
+      kind: "row", text: `${(row.number ?? "-").padEnd(12)} ${clipped(row.counterparty, 36).padEnd(36)} ${row.sourceDate.padEnd(10)} ${String(row.daysOutstanding).padStart(5)} ${row.balance.padStart(12)}`,
+    })),
+    { kind: "note", text: `Control ${report.agedPayables.controlBalance} — scheduled ${report.agedPayables.scheduledBalance} — unallocated ${report.agedPayables.unallocatedBalance}` },
+  ];
+
+  const model: BrandedReport = {
+    documentKind: "Statutory Report Pack",
+    notFilingReady: true,
+    branding,
+    meta: [
+      { label: "Period", value: `${report.period.from} to ${report.period.to} (as at ${report.period.asAt})` },
+      { label: "Currency", value: report.currency },
+      { label: "Scope", value: report.entity.legalEntityScope },
+      { label: "Generated", value: report.generatedAt },
+    ],
+    summary: [
+      { label: "Net profit", value: `${report.currency} ${report.profitAndLoss.netProfit}` },
+      { label: "Total assets", value: `${report.currency} ${report.balanceSheet.totalAssets}` },
+      { label: "Liabilities and equity", value: `${report.currency} ${report.balanceSheet.totalLiabilitiesAndEquity}`, strong: true },
+    ],
+    notices: [
+      "Technical preview only - not filing-ready. Qualified accountant approval is required.",
+      "Payables covers supported PO receipt sources only; no complete AP open-item subledger.",
+    ],
+    sections: [
+      { heading: "Trial balance", rows: trialBalance },
+      { heading: "Profit and loss", rows: profitAndLoss },
+      { heading: "Balance sheet", rows: balanceSheet },
+      { heading: "Aged receivables", rows: agedReceivables },
+      { heading: "Aged payables - supplier bills", rows: agedPayables },
+    ],
+  };
+
+  return renderBrandedReportPdf(model);
 }

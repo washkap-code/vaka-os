@@ -150,8 +150,12 @@ describe("P2-003 VAT technical report", () => {
     expect(pdf.headers["content-type"]).toContain("application/pdf");
     expect(pdf.headers["cache-control"]).toBe("private, no-store");
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
-    expect(pdf.body.toString("latin1")).toContain("VAT technical preview - not filing-ready");
-    expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
+    // Reports are the tenant's own branded documents — no VAKA branding.
+    const vatPdfText = pdf.body.toString("latin1");
+    expect(vatPdfText).toContain("Finance Kernel vat-report-api-a");
+    expect(vatPdfText).toContain("VAT Technical Preview");
+    expect(vatPdfText).toContain("not filing-ready");
+    expect(vatPdfText).not.toContain("Powered by VAKA OS");
 
     const audits = await db.select().from(schema.auditLogs).where(and(
       eq(schema.auditLogs.tenantId, tenantA.tenantId),

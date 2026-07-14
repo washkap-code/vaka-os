@@ -102,8 +102,11 @@ describe("P2-006 statutory report pack", () => {
     const pdf = await request(app).get("/api/v1/reports/statutory-pack.pdf").query(period).set(tenant.auth);
     expect(pdf.status).toBe(200);
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
-    expect(pdf.body.toString("latin1")).toContain("technical preview");
-    expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
+    // Reports are the tenant's own branded documents — no VAKA branding.
+    const statutoryPdfText = pdf.body.toString("latin1");
+    expect(statutoryPdfText).toContain("Statutory Report Pack");
+    expect(statutoryPdfText).toContain("not filing-ready");
+    expect(statutoryPdfText).not.toContain("Powered by VAKA OS");
 
     const audits = await db.select().from(schema.auditLogs).where(and(eq(schema.auditLogs.tenantId, tenant.tenantId), eq(schema.auditLogs.action, "report.statutory_pack_exported")));
     expect(audits).toHaveLength(2);

@@ -56,6 +56,7 @@ import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-repor
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
 import { getStatutoryReportPack, statutoryReportPeriodSchema } from "./statutory-report-pack.js";
 import { renderStatutoryReportCsv, renderStatutoryReportPdf } from "./statutory-report-exports.js";
+import { getReportBranding } from "./document-branding.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
 import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
@@ -1766,10 +1767,11 @@ api.get("/reports/vat.pdf", requirePermission("reports.read"), async (req, res, 
       entityId: tenantId(req as AuthedRequest),
       metadata: { format: "pdf", from: period.from, to: period.to, evidenceCount: report.evidence.length },
     });
+    const branding = await getReportBranding(tenantId(req as AuthedRequest));
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="vat-technical-preview-${period.from}-${period.to}.pdf"`);
     res.setHeader("Cache-Control", "private, no-store");
-    res.send(renderVatReportPdf(report));
+    res.send(renderVatReportPdf(report, branding));
   } catch (error) { next(error); }
 });
 api.get("/reports/statutory-pack", requirePermission("reports.read"), wrap(async (req, res) => {
@@ -1789,10 +1791,11 @@ async function exportStatutoryPack(req: AuthedRequest, res: Response, format: "c
       payableRows: report.agedPayables.items.length,
     },
   });
+  const branding = format === "pdf" ? await getReportBranding(tenantId(req)) : null;
   res.setHeader("Content-Type", format === "csv" ? "text/csv; charset=utf-8" : "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="statutory-report-technical-preview-${period.from}-${period.to}.${format}"`);
   res.setHeader("Cache-Control", "private, no-store");
-  res.send(format === "csv" ? renderStatutoryReportCsv(report) : renderStatutoryReportPdf(report));
+  res.send(format === "csv" ? renderStatutoryReportCsv(report) : renderStatutoryReportPdf(report, branding!));
 }
 api.get("/reports/statutory-pack.csv", requirePermission("reports.read"), (req, res, next) => {
   exportStatutoryPack(req as AuthedRequest, res, "csv").catch(next);

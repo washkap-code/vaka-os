@@ -204,13 +204,14 @@ export class PdfPage {
   readonly commands: string[] = [];
 
   text(value: unknown, x: number, y: number, options: {
-    size?: number; font?: PdfFont; colour?: PdfColour; align?: "left" | "right"; width?: number;
+    size?: number; font?: PdfFont; colour?: PdfColour; align?: "left" | "right"; width?: number; mono?: boolean;
   } = {}) {
     const size = options.size ?? ENTERPRISE_DOCUMENT.type.body;
-    const font = options.font === "bold" ? "F2" : "F1";
+    const font = options.mono ? "F3" : options.font === "bold" ? "F2" : "F1";
     const text = safePdfText(value);
+    const glyphWidth = options.mono ? size * 0.6 : approximateTextWidth(text, size);
     const xPosition = options.align === "right" && options.width
-      ? x + options.width - approximateTextWidth(text, size) : x;
+      ? x + options.width - (options.mono ? text.length * glyphWidth : glyphWidth) : x;
     this.commands.push(`BT /${font} ${size} Tf ${colourCommand(options.colour ?? ENTERPRISE_DOCUMENT.colour.ink)} ${xPosition.toFixed(2)} ${y.toFixed(2)} Td (${escaped(text)}) Tj ET`);
   }
 
@@ -257,6 +258,7 @@ export class PdfDocument {
       "",
       "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
       "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>",
     ];
     const imageRef = this.image ? objects.length + 1 : null;
     if (this.image) {
@@ -267,7 +269,7 @@ export class PdfDocument {
       const pageRef = objects.length + 1;
       const contentRef = pageRef + 1;
       pageRefs.push(pageRef);
-      const resources = `/Font << /F1 3 0 R /F2 4 0 R >>${imageRef ? ` /XObject << /Im1 ${imageRef} 0 R >>` : ""}`;
+      const resources = `/Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >>${imageRef ? ` /XObject << /Im1 ${imageRef} 0 R >>` : ""}`;
       objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${ENTERPRISE_DOCUMENT.page.width} ${ENTERPRISE_DOCUMENT.page.height}] /Resources << ${resources} >> /Contents ${contentRef} 0 R >>`);
       const content = page.commands.join("\n");
       objects.push(`<< /Length ${Buffer.byteLength(content, "latin1")} >>\nstream\n${content}\nendstream`);

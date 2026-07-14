@@ -4,6 +4,20 @@
 
 ### Fixed
 
+- **Financial reports are now the tenant's own branded documents.** VAT technical
+  preview and the statutory report pack PDFs render on the shared document engine
+  used by invoices: the tenant's letterhead (company name, physical address,
+  registration/tax/VAT numbers, logo) and their selected primary brand colour for
+  the accent bar and headings. VAKA branding was removed from these reports (no
+  "Powered by VAKA OS" footer). Evidence tables now lead with figures — clean
+  human references (invoice number or readable source) in the Reference column —
+  and demote raw journal/line/source identifiers to a small grey trace line for
+  auditors. Fixed garbled punctuation (em-dashes and separators previously
+  rendered as "?") via WinAnsi transliteration. Report totals are unchanged; a
+  voided invoice still nets to nil. New `server/src/report-pdf.ts`; `document-
+  layout.ts` gains a monospace font for aligned numeric columns. No schema, data
+  or posting behaviour changed.
+
 - **Invoice customer selection and record actions:** Invoice create and draft
   amendment now load active tenant customers through an accounting-authorised
   read model over the canonical Contact entity, with distinct loading, empty,
