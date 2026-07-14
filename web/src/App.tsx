@@ -283,6 +283,56 @@ type BackupManifestRecord = {
   failureReason: string | null;
   createdAt: string;
 };
+type RestoreDrillRecord = {
+  id: string;
+  drillId: string;
+  backupManifestId: string;
+  backupManifestRef: string;
+  environment: string;
+  scenario: "FULL_DATABASE" | "POINT_IN_TIME" | "DATABASE_AND_OBJECTS";
+  startedAt: string;
+  completedAt: string;
+  targetRpoMinutes: number;
+  targetRtoMinutes: number;
+  achievedRpoMinutes: number;
+  achievedRtoMinutes: number;
+  outcome: "SUCCEEDED" | "PARTIAL" | "FAILED";
+  checksumVerified: boolean;
+  schemaVerified: boolean;
+  tenantIsolationVerified: boolean;
+  auditContinuityVerified: boolean;
+  ledgerBalanceVerified: boolean;
+  objectRecoveryVerified: boolean | null;
+  operator: string;
+  recordedBy: string;
+  reviewDecision: "ACCEPTED" | "REJECTED" | null;
+  reviewReason: string | null;
+  reviewedAt: string | null;
+  acceptanceEligible: boolean;
+};
+type RestoreDrillDraft = {
+  drillId: string;
+  backupManifestId: string;
+  environment: string;
+  scenario: RestoreDrillRecord["scenario"];
+  isolatedTargetRef: string;
+  startedAt: string;
+  completedAt: string;
+  targetRecoveryPointAt: string;
+  recoveredThroughAt: string;
+  targetRpoMinutes: string;
+  targetRtoMinutes: string;
+  outcome: RestoreDrillRecord["outcome"];
+  checksumVerified: boolean;
+  schemaVerified: boolean;
+  tenantIsolationVerified: boolean;
+  auditContinuityVerified: boolean;
+  ledgerBalanceVerified: boolean;
+  objectRecoveryVerified: boolean;
+  verificationSummary: string;
+  failureReason: string;
+  operator: string;
+};
 
 type PlatformControlCenter = {
   generatedAt: string;
@@ -291,7 +341,7 @@ type PlatformControlCenter = {
     api: { status: "operational"; scope: string };
     database: { status: "operational"; observedAt: string };
   };
-  signals: { activeSessions: number; auditEvents24h: number; pastDueTenants: number; suspendedTenants: number };
+  signals: { activeSessions: number; auditEvents24h: number; pastDueTenants: number; suspendedTenants: number; acceptedRestoreDrills: number };
   catalogue: PlatformCapabilityStatus[];
   operationsEvidence: {
     summary: Record<OperationsEvidenceGate["state"], number>;
@@ -532,6 +582,11 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   const [analytics, setAnalytics] = useState<any>(null);
   const [controlCenter, setControlCenter] = useState<PlatformControlCenter | null>(null);
   const [backupManifests, setBackupManifests] = useState<BackupManifestRecord[]>([]);
+  const [restoreDrills, setRestoreDrills] = useState<RestoreDrillRecord[]>([]);
+  const [restoreForm, setRestoreForm] = useState<RestoreDrillDraft | null>(null);
+  const [restoreReview, setRestoreReview] = useState<{
+    drill: RestoreDrillRecord; decision: "ACCEPTED" | "REJECTED"; reason: string;
+  } | null>(null);
   const [staff, setStaff] = useState<PlatformStaff[]>([]);
   const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
   const [tab, setTab] = useState<PlatformAdminPage>("overview");
@@ -566,6 +621,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
       if (can("platform.overview.read")) requests.push(api("/platform/analytics").then(setAnalytics));
       if (can("platform.operations.read")) requests.push(api("/platform/control-center").then((value) => setControlCenter(value as PlatformControlCenter)));
       if (can("platform.backups.read")) requests.push(api("/platform/backup-manifests").then((rows) => setBackupManifests(rows as BackupManifestRecord[])));
+      if (can("platform.backups.read")) requests.push(api("/platform/restore-drills").then((rows) => setRestoreDrills(rows as RestoreDrillRecord[])));
       if (can("platform.staff.read")) {
         requests.push(api("/platform/staff").then((rows) => setStaff(rows as PlatformStaff[])));
         requests.push(api("/platform/staff/roles").then((rows) => setPlatformRoles(rows as PlatformRole[])));
@@ -577,6 +633,71 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   useEffect(() => {
     if (!adminNavigation.some((item) => item.key === tab) && adminNavigation[0]) setTab(adminNavigation[0].key);
   }, [adminNavigation, tab]);
+  const dateTimeLocal = (value: Date) => {
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 16);
+  };
+  const openRestoreForm = () => {
+    const now = Date.now();
+    const source = backupManifests.find((manifest) => manifest.status === "succeeded");
+    setRestoreForm({
+      drillId: `restore-${new Date(now).toISOString().replace(/[^0-9]/g, "").slice(0, 14)}`,
+      backupManifestId: source?.id ?? "",
+      environment: source?.environment ?? "",
+      scenario: "FULL_DATABASE",
+      isolatedTargetRef: "",
+      startedAt: dateTimeLocal(new Date(now - 65 * 60_000)),
+      completedAt: dateTimeLocal(new Date(now - 5 * 60_000)),
+      targetRecoveryPointAt: dateTimeLocal(new Date(now - 75 * 60_000)),
+      recoveredThroughAt: dateTimeLocal(new Date(now - 80 * 60_000)),
+      targetRpoMinutes: "",
+      targetRtoMinutes: "",
+      outcome: "SUCCEEDED",
+      checksumVerified: false,
+      schemaVerified: false,
+      tenantIsolationVerified: false,
+      auditContinuityVerified: false,
+      ledgerBalanceVerified: false,
+      objectRecoveryVerified: false,
+      verificationSummary: "",
+      failureReason: "",
+      operator: me.user.fullName,
+    });
+  };
+  function updateRestoreField<K extends keyof RestoreDrillDraft>(key: K, value: RestoreDrillDraft[K]) {
+    setRestoreForm((current) => current ? { ...current, [key]: value } : current);
+  }
+  const submitRestoreDrill = async () => {
+    if (!restoreForm) return;
+    setBusy(true); setMsg("");
+    try {
+      await api("/platform/restore-drills", { method: "POST", body: {
+        ...restoreForm,
+        startedAt: new Date(restoreForm.startedAt).toISOString(),
+        completedAt: new Date(restoreForm.completedAt).toISOString(),
+        targetRecoveryPointAt: new Date(restoreForm.targetRecoveryPointAt).toISOString(),
+        recoveredThroughAt: new Date(restoreForm.recoveredThroughAt).toISOString(),
+        targetRpoMinutes: Number(restoreForm.targetRpoMinutes),
+        targetRtoMinutes: Number(restoreForm.targetRtoMinutes),
+        objectRecoveryVerified: restoreForm.scenario === "DATABASE_AND_OBJECTS"
+          ? restoreForm.objectRecoveryVerified : null,
+        failureReason: restoreForm.failureReason || null,
+      } });
+      setRestoreForm(null); setMsg(copy.restoreDrillRecorded); await load();
+    } catch (error: unknown) { setMsg(error instanceof Error ? error.message : copy.unexpectedError); }
+    setBusy(false);
+  };
+  const submitRestoreReview = async () => {
+    if (!restoreReview) return;
+    setBusy(true); setMsg("");
+    try {
+      await api(`/platform/restore-drills/${restoreReview.drill.id}/review`, {
+        method: "POST", body: { decision: restoreReview.decision, reason: restoreReview.reason },
+      });
+      setRestoreReview(null); setMsg(copy.restoreReviewRecorded); await load();
+    } catch (error: unknown) { setMsg(error instanceof Error ? error.message : copy.unexpectedError); }
+    setBusy(false);
+  };
   const runBilling = async () => {
     if (!window.confirm(copy.billingConfirm)) return;
     setBusy(true); setMsg(""); setBillingMessage("");
@@ -761,6 +882,64 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
               {!backupManifests.length && <tr><td colSpan={7}>{copy.noBackupManifests}</td></tr>}</tbody>
             </table></div>
           </div>
+          <div className="panel">
+            <div className="panel-heading">
+              <div><h2>{copy.restoreDrills}</h2><div className="sub">{copy.restoreDrillsHelp}</div></div>
+              {can("platform.backups.write") && <button className="btn accent" onClick={openRestoreForm}
+                disabled={!backupManifests.some((manifest) => manifest.status === "succeeded")}>{copy.recordRestoreDrill}</button>}
+            </div>
+            <div className="table-scroll" role="region" aria-label={copy.restoreDrillsTableLabel} tabIndex={0}><table className="evidence-table dense-data-table">
+              <thead><tr><th>{copy.restoreDrill}</th><th>{copy.outcome}</th><th>{copy.review}</th><th>{copy.environment}</th><th>{copy.achievedRpo}</th><th>{copy.achievedRto}</th><th>{copy.operator}</th>{can("platform.security.manage") && <th>{copy.actions}</th>}</tr></thead>
+              <tbody>{restoreDrills.map((drill) => <tr key={drill.id}>
+                <td><strong>{drill.drillId}</strong><small>{drill.scenario} · {drill.backupManifestRef}</small></td>
+                <td><span className={`status-chip state-${drill.outcome.toLowerCase()}`}>{drill.outcome}</span></td>
+                <td><span className={`status-chip state-${(drill.reviewDecision ?? "requires-review").toLowerCase()}`}>{drill.reviewDecision ?? copy.requiresReview}</span></td>
+                <td>{drill.environment}<small>{new Date(drill.completedAt).toLocaleString()}</small></td>
+                <td>{copy.minutesAgainstTarget.replace("{achieved}", String(drill.achievedRpoMinutes)).replace("{target}", String(drill.targetRpoMinutes))}</td>
+                <td>{copy.minutesAgainstTarget.replace("{achieved}", String(drill.achievedRtoMinutes)).replace("{target}", String(drill.targetRtoMinutes))}</td>
+                <td>{drill.operator}</td>
+                {can("platform.security.manage") && <td>{!drill.reviewDecision && drill.recordedBy !== me.userId
+                  ? <div className="row"><button className="btn ghost sm" disabled={!drill.acceptanceEligible}
+                    onClick={() => setRestoreReview({ drill, decision: "ACCEPTED", reason: "" })}>{copy.acceptEvidence}</button>
+                    <button className="btn ghost sm" onClick={() => setRestoreReview({ drill, decision: "REJECTED", reason: "" })}>{copy.rejectEvidence}</button></div>
+                  : "—"}</td>}
+              </tr>)}
+              {!restoreDrills.length && <tr><td colSpan={can("platform.security.manage") ? 8 : 7}>{copy.noRestoreDrills}</td></tr>}</tbody>
+            </table></div>
+          </div>
+          {restoreForm && <LegacyModal labelledBy="restore-drill-dialog-title" onClose={() => setRestoreForm(null)} className="record-modal">
+            <div className="panel-heading"><div><h2 id="restore-drill-dialog-title" tabIndex={-1} data-modal-initial-focus>{copy.recordRestoreDrill}</h2><div className="sub">{copy.restoreEvidenceNotice}</div></div><button className="btn ghost sm" onClick={() => setRestoreForm(null)}>{copy.close}</button></div>
+            <div className="grid2 record-form-grid">
+              <LegacyField label={copy.backupManifestSource}><select value={restoreForm.backupManifestId} onChange={(event) => {
+                const selected = backupManifests.find((manifest) => manifest.id === event.target.value);
+                setRestoreForm({ ...restoreForm, backupManifestId: event.target.value, environment: selected?.environment ?? "" });
+              }}><option value="">{copy.selectBackupManifest}</option>{backupManifests.filter((manifest) => manifest.status === "succeeded").map((manifest) => <option key={manifest.id} value={manifest.id}>{manifest.manifestId} · {manifest.environment}</option>)}</select></LegacyField>
+              <LegacyField label={copy.restoreDrillId}><input value={restoreForm.drillId} onChange={(event) => updateRestoreField("drillId", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.environment}><input value={restoreForm.environment} readOnly /></LegacyField>
+              <LegacyField label={copy.restoreScenario}><select value={restoreForm.scenario} onChange={(event) => updateRestoreField("scenario", event.target.value as RestoreDrillDraft["scenario"])}><option value="FULL_DATABASE">{copy.fullDatabase}</option><option value="POINT_IN_TIME">{copy.pointInTime}</option><option value="DATABASE_AND_OBJECTS">{copy.databaseAndObjects}</option></select></LegacyField>
+              <LegacyField label={copy.isolatedTargetReference}><input value={restoreForm.isolatedTargetRef} onChange={(event) => updateRestoreField("isolatedTargetRef", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.operator}><input value={restoreForm.operator} onChange={(event) => updateRestoreField("operator", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.started}><input type="datetime-local" value={restoreForm.startedAt} onChange={(event) => updateRestoreField("startedAt", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.completed}><input type="datetime-local" value={restoreForm.completedAt} onChange={(event) => updateRestoreField("completedAt", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.targetRecoveryPoint}><input type="datetime-local" value={restoreForm.targetRecoveryPointAt} onChange={(event) => updateRestoreField("targetRecoveryPointAt", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.recoveredThrough}><input type="datetime-local" value={restoreForm.recoveredThroughAt} onChange={(event) => updateRestoreField("recoveredThroughAt", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.targetRpoMinutes}><input type="number" min="1" max="43200" value={restoreForm.targetRpoMinutes} onChange={(event) => updateRestoreField("targetRpoMinutes", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.targetRtoMinutes}><input type="number" min="1" max="10080" value={restoreForm.targetRtoMinutes} onChange={(event) => updateRestoreField("targetRtoMinutes", event.target.value)} /></LegacyField>
+              <LegacyField label={copy.outcome}><select value={restoreForm.outcome} onChange={(event) => updateRestoreField("outcome", event.target.value as RestoreDrillDraft["outcome"])}><option value="SUCCEEDED">{copy.succeeded}</option><option value="PARTIAL">{copy.partial}</option><option value="FAILED">{copy.failed}</option></select></LegacyField>
+              <LegacyField label={copy.failureReason}><input value={restoreForm.failureReason} onChange={(event) => updateRestoreField("failureReason", event.target.value)} /></LegacyField>
+            </div>
+            <fieldset className="panel compact-checks"><legend>{copy.integrityChecks}</legend><div className="grid2">
+              {(["checksumVerified", "schemaVerified", "tenantIsolationVerified", "auditContinuityVerified", "ledgerBalanceVerified"] as const).map((key) => <label key={key}><input type="checkbox" checked={restoreForm[key]} onChange={(event) => updateRestoreField(key, event.target.checked)} />{copy[key]}</label>)}
+              {restoreForm.scenario === "DATABASE_AND_OBJECTS" && <label><input type="checkbox" checked={restoreForm.objectRecoveryVerified} onChange={(event) => updateRestoreField("objectRecoveryVerified", event.target.checked)} />{copy.objectRecoveryVerified}</label>}
+            </div></fieldset>
+            <LegacyField label={copy.verificationSummary}><textarea value={restoreForm.verificationSummary} onChange={(event) => updateRestoreField("verificationSummary", event.target.value)} /></LegacyField>
+            <div className="row end modal-actions"><button className="btn ghost" onClick={() => setRestoreForm(null)}>{copy.cancel}</button><button className="btn accent" disabled={busy} onClick={() => void submitRestoreDrill()}>{copy.recordRestoreDrill}</button></div>
+          </LegacyModal>}
+          {restoreReview && <LegacyModal labelledBy="restore-review-dialog-title" onClose={() => setRestoreReview(null)} className="record-modal">
+            <div className="panel-heading"><div><h2 id="restore-review-dialog-title" tabIndex={-1} data-modal-initial-focus>{restoreReview.decision === "ACCEPTED" ? copy.acceptEvidence : copy.rejectEvidence}</h2><div className="sub">{restoreReview.drill.drillId} · {copy.independentReviewNotice}</div></div><button className="btn ghost sm" onClick={() => setRestoreReview(null)}>{copy.close}</button></div>
+            <LegacyField label={copy.reviewReason}><textarea value={restoreReview.reason} onChange={(event) => setRestoreReview({ ...restoreReview, reason: event.target.value })} /></LegacyField>
+            <div className="row end modal-actions"><button className="btn ghost" onClick={() => setRestoreReview(null)}>{copy.cancel}</button><button className={restoreReview.decision === "ACCEPTED" ? "btn accent" : "btn danger"} disabled={busy} onClick={() => void submitRestoreReview()}>{copy.confirmReview}</button></div>
+          </LegacyModal>}
           <div className="panel"><h2>{copy.limitations}</h2><ul className="operations-limitations">{controlCenter.limitations.map((item) => <li key={item}>{item}</li>)}</ul></div>
         </>}
         {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}

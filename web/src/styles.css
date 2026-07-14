@@ -195,6 +195,10 @@ body { font-family: var(--vaka-workspace-font); background: var(--bg); color: va
 .state-succeeded { background: var(--vaka-workspace-success-surface); color: var(--ok); }
 .state-failed { background: var(--vaka-workspace-danger-surface); color: var(--danger); }
 .state-partial { background: var(--vaka-workspace-warning-surface); color: var(--vaka-workspace-warning-text); }
+.state-accepted, .state-recorded { background: var(--vaka-workspace-success-surface); color: var(--ok); }
+.state-rejected { background: var(--vaka-workspace-danger-surface); color: var(--danger); }
+.state-requires-review { background: var(--vaka-workspace-warning-surface); color: var(--vaka-workspace-warning-text); }
+.state-not-recorded { background: var(--vaka-workspace-neutral-surface); color: var(--vaka-workspace-neutral-text); }
 
 /* P6-013 — Platform Administration workspace */
 .platform-admin-shell { background: var(--vaka-color-surface-subtle); display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); grid-template-rows: 3.75rem 1fr; min-height: 100vh; }
@@ -608,6 +612,10 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .record-role-options input { width: auto; }
 .record-role-fieldset { border: 0; min-width: 0; padding: 0; }
 .record-role-fieldset legend { color: var(--muted); font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.compact-checks { border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-panel); margin: 14px 0; padding: 14px; }
+.compact-checks legend { color: var(--text); font-size: var(--vaka-workspace-type-body); font-weight: 700; padding: 0 6px; }
+.compact-checks label { align-items: center; color: var(--text); display: flex; font-size: var(--vaka-workspace-type-control); gap: 8px; min-height: var(--vaka-control-height-md); }
+.compact-checks input[type="checkbox"] { flex: 0 0 auto; height: 20px; min-height: 20px; width: 20px; }
 .record-profile-section { border-bottom: 1px solid var(--line); margin-bottom: 20px; padding-bottom: 20px; }
 .record-profile-section h3, .invoice-record-modal h3 { margin: 16px 0 10px; }
 .modal-actions { margin-top: 14px; }

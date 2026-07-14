@@ -259,6 +259,71 @@ export const platformBackupManifests = pgTable("platform_backup_manifests", {
   index("platform_backup_manifest_status").on(t.status, t.completedAt),
 ]);
 
+export const platformRestoreDrills = pgTable("platform_restore_drills", {
+  id: id(),
+  drillId: text("drill_id").notNull(),
+  backupManifestId: uuid("backup_manifest_id").notNull()
+    .references(() => platformBackupManifests.id, { onDelete: "restrict" }),
+  environment: text("environment").notNull(),
+  scenario: text("scenario").notNull(),
+  isolatedTargetRef: text("isolated_target_ref").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull(),
+  targetRecoveryPointAt: timestamp("target_recovery_point_at", { withTimezone: true }).notNull(),
+  recoveredThroughAt: timestamp("recovered_through_at", { withTimezone: true }).notNull(),
+  targetRpoMinutes: integer("target_rpo_minutes").notNull(),
+  targetRtoMinutes: integer("target_rto_minutes").notNull(),
+  achievedRpoMinutes: integer("achieved_rpo_minutes").notNull(),
+  achievedRtoMinutes: integer("achieved_rto_minutes").notNull(),
+  outcome: text("outcome").notNull(),
+  checksumVerified: boolean("checksum_verified").notNull(),
+  schemaVerified: boolean("schema_verified").notNull(),
+  tenantIsolationVerified: boolean("tenant_isolation_verified").notNull(),
+  auditContinuityVerified: boolean("audit_continuity_verified").notNull(),
+  ledgerBalanceVerified: boolean("ledger_balance_verified").notNull(),
+  objectRecoveryVerified: boolean("object_recovery_verified"),
+  verificationSummary: text("verification_summary").notNull(),
+  failureReason: text("failure_reason"),
+  operator: text("operator").notNull(),
+  recordedBy: uuid("recorded_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("platform_restore_drill_id").on(t.drillId),
+  index("platform_restore_drill_time").on(t.completedAt),
+  index("platform_restore_drill_manifest").on(t.backupManifestId),
+  check("platform_restore_drill_scenario_check",
+    sql`${t.scenario} IN ('FULL_DATABASE', 'POINT_IN_TIME', 'DATABASE_AND_OBJECTS')`),
+  check("platform_restore_drill_outcome_check", sql`${t.outcome} IN ('SUCCEEDED', 'PARTIAL', 'FAILED')`),
+  check("platform_restore_drill_time_check", sql`${t.completedAt} > ${t.startedAt}`),
+  check("platform_restore_drill_recovery_time_check",
+    sql`${t.targetRecoveryPointAt} <= ${t.completedAt} AND ${t.recoveredThroughAt} <= ${t.completedAt}`),
+  check("platform_restore_drill_target_bounds_check",
+    sql`${t.targetRpoMinutes} BETWEEN 1 AND 43200 AND ${t.targetRtoMinutes} BETWEEN 1 AND 10080`),
+  check("platform_restore_drill_achieved_bounds_check",
+    sql`${t.achievedRpoMinutes} BETWEEN 0 AND 525600 AND ${t.achievedRtoMinutes} BETWEEN 1 AND 10080`),
+  check("platform_restore_drill_failure_reason_check",
+    sql`${t.outcome} = 'SUCCEEDED' OR ${t.failureReason} IS NOT NULL`),
+  check("platform_restore_drill_success_checks_check", sql`${t.outcome} <> 'SUCCEEDED' OR (
+    ${t.checksumVerified} AND ${t.schemaVerified} AND ${t.tenantIsolationVerified}
+    AND ${t.auditContinuityVerified} AND ${t.ledgerBalanceVerified}
+    AND (${t.scenario} <> 'DATABASE_AND_OBJECTS' OR ${t.objectRecoveryVerified} = true)
+  )`),
+]);
+
+export const platformRestoreDrillReviews = pgTable("platform_restore_drill_reviews", {
+  id: id(),
+  restoreDrillId: uuid("restore_drill_id").notNull()
+    .references(() => platformRestoreDrills.id, { onDelete: "restrict" }),
+  decision: text("decision").notNull(),
+  reason: text("reason").notNull(),
+  reviewedBy: uuid("reviewed_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("platform_restore_drill_review_once").on(t.restoreDrillId),
+  index("platform_restore_drill_review_time").on(t.createdAt),
+  check("platform_restore_drill_review_decision_check", sql`${t.decision} IN ('ACCEPTED', 'REJECTED')`),
+]);
+
 export const importBatches = pgTable("import_batches", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
