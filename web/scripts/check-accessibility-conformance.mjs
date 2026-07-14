@@ -109,6 +109,20 @@ for (const expected of [
   'aria-label={copy.invoicesTableLabel} tabIndex={0}',
   'role="group" aria-label={copy.actions}',
   'event.key === "ArrowRight"',
+  'className="import-workspace"',
+  'labelledBy="capture-review-title"',
+  'aria-label={copy.captureListLabel} tabIndex={0}',
+  'aria-disabled={captureReviewBusy}',
+  'aria-label={copy.importPreviewTableLabel} tabIndex={0}',
+  'aria-label={copy.savedReconciliationsTableLabel} tabIndex={0}',
+  'aria-label={copy.bankTransactionsTableLabel} tabIndex={0}',
+  'htmlFor="new-bank-account-name"',
+  'htmlFor="reconciliation-closing-balance"',
+  'aria-describedby="import-schema-help"',
+  'aria-label={copy.captureReviewActions}',
+  'aria-label={copy.bankLineActions.replace',
+  'showStatus(copy.captureReady)',
+  'showError(copy.csvOnly)',
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [
@@ -133,6 +147,9 @@ for (const expected of [
   ".access-table-region table",
   ".report-tabs .btn { min-height: var(--vaka-control-height-md); }",
   ".report-tabs [role=\"tab\"][aria-selected=\"true\"]",
+  ".import-workspace .btn.btn { min-height: var(--vaka-control-height-md); }",
+  ".import-workspace .import-summary",
+  ".capture-review-modal",
   "@media (forced-colors: active)",
   "@media (prefers-reduced-motion: reduce)",
 ]) requireContract(issues, "src/styles.css", styles, expected);

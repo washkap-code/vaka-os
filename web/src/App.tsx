@@ -1110,6 +1110,7 @@ function ImportCenter({
   });
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busy, setBusy] = useState(false);
   const [logoData, setLogoData] = useState<string | null>(null);
   const copy = appEnglish.imports;
@@ -1118,6 +1119,15 @@ function ImportCenter({
   const [selectedCapture, setSelectedCapture] = useState<any>(null);
   const [captureNote, setCaptureNote] = useState("");
   const [captureReviewBusy, setCaptureReviewBusy] = useState(false);
+  const clearMessage = () => setMessage("");
+  const showStatus = (value: string) => {
+    setMessageTone("status");
+    setMessage(value);
+  };
+  const showError = (value: string) => {
+    setMessageTone("error");
+    setMessage(value);
+  };
   const captureTypeLabel = (type: string) => ({
     INVOICE: copy.captureInvoice,
     RECEIPT: copy.captureReceipt,
@@ -1136,7 +1146,7 @@ function ImportCenter({
       setBankAccounts(accounts);
       setBankAccountId((current) => current || accounts[0]?.id || "");
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
   };
 
@@ -1144,7 +1154,7 @@ function ImportCenter({
     try {
       setBankTransactions(await api(`/bank-transactions?bankAccountId=${accountId}`));
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
   };
 
@@ -1152,7 +1162,7 @@ function ImportCenter({
     try {
       setBankSummary(await api(`/bank-accounts/${accountId}/reconciliation-summary`));
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
   };
 
@@ -1160,14 +1170,14 @@ function ImportCenter({
     try {
       setBankReconciliations(await api(`/bank-accounts/${accountId}/reconciliations`));
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
   };
 
   const previewBankWorksheet = async () => {
     if (!bankAccountId) return;
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const query = new URLSearchParams({
         statementDate: worksheetInput.statementDate,
@@ -1175,7 +1185,7 @@ function ImportCenter({
       });
       setBankWorksheet(await api(`/bank-accounts/${bankAccountId}/reconciliation-worksheet?${query}`));
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1183,7 +1193,7 @@ function ImportCenter({
   const prepareBankReconciliation = async () => {
     if (!bankAccountId || !bankWorksheet) return;
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       await api(`/bank-accounts/${bankAccountId}/reconciliations`, {
         method: "POST",
@@ -1192,30 +1202,30 @@ function ImportCenter({
           statementClosingBalance: bankWorksheet.statementClosingBalance,
         },
       });
-      setMessage(copy.reconciliationPrepared);
+      showStatus(copy.reconciliationPrepared);
       await loadBankReconciliations(bankAccountId);
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
 
   const approveBankReconciliation = async (reportId: string) => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       await api(`/bank-reconciliations/${reportId}/approve`, { method: "POST", body: {} });
-      setMessage(copy.reconciliationApproved);
+      showStatus(copy.reconciliationApproved);
       if (bankAccountId) await loadBankReconciliations(bankAccountId);
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
 
   const downloadBankReconciliationReport = async (reportId: string) => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const report = await api(`/bank-reconciliations/${reportId}/report`);
       const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -1259,9 +1269,9 @@ function ImportCenter({
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setMessage(copy.reconciliationReportDownloaded);
+      showStatus(copy.reconciliationReportDownloaded);
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1289,7 +1299,7 @@ function ImportCenter({
 
   const createBankAccount = async () => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const account = await api("/bank-accounts", { method: "POST", body: newBank });
       setBankAccounts((current) => [...current, account]);
@@ -1300,7 +1310,7 @@ function ImportCenter({
       setBankReconciliations([]);
       setNewBank({ name: "", bankName: "", accountNumber: "", currency: "USD" });
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1309,12 +1319,12 @@ function ImportCenter({
     id: string; amount: string; reference: string | null; description: string;
   }) => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const result = await api(`/bank-transactions/${transaction.id}/match-candidates`);
       const candidate = result.candidates?.[0];
       if (!candidate) {
-        setMessage(copy.noInvoiceMatch);
+        showError(copy.noInvoiceMatch);
         setBusy(false);
         return;
       }
@@ -1331,14 +1341,14 @@ function ImportCenter({
         method: "POST",
         body: { invoiceId: candidate.id },
       });
-      setMessage(copy.matchedInvoice.replace("{invoice}", candidate.number ?? candidate.id));
+      showStatus(copy.matchedInvoice.replace("{invoice}", candidate.number ?? candidate.id));
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
         setBankWorksheet(null);
       }
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1347,12 +1357,12 @@ function ImportCenter({
     id: string; amount: string; reference: string | null; description: string;
   }) => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const result = await api(`/bank-transactions/${transaction.id}/split-candidates`);
       const candidates = result.candidates ?? [];
       if (candidates.length < 2) {
-        setMessage(copy.noSplitMatch);
+        showError(copy.noSplitMatch);
         setBusy(false);
         return;
       }
@@ -1371,7 +1381,7 @@ function ImportCenter({
         return { invoiceNumber, amount };
       }).filter((allocation) => allocation.invoiceNumber && allocation.amount);
       if (allocations.length < 2) {
-        setMessage(copy.splitFormatHelp);
+        showError(copy.splitFormatHelp);
         setBusy(false);
         return;
       }
@@ -1379,14 +1389,14 @@ function ImportCenter({
         method: "POST",
         body: { allocations },
       });
-      setMessage(copy.splitMatched.replace("{count}", String(allocations.length)));
+      showStatus(copy.splitMatched.replace("{count}", String(allocations.length)));
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
         setBankWorksheet(null);
       }
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1399,17 +1409,17 @@ function ImportCenter({
       .replace("{description}", transaction.description));
     if (!confirmed) return;
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       await api(`/bank-transactions/${transaction.id}/post-bank-fee`, { method: "POST", body: {} });
-      setMessage(copy.bankFeePosted);
+      showStatus(copy.bankFeePosted);
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
         setBankWorksheet(null);
       }
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1418,12 +1428,12 @@ function ImportCenter({
     id: string; amount: string; reference: string | null; description: string;
   }) => {
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const result = await api(`/bank-transactions/${transaction.id}/transfer-candidates`);
       const candidate = result.candidates?.[0];
       if (!candidate) {
-        setMessage(copy.noTransferMatch);
+        showError(copy.noTransferMatch);
         setBusy(false);
         return;
       }
@@ -1443,14 +1453,14 @@ function ImportCenter({
         method: "POST",
         body: { counterpartyBankTransactionId: candidate.id },
       });
-      setMessage(copy.transferMatched);
+      showStatus(copy.transferMatched);
       if (bankAccountId) {
         await loadBankTransactions(bankAccountId);
         await loadBankSummary(bankAccountId);
         setBankWorksheet(null);
       }
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1484,24 +1494,25 @@ function ImportCenter({
     const file = event.target.files?.[0];
     if (!file) return;
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const prepared = await prepareCapture(file);
       await api("/captures", { method: "POST", body: { documentType: captureType, ...prepared } });
-      setMessage(copy.captureReady);
+      showStatus(copy.captureReady);
       reloadCaptures();
       event.target.value = "";
-    } catch (error: any) { setMessage(error.message || copy.captureFailed); }
+    } catch (error: any) { showError(error.message || copy.captureFailed); }
     setBusy(false);
   };
 
   const openCapture = async (captureId: string) => {
+    if (captureReviewBusy) return;
     setCaptureReviewBusy(true);
     try {
       const detail = await api(`/captures/${captureId}`);
       setSelectedCapture(detail);
       setCaptureNote(detail.reviewNote ?? "");
-    } catch (error: any) { setMessage(error.message); }
+    } catch (error: any) { showError(error.message); }
     setCaptureReviewBusy(false);
   };
 
@@ -1510,24 +1521,24 @@ function ImportCenter({
     setCaptureReviewBusy(true);
     try {
       await api(`/captures/${selectedCapture.id}/review`, { method: "POST", body: { status, note: captureNote || undefined } });
-      setMessage(status === "REVIEWED" ? copy.captureReviewed : copy.captureRejected);
+      showStatus(status === "REVIEWED" ? copy.captureReviewed : copy.captureRejected);
       setSelectedCapture(null);
       reloadCaptures();
-    } catch (error: any) { setMessage(error.message || copy.captureReviewFailed); }
+    } catch (error: any) { showError(error.message || copy.captureReviewFailed); }
     setCaptureReviewBusy(false);
   };
 
   const selectFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setPreview(null);
-    setMessage("");
+    clearMessage();
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      setMessage(copy.csvOnly);
+      showError(copy.csvOnly);
       return;
     }
     if (file.size > 1_000_000) {
-      setMessage(copy.tooLarge);
+      showError(copy.tooLarge);
       return;
     }
     setBusy(true);
@@ -1539,7 +1550,7 @@ function ImportCenter({
         body: kind === "bank-statement" ? { csvText, bankAccountId } : { csvText },
       }));
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
@@ -1547,7 +1558,7 @@ function ImportCenter({
   const commit = async () => {
     if (!preview) return;
     setBusy(true);
-    setMessage("");
+    clearMessage();
     try {
       const result = await api(`/imports/${kind}/${preview.batch.id}/commit`, {
         method: "POST",
@@ -1560,7 +1571,7 @@ function ImportCenter({
           : kind === "opening-stock"
             ? copy.openingStockCompleted.replace("{value}", `${preview.baseCurrency} ${result.totalValue}`)
             : copy.bankStatementCompleted;
-      setMessage(completion.replace("{count}", String(result.importedRows)));
+      showStatus(completion.replace("{count}", String(result.importedRows)));
       if (kind === "bank-statement" && bankAccountId) {
         void loadBankTransactions(bankAccountId);
         void loadBankSummary(bankAccountId);
@@ -1570,12 +1581,12 @@ function ImportCenter({
       setPreview(null);
       setFileName("");
     } catch (error: any) {
-      setMessage(error.message);
+      showError(error.message);
     }
     setBusy(false);
   };
 
-  return (<>
+  return (<div className="import-workspace">
     <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
     <div className="panel">
       <h2>{copy.captureTitle}</h2>
@@ -1587,15 +1598,15 @@ function ImportCenter({
         <div className="field"><label htmlFor="capture-file">{copy.captureFile}</label><input id="capture-file" type="file" accept="image/*,application/pdf" capture="environment" disabled={busy || readonly} onChange={captureFile} /></div>
       </div>
       <h3>{copy.captureListTitle}</h3>
-      {!captures?.length ? <p className="sub">{copy.captureNone}</p> : <div className="table-scroll"><table><thead><tr><th>{copy.captureType}</th><th>{copy.fileName}</th><th>{copy.status}</th><th>{copy.createdAt}</th><th className="num">{copy.captureBytes}</th><th /></tr></thead><tbody>{captures.map((capture: any) => <tr key={capture.id}><td>{captureTypeLabel(capture.documentType)}</td><td>{capture.fileName}</td><td>{captureStatusLabel(capture.status)}</td><td>{new Date(capture.createdAt).toLocaleString()}</td><td className="num">{capture.byteSize}</td><td><button type="button" className="btn ghost sm" disabled={captureReviewBusy} onClick={() => openCapture(capture.id)}>{copy.captureOpen}</button></td></tr>)}</tbody></table></div>}
+      {!captures?.length ? <p className="sub">{copy.captureNone}</p> : <div className="table-scroll access-table-region" role="region" aria-label={copy.captureListLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.captureType}</th><th>{copy.fileName}</th><th>{copy.status}</th><th>{copy.createdAt}</th><th className="num">{copy.captureBytes}</th><th>{copy.action}</th></tr></thead><tbody>{captures.map((capture: any) => <tr key={capture.id}><td>{captureTypeLabel(capture.documentType)}</td><td>{capture.fileName}</td><td>{captureStatusLabel(capture.status)}</td><td>{new Date(capture.createdAt).toLocaleString()}</td><td className="num">{capture.byteSize}</td><td><button type="button" className="btn ghost sm" aria-disabled={captureReviewBusy} onClick={() => openCapture(capture.id)}>{copy.captureOpen}</button></td></tr>)}</tbody></table></div>}
     </div>
-    {selectedCapture && <div className="modalbg" role="presentation" onClick={() => setSelectedCapture(null)}><div className="modal" role="dialog" aria-modal="true" aria-labelledby="capture-review-title" onClick={(event) => event.stopPropagation()}>
+    {selectedCapture && <LegacyModal labelledBy="capture-review-title" onClose={() => setSelectedCapture(null)} className="capture-review-modal">
       <h2 id="capture-review-title">{copy.captureReviewTitle}</h2>
       <p className="sub">{copy.captureReviewHelp}</p>
       {selectedCapture.mediaType.startsWith("image/") ? <img src={selectedCapture.dataUrl} alt={selectedCapture.fileName} style={{ maxWidth: "100%", maxHeight: 420, objectFit: "contain" }} /> : <iframe src={selectedCapture.dataUrl} title={copy.capturePreviewTitle} style={{ width: "100%", height: 420, border: "1px solid var(--line)" }} />}
       <div className="field"><label htmlFor="capture-review-note">{copy.captureReviewNote}</label><textarea id="capture-review-note" value={captureNote} onChange={(event) => setCaptureNote(event.target.value)} disabled={captureReviewBusy} /></div>
-      <div className="row end"><button className="btn ghost" onClick={() => setSelectedCapture(null)}>{copy.captureClose}</button>{selectedCapture.status === "CAPTURED" && canApprove && !readonly && <><button className="btn ghost" disabled={captureReviewBusy} onClick={() => reviewCapture("REJECTED")}>{copy.captureReject}</button><button className="btn accent" disabled={captureReviewBusy} onClick={() => reviewCapture("REVIEWED")}>{copy.captureReview}</button></>}</div>
-    </div></div>}
+      <div className="row end import-row-actions" role="group" aria-label={copy.captureReviewActions}><button className="btn ghost" data-modal-initial-focus onClick={() => setSelectedCapture(null)}>{copy.captureClose}</button>{selectedCapture.status === "CAPTURED" && canApprove && !readonly && <><button className="btn ghost" disabled={captureReviewBusy} onClick={() => reviewCapture("REJECTED")}>{copy.captureReject}</button><button className="btn accent" disabled={captureReviewBusy} onClick={() => reviewCapture("REVIEWED")}>{copy.captureReview}</button></>}</div>
+    </LegacyModal>}
     <div className="panel">
       <div className="field">
         <label htmlFor="import-type">{copy.importType}</label>
@@ -1603,7 +1614,7 @@ function ImportCenter({
           setKind(event.target.value as ImportKind);
           setPreview(null);
           setFileName("");
-          setMessage("");
+          clearMessage();
         }}>
           <option value="contacts">{copy.contactsOption}</option>
           <option value="products">{copy.productsOption}</option>
@@ -1634,17 +1645,17 @@ function ImportCenter({
         {bankAccounts.length === 0 && canConfigureBanks && <div className="import-bank-setup">
           <h3>{copy.addBankAccount}</h3>
           <div className="grid2">
-            <div className="field"><label>{copy.accountName}</label>
-              <input value={newBank.name} onChange={(event) =>
+            <div className="field"><label htmlFor="new-bank-account-name">{copy.accountName}</label>
+              <input id="new-bank-account-name" autoComplete="off" value={newBank.name} onChange={(event) =>
                 setNewBank({ ...newBank, name: event.target.value })} /></div>
-            <div className="field"><label>{copy.bankName}</label>
-              <input value={newBank.bankName} onChange={(event) =>
+            <div className="field"><label htmlFor="new-bank-name">{copy.bankName}</label>
+              <input id="new-bank-name" autoComplete="organization" value={newBank.bankName} onChange={(event) =>
                 setNewBank({ ...newBank, bankName: event.target.value })} /></div>
-            <div className="field"><label>{copy.maskedAccount}</label>
-              <input value={newBank.accountNumber} placeholder={copy.maskedAccountPlaceholder} onChange={(event) =>
+            <div className="field"><label htmlFor="new-bank-account-number">{copy.maskedAccount}</label>
+              <input id="new-bank-account-number" autoComplete="off" value={newBank.accountNumber} placeholder={copy.maskedAccountPlaceholder} onChange={(event) =>
                 setNewBank({ ...newBank, accountNumber: event.target.value })} /></div>
-            <div className="field"><label>{copy.currency}</label>
-              <select value={newBank.currency} onChange={(event) =>
+            <div className="field"><label htmlFor="new-bank-currency">{copy.currency}</label>
+              <select id="new-bank-currency" value={newBank.currency} onChange={(event) =>
                 setNewBank({ ...newBank, currency: event.target.value as "USD" | "ZWG" })}>
                 <option value="USD">USD</option><option value="ZWG">ZWG</option>
               </select></div>
@@ -1653,7 +1664,8 @@ function ImportCenter({
             {copy.createBankAccount}</button>
         </div>}
       </>}
-      <div className="import-template">
+      <div className="import-template" id="import-schema-help">
+        <span className="import-template-label">{copy.csvTemplateLabel}</span>
         <code>{kind === "contacts"
           ? "name,email,phone,type,is_customer,is_vendor,tax_number,tags"
           : kind === "products"
@@ -1665,8 +1677,8 @@ function ImportCenter({
       {kind === "opening-stock" && <p className="sub">{copy.openingStockWarning}</p>}
       {kind === "bank-statement" && <p className="sub">{copy.bankStatementWarning}</p>}
       <div className="field">
-        <label>{copy.chooseCsv}</label>
-        <input type="file" accept=".csv,text/csv"
+        <label htmlFor="import-csv-file">{copy.chooseCsv}</label>
+        <input id="import-csv-file" type="file" accept=".csv,text/csv" aria-describedby="import-schema-help"
           disabled={readonly || busy || (kind === "bank-statement" && !bankAccountId)}
           onChange={selectFile} />
         {fileName && <small>{fileName}</small>}
@@ -1679,8 +1691,8 @@ function ImportCenter({
         <span>{copy.duplicates}: <b>{preview.batch.duplicateRows}</b></span>
         <span>{copy.invalid}: <b>{preview.batch.invalidRows}</b></span>
       </div>
-      <div className="table-scroll">
-        <table>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.importPreviewTableLabel} tabIndex={0}>
+        <table className="dense-data-table">
           <thead><tr><th>{copy.row}</th>
             {kind !== "contacts" && kind !== "bank-statement" && <th>{copy.sku}</th>}
             {kind === "opening-stock"
@@ -1734,19 +1746,19 @@ function ImportCenter({
       </div>}
       <div className="grid2" style={{ marginTop: 16 }}>
         <div className="field">
-          <label>{copy.statementDate}</label>
-          <input type="date" value={worksheetInput.statementDate}
+          <label htmlFor="reconciliation-statement-date">{copy.statementDate}</label>
+          <input id="reconciliation-statement-date" type="date" value={worksheetInput.statementDate}
             onChange={(event) => setWorksheetInput({ ...worksheetInput, statementDate: event.target.value })} />
         </div>
         <div className="field">
-          <label>{copy.statementClosingBalance}</label>
-          <input inputMode="decimal" placeholder="0.00" value={worksheetInput.statementClosingBalance}
+          <label htmlFor="reconciliation-closing-balance">{copy.statementClosingBalance}</label>
+          <input id="reconciliation-closing-balance" inputMode="decimal" placeholder="0.00" value={worksheetInput.statementClosingBalance}
             onChange={(event) => setWorksheetInput({ ...worksheetInput, statementClosingBalance: event.target.value })} />
         </div>
       </div>
       <button className="btn sm" disabled={busy || !worksheetInput.statementDate || !worksheetInput.statementClosingBalance}
         onClick={previewBankWorksheet}>{copy.previewReconciliationWorksheet}</button>
-      {bankWorksheet && <div className="import-summary" style={{ marginTop: 16 }}>
+      {bankWorksheet && <div className="import-summary" role="status" aria-label={copy.worksheetSummaryLabel} style={{ marginTop: 16 }}>
         <span>{copy.worksheetStatus}: <b>{bankWorksheet.status === "balanced" ? copy.balanced : copy.needsReview}</b></span>
         <span>{copy.openingBalance}: <b>{fmt(bankWorksheet.openingBalance, bankWorksheet.account.currency)}</b></span>
         <span>{copy.importedMovement}: <b>{fmt(bankWorksheet.importedNetMovement, bankWorksheet.account.currency)}</b></span>
@@ -1767,8 +1779,8 @@ function ImportCenter({
       <p className="sub">{copy.savedReconciliationsHelp}</p>
       {bankReconciliations.length === 0
         ? <p className="empty">{copy.noSavedReconciliations}</p>
-        : <div className="table-scroll">
-          <table>
+        : <div className="table-scroll access-table-region" role="region" aria-label={copy.savedReconciliationsTableLabel} tabIndex={0}>
+          <table className="dense-data-table">
             <thead><tr>
               <th>{copy.statementDate}</th>
               <th>{copy.status}</th>
@@ -1787,7 +1799,7 @@ function ImportCenter({
                 <td><span className={Number(report.difference) === 0 ? "ok-text" : "bad-text"}>
                   {fmt(report.difference, selectedBankAccount?.currency ?? "USD")}</span></td>
                 <td>{report.unreviewedLines}</td>
-                <td><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <td><div className="import-row-actions" role="group" aria-label={copy.reconciliationRowActions.replace("{date}", new Date(`${report.statementDate}T00:00:00`).toLocaleDateString("en-ZW"))}>
                   <button className="btn sm" disabled={busy}
                     onClick={() => downloadBankReconciliationReport(report.id)}>{copy.downloadReport}</button>
                   {report.status === "PREPARED" && <button className="btn sm"
@@ -1805,8 +1817,8 @@ function ImportCenter({
       <p className="sub">{copy.recentBankFeedHelp}</p>
       {bankTransactions.length === 0
         ? <p className="empty">{copy.noBankTransactions}</p>
-        : <div className="table-scroll">
-          <table>
+        : <div className="table-scroll access-table-region" role="region" aria-label={copy.bankTransactionsTableLabel} tabIndex={0}>
+          <table className="dense-data-table">
             <thead><tr>
               <th>{copy.date}</th>
               <th>{copy.description}</th>
@@ -1823,7 +1835,7 @@ function ImportCenter({
                 <td>{selectedBankAccount?.currency ?? ""} {transaction.amount}</td>
                 <td>{transaction.matchedJournalEntryId ? copy.reconciled : copy.unreviewed}</td>
                 <td>{!transaction.matchedJournalEntryId && Number(transaction.amount) > 0
-                  ? <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  ? <div className="import-row-actions" role="group" aria-label={copy.bankLineActions.replace("{description}", transaction.description)}>
                     <button className="btn sm" disabled={busy || readonly}
                       onClick={() => matchBankTransaction(transaction)}>{copy.findInvoiceMatch}</button>
                     <button className="btn sm" disabled={busy || readonly}
@@ -1832,7 +1844,7 @@ function ImportCenter({
                       onClick={() => matchBankTransfer(transaction)}>{copy.matchTransfer}</button>
                   </div>
                   : !transaction.matchedJournalEntryId && Number(transaction.amount) < 0
-                    ? <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    ? <div className="import-row-actions" role="group" aria-label={copy.bankLineActions.replace("{description}", transaction.description)}>
                       <button className="btn sm" disabled={busy || readonly || !canPostBankFees}
                         onClick={() => postBankFee(transaction)}>{copy.postBankFee}</button>
                       <button className="btn sm" disabled={busy || readonly || !canMatchBankTransfers}
@@ -1844,8 +1856,9 @@ function ImportCenter({
           </table>
         </div>}
     </div>}
-    {message && <div className="banner warn">{message}</div>}
-  </>);
+    {message && <div className={messageTone === "error" ? "banner err" : "banner success"}
+      role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
+  </div>);
 }
 
 function Settings({ me, readonly, onSaved }: {
