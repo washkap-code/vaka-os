@@ -108,6 +108,52 @@ export interface EmailProviderConfig {
   from: string;
 }
 
+export interface PaynowProviderConfig {
+  integrationId: string;
+  integrationKey: string;
+  currency: "USD" | "ZWG";
+}
+
+/**
+ * VAKA subscription collection remains disabled unless explicitly enabled and
+ * the complete merchant configuration is present. Tenant settings must never
+ * contain these values.
+ */
+export function paynowProviderConfig(
+  env: RuntimeEnvironment = process.env,
+): PaynowProviderConfig | null {
+  const enabledValue = valueOf(env, "PAYNOW_ENABLED")?.toLowerCase();
+  if (enabledValue && enabledValue !== "true" && enabledValue !== "false") {
+    throw new Error("PAYNOW_ENABLED must be true or false");
+  }
+  if (enabledValue !== "true") return null;
+  const integrationId = valueOf(env, "PAYNOW_INTEGRATION_ID");
+  const integrationKey = valueOf(env, "PAYNOW_INTEGRATION_KEY");
+  const configuredCurrency = valueOf(env, "PAYNOW_CURRENCY") ?? "USD";
+  if (!integrationId || !integrationKey) {
+    throw new Error("PAYNOW_INTEGRATION_ID and PAYNOW_INTEGRATION_KEY are required when Paynow is enabled");
+  }
+  if (!/^\d+$/.test(integrationId)) throw new Error("PAYNOW_INTEGRATION_ID must be numeric");
+  if (configuredCurrency !== "USD" && configuredCurrency !== "ZWG") {
+    throw new Error("PAYNOW_CURRENCY must be USD or ZWG");
+  }
+  if (isProduction(env)) assertSafeSecret("PAYNOW_INTEGRATION_KEY", integrationKey, 16);
+  return { integrationId, integrationKey, currency: configuredCurrency };
+}
+
+export function paynowEncryptionSecret(env: RuntimeEnvironment = process.env): string {
+  const configured = valueOf(env, "PAYNOW_ENCRYPTION_KEY");
+  if (configured) {
+    return isProduction(env)
+      ? assertSafeSecret("PAYNOW_ENCRYPTION_KEY", configured, 32)
+      : configured;
+  }
+  if (isProduction(env) && paynowProviderConfig(env)) {
+    throw new Error("PAYNOW_ENCRYPTION_KEY is required when Paynow is enabled in production");
+  }
+  return jwtSecret(env);
+}
+
 /** Absolute public origin used only to build revocable customer document links. */
 export function publicAppUrl(env: RuntimeEnvironment = process.env): string {
   const vercelProductionDomain = valueOf(env, "VERCEL_PROJECT_PRODUCTION_URL");

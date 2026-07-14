@@ -5,6 +5,8 @@ import {
   jwtSecret,
   mfaEnrollmentAvailable,
   mfaEncryptionSecret,
+  paynowEncryptionSecret,
+  paynowProviderConfig,
   platformAdminPassword,
   publicAppUrl,
 } from "../src/config.js";
@@ -106,5 +108,22 @@ describe("runtime configuration", () => {
       PUBLIC_APP_URL: "https://configured.example.com",
       VERCEL_PROJECT_PRODUCTION_URL: "vakaos.com",
     })).toBe("https://configured.example.com");
+  });
+
+  it("keeps Paynow disabled by default and requires complete production merchant controls", () => {
+    expect(paynowProviderConfig({ NODE_ENV: "test" })).toBeNull();
+    expect(paynowProviderConfig({ NODE_ENV: "test", PAYNOW_ENABLED: "false" })).toBeNull();
+    expect(() => paynowProviderConfig({ NODE_ENV: "test", PAYNOW_ENABLED: "yes" }))
+      .toThrow("true or false");
+    expect(() => paynowProviderConfig({ NODE_ENV: "test", PAYNOW_ENABLED: "true" }))
+      .toThrow("required when Paynow is enabled");
+    expect(paynowProviderConfig({
+      NODE_ENV: "test", PAYNOW_ENABLED: "true", PAYNOW_INTEGRATION_ID: "1234",
+      PAYNOW_INTEGRATION_KEY: "test-integration-key", PAYNOW_CURRENCY: "USD",
+    })).toMatchObject({ integrationId: "1234", currency: "USD" });
+    expect(() => paynowEncryptionSecret({
+      NODE_ENV: "production", JWT_SECRET: "j".repeat(64), PAYNOW_ENABLED: "true",
+      PAYNOW_INTEGRATION_ID: "1234", PAYNOW_INTEGRATION_KEY: "k".repeat(32),
+    })).toThrow("PAYNOW_ENCRYPTION_KEY is required");
   });
 });

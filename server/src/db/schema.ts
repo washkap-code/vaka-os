@@ -56,8 +56,20 @@ export const tenants = pgTable("tenants", {
   invoiceBankSwiftCode: text("invoice_bank_swift_code"),
   invoiceBankCurrency: currency("invoice_bank_currency"),
   showVatNumberOnInvoices: boolean("show_vat_number_on_invoices").default(true).notNull(),
+  signOutDestination: text("sign_out_destination").default("PUBLIC_HOME").notNull(),
+  idleSignOutEnabled: boolean("idle_sign_out_enabled").default(false).notNull(),
+  idleSignOutMinutes: integer("idle_sign_out_minutes").default(5).notNull(),
+  holdingPageHeading: text("holding_page_heading"),
+  holdingPageMessage: text("holding_page_message"),
+  holdingOfferTitle: text("holding_offer_title"),
+  holdingOfferBody: text("holding_offer_body"),
+  holdingOfferCtaLabel: text("holding_offer_cta_label"),
+  holdingOfferCtaUrl: text("holding_offer_cta_url"),
   createdAt: createdAt(),
-});
+}, (t) => [
+  check("tenants_sign_out_destination_check", sql`${t.signOutDestination} IN ('PUBLIC_HOME', 'HOLDING_PAGE')`),
+  check("tenants_idle_sign_out_minutes_check", sql`${t.idleSignOutMinutes} BETWEEN 5 AND 480`),
+]);
 
 export const platformRoles = pgTable("platform_roles", {
   key: text("key").primaryKey(),
@@ -881,6 +893,38 @@ export const subscriptionInvoices = pgTable("subscription_invoices", {
   dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
 });
+
+export const subscriptionPaymentAttempts = pgTable("subscription_payment_attempts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  subscriptionInvoiceId: uuid("subscription_invoice_id").notNull().references(() => subscriptionInvoices.id),
+  provider: text("provider").default("PAYNOW").notNull(),
+  merchantReference: text("merchant_reference").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: currency("currency").notNull(),
+  status: text("status").default("CREATED").notNull(),
+  providerStatus: text("provider_status"),
+  providerReference: text("provider_reference"),
+  redirectUrl: text("redirect_url"),
+  encryptedPollUrl: text("encrypted_poll_url"),
+  initiatedBy: uuid("initiated_by").notNull().references(() => users.id),
+  providerConfirmedAt: timestamp("provider_confirmed_at", { withTimezone: true }),
+  settledAt: timestamp("settled_at", { withTimezone: true }),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("subscription_payment_attempts_reference_unique").on(t.merchantReference),
+  uniqueIndex("subscription_payment_attempts_idempotency_unique")
+    .on(t.tenantId, t.subscriptionInvoiceId, t.idempotencyKey),
+  index("subscription_payment_attempts_tenant_invoice")
+    .on(t.tenantId, t.subscriptionInvoiceId, t.createdAt),
+  index("subscription_payment_attempts_invoice").on(t.subscriptionInvoiceId),
+  index("subscription_payment_attempts_initiated_by").on(t.initiatedBy),
+  check("subscription_payment_attempts_provider_check", sql`${t.provider} = 'PAYNOW'`),
+  check("subscription_payment_attempts_status_check", sql`${t.status} IN ('CREATED', 'PENDING', 'PAID', 'FAILED', 'CANCELLED', 'DISPUTED', 'REFUNDED', 'REQUIRES_REVIEW')`),
+]);
 
 export const dunningEvents = pgTable("dunning_events", {
   id: id(),

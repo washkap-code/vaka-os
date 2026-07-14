@@ -8,7 +8,7 @@
 // CLOSED is only reachable via the platform-admin long-stop process with the
 // export-first requirement — there is deliberately no automatic path to it.
 // ============================================================================
-import { and, eq, lt, count, or } from "drizzle-orm";
+import { and, eq, lt, count, or, sql } from "drizzle-orm";
 import { DB, db, schema, badRequest, conflict, notFound, audit, fromCents, toCents } from "./lib.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
@@ -176,8 +176,31 @@ async function issueSubscriptionInvoice(tx: DB, sub: any, plan: any, periodStart
 }
 
 /** Mark a subscription invoice paid; reactivate suspended/past-due tenants when clear. */
-export async function markSubscriptionInvoicePaid(opts: { tenantId: string; invoiceId: string; actorUserId?: string | null }) {
+export async function markSubscriptionInvoicePaid(opts: {
+  tenantId: string;
+  invoiceId: string;
+  actorUserId?: string | null;
+  providerPayment?: {
+    attemptId: string;
+    providerReference: string | null;
+    providerStatus: string;
+    confirmedAt: Date;
+  };
+}) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    let paymentAttempt: typeof schema.subscriptionPaymentAttempts.$inferSelect | null = null;
+    if (opts.providerPayment) {
+      await tx.execute(sql`SELECT id FROM subscription_payment_attempts
+        WHERE id = ${opts.providerPayment.attemptId} FOR UPDATE`);
+      const [attempt] = await tx.select().from(schema.subscriptionPaymentAttempts).where(and(
+        eq(schema.subscriptionPaymentAttempts.id, opts.providerPayment.attemptId),
+        eq(schema.subscriptionPaymentAttempts.tenantId, opts.tenantId),
+        eq(schema.subscriptionPaymentAttempts.subscriptionInvoiceId, opts.invoiceId),
+      ));
+      if (!attempt) throw notFound("Subscription payment attempt not found");
+      if (attempt.status === "PAID") return { paid: true, reactivated: false, idempotent: true };
+      paymentAttempt = attempt;
+    }
     const [inv] = await tx.select().from(schema.subscriptionInvoices).where(and(
       eq(schema.subscriptionInvoices.id, opts.invoiceId),
       eq(schema.subscriptionInvoices.tenantId, opts.tenantId)));
@@ -185,6 +208,25 @@ export async function markSubscriptionInvoicePaid(opts: { tenantId: string; invo
     if (inv.status === "paid") throw conflict("Invoice already paid");
     await tx.update(schema.subscriptionInvoices).set({ status: "paid", paidAt: new Date() })
       .where(eq(schema.subscriptionInvoices.id, inv.id));
+
+    if (paymentAttempt && opts.providerPayment) {
+      await tx.update(schema.subscriptionPaymentAttempts).set({
+        status: "PAID",
+        providerStatus: opts.providerPayment.providerStatus,
+        providerReference: opts.providerPayment.providerReference,
+        providerConfirmedAt: opts.providerPayment.confirmedAt,
+        settledAt: opts.providerPayment.confirmedAt,
+        lastCheckedAt: opts.providerPayment.confirmedAt,
+        updatedAt: opts.providerPayment.confirmedAt,
+      }).where(eq(schema.subscriptionPaymentAttempts.id, paymentAttempt.id));
+      await audit(tx, opts.tenantId, opts.actorUserId ?? null,
+        "billing.subscription_payment_confirmed", "subscription_payment_attempt", paymentAttempt.id, {
+          subscriptionInvoiceId: inv.id,
+          provider: paymentAttempt.provider,
+          providerReference: opts.providerPayment.providerReference,
+          providerStatus: opts.providerPayment.providerStatus,
+        });
+    }
 
     const remaining = await tx.select({ c: count() }).from(schema.subscriptionInvoices).where(and(
       eq(schema.subscriptionInvoices.tenantId, opts.tenantId),
@@ -203,7 +245,7 @@ export async function markSubscriptionInvoicePaid(opts: { tenantId: string; invo
           payload: { tenantId: opts.tenantId, from: tenant.status, to: "ACTIVE" } });
       }
     }
-    return { paid: true, reactivated: !stillOverdue };
+    return { paid: true, reactivated: !stillOverdue, idempotent: false };
   }));
 }
 

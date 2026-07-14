@@ -21,6 +21,15 @@ const required = [
   ["tenants", "invoice_bank_swift_code"],
   ["tenants", "invoice_bank_currency"],
   ["tenants", "show_vat_number_on_invoices"],
+  ["tenants", "sign_out_destination"],
+  ["tenants", "idle_sign_out_enabled"],
+  ["tenants", "idle_sign_out_minutes"],
+  ["tenants", "holding_page_heading"],
+  ["tenants", "holding_page_message"],
+  ["tenants", "holding_offer_title"],
+  ["tenants", "holding_offer_body"],
+  ["tenants", "holding_offer_cta_label"],
+  ["tenants", "holding_offer_cta_url"],
   ["users", "must_change_password"],
   ["users", "platform_role_key"],
   ["user_sessions", "id"],
@@ -49,6 +58,9 @@ const required = [
   ["contacts", "deleted_by"],
   ["record_deletion_requests", "id"],
   ["record_deletion_requests", "status"],
+  ["subscription_payment_attempts", "merchant_reference"],
+  ["subscription_payment_attempts", "encrypted_poll_url"],
+  ["subscription_payment_attempts", "status"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 
