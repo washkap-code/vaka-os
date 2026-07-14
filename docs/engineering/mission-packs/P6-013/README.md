@@ -1,6 +1,6 @@
 # P6-013 — Modern Platform Administration
 
-**Status:** Specification committed; implementation pending
+**Status:** Released; interface refinement implemented locally on 2026-07-14 and awaiting release gates
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend information architecture, design-system adoption and accessibility
 **Depends on:** P6-001 design system; P6-002 tenant workspace shell; P6-005 accessibility foundation; P6-008 and P6-011 platform administration safeguards

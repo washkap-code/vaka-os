@@ -1,7 +1,31 @@
 # P6-013 completion report — Modern Platform Administration
 
 **Local completion date:** 2026-07-14
-**Release status:** Branch implementation complete and pushed after local gates; remote review, merge, deployment and live verification pending
+**Release status:** Initial implementation released in PR #69. A user-requested visual and information-hierarchy refinement was implemented locally on 2026-07-14; remote review, merge, deployment and live verification are pending.
+
+## 2026-07-14 interface refinement
+
+- Replaced the visually separate dark administrator treatment with the same
+  light workspace language used by the tenant portal, while retaining a clear
+  Platform control centre identity.
+- Grouped the six permission-visible destinations into Workspace,
+  Administration and Support, added consistent line icons, preserved
+  descriptions, and retained the exact active-page `aria-current` state.
+- Reused the tenant workspace account menu so profile settings and sign-out are
+  in the same familiar upper-right location in both portals.
+- Reduced the overview from nine equal-priority tiles to four headline signals
+  and a distinct commercial/lifecycle watch panel. All original aggregate
+  values remain visible and no status is inferred or suppressed.
+- Tightened cards, typography, spacing, header context and responsive behavior
+  to improve scan speed without changing any platform API, permission, billing,
+  tenant, audit, backup or finance behavior.
+- Controlled Chrome verification covered grouped navigation, active-page state,
+  account-to-settings navigation, organisation table access, the mobile drawer,
+  body scroll locking, Escape close, focus restoration and zero document
+  overflow at 1440px, 640px and 320px. The web TypeScript, 13-test navigation
+  model, 3-test invoice PDF regression, design-token, accessibility and
+  production-build gates passed. Focused database-backed Platform
+  Administration regressions passed 10 tests with one intentional skip.
 
 ## Delivered
 
@@ -65,9 +89,11 @@ representative users.
 
 ## Release boundary
 
-Local implementation and verification do not prove merge, deployment or live
-availability. GitHub review/CI, approved merge, deployment completion and an
-authenticated production check remain mandatory before calling P6-013 live.
+The initial P6-013 implementation passed review, merged in PR #69 and was
+verified in production. The 2026-07-14 interface refinement is not live merely
+because its local checks pass: GitHub review/CI, approved merge, production
+deployment and live authenticated verification remain mandatory for the
+refined interface.
 
 ## Rollback
 

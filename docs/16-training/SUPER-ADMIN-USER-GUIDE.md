@@ -1,6 +1,6 @@
 # VAKA OS Super Admin User Guide
 
-Edition 1.2 · Effective 2026-07-14 · Audience: authorised VAKA platform administrators
+Edition 1.3 · Effective 2026-07-14 · Audience: authorised VAKA platform administrators
 
 This guide explains the Platform Administration console that is available when an authorised VAKA staff account signs in without a tenant workspace. It describes the current console and its controls. It is not evidence that every VAKA product, platform service, country pack, integration or launch gate is implemented.
 
@@ -45,6 +45,9 @@ If a tenant workspace appears, sign out and report the identity/context mismatch
 ## 4. Console navigation
 
 The console has six working areas, subject to the signed-in role's permissions.
+They are grouped as Workspace, Administration and Support so routine operating
+tasks, staff controls and guidance remain distinct. The upper-right account menu
+opens personal settings or signs out, matching the tenant workspace pattern.
 
 - Overview shows fast destinations plus aggregate tenant, user, billing, growth and audit-event signals.
 - Organisations lists authorised client workspaces, supports company, subdomain,
@@ -117,6 +120,11 @@ The runtime cards are signals only. They do not prove availability, backup recov
 ## 6. Overview metrics
 
 Overview contains privacy-minimised aggregates rather than routine tenant records.
+Total tenants, Active tenants, Registered users and Signed-in users are the four
+headline signals. Trial, past-due and suspended tenants plus issued and
+outstanding business invoices remain visible in the separate commercial and
+lifecycle watch panel; that panel is a navigation aid, not an automated risk
+classification.
 
 - Total tenants is the number of tenant workspaces known to the platform.
 - Trial, Active, Past due and Suspended reflect stored tenant lifecycle state.
