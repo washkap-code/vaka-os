@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Children, useCallback, useEffect, useMemo, useState } from "react";
 import { api, fmt } from "../api";
 import { LegacyField } from "../accessibility/legacy-field";
 import { LegacyModal } from "../accessibility/legacy-modal";
@@ -187,7 +187,8 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
 }
 
 function RecordGrid({ empty, children }: { empty: string; children: React.ReactNode }) {
-  return <div className="procurement-grid">{children || <div className="panel procurement-empty">{empty}</div>}</div>;
+  return <div className="procurement-grid">{Children.count(children) > 0
+    ? children : <div className="panel procurement-empty">{empty}</div>}</div>;
 }
 function RecordHeading({ number, status, meta }: { number: string; status: string; meta: string }) {
   return <header className="procurement-card-heading"><div><h2>{number}</h2><span className="sub">{meta}</span></div><span className={`pill ${status}`}>{status.replaceAll("_", " ")}</span></header>;
