@@ -4,6 +4,7 @@ import { resolveWorkspacePage, visibleWorkspaceNavigation } from "../src/shell/n
 import { notificationCopy } from "../src/shell/notification-copy.ts";
 import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "../src/shell/workbench-model.ts";
 import { parseWorkspaceSearchResponse, workspaceSearchTarget } from "../src/shell/command-search-model.ts";
+import { filterPlatformTenants, visiblePlatformAdminPages } from "../src/platform/platform-admin-model.ts";
 
 const notificationCatalogue = {
   lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
@@ -32,6 +33,21 @@ test("a forbidden current page falls back to the first visible destination", () 
 
 test("billing and settings remain available without domain permissions", () => {
   assert.deepEqual(visibleWorkspaceNavigation([], false).map((item) => item.key), ["billing", "settings"]);
+});
+
+test("platform administration navigation exposes only authorised operating areas", () => {
+  assert.deepEqual(visiblePlatformAdminPages(["platform.tenants.read", "platform.staff.read"]), ["tenants", "staff", "settings", "guide"]);
+  assert.deepEqual(visiblePlatformAdminPages([]), ["settings", "guide"]);
+});
+
+test("platform tenant filtering narrows only already-authorised results", () => {
+  const tenants = [
+    { company_name: "Waskap Advisory", subdomain: "waskap", plan: "Build", status: "TRIAL" },
+    { company_name: "Africa Procurement Group", subdomain: "africaprocure", plan: "Scale", status: "ACTIVE" },
+  ];
+  assert.deepEqual(filterPlatformTenants(tenants, "WASKAP", "all"), [tenants[0]]);
+  assert.deepEqual(filterPlatformTenants(tenants, "", "ACTIVE"), [tenants[1]]);
+  assert.deepEqual(filterPlatformTenants(tenants, "Scale", "TRIAL"), []);
 });
 
 test("workbench actions expose only destinations already permitted by the shell", () => {

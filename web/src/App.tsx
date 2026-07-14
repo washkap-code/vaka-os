@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
-import { PlatformAdminGuide } from "./platform-admin-guide";
+import { PlatformAdminShell, type PlatformAdminNavigationItem } from "./platform/platform-admin-shell";
+import { filterPlatformTenants, visiblePlatformAdminPages, type PlatformAdminPage } from "./platform/platform-admin-model";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
 import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
@@ -12,6 +13,8 @@ import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
+
+const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -395,14 +398,28 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   const [backupManifests, setBackupManifests] = useState<BackupManifestRecord[]>([]);
   const [staff, setStaff] = useState<PlatformStaff[]>([]);
   const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
-  const [tab, setTab] = useState<"overview" | "tenants" | "operations" | "staff" | "settings" | "guide">("overview");
+  const [tab, setTab] = useState<PlatformAdminPage>("overview");
   const [catalogueGroup, setCatalogueGroup] = useState<"all" | PlatformCapabilityStatus["group"]>("all");
+  const [tenantSearch, setTenantSearch] = useState("");
+  const [tenantStatus, setTenantStatus] = useState("all");
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
   const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
   const can = (permission: string) => me.platformPermissions.includes(permission);
+  const adminNavigation = useMemo<PlatformAdminNavigationItem[]>(() => {
+    const content: Record<PlatformAdminPage, Omit<PlatformAdminNavigationItem, "key">> = {
+      overview: { label: copy.overview, description: copy.overviewNavHelp },
+      tenants: { label: copy.organisations, description: copy.tenantsNavHelp },
+      operations: { label: copy.platformHealth, description: copy.operationsNavHelp },
+      staff: { label: copy.workforce, description: copy.workforceNavHelp },
+      settings: { label: copy.settings, description: copy.settingsNavHelp },
+      guide: { label: copy.helpCentre, description: copy.guideNavHelp },
+    };
+    return visiblePlatformAdminPages(me.platformPermissions).map((key) => ({ key, ...content[key] }));
+  }, [me.platformPermissions, copy]);
+  const currentAdminPage = adminNavigation.find((item) => item.key === tab) ?? adminNavigation[0];
   const load = async () => {
     try {
       const requests: Promise<void>[] = [];
@@ -418,6 +435,9 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
     } catch (error: any) { setMsg(error.message); }
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    if (!adminNavigation.some((item) => item.key === tab) && adminNavigation[0]) setTab(adminNavigation[0].key);
+  }, [adminNavigation, tab]);
   const runBilling = async () => {
     if (!window.confirm(copy.billingConfirm)) return;
     setBusy(true); setMsg("");
@@ -442,33 +462,31 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   };
   const visibleCapabilities = controlCenter?.catalogue.filter((entry) =>
     catalogueGroup === "all" || entry.group === catalogueGroup) ?? [];
+  const tenantStatuses = useMemo(() => Array.from(new Set(tenants.map((tenant) => tenant.status))).sort(), [tenants]);
+  const visibleTenants = useMemo(() => {
+    return filterPlatformTenants(tenants, tenantSearch, tenantStatus);
+  }, [tenantSearch, tenantStatus, tenants]);
   return (
-    <div className="shell">
-      <aside className="side">
-        <div className="logo">VAKA OS<small>{copy.title}</small></div>
-        <nav>
-          {can("platform.overview.read") && <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>{copy.overview}</button>}
-          {can("platform.tenants.read") && <button className={tab === "tenants" ? "active" : ""} onClick={() => setTab("tenants")}>{copy.tenants}</button>}
-          {can("platform.operations.read") && <button className={tab === "operations" ? "active" : ""} onClick={() => setTab("operations")}>{copy.operations}</button>}
-          {can("platform.staff.read") && <button className={tab === "staff" ? "active" : ""} onClick={() => setTab("staff")}>{copy.workforce}</button>}
-          <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>{copy.settings}</button>
-          <button className={tab === "guide" ? "active" : ""} onClick={() => setTab("guide")}>{copy.userGuide}</button>
-        </nav>
-        <div className="foot">
-          {me.user.fullName}<br /><small>{me.platformRoleName}</small><br />
-          <a className="side-signout" onClick={onLogout}>Sign out</a>
+    <PlatformAdminShell items={adminNavigation} currentPage={tab}
+      user={{ fullName: me.user.fullName, email: me.user.email }} role={me.platformRoleName ?? copy.platformStaffRole}
+      labels={{ product: "VAKA OS", workspace: copy.controlCentre, navigation: copy.navigation,
+        openMenu: copy.openMenu, closeMenu: copy.closeMenu, mobileNavigation: copy.mobileNavigation,
+        signedInAs: copy.signedInAs, signOut: copy.signOut, skipToContent: copy.skipToContent }}
+      onNavigate={setTab} onLogout={onLogout}>
+        <div className="platform-admin-page-heading">
+          <div><span>{copy.controlCentre}</span><h1>{currentAdminPage?.label}</h1><p>{currentAdminPage?.description}</p></div>
+          {tab === "overview" && can("platform.billing.run") && <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>}
         </div>
-      </aside>
-      <main className="main">
-        <h1>{copy.title}</h1>
-        <div className="sub">{copy.subtitle}</div>
-        {tab === "overview" && can("platform.billing.run") && <div className="row" style={{ marginBottom: 14 }}>
-          <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>
-        </div>}
-        {msg && <div className="banner warn">{msg}</div>}
+        {msg && <div className="banner warn" role="status">{msg}</div>}
+        {tab === "overview" && <section className="platform-admin-shortcuts" aria-labelledby="platform-shortcuts-heading">
+          <div className="platform-admin-section-heading"><div><span>{copy.getThereFaster}</span><h2 id="platform-shortcuts-heading">{copy.commonDestinations}</h2></div></div>
+          <div className="platform-admin-shortcut-grid">{adminNavigation.filter((item) => item.key !== "overview").slice(0, 4).map((item) =>
+            <button type="button" key={item.key} onClick={() => setTab(item.key)}><strong>{item.label}</strong><small>{item.description}</small><b aria-hidden="true">→</b></button>)}</div>
+        </section>}
         {tab === "overview" && analytics && <>
-          <div className="cards">
-            {[[copy.totalTenants, analytics.summary.total_tenants], [copy.trialTenants, analytics.summary.trial_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users], [copy.invoicesIssued, analytics.summary.invoices_issued], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding]].map(([label, value]) => <div className="card" key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
+          <div className="platform-admin-section-heading"><div><span>{copy.atAGlance}</span><h2>{copy.platformSignals}</h2></div><small>{copy.platformSignalsHelp}</small></div>
+          <div className="cards platform-admin-metrics">
+            {[[copy.totalTenants, analytics.summary.total_tenants], [copy.trialTenants, analytics.summary.trial_tenants], [copy.activeTenants, analytics.summary.active_tenants], [copy.pastDueTenants, analytics.summary.past_due_tenants], [copy.suspendedTenants, analytics.summary.suspended_tenants], [copy.totalUsers, analytics.summary.total_users], [copy.signedInUsers, analytics.summary.signed_in_users], [copy.invoicesIssued, analytics.summary.invoices_issued], [copy.invoicesOutstanding, analytics.summary.invoices_outstanding]].map(([label, value], index) => <div className={`card platform-admin-metric metric-${index + 1}`} key={String(label)}><div className="k">{label}</div><div className="v">{value ?? 0}</div></div>)}
           </div>
           <div className="grid2">
             <div className="panel"><h2>{copy.planMix}</h2><table><thead><tr><th>{copy.plan}</th><th className="num">{copy.tenantCount}</th></tr></thead><tbody>{(analytics.planMix ?? []).map((row: any) => <tr key={row.plan}><td>{row.plan}</td><td className="num">{row.tenants}</td></tr>)}{!analytics.planMix?.length && <tr><td colSpan={2}>{copy.noData}</td></tr>}</tbody></table></div>
@@ -479,10 +497,16 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         </>}
         {tab === "tenants" && <>
         <div className="panel">
-          <h2>{copy.tenantsHeading.replace("{count}", String(tenants.length))}</h2>
-          <div className="table-scroll"><table>
+          <div className="panel-heading platform-admin-filter-heading">
+            <div><span className="platform-admin-section-kicker">{copy.clientPortfolio}</span><h2>{copy.tenantsHeading.replace("{count}", String(visibleTenants.length))}</h2><div className="sub">{copy.tenantFilterSummary.replace("{total}", String(tenants.length))}</div></div>
+            <div className="platform-admin-filters">
+              <div className="field"><label htmlFor="platform-tenant-search">{copy.searchOrganisations}</label><input id="platform-tenant-search" type="search" value={tenantSearch} placeholder={copy.searchOrganisationsPlaceholder} onChange={(event) => setTenantSearch(event.target.value)} /></div>
+              <div className="field"><label htmlFor="platform-tenant-status">{copy.lifecycleStatus}</label><select id="platform-tenant-status" value={tenantStatus} onChange={(event) => setTenantStatus(event.target.value)}><option value="all">{copy.allStatuses}</option>{tenantStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></div>
+            </div>
+          </div>
+          <div className="table-scroll" role="region" aria-label={copy.tenantsTableLabel} tabIndex={0}><table className="dense-data-table">
             <thead><tr><th>{copy.company}</th><th>{copy.subdomain}</th><th>{copy.status}</th><th>{copy.plan}</th><th className="num">{copy.users}</th><th>{copy.trialEnds}</th><th>{copy.created}</th><th>{copy.review}</th></tr></thead>
-            <tbody>{tenants.map((t) => <tr key={t.id}><td>{t.company_name}</td><td>{t.subdomain}</td><td><span className={`pill ${t.status}`}>{t.status}</span></td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td><td><button className="btn ghost sm" onClick={() => void reviewTenant(t)}>{copy.reviewAudit}</button></td></tr>)}{!tenants.length && <tr><td colSpan={8}>{copy.noTenants}</td></tr>}</tbody>
+            <tbody>{visibleTenants.map((t) => <tr key={t.id}><td><strong>{t.company_name}</strong></td><td>{t.subdomain}</td><td><span className={`pill ${t.status}`}>{t.status}</span></td><td>{t.plan ?? "—"}</td><td className="num">{t.user_count}</td><td>{t.trial_ends_at ? new Date(t.trial_ends_at).toLocaleDateString() : "—"}</td><td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}</td><td><button className="btn ghost sm" onClick={() => void reviewTenant(t)}>{copy.reviewAudit}</button></td></tr>)}{!visibleTenants.length && <tr><td colSpan={8}>{tenants.length ? copy.noMatchingTenants : copy.noTenants}</td></tr>}</tbody>
           </table></div>
         </div>
         {selectedTenant && <div className="panel">
@@ -497,7 +521,10 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         </div>}
         </>}
         {tab === "operations" && controlCenter && <>
-          <div className="architecture-banner">
+          <nav className="platform-admin-subnavigation" aria-label={copy.operationsSections}>
+            <a href="#operations-health">{copy.health}</a><a href="#operations-capabilities">{copy.capabilities}</a><a href="#operations-assurance">{copy.assurance}</a><a href="#operations-recovery">{copy.recovery}</a>
+          </nav>
+          <div className="architecture-banner platform-admin-section-anchor" id="operations-health">
             <div><span>{copy.architectureFreeze}</span><strong>{controlCenter.architecture.status}</strong></div>
             <p>{copy.effective.replace("{date}", controlCenter.architecture.effectiveOn)} · {copy.blueprintEdition.replace("{edition}", controlCenter.architecture.blueprintEdition)}. {controlCenter.architecture.changeControl}</p>
           </div>
@@ -509,7 +536,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
             <div className="card"><div className="k">{copy.pastDueTenants}</div><div className="v">{controlCenter.signals.pastDueTenants}</div></div>
             <div className="card"><div className="k">{copy.suspendedTenants}</div><div className="v">{controlCenter.signals.suspendedTenants}</div></div>
           </div>
-          <div className="panel">
+          <div className="panel platform-admin-section-anchor" id="operations-capabilities">
             <div className="panel-heading">
               <div><h2>{copy.capabilityStatus}</h2><div className="sub">{copy.capabilityStatusHelp}</div></div>
               <div className="field compact-field"><label htmlFor="capability-group">{copy.scope}</label><select id="capability-group" value={catalogueGroup} onChange={(event) => setCatalogueGroup(event.target.value as typeof catalogueGroup)}><option value="all">{copy.all}</option><option value="Frozen product">{copy.frozenProducts}</option><option value="Platform Kernel service">{copy.kernelServices}</option></select></div>
@@ -519,7 +546,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
               <tbody>{visibleCapabilities.map((entry) => <tr key={entry.id}><td><strong>{entry.name}</strong><small>{entry.group}</small></td><td><span className={`status-chip state-${entry.implementation}`}>{entry.implementation}</span></td><td><span className={`status-chip state-${entry.verification}`}>{entry.verification}</span><small>{entry.verificationScope}</small></td><td><span className={`status-chip state-${entry.availability}`}>{entry.availability}</span></td><td>{entry.currentEvidence}</td><td>{entry.nextGate}</td></tr>)}</tbody>
             </table></div>
           </div>
-          <div className="panel">
+          <div className="panel platform-admin-section-anchor" id="operations-assurance">
             <div className="panel-heading">
               <div><h2>{copy.operationsEvidence}</h2><div className="sub">{copy.operationsEvidenceHelp}</div></div>
               <div className="evidence-summary" aria-label={copy.operationsEvidenceSummary}>
@@ -533,7 +560,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
               <tbody>{controlCenter.operationsEvidence.gates.map((gate) => <tr key={gate.id}><td><strong>{gate.name}</strong><small>{gate.category}</small></td><td><span className={`status-chip state-${gate.state}`}>{gate.state}</span></td><td>{gate.owner}</td><td>{gate.evidence}</td><td>{gate.nextGate}</td></tr>)}</tbody>
             </table></div>
           </div>
-          <div className="panel">
+          <div className="panel platform-admin-section-anchor" id="operations-recovery">
             <div className="panel-heading">
               <div><h2>{copy.backupManifest}</h2><div className="sub">{controlCenter.backupManifest.purpose}</div></div>
               <span className={`status-chip state-${controlCenter.backupManifest.status}`}>{controlCenter.backupManifest.status}</span>
@@ -576,9 +603,8 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}
         {tab === "staff" && <PlatformWorkforce me={me} staff={staff} roles={platformRoles} onReload={load} />}
         {tab === "settings" && <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />}
-        {tab === "guide" && <PlatformAdminGuide />}
-      </main>
-    </div>
+        {tab === "guide" && <Suspense fallback={<div className="panel" role="status">{copy.loadingGuide}</div>}><PlatformAdminGuide /></Suspense>}
+    </PlatformAdminShell>
   );
 }
 
