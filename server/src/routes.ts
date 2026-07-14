@@ -91,6 +91,10 @@ import {
   createSupplierBill, evaluateSupplierBillMatch, getSupplierBill, listSupplierBills,
   postSupplierBill, supplierBillCreateSchema, supplierBillPostSchema, supplierBillUpdateSchema, updateSupplierBill,
 } from "./supplier-bills.js";
+import {
+  createWarehouse, getWarehouseSettings, updateWarehouse,
+  warehouseCreateSchema, warehouseUpdateSchema,
+} from "./warehouse-settings.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1363,17 +1367,27 @@ api.patch("/products/:id/reorder-rule", requirePermission("inventory.write"), wr
 api.get("/warehouses", requirePermission("inventory.read"), wrap(async (req) =>
   db.select().from(schema.warehouses).where(eq(schema.warehouses.tenantId, tenantId(req)))));
 api.post("/warehouses", requirePermission("inventory.write"), wrap(async (req) => {
-  const body = z.object({ name: z.string().min(1), address: z.string().optional().nullable() }).parse(req.body);
-  const tid = tenantId(req);
-  return db.transaction(async (tx) => {
-    const [warehouse] = await tx.insert(schema.warehouses).values({ ...body, tenantId: tid }).returning();
-    await audit(tx, tid, req.auth!.userId, "warehouse.created", "warehouse", warehouse.id, {
-      name: warehouse.name,
-      address: warehouse.address,
-    });
-    return warehouse;
+  const result = await createWarehouse({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: warehouseCreateSchema.parse(req.body),
   });
+  return result.warehouse;
 }));
+api.get("/settings/warehouses",
+  requireAnyPermission("settings.manage", "inventory.read", "inventory.write"),
+  wrap(async (req) => getWarehouseSettings(tenantId(req))));
+api.post("/settings/warehouses",
+  requireAnyPermission("settings.manage", "inventory.write"),
+  wrap(async (req) => createWarehouse({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: warehouseCreateSchema.parse(req.body),
+  })));
+api.patch("/settings/warehouses/:id",
+  requireAnyPermission("settings.manage", "inventory.write"),
+  wrap(async (req) => updateWarehouse({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    warehouseId: uuidRouteParam(req, "id"), input: warehouseUpdateSchema.parse(req.body),
+  })));
 api.post("/stock/adjust", requirePermission("inventory.write"), wrap(async (req) => {
   const body = z.object({
     productId: z.string().uuid(), warehouseId: z.string().uuid(),
