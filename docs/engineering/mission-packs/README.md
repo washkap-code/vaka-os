@@ -31,6 +31,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P1-006 | Tenant-scoped Customer/Invoice/Product search adapter | ✅ Technically verified internal adapter; durable delivery, scale and UI gated |
 | P1-008 | Canonical Company/Customer/Invoice/Product metadata registry | ✅ Technically verified read-only registry; dynamic values and AI context gated |
 | P9-008 | Account recovery, optional MFA and governed platform workforce | ✅ Released (PR #62–#64); email delivery and stable MFA key activation remain externally configured |
+| P9-009 | Explicit Tenant Ownership Foundation | Implemented on a clean current-main branch; legacy/fresh-schema and full local security/domain suites verified; remote migration/release gates pending |
 | P3-003 | Customer activity and communication timeline | ✅ Technically verified for manual CRM activity and financial milestones; provider communications gated |
 | P3-004 | Customer records, bulk actions and controlled deletion | ✅ Released (PR #61); physical privacy erasure and merge/deduplication remain gated |
 | P2-007 | Invoice detail and draft amendment | ✅ Released (PR #61); issued/posted history remains immutable |
@@ -49,6 +50,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P6-016 | Homepage Visual Modernisation I: Navigation, Hero and Product Proof | ✅ Released (PR #78); full remote quality gate, production deployment and live browser verification passed |
 | CO-006 | Verified Paynow Subscription Collection | ✅ Implementation complete and locally verified; remote DB gates and live merchant activation pending |
 | P6-018 | Tenant-branded Secure Holding and Sign-out Experience | ✅ Implementation complete and locally verified; remote DB and release gates pending |
+| P9-009 | Explicit tenant ownership (accountable Owner as identity invariant) | ✅ Implemented; DB-backed verified; production DDL hand-applied |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |

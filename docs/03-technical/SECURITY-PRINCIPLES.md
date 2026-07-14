@@ -48,9 +48,11 @@ Current implementation evidence (P9-008) includes non-enumerating,
 single-use 30-minute password-reset links; session revocation after recovery;
 optional authenticator TOTP with encrypted secrets and hash-only one-time
 recovery codes; AAL2 enforcement for enrolled accounts; and user-controlled
-session review/revocation. Email delivery still depends on an approved,
-configured HTTPS provider. SSO, refresh-token rotation and risk-based step-up
-remain future work.
+session review/revocation. P9-009 adds explicit, tenant-scoped accountable
+ownership with same-tenant database enforcement so mutable role names cannot
+grant principal-owner authority. Email delivery still depends on an approved,
+configured HTTPS provider. Controlled ownership transfer/recovery, SSO,
+refresh-token rotation and risk-based step-up remain future work.
 
 ## 5. Role-based access
 

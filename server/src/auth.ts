@@ -68,6 +68,12 @@ export async function signupTenant(opts: {
       tenantId: tenant.id, email: opts.ownerEmail.toLowerCase(), passwordHash,
       fullName: opts.ownerName, roleId: ownerRole.id,
     }).returning();
+    await tx.insert(schema.tenantOwnerships).values({
+      tenantId: tenant.id,
+      ownerUserId: owner.id,
+    });
+    await audit(tx, tenant.id, owner.id, "security.tenant_ownership_established",
+      "tenant_ownership", tenant.id, { source: "signup" });
 
     // chart of accounts + default warehouse
     await seedChartOfAccounts(tx, tenant.id);
@@ -141,14 +147,16 @@ export async function setTenantUserStatus(opts: {
   tenantId: string; actorUserId: string; userId: string; status: "active" | "disabled";
 }) {
   return db.transaction(async (tx) => {
-    const [target] = await tx.select({ id: schema.users.id, roleId: schema.users.roleId, status: schema.users.status })
+    const [target] = await tx.select({ id: schema.users.id, status: schema.users.status })
       .from(schema.users).where(and(eq(schema.users.id, opts.userId), eq(schema.users.tenantId, opts.tenantId)));
     if (!target) throw notFound("User not found");
     if (target.id === opts.actorUserId) throw badRequest("You cannot disable your own account");
-    if (target.roleId) {
-      const [role] = await tx.select({ name: schema.roles.name }).from(schema.roles).where(eq(schema.roles.id, target.roleId));
-      if (role?.name === "Owner") throw badRequest("The accountable Owner cannot be disabled");
-    }
+    const [ownership] = await tx.select({ tenantId: schema.tenantOwnerships.tenantId })
+      .from(schema.tenantOwnerships).where(and(
+        eq(schema.tenantOwnerships.tenantId, opts.tenantId),
+        eq(schema.tenantOwnerships.ownerUserId, target.id),
+      ));
+    if (ownership) throw badRequest("The accountable Owner cannot be disabled");
     const [updated] = await tx.update(schema.users).set({ status: opts.status }).where(eq(schema.users.id, target.id))
       .returning({ id: schema.users.id, status: schema.users.status });
     if (opts.status === "disabled") {
@@ -275,8 +283,13 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
       if (user.roleId) {
         const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, user.roleId));
         permissions = role?.permissions ?? [];
-        isTenantOwner = role?.name === "Owner";
       }
+      const [ownership] = await db.select({ tenantId: schema.tenantOwnerships.tenantId })
+        .from(schema.tenantOwnerships).where(and(
+          eq(schema.tenantOwnerships.tenantId, user.tenantId),
+          eq(schema.tenantOwnerships.ownerUserId, user.id),
+        ));
+      isTenantOwner = Boolean(ownership);
       const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.id, user.tenantId));
       if (!tenant) throw unauthorized("Tenant not found");
       accessLevel = accessLevelFor(tenant.status);
