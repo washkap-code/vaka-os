@@ -1,7 +1,7 @@
 # P6-013 completion report — Modern Platform Administration
 
 **Local completion date:** 2026-07-14
-**Release status:** Initial implementation released in PR #69. A user-requested visual and information-hierarchy refinement was implemented locally on 2026-07-14; remote review, merge, deployment and live verification are pending.
+**Release status:** Initial implementation released in PR #69. The user-requested visual and information-hierarchy refinement was released in PR #72 and verified live on 2026-07-14.
 
 ## 2026-07-14 interface refinement
 
@@ -90,10 +90,12 @@ representative users.
 ## Release boundary
 
 The initial P6-013 implementation passed review, merged in PR #69 and was
-verified in production. The 2026-07-14 interface refinement is not live merely
-because its local checks pass: GitHub review/CI, approved merge, production
-deployment and live authenticated verification remain mandatory for the
-refined interface.
+verified in production. The 2026-07-14 interface refinement passed the complete
+remote quality gate, merged at `aaebd7da2379103686573aec29edb033a12ee495`,
+deployed successfully to Vercel Production and was verified on `www.vakaos.com`.
+The live HTML served the exact locally verified JavaScript and CSS bundle names;
+the live bundles contained the new grouped-navigation copy and dashboard rules.
+The attached release evidence is recorded on PR #72.
 
 ## Rollback
 
