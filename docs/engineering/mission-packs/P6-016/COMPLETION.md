@@ -1,7 +1,7 @@
 # P6-016 Completion Report
 
 **Date:** 2026-07-14
-**Status:** Implementation complete; all local release gates passed; remote quality and production release pending
+**Status:** Released (PR #78); local, remote, production and live-browser gates passed
 
 ## Delivered
 
@@ -89,7 +89,18 @@ analytics, field Core Web Vitals and formal WCAG certification remain gated.
 
 ## Release evidence
 
-P6-016 remains unreleased until the GitHub quality gate, Vercel preview,
-approved merge, post-merge main gate, Production deployment and exact live-bundle
-verification pass. Rollback requires reverting only the scoped landing,
-catalogue, CSS, test and documentation commits; no database rollback is required.
+P6-016 was squash-merged through [PR #78](https://github.com/washkap-code/vaka-os/pull/78)
+at commit `ddb6b7943fd88b4c139c48b58bc9c2b5968e1490` after the GitHub quality gate,
+Vercel preview and preview-comment checks passed. The post-merge `main` quality
+gate [run 29316578824](https://github.com/washkap-code/vaka-os/actions/runs/29316578824)
+passed. GitHub deployment `5437286170` recorded the exact commit in the
+Production environment with state `success`.
+
+The public site served `/assets/index-i1AODqEN.js` and
+`/assets/index-DVTJlI1-.css` over HTTPS with status 200, correct JavaScript/CSS
+media types and HSTS. A live-browser rerun reproduced the local 320/640/1024/
+1440 reflow, access, Product disclosure, tab, mobile-menu, FAQ and language-
+fallback evidence with one homepage/hero and no overlay, console or page error.
+
+Rollback requires reverting only the scoped landing, catalogue, CSS, test and
+documentation commits; no database rollback is required.
