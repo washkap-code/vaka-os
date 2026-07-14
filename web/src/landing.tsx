@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { HOME_EN, type HomeCopy } from "./locales/home.en";
 import { VakaLogo } from "./design-system/Logo";
+import { HOME_NAVIGATION_IDS, nextHomepageTabIndex, resolveHomeLocale, type HomeLocale } from "./landing-model";
 
 type LandingProps = {
   onLogin: () => void;
   onSignup: () => void;
 };
 
-type Locale = "en" | "sn" | "nd";
 type PreviewTab = HomeCopy["preview"]["tabs"][number];
 type ModuleTab = HomeCopy["modules"]["tabs"][number];
 
@@ -120,12 +120,8 @@ function ModuleExplorer({ copy, onInteraction }: { copy: HomeCopy; onInteraction
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    let next = index;
-    if (event.key === "ArrowRight") next = (index + 1) % copy.modules.tabs.length;
-    else if (event.key === "ArrowLeft") next = (index - 1 + copy.modules.tabs.length) % copy.modules.tabs.length;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = copy.modules.tabs.length - 1;
-    else return;
+    const next = nextHomepageTabIndex(event.key, index, copy.modules.tabs.length);
+    if (next === null) return;
     event.preventDefault();
     choose(copy.modules.tabs[next], next);
   };
@@ -175,10 +171,8 @@ function ModuleExplorer({ copy, onInteraction }: { copy: HomeCopy; onInteraction
 
 export function Landing({ onLogin, onSignup }: LandingProps) {
   const browserLocale = typeof navigator === "undefined" ? "en" : navigator.language.toLowerCase();
-  const storedLocale = typeof window === "undefined" ? null : localStorage.getItem(LANGUAGE_KEY) as Locale | null;
-  const initialLocale = storedLocale
-    ?? (browserLocale.startsWith("sn") ? "sn" : browserLocale.startsWith("nd") ? "nd" : "en");
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+  const storedLocale = typeof window === "undefined" ? null : localStorage.getItem(LANGUAGE_KEY);
+  const [locale, setLocale] = useState<HomeLocale>(() => resolveHomeLocale(storedLocale, browserLocale));
   const [menuOpen, setMenuOpen] = useState(false);
   const copy = useMemo(() => HOME_EN, []);
   const languageNotice = locale !== "en";
@@ -217,13 +211,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
     onSignup();
   };
 
-  const navigation = [
-    ["product", copy.nav.product],
-    ["outcomes", copy.nav.outcomes],
-    ["why", copy.nav.why],
-    ["pricing", copy.nav.pricing],
-    ["faq", copy.nav.resources],
-  ] as const;
+  const navigation = HOME_NAVIGATION_IDS.map((id) => [id, copy.nav[id === "faq" ? "resources" : id]] as const);
 
   return (
     <div className="v-home">
@@ -505,7 +493,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
           <div className="v-logo"><VakaLogo size={30} /></div>
           <p>{copy.footer.position}</p>
           <label htmlFor="v-language">{copy.footer.language}</label>
-          <select id="v-language" value={locale} onChange={(event) => { setLocale(event.target.value as Locale); track("language_change"); }}>
+          <select id="v-language" value={locale} onChange={(event) => { setLocale(resolveHomeLocale(event.target.value, "en")); track("language_change"); }}>
             <option value="en">{copy.footer.languages.english}</option>
             <option value="sn">{copy.footer.languages.shona}</option>
             <option value="nd">{copy.footer.languages.ndebele}</option>
