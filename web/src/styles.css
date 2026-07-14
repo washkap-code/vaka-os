@@ -156,6 +156,101 @@ body { font-family: var(--vaka-workspace-font); background: var(--bg); color: va
 .state-succeeded { background: var(--vaka-workspace-success-surface); color: var(--ok); }
 .state-failed { background: var(--vaka-workspace-danger-surface); color: var(--danger); }
 .state-partial { background: var(--vaka-workspace-warning-surface); color: var(--vaka-workspace-warning-text); }
+
+/* P6-013 — Modern Platform Administration */
+.platform-admin-shell { background: var(--vaka-color-surface-subtle); display: grid; grid-template-columns: 17.5rem minmax(0, 1fr); grid-template-rows: 4.25rem 1fr; min-height: 100vh; }
+.platform-admin-sidebar { background: linear-gradient(180deg, var(--vaka-color-primary) 0%, var(--brand) 100%); color: var(--vaka-color-text-inverse); display: flex; flex-direction: column; min-width: 0; padding: var(--vaka-space-5) var(--vaka-space-3); }
+.platform-admin-desktop-sidebar { grid-column: 1; grid-row: 1 / -1; min-height: 100vh; position: sticky; top: 0; }
+.platform-admin-brand { align-items: center; border-bottom: 1px solid rgb(var(--vaka-workspace-white-rgb) / .16); display: flex; gap: var(--vaka-space-3); margin: 0 var(--vaka-space-2); padding: 0 var(--vaka-space-2) var(--vaka-space-5); }
+.platform-admin-brand-mark { align-items: center; background: var(--accent); border-radius: var(--vaka-radius-md); color: var(--vaka-workspace-accent-text); display: inline-flex; flex: 0 0 2.5rem; font-size: 1.15rem; font-weight: var(--vaka-weight-bold); height: 2.5rem; justify-content: center; }
+.platform-admin-brand > span:last-child, .platform-admin-sidebar-profile > span:last-child { display: grid; gap: var(--vaka-space-1); min-width: 0; }
+.platform-admin-brand strong { font-size: var(--vaka-type-heading-3); letter-spacing: var(--vaka-tracking-display); }
+.platform-admin-brand small { color: rgb(var(--vaka-workspace-white-rgb) / .66); font-size: var(--vaka-type-label); font-weight: var(--vaka-weight-semibold); letter-spacing: var(--vaka-tracking-label); text-transform: uppercase; }
+.platform-admin-navigation { display: flex; flex: 1; flex-direction: column; gap: var(--vaka-space-1); padding: var(--vaka-space-5) 0; }
+.platform-admin-navigation button { align-items: center; background: transparent; border: 1px solid transparent; border-radius: var(--vaka-radius-md); color: rgb(var(--vaka-workspace-white-rgb) / .78); cursor: pointer; display: flex; gap: var(--vaka-space-3); min-height: 3.6rem; padding: var(--vaka-space-2) var(--vaka-space-3); text-align: left; width: 100%; }
+.platform-admin-navigation button:hover { background: rgb(var(--vaka-workspace-white-rgb) / .08); color: var(--vaka-color-text-inverse); }
+.platform-admin-navigation button.active { background: rgb(var(--vaka-workspace-white-rgb) / .13); border-color: rgb(var(--vaka-workspace-white-rgb) / .16); box-shadow: inset .2rem 0 0 var(--accent); color: var(--vaka-color-text-inverse); }
+.platform-admin-navigation button > span { display: grid; gap: .18rem; min-width: 0; }
+.platform-admin-navigation button strong { font-size: var(--vaka-type-body); line-height: var(--vaka-leading-label); }
+.platform-admin-navigation button small { color: inherit; font-size: var(--vaka-type-label); line-height: var(--vaka-leading-label); opacity: .72; }
+.platform-admin-nav-icon { align-items: center; border-radius: var(--vaka-radius-sm); display: inline-flex; flex: 0 0 2rem; font-size: 1rem; height: 2rem; justify-content: center; }
+.platform-admin-navigation button.active .platform-admin-nav-icon { background: rgb(var(--vaka-workspace-white-rgb) / .1); color: var(--accent); }
+.platform-admin-sidebar-profile { align-items: center; border-top: 1px solid rgb(var(--vaka-workspace-white-rgb) / .16); display: flex; gap: var(--vaka-space-3); margin: 0 var(--vaka-space-2); padding: var(--vaka-space-4) var(--vaka-space-2) 0; }
+.platform-admin-sidebar-profile strong, .platform-admin-sidebar-profile small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-admin-sidebar-profile strong { font-size: var(--vaka-type-small); }
+.platform-admin-sidebar-profile small { color: rgb(var(--vaka-workspace-white-rgb) / .65); font-size: var(--vaka-type-label); }
+.platform-admin-avatar { align-items: center; background: rgb(var(--vaka-workspace-white-rgb) / .12); border: 1px solid rgb(var(--vaka-workspace-white-rgb) / .2); border-radius: var(--vaka-radius-full); display: inline-flex; flex: 0 0 2.25rem; font-size: var(--vaka-type-small); font-weight: var(--vaka-weight-bold); height: 2.25rem; justify-content: center; }
+.platform-admin-header { align-items: center; background: rgb(var(--vaka-workspace-white-rgb) / .94); border-bottom: 1px solid var(--vaka-color-border); display: flex; gap: var(--vaka-space-4); grid-column: 2; grid-row: 1; justify-content: space-between; min-width: 0; padding: var(--vaka-space-3) var(--vaka-space-6); position: sticky; top: 0; z-index: 30; }
+.platform-admin-header-context { display: grid; gap: var(--vaka-space-1); min-width: 0; }
+.platform-admin-header-context span { color: var(--vaka-color-text-muted); font-size: var(--vaka-type-label); font-weight: var(--vaka-weight-bold); letter-spacing: var(--vaka-tracking-label); text-transform: uppercase; }
+.platform-admin-header-context strong { font-size: var(--vaka-type-body); }
+.platform-admin-header-account { align-items: center; display: flex; gap: var(--vaka-space-4); min-width: 0; }
+.platform-admin-header-identity { display: grid; gap: var(--vaka-space-1); min-width: 0; text-align: right; }
+.platform-admin-header-identity small { color: var(--vaka-color-text-muted); font-size: var(--vaka-type-label); }
+.platform-admin-header-identity strong { font-size: var(--vaka-type-small); max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-admin-icon-button { align-items: center; background: var(--vaka-color-surface); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-md); color: var(--vaka-color-primary); cursor: pointer; display: inline-flex; height: 2.5rem; justify-content: center; width: 2.5rem; }
+.platform-admin-menu-button, .platform-admin-mobile-drawer, .platform-admin-drawer-backdrop { display: none; }
+.platform-admin-main { grid-column: 2; grid-row: 2; margin: 0 auto; max-width: 90rem; min-width: 0; padding: var(--vaka-space-6); width: 100%; }
+.platform-admin-page-heading { align-items: end; display: flex; gap: var(--vaka-space-5); justify-content: space-between; margin-bottom: var(--vaka-space-6); }
+.platform-admin-page-heading > div { display: grid; gap: var(--vaka-space-2); }
+.platform-admin-page-heading span, .platform-admin-section-heading span, .platform-admin-section-kicker { color: var(--vaka-color-primary); font-size: var(--vaka-type-label); font-weight: var(--vaka-weight-bold); letter-spacing: var(--vaka-tracking-label); text-transform: uppercase; }
+.platform-admin-page-heading h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: var(--vaka-tracking-display); line-height: var(--vaka-leading-tight); }
+.platform-admin-page-heading p { color: var(--vaka-color-text-muted); line-height: var(--vaka-leading-body); max-width: 42rem; }
+.platform-admin-section-heading { align-items: end; display: flex; gap: var(--vaka-space-4); justify-content: space-between; margin: 0 0 var(--vaka-space-3); }
+.platform-admin-section-heading > div { display: grid; gap: var(--vaka-space-1); }
+.platform-admin-section-heading h2 { font-size: var(--vaka-type-heading-3); }
+.platform-admin-section-heading small { color: var(--vaka-color-text-muted); }
+.platform-admin-shortcuts { margin-bottom: var(--vaka-space-6); }
+.platform-admin-shortcut-grid { display: grid; gap: var(--vaka-space-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.platform-admin-shortcut-grid button { align-content: start; background: var(--vaka-color-surface); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-lg); box-shadow: var(--vaka-shadow-xs); color: var(--vaka-color-text); cursor: pointer; display: grid; gap: var(--vaka-space-2); min-height: 9.25rem; padding: var(--vaka-space-4); position: relative; text-align: left; }
+.platform-admin-shortcut-grid button:hover { border-color: var(--vaka-color-primary); box-shadow: var(--vaka-shadow-sm); transform: translateY(-1px); }
+.platform-admin-shortcut-grid button strong { font-size: var(--vaka-type-body); }
+.platform-admin-shortcut-grid button small { color: var(--vaka-color-text-muted); line-height: var(--vaka-leading-label); }
+.platform-admin-shortcut-grid button b { color: var(--vaka-color-primary); font-size: 1.2rem; position: absolute; right: var(--vaka-space-4); top: var(--vaka-space-4); }
+.platform-admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.platform-admin-metric { border-top: .2rem solid var(--vaka-color-primary); box-shadow: var(--vaka-shadow-xs); min-height: 8.25rem; }
+.platform-admin-metric .v { font-size: 1.75rem; font-variant-numeric: tabular-nums; }
+.platform-admin-metric.metric-3 { border-top-color: var(--vaka-color-success); }
+.platform-admin-metric.metric-4, .platform-admin-metric.metric-5, .platform-admin-metric.metric-9 { border-top-color: var(--vaka-color-warning); }
+.platform-admin-filter-heading { align-items: end; margin-bottom: var(--vaka-space-4); }
+.platform-admin-filters { align-items: end; display: flex; gap: var(--vaka-space-3); }
+.platform-admin-filters .field { margin: 0; min-width: 12rem; }
+.platform-admin-filters .field:first-child { min-width: min(20rem, 34vw); }
+.platform-admin-subnavigation { align-items: center; background: rgb(var(--vaka-workspace-white-rgb) / .96); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-full); box-shadow: var(--vaka-shadow-xs); display: flex; gap: var(--vaka-space-1); margin-bottom: var(--vaka-space-5); overflow-x: auto; padding: var(--vaka-space-1); position: sticky; top: 5rem; z-index: 20; }
+.platform-admin-subnavigation a { border-radius: var(--vaka-radius-full); color: var(--vaka-color-text-muted); flex: 1; font-size: var(--vaka-type-small); font-weight: var(--vaka-weight-semibold); min-width: max-content; padding: var(--vaka-space-2) var(--vaka-space-4); text-align: center; text-decoration: none; }
+.platform-admin-subnavigation a:hover, .platform-admin-subnavigation a:focus-visible { background: var(--vaka-color-info-surface); color: var(--vaka-color-primary); }
+.platform-admin-section-anchor { scroll-margin-top: 9rem; }
+
+@media (max-width: 72rem) {
+  .platform-admin-shortcut-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 56rem) {
+  .platform-admin-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: 4rem 1fr; }
+  .platform-admin-desktop-sidebar { display: none; }
+  .platform-admin-header { grid-column: 1; grid-row: 1; padding: var(--vaka-space-2) var(--vaka-space-4); }
+  .platform-admin-menu-button { display: inline-flex; }
+  .platform-admin-header-context { margin-right: auto; }
+  .platform-admin-header-identity { display: none; }
+  .platform-admin-main { grid-column: 1; grid-row: 2; padding: var(--vaka-space-5); }
+  .platform-admin-drawer-backdrop { background: rgb(var(--vaka-workspace-overlay-rgb) / .54); border: 0; display: block; inset: 0; position: fixed; z-index: 70; }
+  .platform-admin-mobile-drawer { background: linear-gradient(180deg, var(--vaka-color-primary) 0%, var(--brand) 100%); color: var(--vaka-color-text-inverse); display: flex; flex-direction: column; height: 100vh; left: 0; max-width: 90vw; overflow-y: auto; padding: var(--vaka-space-4) var(--vaka-space-3); position: fixed; top: 0; width: 20rem; z-index: 80; }
+  .platform-admin-drawer-close { align-self: flex-end; background: rgb(var(--vaka-workspace-white-rgb) / .08); border: 1px solid rgb(var(--vaka-workspace-white-rgb) / .2); border-radius: var(--vaka-radius-md); color: var(--vaka-color-text-inverse); cursor: pointer; margin-bottom: var(--vaka-space-3); min-height: 2.75rem; padding: var(--vaka-space-2) var(--vaka-space-3); }
+  .platform-admin-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 40rem) {
+  .platform-admin-main { padding: var(--vaka-space-4); }
+  .platform-admin-page-heading { align-items: stretch; flex-direction: column; margin-bottom: var(--vaka-space-5); }
+  .platform-admin-page-heading .btn { width: 100%; }
+  .platform-admin-shortcut-grid, .platform-admin-metrics { grid-template-columns: minmax(0, 1fr); }
+  .platform-admin-shortcut-grid button { min-height: 8rem; }
+  .platform-admin-section-heading { align-items: flex-start; flex-direction: column; }
+  .platform-admin-filter-heading { align-items: stretch; }
+  .platform-admin-filters { align-items: stretch; flex-direction: column; width: 100%; }
+  .platform-admin-filters .field, .platform-admin-filters .field:first-child { min-width: 0; width: 100%; }
+  .platform-admin-subnavigation { border-radius: var(--vaka-radius-md); top: 4.5rem; }
+  .platform-admin-header-account .btn { min-height: 2.75rem; min-width: 0; padding-inline: var(--vaka-space-2); white-space: nowrap; }
+  .platform-admin-menu-button { height: 2.75rem; width: 2.75rem; }
+}
 .guide-toolbar { align-items: end; display: flex; gap: 24px; justify-content: space-between; }
 .guide-toolbar h2 { margin-bottom: 5px; }
 .guide-toolbar p { color: var(--muted); line-height: 1.5; }

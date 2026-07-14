@@ -39,6 +39,7 @@ const files = [
   "src/accessibility/legacy-modal.tsx",
   "src/accessibility/use-modal-focus.ts",
   "src/shell/workspace-shell.tsx",
+  "src/platform/platform-admin-shell.tsx",
   "src/shell/command-palette.tsx",
 ];
 const sources = new Map();
@@ -55,6 +56,7 @@ const landing = sources.get("src/landing.css");
 const field = sources.get("src/accessibility/legacy-field.tsx");
 const modal = sources.get("src/accessibility/legacy-modal.tsx");
 const focus = sources.get("src/accessibility/use-modal-focus.ts");
+const platformShell = sources.get("src/platform/platform-admin-shell.tsx");
 
 for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"aria-invalid": error ? true']) {
   requireContract(issues, "src/accessibility/legacy-field.tsx", field, expected);
@@ -86,6 +88,20 @@ for (const expected of [
   "data-modal-initial-focus",
   "copy.lineField.replace",
 ]) requireContract(issues, "src/App.tsx", app, expected);
+
+for (const expected of [
+  'href="#platform-main"',
+  'aria-label={labels.navigation}',
+  'aria-current={currentPage === item.key ? "page" : undefined}',
+  'aria-expanded={drawerOpen}',
+  'aria-controls="platform-admin-mobile-drawer"',
+  'role="dialog" aria-modal="true"',
+  'event.key === "Escape"',
+  'event.key !== "Tab"',
+  'document.body.style.overflow = "hidden"',
+  'drawerCloseRef.current?.focus()',
+  'menuButtonRef.current?.focus()',
+]) requireContract(issues, "src/platform/platform-admin-shell.tsx", platformShell, expected);
 
 for (const expected of [
   ":where(a, button, input, select, textarea, [tabindex]):focus-visible",

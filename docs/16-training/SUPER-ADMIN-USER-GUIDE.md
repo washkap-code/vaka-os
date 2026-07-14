@@ -1,6 +1,6 @@
 # VAKA OS Super Admin User Guide
 
-Edition 1.1 · Effective 2026-07-13 · Audience: authorised VAKA platform administrators
+Edition 1.2 · Effective 2026-07-14 · Audience: authorised VAKA platform administrators
 
 This guide explains the Platform Administration console that is available when an authorised VAKA staff account signs in without a tenant workspace. It describes the current console and its controls. It is not evidence that every VAKA product, platform service, country pack, integration or launch gate is implemented.
 
@@ -30,8 +30,8 @@ The delivery chain is ChatGPT to Knowledge System to Mission Packs to Codex to G
 3. Complete a required temporary-password change before continuing.
 4. If authenticator two-factor authentication is enabled, enter the current
    six-digit authenticator code or one unused recovery code.
-5. Confirm that the page title is Platform administration and that no tenant workspace is shown.
-6. Sign out from the lower-left navigation when work is complete.
+5. Confirm that the header identifies the Platform control centre and that no tenant workspace is shown.
+6. Sign out from the upper-right account area when work is complete.
 
 Use Forgot password when the password is unavailable. Platform staff leave
 the company subdomain blank. The reset link is single-use and expires after 30
@@ -46,15 +46,23 @@ If a tenant workspace appears, sign out and report the identity/context mismatch
 
 The console has six working areas, subject to the signed-in role's permissions.
 
-- Overview shows aggregate tenant, user, billing, growth and audit-event signals.
-- Tenants lists client workspaces and allows authorised review of their recent material audit events.
-- Operations shows runtime observations, the Architecture Freeze and the status of every frozen product and Platform Kernel service.
+- Overview shows fast destinations plus aggregate tenant, user, billing, growth and audit-event signals.
+- Organisations lists authorised client workspaces, supports company, subdomain,
+  plan and lifecycle filtering, and allows review of recent material audit events.
+- Platform health shows runtime observations, the Architecture Freeze and the
+  status of frozen products and Platform Kernel services. Use its Health,
+  Capabilities, Assurance and Recovery shortcuts to move through exact evidence.
 - VAKA Staff shows authorised operational staff profiles, functions and
   limited platform-access roles. Only the Principal Administrator can add or
   alter staff access.
 - Settings covers the signed-in administrator's profile, password, optional
   authenticator MFA, recovery codes and active sessions.
-- User Guide provides this searchable guide and a Markdown download.
+- Help centre provides this searchable guide and a Markdown download.
+
+On narrow screens, open the menu from the upper-left control. Close it with the
+Close navigation control, the shaded backdrop or Escape. The console returns
+keyboard focus to the menu control. Long evidence tables scroll inside their
+own named regions rather than widening the page.
 
 The fixed delegated roles are Operations Administrator, Finance Operations,
 Support Analyst and Security Auditor. They receive only their predefined
@@ -97,7 +105,7 @@ Every status is evidence-sensitive. Definition, implementation, verification and
 
 ## 5. Start-of-day control cycle
 
-1. Open Operations and confirm that the API request and database observation completed.
+1. Open Platform health and confirm that the API request and database observation completed.
 2. Review active sessions, audit events in the last 24 hours, past-due tenants and suspended tenants.
 3. Open Overview and compare tenant lifecycle totals, subscription billing and unusual activity with the previous operating period.
 4. Review new or changing past-due and suspended tenants before customer contact.
@@ -145,7 +153,7 @@ If the request fails or the result is uncertain, stop, record the exact time and
 
 ## 8. Reviewing tenants
 
-The Tenants area shows company name, subdomain, lifecycle status, subscription plan, user count, trial end and creation date.
+The Organisations area shows company name, subdomain, lifecycle status, subscription plan, user count, trial end and creation date.
 
 Use Review audit only when there is a defined support, security, billing or assurance need. The review pane shows recent material actions, entity type, entity identifier and time. Treat entity identifiers as tenant-confidential even when no business payload is displayed.
 
@@ -159,7 +167,7 @@ The current console does not provide impersonation, unrestricted tenant record s
 
 ## 9. Operations control centre
 
-The Operations area reports an authenticated API observation and a database timestamp. A green observation means that this request completed; it is not an uptime guarantee or substitute for monitoring.
+The Platform health area reports an authenticated API observation and a database timestamp. A green observation means that this request completed; it is not an uptime guarantee or substitute for monitoring.
 
 The capability register contains every frozen product and Platform Kernel service. Read its columns independently.
 
