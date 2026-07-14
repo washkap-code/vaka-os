@@ -53,10 +53,12 @@ export function useModalFocus(onClose: () => void) {
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+    const activeElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const activeIsFocusable = activeElement ? focusable.includes(activeElement) : false;
+    if (event.shiftKey && (activeElement === first || activeElement === dialog || !activeIsFocusable)) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (!event.shiftKey && (activeElement === last || activeElement === dialog || !activeIsFocusable)) {
       event.preventDefault();
       first.focus();
     }

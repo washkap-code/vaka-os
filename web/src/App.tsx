@@ -300,21 +300,23 @@ export default function App() {
   return <Shell me={me} onLogout={logout} onRefresh={refresh} />;
 }
 
-function PasswordField({ label, value, onChange, autoComplete, disabled = false }: {
+function PasswordField({ label, value, onChange, autoComplete, disabled = false, hint }: {
   label: string; value: string; onChange: (value: string) => void;
-  autoComplete?: string; disabled?: boolean;
+  autoComplete?: string; disabled?: boolean; hint?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const inputId = useId();
+  const hintId = hint ? `${inputId}-hint` : undefined;
   return <div className="field"><label htmlFor={inputId}>{label}</label><div className="password-control">
     <input id={inputId} disabled={disabled} type={visible ? "text" : "password"} autoComplete={autoComplete}
+      aria-describedby={hintId}
       value={value} onChange={(event) => onChange(event.target.value)} />
     <button type="button" className="password-toggle" aria-pressed={visible}
       aria-label={visible ? appEnglish.auth.hidePassword : appEnglish.auth.showPassword}
       onClick={() => setVisible((current) => !current)}>
       {visible ? appEnglish.auth.hidePassword : appEnglish.auth.showPassword}
     </button>
-  </div></div>;
+  </div>{hint && <small className="field-help" id={hintId}>{hint}</small>}</div>;
 }
 
 function PasswordReset({ token, onDone }: { token: string; onDone: () => void }) {
@@ -625,6 +627,7 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
   const canManage = me.platformPermissions.includes("platform.staff.manage");
   const [editing, setEditing] = useState<any | null>(null);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busy, setBusy] = useState(false);
   const create = async () => {
     setBusy(true); setMessage("");
@@ -637,8 +640,9 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
         initialPassword: editing.initialPassword || undefined,
       } });
       setMessage(copy.staffCreated.replace("{password}", result.temporaryPassword));
+      setMessageTone("status");
       setEditing(null); await onReload();
-    } catch (error: any) { setMessage(error.message); }
+    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
     setBusy(false);
   };
   const save = async () => {
@@ -651,54 +655,57 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
         endDate: editing.endDate || null,
       } });
       setEditing(null); await onReload();
-    } catch (error: any) { setMessage(error.message); }
+    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
     setBusy(false);
   };
   const issueTemporaryPassword = async (staffId: string) => {
-    if (!window.confirm("Issue a new one-time password and end this staff member's active sessions?")) return;
+    if (!window.confirm(copy.temporaryPasswordConfirm)) return;
     try {
       const result = await api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {} });
       setMessage(copy.temporaryPasswordIssued.replace("{password}", result.temporaryPassword));
+      setMessageTone("status");
       await onReload();
-    } catch (error: any) { setMessage(error.message); }
+    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
   };
+  const openEditor = (value: any) => { setMessage(""); setEditing(value); };
+  const closeEditor = () => setEditing(null);
   return <>
     <div className="panel-heading"><div><h2>{copy.staffHeading}</h2><div className="sub">{copy.staffHelp}</div></div>
-      {canManage && <button className="btn accent" onClick={() => setEditing({ ...emptyPlatformStaff, platformRoleKey: roles[0]?.key ?? "SUPPORT_ANALYST" })}>{copy.addStaff}</button>}
+      {canManage && <button className="btn accent" onClick={() => openEditor({ ...emptyPlatformStaff, platformRoleKey: roles[0]?.key ?? "SUPPORT_ANALYST" })}>{copy.addStaff}</button>}
     </div>
-    {message && <div className="banner warn security-sensitive-message">{message}</div>}
-    <div className="panel"><div className="table-scroll"><table><thead><tr>
+    {message && <div className="banner warn security-sensitive-message" role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
+    <div className="panel"><div className="table-scroll access-table-region" role="region" aria-label={copy.staffTableLabel} tabIndex={0}><table><thead><tr>
       <th>{copy.users}</th><th>{copy.role}</th><th>{copy.function}</th><th>{copy.jobTitle}</th><th>{copy.location}</th><th>{copy.staffStatus}</th>{canManage && <th>{copy.review}</th>}
     </tr></thead><tbody>{staff.map((member) => <tr key={member.id}>
       <td><strong>{member.fullName}</strong><small>{member.email}</small></td><td>{member.roleName}</td>
       <td>{member.businessFunction}</td><td>{member.jobTitle}</td><td>{member.location ?? "—"}</td>
       <td><span className={`pill ${member.status === "active" ? "ACTIVE" : "VOID"}`}>{member.status}</span></td>
       {canManage && <td><div className="row"><button className="btn ghost sm" disabled={member.platformRoleKey === "PRINCIPAL_ADMIN" || member.id === me.userId}
-        onClick={() => setEditing({ ...member })}>{copy.editStaff}</button>
+        onClick={() => openEditor({ ...member })}>{copy.editStaff}</button>
         <button className="btn ghost sm" disabled={member.platformRoleKey === "PRINCIPAL_ADMIN" || member.id === me.userId}
           onClick={() => void issueTemporaryPassword(member.id)}>{copy.issueTemporaryPassword}</button></div></td>}
     </tr>)}{!staff.length && <tr><td colSpan={canManage ? 7 : 6}>{copy.noStaff}</td></tr>}</tbody></table></div></div>
-    {editing && <div className="modal-backdrop" role="presentation"><div className="modal record-modal" role="dialog" aria-modal="true" aria-label={editing.id ? copy.editStaff : copy.addStaff}>
-      <div className="panel-heading"><h2>{editing.id ? copy.editStaff : copy.addStaff}</h2><button className="btn ghost sm" onClick={() => setEditing(null)}>{copy.close}</button></div>
+    {editing && <LegacyModal labelledBy="platform-staff-dialog-title" onClose={closeEditor} className="record-modal">
+      <div className="panel-heading"><h2 id="platform-staff-dialog-title" tabIndex={-1} data-modal-initial-focus>{editing.id ? copy.editStaff : copy.addStaff}</h2><button className="btn ghost sm" onClick={closeEditor}>{copy.close}</button></div>
       <div className="grid2 record-form-grid">
-        <div className="field"><label>{copy.users}</label><input value={editing.fullName ?? ""} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} /></div>
-        <div className="field"><label>Email</label><input type="email" disabled={Boolean(editing.id)} value={editing.email ?? ""} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></div>
-        <div className="field"><label>{copy.role}</label><select value={editing.platformRoleKey ?? ""} onChange={(event) => setEditing({ ...editing, platformRoleKey: event.target.value })}>{roles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}</select></div>
-        <div className="field"><label>{copy.employeeNumber}</label><input value={editing.employeeNumber ?? ""} onChange={(event) => setEditing({ ...editing, employeeNumber: event.target.value })} /></div>
-        <div className="field"><label>{copy.function}</label><input value={editing.businessFunction ?? ""} onChange={(event) => setEditing({ ...editing, businessFunction: event.target.value })} /></div>
-        <div className="field"><label>{copy.jobTitle}</label><input value={editing.jobTitle ?? ""} onChange={(event) => setEditing({ ...editing, jobTitle: event.target.value })} /></div>
-        <div className="field"><label>{copy.workPhone}</label><input value={editing.workPhone ?? ""} onChange={(event) => setEditing({ ...editing, workPhone: event.target.value })} /></div>
-        <div className="field"><label>{copy.location}</label><input value={editing.location ?? ""} onChange={(event) => setEditing({ ...editing, location: event.target.value })} /></div>
-        <div className="field"><label>{copy.manager}</label><select value={editing.managerUserId ?? ""} onChange={(event) => setEditing({ ...editing, managerUserId: event.target.value })}><option value="">—</option>{staff.filter((item) => item.id !== editing.id).map((item) => <option key={item.id} value={item.id}>{item.fullName}</option>)}</select></div>
-        <div className="field"><label>{copy.employmentState}</label><select value={editing.employmentState ?? "ACTIVE"} onChange={(event) => setEditing({ ...editing, employmentState: event.target.value })}><option>ACTIVE</option><option>LEAVE</option><option>ENDED</option></select></div>
-        <div className="field"><label>{copy.startDate}</label><input type="date" value={editing.startDate ?? ""} onChange={(event) => setEditing({ ...editing, startDate: event.target.value })} /></div>
-        <div className="field"><label>{copy.endDate}</label><input type="date" value={editing.endDate ?? ""} onChange={(event) => setEditing({ ...editing, endDate: event.target.value })} /></div>
-        {editing.id && <div className="field"><label>{copy.staffStatus}</label><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value })}><option value="active">Active</option><option value="disabled">Disabled</option></select></div>}
+        <LegacyField label={copy.fullName}><input autoComplete="name" value={editing.fullName ?? ""} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.email}><input type="email" autoComplete="email" disabled={Boolean(editing.id)} value={editing.email ?? ""} onChange={(event) => setEditing({ ...editing, email: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.role}><select value={editing.platformRoleKey ?? ""} onChange={(event) => setEditing({ ...editing, platformRoleKey: event.target.value })}>{roles.map((role) => <option key={role.key} value={role.key}>{role.name}</option>)}</select></LegacyField>
+        <LegacyField label={copy.employeeNumber}><input value={editing.employeeNumber ?? ""} onChange={(event) => setEditing({ ...editing, employeeNumber: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.function}><input value={editing.businessFunction ?? ""} onChange={(event) => setEditing({ ...editing, businessFunction: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.jobTitle}><input autoComplete="organization-title" value={editing.jobTitle ?? ""} onChange={(event) => setEditing({ ...editing, jobTitle: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.workPhone}><input type="tel" autoComplete="tel" value={editing.workPhone ?? ""} onChange={(event) => setEditing({ ...editing, workPhone: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.location}><input value={editing.location ?? ""} onChange={(event) => setEditing({ ...editing, location: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.manager}><select value={editing.managerUserId ?? ""} onChange={(event) => setEditing({ ...editing, managerUserId: event.target.value })}><option value="">—</option>{staff.filter((item) => item.id !== editing.id).map((item) => <option key={item.id} value={item.id}>{item.fullName}</option>)}</select></LegacyField>
+        <LegacyField label={copy.employmentState}><select value={editing.employmentState ?? "ACTIVE"} onChange={(event) => setEditing({ ...editing, employmentState: event.target.value })}><option>ACTIVE</option><option>LEAVE</option><option>ENDED</option></select></LegacyField>
+        <LegacyField label={copy.startDate}><input type="date" value={editing.startDate ?? ""} onChange={(event) => setEditing({ ...editing, startDate: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.endDate}><input type="date" value={editing.endDate ?? ""} onChange={(event) => setEditing({ ...editing, endDate: event.target.value })} /></LegacyField>
+        {editing.id && <LegacyField label={copy.staffStatus}><select value={editing.status} onChange={(event) => setEditing({ ...editing, status: event.target.value })}><option value="active">Active</option><option value="disabled">Disabled</option></select></LegacyField>}
       </div>
-      <div className="field"><label>{copy.operationalNotes}</label><textarea value={editing.operationalNotes ?? ""} onChange={(event) => setEditing({ ...editing, operationalNotes: event.target.value })} /></div>
+      <LegacyField label={copy.operationalNotes}><textarea value={editing.operationalNotes ?? ""} onChange={(event) => setEditing({ ...editing, operationalNotes: event.target.value })} /></LegacyField>
       {!editing.id && <PasswordField label={copy.initialPassword} value={editing.initialPassword ?? ""} onChange={(value) => setEditing({ ...editing, initialPassword: value })} autoComplete="new-password" />}
-      <div className="row end"><button className="btn ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn accent" disabled={busy} onClick={editing.id ? save : create}>{editing.id ? copy.saveStaff : copy.createStaff}</button></div>
-    </div></div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={closeEditor}>{copy.cancel}</button><button className="btn accent" disabled={busy} onClick={editing.id ? save : create}>{editing.id ? copy.saveStaff : copy.createStaff}</button></div>
+    </LegacyModal>}
   </>;
 }
 
@@ -717,55 +724,57 @@ function PlatformSecuritySettings({ me, onSaved, onLogout }: {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
+  const showMessage = (value: string, tone: "status" | "error") => { setMessage(value); setMessageTone(tone); };
   const loadSecurity = () => Promise.all([api("/auth/mfa"), api("/security/my-sessions")])
     .then(([factor, sessionRows]) => { setMfa(factor); setSessions(sessionRows); })
-    .catch((error: any) => setMessage(error.message));
+    .catch((error: any) => showMessage(error.message, "error"));
   useEffect(() => { void loadSecurity(); }, []);
   const saveProfile = async () => {
-    try { await api("/me/profile", { method: "PATCH", body: profile }); setMessage("Profile updated."); await onSaved(); }
-    catch (error: any) { setMessage(error.message); }
+    try { await api("/me/profile", { method: "PATCH", body: profile }); showMessage(copy.profileUpdated, "status"); await onSaved(); }
+    catch (error: any) { showMessage(error.message, "error"); }
   };
   const savePassword = async () => {
-    if (newPassword !== confirmPassword) { setMessage(appEnglish.auth.passwordMismatch); return; }
+    if (newPassword !== confirmPassword) { showMessage(appEnglish.auth.passwordMismatch, "error"); return; }
     try {
       await api("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
-      setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setMessage(copy.passwordChanged);
-    } catch (error: any) { setMessage(error.message); }
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); showMessage(copy.passwordChanged, "status");
+    } catch (error: any) { showMessage(error.message, "error"); }
   };
-  const beginMfa = async () => { try { setSetup(await api("/auth/mfa/enroll", { method: "POST", body: {} })); } catch (error: any) { setMessage(error.message); } };
+  const beginMfa = async () => { try { setSetup(await api("/auth/mfa/enroll", { method: "POST", body: {} })); } catch (error: any) { showMessage(error.message, "error"); } };
   const verifyEnrollment = async () => {
     try {
       const result = await api("/auth/mfa/enroll/verify", { method: "POST", body: { code: mfaCode } });
       setRecoveryCodes(result.recoveryCodes); setSetup(null); setMfa({ enabled: true, recoveryCodesRemaining: result.recoveryCodes.length });
-      setMessage("Two-factor authentication is enabled. Save the recovery codes, then sign in again.");
-    } catch (error: any) { setMessage(error.message); }
+      showMessage(copy.mfaEnabledNotice, "status");
+    } catch (error: any) { showMessage(error.message, "error"); }
   };
   const replaceCodes = async () => {
     try {
       const result = await api("/auth/mfa/recovery-codes", { method: "POST", body: { currentPassword: securityPassword, code: mfaCode } });
       setRecoveryCodes(result.recoveryCodes); setSecurityPassword(""); setMfaCode(""); await loadSecurity();
-    } catch (error: any) { setMessage(error.message); }
+    } catch (error: any) { showMessage(error.message, "error"); }
   };
   const disable = async () => {
-    if (!window.confirm("Disable two-factor authentication and end all active sessions?")) return;
+    if (!window.confirm(copy.disableMfaConfirm)) return;
     try { await api("/auth/mfa", { method: "DELETE", body: { currentPassword: securityPassword, code: mfaCode } }); onLogout(); }
-    catch (error: any) { setMessage(error.message); }
+    catch (error: any) { showMessage(error.message, "error"); }
   };
   const revoke = async (sessionId: string) => {
     try { await api(`/security/my-sessions/${sessionId}/revoke`, { method: "POST", body: {} }); if (sessionId === me.sessionId) onLogout(); else await loadSecurity(); }
-    catch (error: any) { setMessage(error.message); }
+    catch (error: any) { showMessage(error.message, "error"); }
   };
   return <>
-    {message && <div className="banner warn">{message}</div>}
+    {message && <div className="banner warn" role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
     <div className="grid2 settings-grid">
       <div className="panel"><h2>{copy.profileSettings}</h2>
-        <div className="field"><label>{copy.users}</label><input value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} /></div>
-        <div className="field"><label>Email</label><input value={me.user.email} disabled /></div>
-        <div className="field"><label>{copy.role}</label><input value={me.platformRoleName ?? ""} disabled /></div>
-        <div className="field"><label>{copy.function}</label><input value={me.user.businessFunction ?? ""} disabled /></div>
-        <div className="field"><label>{copy.jobTitle}</label><input value={me.user.jobTitle ?? ""} disabled /></div>
-        <div className="field"><label>{copy.workPhone}</label><input value={profile.workPhone} onChange={(event) => setProfile({ ...profile, workPhone: event.target.value })} /></div>
-        <div className="field"><label>{copy.location}</label><input value={profile.location} onChange={(event) => setProfile({ ...profile, location: event.target.value })} /></div>
+        <LegacyField label={copy.fullName}><input autoComplete="name" value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.email}><input type="email" autoComplete="email" value={me.user.email} disabled /></LegacyField>
+        <LegacyField label={copy.role}><input value={me.platformRoleName ?? ""} disabled /></LegacyField>
+        <LegacyField label={copy.function}><input value={me.user.businessFunction ?? ""} disabled /></LegacyField>
+        <LegacyField label={copy.jobTitle}><input value={me.user.jobTitle ?? ""} disabled /></LegacyField>
+        <LegacyField label={copy.workPhone}><input type="tel" autoComplete="tel" value={profile.workPhone} onChange={(event) => setProfile({ ...profile, workPhone: event.target.value })} /></LegacyField>
+        <LegacyField label={copy.location}><input value={profile.location} onChange={(event) => setProfile({ ...profile, location: event.target.value })} /></LegacyField>
         <button className="btn accent" onClick={saveProfile}>{copy.saveProfile}</button>
       </div>
       <div className="panel"><h2>{copy.securitySettings}</h2>
@@ -781,16 +790,16 @@ function PlatformSecuritySettings({ me, onSaved, onLogout }: {
       {!mfa?.enabled && mfa?.available !== false && !setup && <button className="btn accent" onClick={beginMfa}>{copy.enableMfa}</button>}
       {setup && <div className="mfa-setup"><p>{copy.mfaSetupHelp}</p><div className="secret-box"><strong>{copy.secret}</strong><code>{setup.secret}</code></div>
         <details><summary>{copy.otpauthUri}</summary><code className="breakable-code">{setup.otpauthUri}</code></details>
-        <div className="field"><label>{appEnglish.auth.authenticationCode}</label><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></div>
+        <LegacyField label={appEnglish.auth.authenticationCode}><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></LegacyField>
         <button className="btn accent" onClick={verifyEnrollment}>{copy.verifyMfa}</button></div>}
       {recoveryCodes.length > 0 && <div className="recovery-codes"><h3>{copy.recoveryCodes}</h3><p>{copy.recoveryCodesHelp}</p><ul>{recoveryCodes.map((code) => <li key={code}><code>{code}</code></li>)}</ul>
         <button className="btn ghost" onClick={onLogout}>{appEnglish.auth.signOut}</button></div>}
       {mfa?.enabled && recoveryCodes.length === 0 && <><p>{copy.remainingCodes.replace("{count}", String(mfa.recoveryCodesRemaining))}</p>
         <div className="grid2"><PasswordField label={copy.currentPassword} value={securityPassword} onChange={setSecurityPassword} autoComplete="current-password" />
-          <div className="field"><label>{appEnglish.auth.authenticationCode}</label><input inputMode="numeric" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></div></div>
+          <LegacyField label={appEnglish.auth.authenticationCode}><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></LegacyField></div>
         <div className="row"><button className="btn ghost" onClick={replaceCodes}>{copy.replaceRecoveryCodes}</button><button className="btn danger" onClick={disable}>{copy.disableMfa}</button></div></>}
     </div>
-    <div className="panel"><h2>{copy.activeSessionsHeading}</h2><div className="table-scroll"><table><thead><tr><th>Client</th><th>Device</th><th>Last seen</th><th>Created</th><th></th></tr></thead>
+    <div className="panel"><h2>{copy.activeSessionsHeading}</h2><div className="table-scroll access-table-region" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.client}</th><th>{copy.device}</th><th>{copy.lastSeen}</th><th>{copy.created}</th><th></th></tr></thead>
       <tbody>{sessions.map((session) => <tr key={session.id}><td>{session.clientType}</td><td>{session.deviceDescription ?? "—"}</td><td>{new Date(session.lastSeenAt).toLocaleString()}</td><td>{new Date(session.createdAt).toLocaleString()}</td><td>{!session.revokedAt && <button className="btn ghost sm" onClick={() => void revoke(session.id)}>{copy.revokeSession}</button>}</td></tr>)}
       {!sessions.length && <tr><td colSpan={5}>{copy.noSessions}</td></tr>}</tbody></table></div></div>
   </>;
@@ -1848,6 +1857,7 @@ function Settings({ me, readonly, onSaved }: {
     physicalAddress: t.physicalAddress ?? "",
   });
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busy, setBusy] = useState(false);
   const [logoData, setLogoData] = useState<string | null>(null);
   const canManageCompany = me.permissions.includes("settings.manage") && !readonly;
@@ -1874,9 +1884,11 @@ function Settings({ me, readonly, onSaved }: {
         } });
       }
       setMessage(appEnglish.settings.saved);
+      setMessageTone("status");
       onSaved();
     } catch (error: any) {
       setMessage(error.message);
+      setMessageTone("error");
     }
     setBusy(false);
   };
@@ -1887,10 +1899,10 @@ function Settings({ me, readonly, onSaved }: {
       <div className="grid2 settings-grid">
         <div className="panel">
           <h2>{appEnglish.settings.profile}</h2>
-          <div className="field"><label>{appEnglish.settings.name}</label>
-            <input value={profileName} onChange={(event) => setProfileName(event.target.value)} /></div>
-          <div className="field"><label>{appEnglish.settings.email}</label>
-            <input value={me.user.email} disabled /></div>
+          <LegacyField label={appEnglish.settings.name}>
+            <input autoComplete="name" value={profileName} onChange={(event) => setProfileName(event.target.value)} /></LegacyField>
+          <LegacyField label={appEnglish.settings.email}>
+            <input type="email" autoComplete="email" value={me.user.email} disabled /></LegacyField>
         </div>
         <div className="panel brand-preview" style={{
           borderTopColor: company.brandSecondaryColor,
@@ -1905,49 +1917,48 @@ function Settings({ me, readonly, onSaved }: {
         <h2>{appEnglish.settings.company}</h2>
         {!canManageCompany && <div className="banner warn">{appEnglish.settings.companyPermission}</div>}
         <div className="grid2">
-          <div className="field"><label>{appEnglish.settings.companyName}</label>
-            <input disabled={!canManageCompany} value={company.companyName} onChange={setCompanyField("companyName")} /></div>
-          <div className="field"><label>{appEnglish.settings.logoUrl}</label>
+          <LegacyField label={appEnglish.settings.companyName}>
+            <input autoComplete="organization" disabled={!canManageCompany} value={company.companyName} onChange={setCompanyField("companyName")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.logoUrl} hint={appEnglish.settings.logoHelp}>
             <input type="url" disabled={!canManageCompany} value={company.logoUrl}
               onChange={setCompanyField("logoUrl")} placeholder="https://example.com/logo.png" />
-            <small>{appEnglish.settings.logoHelp}</small></div>
-          <div className="field"><label>{appEnglish.settings.logoUpload}</label>
+          </LegacyField>
+          <LegacyField label={appEnglish.settings.logoUpload} hint={`${logoData ? `${appEnglish.settings.logoSelected} ` : ""}${appEnglish.settings.logoUploadHelp}`}>
             <input type="file" accept="image/png,image/jpeg" disabled={!canManageCompany}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                if (file.size > 512_000) { setMessage(appEnglish.settings.logoUploadHelp); return; }
+                if (file.size > 512_000) { setMessage(appEnglish.settings.logoUploadHelp); setMessageTone("error"); return; }
                 const reader = new FileReader();
                 reader.onload = () => setLogoData(typeof reader.result === "string" ? reader.result : null);
                 reader.readAsDataURL(file);
               }} />
-            {logoData && <small>{appEnglish.settings.logoSelected}</small>}
-            <small>{appEnglish.settings.logoUploadHelp}</small></div>
-          <div className="field"><label>{appEnglish.settings.primaryColour}</label>
+          </LegacyField>
+          <LegacyField label={appEnglish.settings.primaryColour}>
             <input type="color" disabled={!canManageCompany} value={company.brandPrimaryColor}
-              onChange={setCompanyField("brandPrimaryColor")} /></div>
-          <div className="field"><label>{appEnglish.settings.accentColour}</label>
+              onChange={setCompanyField("brandPrimaryColor")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.accentColour}>
             <input type="color" disabled={!canManageCompany} value={company.brandSecondaryColor}
-              onChange={setCompanyField("brandSecondaryColor")} /></div>
-          <div className="field"><label>{appEnglish.settings.registrationNumber}</label>
+              onChange={setCompanyField("brandSecondaryColor")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.registrationNumber}>
             <input disabled={!canManageCompany} value={company.registrationNumber}
-              onChange={setCompanyField("registrationNumber")} /></div>
-          <div className="field"><label>{appEnglish.settings.taxNumber}</label>
+              onChange={setCompanyField("registrationNumber")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.taxNumber}>
             <input disabled={!canManageCompany} value={company.taxNumber}
-              onChange={setCompanyField("taxNumber")} /></div>
-          <div className="field"><label>{appEnglish.settings.vatNumber}</label>
+              onChange={setCompanyField("taxNumber")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.vatNumber}>
             <input disabled={!canManageCompany} value={company.vatNumber}
-              onChange={setCompanyField("vatNumber")} /></div>
+              onChange={setCompanyField("vatNumber")} /></LegacyField>
         </div>
-        <div className="field"><label>{appEnglish.settings.address}</label>
+        <LegacyField label={appEnglish.settings.address}>
           <textarea disabled={!canManageCompany} value={company.physicalAddress}
-            onChange={setCompanyField("physicalAddress")} /></div>
+            onChange={setCompanyField("physicalAddress")} /></LegacyField>
         <small>{appEnglish.settings.invoiceHelp}</small>
       </div>
       <button className="btn accent" disabled={busy || readonly} onClick={save}>
         {busy ? appEnglish.settings.saving : appEnglish.settings.save}
       </button>
-      {message && <div className="banner warn" style={{ marginTop: 12 }}>{message}</div>}
+      {message && <div className="banner warn" role={messageTone === "error" ? "alert" : "status"} style={{ marginTop: 12 }}>{message}</div>}
     </>
   );
 }
@@ -1964,6 +1975,7 @@ function UsersActivity() {
   const [busy, setBusy] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [createdPassword, setCreatedPassword] = useState("");
+  const [message, setMessage] = useState("");
   const [newUser, setNewUser] = useState({ fullName: "", email: "", roleId: "", initialPassword: "" });
   const copy = appEnglish.activity;
   const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : "—";
@@ -1977,17 +1989,18 @@ function UsersActivity() {
     if (!window.confirm(copy.revokePrompt)) return;
     setBusy(true);
     try { await api(`/security/sessions/${sessionId}/revoke`, { method: "POST", body: { reason: "owner_revoked" } }); reload(); }
-    catch (error: any) { alert(error.message || copy.revokeFailed); }
+    catch (error: any) { setMessage(error.message || copy.revokeFailed); }
     finally { setBusy(false); }
   };
   const openAdd = () => {
     const defaultRole = (data?.roles ?? []).find((role: any) => role.name !== "Owner");
     setCreatedPassword("");
+    setMessage("");
     setNewUser({ fullName: "", email: "", roleId: defaultRole?.id ?? "", initialPassword: "" });
     setShowAdd(true);
   };
   const createUser = async () => {
-    setBusy(true);
+    setBusy(true); setMessage("");
     try {
       const result = await api("/security/users", { method: "POST", body: {
         ...newUser, initialPassword: newUser.initialPassword || undefined,
@@ -1995,14 +2008,14 @@ function UsersActivity() {
       setCreatedPassword(result.temporaryPassword);
       setNewUser({ fullName: "", email: "", roleId: "", initialPassword: "" });
       reload();
-    } catch (error: any) { alert(error.message || copy.createUserFailed); }
+    } catch (error: any) { setMessage(error.message || copy.createUserFailed); }
     finally { setBusy(false); }
   };
   const updateUserStatus = async (user: any) => {
     if (!window.confirm(copy.statusUpdatePrompt)) return;
     setBusy(true);
     try { await api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST" }); reload(); }
-    catch (error: any) { alert(error.message || copy.statusUpdateFailed); }
+    catch (error: any) { setMessage(error.message || copy.statusUpdateFailed); }
     finally { setBusy(false); }
   };
   if (!data) return <p className="sub">{appEnglish.dashboard.loading}</p>;
@@ -2023,7 +2036,7 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <div className="panel-heading"><h2>{copy.usersTitle}</h2><button className="btn sm" onClick={openAdd}>{copy.addUser}</button></div>
-      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.role}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th><th /></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.usersTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.role}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th><th /></tr></thead>
         <tbody>{users.map((user: any) => <tr key={user.id}>
           <td><b>{user.full_name}</b></td><td>{user.email}</td><td>{user.role_name ?? "—"}</td><td>{user.status}</td><td>{user.valid_sessions ?? 0}</td>
           <td>{formatDate(user.last_login_at)}</td><td>{formatDate(user.last_seen_at)}</td>
@@ -2033,7 +2046,7 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <h2>{copy.sessionsTitle}</h2>
-      <div className="table-scroll"><table><thead><tr><th>{copy.name}</th><th>{copy.client}</th><th>{copy.device}</th><th>{copy.created}</th><th>{copy.lastSeen}</th><th>{copy.status}</th><th /></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.client}</th><th>{copy.device}</th><th>{copy.created}</th><th>{copy.lastSeen}</th><th>{copy.status}</th><th /></tr></thead>
         <tbody>{sessions.map((session: any) => <tr key={session.id}>
           <td><b>{session.full_name}</b><div className="sub">{session.email}</div></td><td>{session.client_type}{session.app_version ? ` · ${session.app_version}` : ""}</td>
           <td>{session.device_description ?? "—"}</td><td>{formatDate(session.created_at)}</td><td>{formatDate(session.last_seen_at)}</td>
@@ -2043,24 +2056,25 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <h2>{copy.eventsTitle}</h2>
-      <div className="table-scroll"><table><thead><tr><th>{copy.time}</th><th>{copy.actor}</th><th>{copy.action}</th><th>{copy.evidence}</th></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.eventsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.time}</th><th>{copy.actor}</th><th>{copy.action}</th><th>{copy.evidence}</th></tr></thead>
         <tbody>{events.map((event: any) => <tr key={event.id}><td>{formatDate(event.createdAt)}</td><td>{users.find((user: any) => user.id === event.userId)?.full_name ?? "—"}</td><td>{event.action}</td><td className="sub">{event.metadata ? JSON.stringify(event.metadata).slice(0, 280) : "—"}</td></tr>)}{!events.length && <tr><td colSpan={4}>{copy.noEvents}</td></tr>}</tbody>
       </table></div>
     </div>
-    {showAdd && <div className="modalbg" onClick={() => setShowAdd(false)}><div className="modal" onClick={(event) => event.stopPropagation()}>
-      <h2>{copy.addUserTitle}</h2>
+    {message && !showAdd && <div className="banner warn" role="alert">{message}</div>}
+    {showAdd && <LegacyModal labelledBy="add-team-member-title" onClose={() => setShowAdd(false)}>
+      <h2 id="add-team-member-title" tabIndex={-1} data-modal-initial-focus>{copy.addUserTitle}</h2>
       <p className="sub">{copy.addUserHelp}</p>
-      <div className="field"><label>{copy.fullName}</label><input value={newUser.fullName} onChange={(event) => setNewUser({ ...newUser, fullName: event.target.value })} /></div>
-      <div className="field"><label>{copy.email}</label><input type="email" value={newUser.email} onChange={(event) => setNewUser({ ...newUser, email: event.target.value })} /></div>
-      <div className="field"><label>{copy.role}</label><select value={newUser.roleId} onChange={(event) => setNewUser({ ...newUser, roleId: event.target.value })}>
+      <LegacyField label={copy.fullName}><input autoComplete="name" value={newUser.fullName} onChange={(event) => setNewUser({ ...newUser, fullName: event.target.value })} /></LegacyField>
+      <LegacyField label={copy.email}><input type="email" autoComplete="email" value={newUser.email} onChange={(event) => setNewUser({ ...newUser, email: event.target.value })} /></LegacyField>
+      <LegacyField label={copy.role}><select value={newUser.roleId} onChange={(event) => setNewUser({ ...newUser, roleId: event.target.value })}>
         <option value="">{copy.role}</option>{(data.roles ?? []).filter((role: any) => role.name !== "Owner").map((role: any) => <option key={role.id} value={role.id}>{role.name}</option>)}
-      </select></div>
+      </select></LegacyField>
       <PasswordField label={copy.initialPassword} value={newUser.initialPassword}
-        onChange={(value) => setNewUser({ ...newUser, initialPassword: value })} autoComplete="new-password" />
-      <small className="field-help">{copy.initialPasswordHelp}</small>
-      {createdPassword && <div className="banner warn">{copy.userCreated.replace("{password}", createdPassword)}</div>}
-      <div className="row end"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
-    </div></div>}
+        onChange={(value) => setNewUser({ ...newUser, initialPassword: value })} autoComplete="new-password" hint={copy.initialPasswordHelp} />
+      {message && <div className="banner warn" role="alert">{message}</div>}
+      {createdPassword && <div className="banner warn security-sensitive-message" role="status">{copy.userCreated.replace("{password}", createdPassword)}</div>}
+      <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
+    </LegacyModal>}
   </>);
 }
 
