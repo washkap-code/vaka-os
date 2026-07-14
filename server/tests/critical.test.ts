@@ -3,7 +3,7 @@
 // client business if wrong. Runs against the real Postgres database.
 //   1. Journal engine rejects unbalanced entries
 //   2. Signup seeds a complete, working tenant
-//   3. Full trade cycle: PO receive -> stock+GL, invoice issue -> revenue+VAT+
+//   3. Full trade cycle: approved PO receipt -> stock+GRNI, invoice issue -> revenue+VAT+
 //      COGS+stock decrement, payment -> AR clearance, reports balance
 //   4. Overselling is refused and rolls back the whole invoice issue
 //   5. Multi-currency: ZWG invoice posts to base at the snapshot rate
@@ -17,6 +17,8 @@ import { db, schema } from "../src/lib.js";
 import { runBillingCycle, markSubscriptionInvoicePaid } from "../src/billing.js";
 import { postJournal } from "../src/accounting.js";
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { login } from "../src/auth.js";
 
 const app = createApp();
 const uniq = Date.now().toString(36);
@@ -28,12 +30,30 @@ async function makeTenant(n: string, currency: "USD" | "ZWG" = "USD") {
     planName: "Growth",
   });
   expect(res.status).toBe(200);
-  return { token: res.body.token as string, tenantId: res.body.tenant.id as string };
+  return { token: res.body.token as string, tenantId: res.body.tenant.id as string, subdomain: `t${uniq}${n}` };
 }
 const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
 
-let A: { token: string; tenantId: string };
-let B: { token: string; tenantId: string };
+async function makeProcurementApprover(tenant: { tenantId: string; subdomain: string }, label: string) {
+  const roles = await db.select().from(schema.roles).where(eq(schema.roles.tenantId, tenant.tenantId));
+  const selectedRole = roles.find((candidate) => candidate.name === "Procurement Approver");
+  expect(selectedRole).toBeTruthy();
+  const email = `approver-${uniq}-${label}@test.zw`;
+  const password = "Procurement-Test-123!";
+  await db.insert(schema.users).values({
+    tenantId: tenant.tenantId,
+    email,
+    fullName: "Procurement Approver",
+    passwordHash: await bcrypt.hash(password, 4),
+    roleId: selectedRole!.id,
+    mustChangePassword: false,
+    status: "active",
+  });
+  return (await login(email, password, tenant.subdomain)).token;
+}
+
+let A: { token: string; tenantId: string; subdomain: string };
+let B: { token: string; tenantId: string; subdomain: string };
 
 beforeAll(async () => {
   A = await makeTenant("a");
@@ -59,7 +79,7 @@ describe("journal engine", () => {
 });
 
 describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
-  let productId: string, warehouseId: string, vendorId: string, customerId: string, invoiceId: string;
+  let productId: string, warehouseId: string, vendorId: string, customerId: string, invoiceId: string, approverToken: string;
 
   it("sets up vendor, customer, product", async () => {
     const v = await request(app).post("/api/v1/contacts").set(auth(A.token))
@@ -74,16 +94,23 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
     productId = p.body.id;
     const w = await request(app).get("/api/v1/warehouses").set(auth(A.token));
     warehouseId = w.body[0].id;
+    approverToken = await makeProcurementApprover(A, "trade-cycle");
   });
 
-  it("receives a PO: stock in + Dr Inventory / Cr AP", async () => {
+  it("approves and receives a PO: stock in + Dr Inventory / Cr GRNI", async () => {
     const po = await request(app).post("/api/v1/purchase-orders").set(auth(A.token)).send({
       vendorContactId: vendorId, currency: "USD",
       lines: [{ productId, warehouseId, quantity: "100", unitCost: "6.00" }],
     });
     expect(po.status).toBe(200);
-    expect(po.body.number).toMatch(/^PO-\d{5}$/);
-    const rec = await request(app).post(`/api/v1/purchase-orders/${po.body.id}/receive`).set(auth(A.token)).send({});
+    expect(po.body).toMatchObject({ status: "DRAFT", number: null });
+    const approved = await request(app).post(`/api/v1/purchase-orders/${po.body.id}/approve`)
+      .set(auth(approverToken)).send({ reason: "Approved for the trade-cycle test" });
+    expect(approved.status).toBe(200);
+    expect(approved.body.number).toMatch(/^PO-\d{5}$/);
+    const rec = await request(app).post(`/api/v1/purchase-orders/${po.body.id}/receipts`)
+      .set(auth(A.token)).set("Idempotency-Key", "critical-goods-receipt-1")
+      .send({ lines: [{ purchaseOrderLineItemId: po.body.lines[0].id, quantity: "100" }] });
     expect(rec.status).toBe(200);
 
     const products = await request(app).get("/api/v1/products").set(auth(A.token));
@@ -91,9 +118,11 @@ describe("full trade cycle (PO -> invoice -> payment -> reports)", () => {
 
     const tb = await request(app).get("/api/v1/reports/trial-balance").set(auth(A.token));
     const inv = tb.body.find((r: any) => r.code === "1200");
+    const grni = tb.body.find((r: any) => r.code === "2050");
     const ap = tb.body.find((r: any) => r.code === "2000");
     expect(inv.balance).toBe("600.00");   // 100 * 6.00 into Inventory
-    expect(ap.balance).toBe("-600.00");   // owed to vendor
+    expect(grni.balance).toBe("-600.00"); // received, not yet supplier-billed
+    expect(ap.balance).toBe("0.00");      // P4-003 posts AP only after three-way match
   });
 
   it("issues an invoice: number, revenue+VAT, COGS, stock decrement — atomically", async () => {

@@ -26,7 +26,7 @@ export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
   { key: "pipeline", permission: "crm.read" },
   { key: "invoices", permission: "accounting.read" },
   { key: "products", permission: "inventory.read" },
-  { key: "pos", permission: "inventory.read" },
+  { key: "pos", permission: "procurement.read" },
   { key: "reports", permission: "reports.read" },
   { key: "imports", permission: "imports.create" },
   { key: "usersActivity", ownerOnly: true },

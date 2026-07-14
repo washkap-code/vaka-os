@@ -26,7 +26,7 @@ import {
   listPlatformStaff, updatePlatformStaff,
 } from "./platform-staff.js";
 import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, voidInvoice } from "./invoicing.js";
-import { adjustStock, receivePurchaseOrder, recordOpeningStock } from "./inventory.js";
+import { adjustStock, recordOpeningStock } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
 import { trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard } from "./reports.js";
 import { runBillingCycle, markSubscriptionInvoicePaid, collectUsageSummary, getArrearsStatus } from "./billing.js";
@@ -79,6 +79,14 @@ import {
   assertActiveSupplier, createSupplier, getSupplier, listSuppliers,
   supplierCreateSchema, supplierUpdateSchema, updateSupplier,
 } from "./suppliers.js";
+import {
+  approvePurchaseOrder, awardRequestForQuote, createDirectPurchaseOrder,
+  createPurchaseRequisition, createRequestForQuote, decidePurchaseRequisition, getProcurementReferenceData,
+  directPurchaseOrderSchema, goodsReceiptSchema, listGoodsReceipts,
+  listPurchaseOrders, listPurchaseRequisitions, listRequestForQuotes,
+  postGoodsReceipt, purchaseOrderApprovalSchema, purchaseRequisitionCreateSchema,
+  requestForQuoteAwardSchema, requestForQuoteCreateSchema, requisitionDecisionSchema,
+} from "./procurement.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -88,6 +96,8 @@ const routeParam = (req: AuthedRequest, name: string): string => {
   if (typeof value !== "string") throw badRequest(`Invalid route parameter: ${name}`);
   return value;
 };
+const uuidRouteParam = (req: AuthedRequest, name: string): string =>
+  z.string().uuid().parse(routeParam(req, name));
 const financialIdempotencyKey = (req: AuthedRequest, bodyKey?: string | null): string => {
   const headerKey = req.header("Idempotency-Key")?.trim();
   const fieldKey = bodyKey?.trim();
@@ -1387,50 +1397,56 @@ api.get("/stock/movements", requirePermission("inventory.read"), wrap(async (req
   db.select().from(schema.stockMovements).where(eq(schema.stockMovements.tenantId, tenantId(req)))
     .orderBy(desc(schema.stockMovements.createdAt)).limit(200)));
 
-const poSchema = z.object({
-  vendorContactId: z.string().uuid(), currency: z.enum(["USD", "ZWG"]).default("USD"),
-  rateToBase: z.string().default("1"), expectedDate: z.coerce.date().optional().nullable(),
-  lines: z.array(z.object({
-    productId: z.string().uuid(), warehouseId: z.string().uuid(),
-    quantity: z.string(), unitCost: z.string(),
-  }).strict()).min(1),
-}).strict();
-api.post("/purchase-orders", requirePermission("inventory.write"), wrap(async (req) => {
-  const body = poSchema.parse(req.body);
-  const tid = tenantId(req);
-  return db.transaction(async (tx) => {
-    await assertActiveSupplier(tx, tid, body.vendorContactId);
-    const { toCents, fromCents, mulRate } = await import("./lib.js");
-    let total = 0n;
-    const lines = body.lines.map((l) => {
-      const lineTotal = mulRate(toCents(l.unitCost), Number(l.quantity).toFixed(6));
-      total += lineTotal;
-      return { ...l, lineTotal: fromCents(lineTotal) };
-    });
-    const number = await nextDocNumber(tx, tid, "purchase_order", "PO");
-    const [po] = await tx.insert(schema.purchaseOrders).values({
-      tenantId: tid, vendorContactId: body.vendorContactId, number, status: "ORDERED",
-      currency: body.currency, rateToBase: body.rateToBase,
-      expectedDate: body.expectedDate ?? null, total: fromCents(total), createdBy: req.auth!.userId,
-    }).returning();
-    await tx.insert(schema.purchaseOrderLineItems).values(lines.map((l) => ({ ...l, purchaseOrderId: po.id })));
-    await audit(tx, tid, req.auth!.userId, "po.created", "purchase_order", po.id, { number, total: fromCents(total) });
-    return po;
-  });
-}));
-api.get("/purchase-orders", requirePermission("inventory.read"), wrap(async (req) =>
-  db.select().from(schema.purchaseOrders).where(eq(schema.purchaseOrders.tenantId, tenantId(req)))
-    .orderBy(desc(schema.purchaseOrders.createdAt))));
-api.post("/purchase-orders/:id/receive", requirePermission("inventory.write", "accounting.post"), wrap(async (req) => {
-  const tid = tenantId(req);
-  return runWithPostCommitEvents((queue) => db.transaction((tx) => receivePurchaseOrder(tx, {
-    tenantId: tid, purchaseOrderId: routeParam(req, "id"), createdBy: req.auth!.userId,
-    onMovement: (movement) => queue({
-      id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
-      type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: tid, actorUserId: req.auth!.userId, payload: movement,
-    }),
+api.get("/purchase-requisitions", requirePermission("procurement.read"), wrap(async (req) =>
+  listPurchaseRequisitions(tenantId(req))));
+api.get("/procurement/reference-data", requirePermission("procurement.read"), wrap(async (req) =>
+  getProcurementReferenceData(tenantId(req))));
+api.post("/purchase-requisitions", requirePermission("procurement.request"), wrap(async (req) =>
+  createPurchaseRequisition({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: purchaseRequisitionCreateSchema.parse(req.body),
   })));
-}));
+api.post("/purchase-requisitions/:id/decision", requirePermission("procurement.approve"), wrap(async (req) =>
+  decidePurchaseRequisition({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    requisitionId: uuidRouteParam(req, "id"), input: requisitionDecisionSchema.parse(req.body),
+  })));
+
+api.get("/request-for-quotes", requirePermission("procurement.read"), wrap(async (req) =>
+  listRequestForQuotes(tenantId(req))));
+api.post("/request-for-quotes", requirePermission("procurement.write"), wrap(async (req) =>
+  createRequestForQuote({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: requestForQuoteCreateSchema.parse(req.body),
+  })));
+api.post("/request-for-quotes/:id/award", requirePermission("procurement.write"), wrap(async (req) =>
+  awardRequestForQuote({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    requestForQuoteId: uuidRouteParam(req, "id"), input: requestForQuoteAwardSchema.parse(req.body),
+  })));
+
+api.post("/purchase-orders", requirePermission("procurement.write"), wrap(async (req) =>
+  createDirectPurchaseOrder({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: directPurchaseOrderSchema.parse(req.body),
+  })));
+api.get("/purchase-orders", requirePermission("procurement.read"), wrap(async (req) =>
+  listPurchaseOrders(tenantId(req))));
+api.post("/purchase-orders/:id/approve", requirePermission("procurement.approve"), wrap(async (req) =>
+  approvePurchaseOrder({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    purchaseOrderId: uuidRouteParam(req, "id"),
+    reason: purchaseOrderApprovalSchema.parse(req.body).reason,
+  })));
+api.post("/purchase-orders/:id/receipts", requirePermission("procurement.receive"), wrap(async (req) =>
+  postGoodsReceipt({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    purchaseOrderId: uuidRouteParam(req, "id"),
+    idempotencyKey: requireIdempotencyKey(req.header("Idempotency-Key")),
+    input: goodsReceiptSchema.parse(req.body),
+  })));
+api.get("/goods-receipts", requirePermission("procurement.read"), wrap(async (req) =>
+  listGoodsReceipts(tenantId(req))));
 
 // ---------------------------------------------------------------------------
 // Accounting

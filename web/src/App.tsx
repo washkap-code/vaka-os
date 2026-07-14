@@ -18,6 +18,8 @@ import { Dropdown } from "./design-system/primitives";
 import { isPositiveMoney, isPositiveStockQuantity, suggestProductSku } from "./inventory/product-entry-model";
 
 const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
+const ProcurementWorkspace = lazy(() => import("./procurement/procurement-workspace")
+  .then((module) => ({ default: module.ProcurementWorkspace })));
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -1077,7 +1079,10 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
           searchTarget={searchTarget?.entityType === "invoice" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
         {page === "products" && <Products readonly={suspended} canWrite={me.permissions.includes("inventory.write")} baseCcy={t.baseCurrency}
           searchTarget={searchTarget?.entityType === "product" ? searchTarget : null} onSearchTargetConsumed={consumeSearchTarget} />}
-        {page === "pos" && <PurchaseOrders readonly={suspended} />}
+        {page === "pos" && <Suspense fallback={<div className="panel">{appEnglish.procurement.loading}</div>}>
+          <ProcurementWorkspace readonly={suspended} permissions={me.permissions}
+            currentUserId={me.userId} baseCurrency={t.baseCurrency} />
+        </Suspense>}
         {page === "reports" && <Reports ccy={t.baseCurrency} />}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter
@@ -3435,82 +3440,6 @@ function Products({ readonly, canWrite, baseCcy, searchTarget, onSearchTargetCon
       <p className="sub">{appEnglish.lowStockAlerts.thresholdHelp}</p>
       {ruleError && <div className="err-text" role="alert">{ruleError}</div>}
       <div className="row end"><button className="btn ghost" onClick={() => setRuleProduct(null)}>{appEnglish.lowStockAlerts.cancel}</button><button className="btn" disabled={ruleBusy || !/^\d+$/.test(ruleLevel) || Number(ruleLevel) > 1_000_000} onClick={saveRule}>{ruleBusy ? appEnglish.lowStockAlerts.saving : appEnglish.lowStockAlerts.save}</button></div>
-    </LegacyModal>}
-  </>);
-}
-
-// ---------------------------------------------------------------------------
-// Purchase orders
-// ---------------------------------------------------------------------------
-function PurchaseOrders({ readonly }: { readonly: boolean }) {
-  const copy = appEnglish.purchaseOrders;
-  const [rows, reload] = useLoad(() => api("/purchase-orders"));
-  const [suppliers] = useLoad(() => api("/suppliers"));
-  const [products] = useLoad(() => api("/products"));
-  const [warehouses] = useLoad(() => api("/warehouses"));
-  const [show, setShow] = useState(false);
-  const [err, setErr] = useState("");
-  const emptyLine = { productId: "", quantity: "1", unitCost: "0" };
-  const [f, setF] = useState<any>({ currency: "USD", rateToBase: "1", lines: [{ ...emptyLine }] });
-  const openCreate = () => { setErr(""); setShow(true); };
-  const closeCreate = () => { setErr(""); setShow(false); };
-  const setLine = (i: number, k: string, v: string) => {
-    const lines = [...f.lines]; lines[i] = { ...lines[i], [k]: v };
-    if (k === "productId" && v) {
-      const p = (products ?? []).find((x: any) => x.id === v);
-      if (p) lines[i].unitCost = p.cost_price;
-    }
-    setF({ ...f, lines });
-  };
-  const save = async () => {
-    try {
-      const body = { ...f, lines: f.lines.map((l: any) => ({ ...l, warehouseId: warehouses[0].id })) };
-      await api("/purchase-orders", { method: "POST", body }); closeCreate();
-      setF({ currency: "USD", rateToBase: "1", lines: [{ ...emptyLine }] }); reload();
-    } catch (e: any) { setErr(e.message); }
-  };
-  const receive = async (id: string) => {
-    try { await api(`/purchase-orders/${id}/receive`, { method: "POST", body: {} }); reload(); } catch (e: any) { alert(e.message); }
-  };
-  return (<>
-    <div className="row" style={{ justifyContent: "space-between" }}>
-      <div><h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div></div>
-      {!readonly && <button className="btn" onClick={openCreate}>{copy.newPurchaseOrder}</button>}
-    </div>
-    <div className="panel">
-      <div className="table-scroll" role="region" aria-label={copy.listLabel} tabIndex={0}><table><thead><tr><th>{copy.number}</th><th>{copy.vendor}</th><th>{copy.status}</th><th className="num">{copy.total}</th><th>{copy.actions}</th></tr></thead>
-        <tbody>{(rows ?? []).map((po: any) => {
-          const vendor = (suppliers ?? []).find((c: any) => c.id === po.vendorContactId);
-          return (<tr key={po.id}>
-            <td><b>{po.number}</b></td><td>{vendor?.name ?? "—"}</td>
-            <td><span className={`pill ${po.status}`}>{po.status}</span></td>
-            <td className="num">{fmt(po.total, po.currency)}</td>
-            <td>{!readonly && po.status === "ORDERED" && <button className="btn accent sm" onClick={() => receive(po.id)}>{copy.receiveGoods}</button>}</td>
-          </tr>);
-        })}</tbody></table></div>
-      {rows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>{copy.empty}</p>}
-    </div>
-    {show && <LegacyModal labelledBy="new-purchase-order-title" onClose={closeCreate}>
-      <h2 id="new-purchase-order-title" tabIndex={-1} data-modal-initial-focus>{copy.newPurchaseOrderTitle}</h2>
-      <LegacyField label={copy.vendor}><select value={f.vendorContactId ?? ""} onChange={(e) => setF({ ...f, vendorContactId: e.target.value })}>
-        <option value="">{copy.selectVendor}</option>{(suppliers ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></LegacyField>
-      {f.lines.map((l: any, i: number) => (
-        <fieldset className="purchase-line-create" key={i}>
-          <legend>{copy.line.replace("{number}", String(i + 1))}</legend>
-          <select aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.product)} value={l.productId} onChange={(e) => setLine(i, "productId", e.target.value)}>
-            <option value="">{copy.selectProduct}</option>
-            {(products ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.sku} — {p.name}</option>)}
-          </select>
-          <input aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.quantity)} inputMode="decimal" placeholder={copy.quantity} value={l.quantity} onChange={(e) => setLine(i, "quantity", e.target.value)} />
-          <input aria-label={copy.lineField.replace("{number}", String(i + 1)).replace("{field}", copy.unitCost)} inputMode="decimal" placeholder={copy.unitCost} value={l.unitCost} onChange={(e) => setLine(i, "unitCost", e.target.value)} />
-        </fieldset>
-      ))}
-      <button className="btn ghost sm" onClick={() => setF({ ...f, lines: [...f.lines, { ...emptyLine }] })}>{copy.addLine}</button>
-      {err && <div className="err-text" role="alert">{err}</div>}
-      <div className="row end modal-actions">
-        <button className="btn ghost" onClick={closeCreate}>{copy.cancel}</button>
-        <button className="btn" onClick={save}>{copy.create}</button>
-      </div>
     </LegacyModal>}
   </>);
 }

@@ -504,9 +504,13 @@ export const accounts = pgTable("accounts", {
   type: accountType("type").notNull(),
   parentId: uuid("parent_id"),
   isSystem: boolean("is_system").default(false).notNull(),
-  systemKey: text("system_key"), // AR | SALES | VAT_OUTPUT | VAT_INPUT | INVENTORY | COGS | BANK | AP | OPENING_EQUITY
+  systemKey: text("system_key"), // AR | SALES | VAT_OUTPUT | VAT_INPUT | INVENTORY | COGS | BANK | AP | GRNI | OPENING_EQUITY
   isActive: boolean("is_active").default(true).notNull(),
-}, (t) => [uniqueIndex("accounts_tenant_code").on(t.tenantId, t.code)]);
+}, (t) => [
+  uniqueIndex("accounts_tenant_code").on(t.tenantId, t.code),
+  uniqueIndex("accounts_tenant_system_key").on(t.tenantId, t.systemKey)
+    .where(sql`${t.systemKey} IS NOT NULL`),
+]);
 
 // Every transaction snapshots its OWN rate at posting time.
 export const exchangeRates = pgTable("exchange_rates", {
@@ -840,10 +844,94 @@ export const stockMovements = pgTable("stock_movements", {
   uniqueIndex("stock_movements_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
 ]);
 
+export const purchaseRequisitions = pgTable("purchase_requisitions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  number: text("number").notNull(),
+  status: text("status").default("SUBMITTED").notNull(),
+  purpose: text("purpose").notNull(),
+  neededBy: timestamp("needed_by", { withTimezone: true }),
+  currency: currency("currency").default("USD").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  decisionReason: text("decision_reason"),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("purchase_requisitions_tenant_number").on(t.tenantId, t.number),
+  index("purchase_requisitions_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  check("purchase_requisitions_status_check", sql`${t.status} IN ('SUBMITTED', 'APPROVED', 'REJECTED', 'CANCELLED')`),
+]);
+
+export const purchaseRequisitionLineItems = pgTable("purchase_requisition_line_items", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  purchaseRequisitionId: uuid("purchase_requisition_id").notNull().references(() => purchaseRequisitions.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  position: integer("position").notNull(),
+  quantity: qty("quantity").notNull(),
+  estimatedUnitCost: money("estimated_unit_cost"),
+}, (t) => [
+  uniqueIndex("purchase_requisition_lines_position").on(t.purchaseRequisitionId, t.position),
+  index("purchase_requisition_lines_tenant").on(t.tenantId, t.purchaseRequisitionId),
+  check("purchase_requisition_lines_position_check", sql`${t.position} > 0`),
+  check("purchase_requisition_lines_quantity_check", sql`${t.quantity} > 0`),
+  check("purchase_requisition_lines_cost_check", sql`${t.estimatedUnitCost} IS NULL OR ${t.estimatedUnitCost} >= 0`),
+]);
+
+export const requestForQuotes = pgTable("request_for_quotes", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  purchaseRequisitionId: uuid("purchase_requisition_id").notNull().references(() => purchaseRequisitions.id),
+  number: text("number").notNull(),
+  status: text("status").default("ISSUED").notNull(),
+  responseDueAt: timestamp("response_due_at", { withTimezone: true }),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  awardedSupplierContactId: uuid("awarded_supplier_contact_id").references(() => contacts.id),
+  awardedAt: timestamp("awarded_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("request_for_quotes_tenant_number").on(t.tenantId, t.number),
+  uniqueIndex("request_for_quotes_requisition").on(t.tenantId, t.purchaseRequisitionId),
+  index("request_for_quotes_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  check("request_for_quotes_status_check", sql`${t.status} IN ('ISSUED', 'AWARDED', 'CANCELLED')`),
+]);
+
+export const requestForQuoteLineItems = pgTable("request_for_quote_line_items", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  requestForQuoteId: uuid("request_for_quote_id").notNull().references(() => requestForQuotes.id),
+  purchaseRequisitionLineItemId: uuid("purchase_requisition_line_item_id").notNull().references(() => purchaseRequisitionLineItems.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  position: integer("position").notNull(),
+  quantity: qty("quantity").notNull(),
+}, (t) => [
+  uniqueIndex("request_for_quote_lines_position").on(t.requestForQuoteId, t.position),
+  uniqueIndex("request_for_quote_lines_requisition_line").on(t.requestForQuoteId, t.purchaseRequisitionLineItemId),
+  index("request_for_quote_lines_tenant").on(t.tenantId, t.requestForQuoteId),
+  check("request_for_quote_lines_position_check", sql`${t.position} > 0`),
+  check("request_for_quote_lines_quantity_check", sql`${t.quantity} > 0`),
+]);
+
+export const requestForQuoteSuppliers = pgTable("request_for_quote_suppliers", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  requestForQuoteId: uuid("request_for_quote_id").notNull().references(() => requestForQuotes.id),
+  supplierContactId: uuid("supplier_contact_id").notNull().references(() => contacts.id),
+  invitedAt: timestamp("invited_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("request_for_quote_suppliers_unique").on(t.requestForQuoteId, t.supplierContactId),
+  index("request_for_quote_suppliers_tenant").on(t.tenantId, t.requestForQuoteId),
+]);
+
 export const purchaseOrders = pgTable("purchase_orders", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
   vendorContactId: uuid("vendor_contact_id").notNull().references(() => contacts.id),
+  purchaseRequisitionId: uuid("purchase_requisition_id").references(() => purchaseRequisitions.id),
+  requestForQuoteId: uuid("request_for_quote_id").references(() => requestForQuotes.id),
   number: text("number"),
   status: poStatus("status").default("DRAFT").notNull(),
   currency: currency("currency").default("USD").notNull(),
@@ -852,8 +940,15 @@ export const purchaseOrders = pgTable("purchase_orders", {
   receivedAt: timestamp("received_at", { withTimezone: true }),
   total: money("total").default("0").notNull(),
   createdBy: uuid("created_by"),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  approvalReason: text("approval_reason"),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("po_tenant_number").on(t.tenantId, t.number)]);
+}, (t) => [
+  uniqueIndex("po_tenant_number").on(t.tenantId, t.number),
+  uniqueIndex("po_tenant_rfq").on(t.tenantId, t.requestForQuoteId),
+  index("po_tenant_requisition").on(t.tenantId, t.purchaseRequisitionId),
+]);
 
 export const purchaseOrderLineItems = pgTable("purchase_order_line_items", {
   id: id(),
@@ -864,6 +959,44 @@ export const purchaseOrderLineItems = pgTable("purchase_order_line_items", {
   unitCost: money("unit_cost").notNull(),
   lineTotal: money("line_total").notNull(),
 });
+
+export const goodsReceipts = pgTable("goods_receipts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  purchaseOrderId: uuid("purchase_order_id").notNull().references(() => purchaseOrders.id),
+  number: text("number").notNull(),
+  status: text("status").default("POSTED").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+  deliveryNote: text("delivery_note"),
+  note: text("note"),
+  idempotencyKey: text("idempotency_key").notNull(),
+  idempotencyFingerprint: text("idempotency_fingerprint").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("goods_receipts_tenant_number").on(t.tenantId, t.number),
+  uniqueIndex("goods_receipts_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+  index("goods_receipts_tenant_po").on(t.tenantId, t.purchaseOrderId, t.createdAt),
+  check("goods_receipts_status_check", sql`${t.status} = 'POSTED'`),
+]);
+
+export const goodsReceiptLineItems = pgTable("goods_receipt_line_items", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  goodsReceiptId: uuid("goods_receipt_id").notNull().references(() => goodsReceipts.id),
+  purchaseOrderLineItemId: uuid("purchase_order_line_item_id").notNull().references(() => purchaseOrderLineItems.id),
+  productId: uuid("product_id").notNull().references(() => products.id),
+  warehouseId: uuid("warehouse_id").notNull().references(() => warehouses.id),
+  quantityReceived: qty("quantity_received").notNull(),
+  unitCost: money("unit_cost").notNull(),
+  lineTotal: money("line_total").notNull(),
+}, (t) => [
+  uniqueIndex("goods_receipt_lines_po_line").on(t.goodsReceiptId, t.purchaseOrderLineItemId),
+  index("goods_receipt_lines_tenant_receipt").on(t.tenantId, t.goodsReceiptId),
+  index("goods_receipt_lines_po_line_lookup").on(t.tenantId, t.purchaseOrderLineItemId),
+  check("goods_receipt_lines_quantity_check", sql`${t.quantityReceived} > 0`),
+  check("goods_receipt_lines_cost_check", sql`${t.unitCost} >= 0 AND ${t.lineTotal} >= 0`),
+]);
 
 // ---------------------------------------------------------------------------
 // BILLING — Jonomi's own subscription revenue; state machine enforced server-side

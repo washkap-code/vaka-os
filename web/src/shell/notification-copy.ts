@@ -16,6 +16,11 @@ export type NotificationCopy = {
   deliveryFailedDetail: string;
   securityTitle: string;
   securityDetail: string;
+  procurementApprovalTitle: string;
+  procurementApprovalDetail: string;
+  procurementRequisition: string;
+  procurementPurchaseOrder: string;
+  procurementReference: string;
   genericTitle: string;
   genericDetail: string;
   stockItem: string;
@@ -50,6 +55,13 @@ export function notificationCopy(item: NotificationItem, copy: NotificationCopy)
   }
   if (item.template === "security.notice") {
     return { title: copy.securityTitle, detail: safeText(item.variables.event) ?? copy.securityDetail };
+  }
+  if (item.template === "procurement.approval_requested.v1") {
+    const kind = safeText(item.variables.kind) === "purchase_requisition"
+      ? copy.procurementRequisition : copy.procurementPurchaseOrder;
+    const reference = safeText(item.variables.reference) ?? copy.procurementReference;
+    return { title: copy.procurementApprovalTitle, detail: copy.procurementApprovalDetail
+      .replace("{kind}", kind).replace("{reference}", reference) };
   }
   return { title: copy.genericTitle, detail: copy.genericDetail };
 }

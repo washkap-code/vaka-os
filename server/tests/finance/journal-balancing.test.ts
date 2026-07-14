@@ -2,13 +2,13 @@ import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db, audit, fromCents, mulRate, schema, toCents } from "../../src/lib.js";
 import { createDraftInvoice, recordPayment } from "../../src/invoicing.js";
-import { adjustStock, receivePurchaseOrder } from "../../src/inventory.js";
+import { adjustStock } from "../../src/inventory.js";
 import { postJournal, systemAccount } from "../../src/accounting.js";
 import { commitBankStatementImport, previewBankStatementImport } from "../../src/imports.js";
 import {
   accountByCode, createContact, createIssuedServiceInvoice, createProduct,
   createPurchaseOrder, defaultWarehouse, expectJournalBalanced,
-  expectTenantJournalsBalanced, journalEntriesBySource, signupFinanceTenant,
+  expectTenantJournalsBalanced, journalEntriesBySource, receiveTestPurchaseOrder, signupFinanceTenant,
 } from "./helpers.js";
 
 describe("finance kernel - journal balancing across posting paths", () => {
@@ -67,12 +67,8 @@ describe("finance kernel - journal balancing across posting paths", () => {
     const warehouse = await defaultWarehouse(tenant);
     const product = await createProduct(tenant, "balancing", { costPrice: "8.00", salePrice: "12.00" });
     const po = await createPurchaseOrder(tenant, product.id, warehouse.id, "4", "8.00");
-    await db.transaction((tx) => receivePurchaseOrder(tx, {
-      tenantId: tenant.tenantId,
-      purchaseOrderId: po.id,
-      createdBy: tenant.userId,
-    }));
-    const poJournals = await journalEntriesBySource(tenant.tenantId, "po_receipt", po.id);
+    const receipt = await receiveTestPurchaseOrder(tenant, po, "goods-receipt-balancing-1");
+    const poJournals = await journalEntriesBySource(tenant.tenantId, "goods_receipt", receipt.receipt.id);
     expect(poJournals).toHaveLength(1);
     await expectJournalBalanced(poJournals[0].id);
 

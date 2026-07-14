@@ -42,6 +42,10 @@ import { LowStockAlertCoordinator, subscribeLowStockAlerts, type LowStockAlertCo
 import { DocumentService } from "./platform/documents/service.js";
 import type { DocumentServiceContract, DocumentStore } from "./platform/documents/interfaces.js";
 import { PostgresDocumentStore } from "./documents.js";
+import {
+  ProcurementApprovalNotifier, subscribeProcurementApprovalNotifications,
+  type ProcurementApprovalNotifierContract,
+} from "./procurement-notifications.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -91,6 +95,7 @@ export interface PlatformKernelOptions {
   customerTimelineProjector?: CustomerTimelineProjectorContract;
   lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
   documentStore?: DocumentStore;
+  procurementApprovalNotifier?: ProcurementApprovalNotifierContract;
 }
 
 function configuredEmailTransport(): EmailTransport {
@@ -182,6 +187,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   subscribeLowStockAlerts(
     kernel.container.get(EVENT_BUS),
     options.lowStockAlertCoordinator ?? new LowStockAlertCoordinator(kernel.container.get(NOTIFICATION_SERVICE)),
+  );
+  subscribeProcurementApprovalNotifications(
+    kernel.container.get(EVENT_BUS),
+    options.procurementApprovalNotifier ?? new ProcurementApprovalNotifier(kernel.container.get(NOTIFICATION_SERVICE)),
   );
 
   return kernel;
