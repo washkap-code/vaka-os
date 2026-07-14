@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
@@ -3020,13 +3020,34 @@ function Reports({ ccy }: { ccy: string }) {
   const [vat, setVat] = useState<VatTechnicalReportView | null>(null);
   const [vatLoading, setVatLoading] = useState(false);
   const [vatError, setVatError] = useState("");
-  const copy = appEnglish.reports.vat;
-  const statutoryCopy = appEnglish.reports.statutory;
+  const reportsCopy = appEnglish.reports;
+  const copy = reportsCopy.vat;
+  const statutoryCopy = reportsCopy.statutory;
+  const reportTabs = ["pl", "bs", "ar", "journal", "vat", "statutory"] as const;
+  const reportTabLabels = {
+    pl: reportsCopy.tabs.pl,
+    bs: reportsCopy.tabs.bs,
+    ar: reportsCopy.tabs.ar,
+    journal: reportsCopy.tabs.journal,
+    vat: copy.tab,
+    statutory: statutoryCopy.tab,
+  };
   const [statutoryPeriod, setStatutoryPeriod] = useState({ from: defaultFrom, to: defaultTo, asAt: defaultTo });
   const [statutoryApplied, setStatutoryApplied] = useState(statutoryPeriod);
   const [statutory, setStatutory] = useState<StatutoryReportPackView | null>(null);
   const [statutoryLoading, setStatutoryLoading] = useState(false);
   const [statutoryError, setStatutoryError] = useState("");
+  const onReportTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, current: typeof reportTabs[number]) => {
+    const currentIndex = reportTabs.indexOf(current);
+    const nextIndex = event.key === "ArrowRight" ? (currentIndex + 1) % reportTabs.length
+      : event.key === "ArrowLeft" ? (currentIndex - 1 + reportTabs.length) % reportTabs.length
+        : event.key === "Home" ? 0 : event.key === "End" ? reportTabs.length - 1 : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const next = reportTabs[nextIndex];
+    setTab(next);
+    document.getElementById(`report-tab-${next}`)?.focus();
+  };
   useEffect(() => {
     if (tab !== "vat") return;
     let active = true;
@@ -3085,40 +3106,44 @@ function Reports({ ccy }: { ccy: string }) {
     } catch (error) { setStatutoryError(error instanceof Error ? error.message : statutoryCopy.downloadFailed); }
   };
   return (<>
-    <h1>Reports</h1><div className="sub">Every figure computed live from the double-entry ledger — in {ccy}</div>
-    <div className="row" style={{ marginBottom: 16 }}>
-      {(["pl", "bs", "ar", "journal", "vat", "statutory"] as const).map((t) => (
-        <button key={t} className={`btn ${tab === t ? "" : "ghost"} sm`} onClick={() => setTab(t)}>
-          {{ pl: "Profit & Loss", bs: "Balance Sheet", ar: "Aged Receivables", journal: "Journal", vat: copy.tab, statutory: statutoryCopy.tab }[t]}
+    <h1>{reportsCopy.title}</h1><div className="sub">{reportsCopy.subtitle.replace("{currency}", ccy)}</div>
+    <div className="row report-tabs" role="tablist" aria-label={reportsCopy.navigation}>
+      {reportTabs.map((t) => (
+        <button key={t} id={`report-tab-${t}`} role="tab" aria-selected={tab === t}
+          aria-controls={`report-panel-${t}`} tabIndex={tab === t ? 0 : -1}
+          className={`btn ${tab === t ? "" : "ghost"} sm`} onClick={() => setTab(t)}
+          onKeyDown={(event) => onReportTabKeyDown(event, t)}>
+          {reportTabLabels[t]}
         </button>
       ))}
     </div>
-    {tab === "pl" && pl && <div className="panel">
-      <h2>Profit &amp; Loss — year to date</h2>
-      <table><tbody>
+    {tab === "pl" && <div className="panel" role="tabpanel" id="report-panel-pl" aria-labelledby="report-tab-pl" tabIndex={0}>
+      <h2>{reportsCopy.profitLossTitle}</h2>
+      {!pl ? <p className="sub" role="status">{reportsCopy.loading}</p> : <div className="table-scroll" role="region" aria-label={reportsCopy.profitLossTableLabel} tabIndex={0}><table><tbody>
         {pl.income.map((r: any) => <tr key={r.code}><td>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
-        <tr><td><b>Total income</b></td><td className="num"><b>{fmt(pl.totalIncome, ccy)}</b></td></tr>
+        <tr><td><b>{reportsCopy.totalIncome}</b></td><td className="num"><b>{fmt(pl.totalIncome, ccy)}</b></td></tr>
         {pl.expenses.map((r: any) => <tr key={r.code}><td>{r.code} {r.name}</td><td className="num">({fmt(r.amount, ccy)})</td></tr>)}
-        <tr><td><b>Total expenses</b></td><td className="num"><b>({fmt(pl.totalExpenses, ccy)})</b></td></tr>
-        <tr><td><b>Net profit</b></td><td className="num" style={{ color: Number(pl.netProfit) >= 0 ? "var(--ok)" : "var(--danger)" }}><b>{fmt(pl.netProfit, ccy)}</b></td></tr>
-      </tbody></table>
+        <tr><td><b>{reportsCopy.totalExpenses}</b></td><td className="num"><b>({fmt(pl.totalExpenses, ccy)})</b></td></tr>
+        <tr><td><b>{reportsCopy.netProfit}</b></td><td className="num" style={{ color: Number(pl.netProfit) >= 0 ? "var(--ok)" : "var(--danger)" }}><b>{fmt(pl.netProfit, ccy)}</b></td></tr>
+      </tbody></table></div>}
     </div>}
-    {tab === "bs" && bs && <div className="panel">
-      <h2>Balance Sheet — as at today {bs.balances ? "✓ balances" : "⚠ DOES NOT BALANCE"}</h2>
-      <table><tbody>
-        <tr><td colSpan={2}><b>Assets</b></td></tr>
+    {tab === "bs" && <div className="panel" role="tabpanel" id="report-panel-bs" aria-labelledby="report-tab-bs" tabIndex={0}>
+      <h2>{reportsCopy.balanceSheetTitle}{bs ? ` — ${bs.balances ? reportsCopy.balanceSheetBalances : reportsCopy.balanceSheetDoesNotBalance}` : ""}</h2>
+      {!bs ? <p className="sub" role="status">{reportsCopy.loading}</p> : <div className="table-scroll" role="region" aria-label={reportsCopy.balanceSheetTableLabel} tabIndex={0}><table><tbody>
+        <tr><td colSpan={2}><b>{reportsCopy.assets}</b></td></tr>
         {bs.assets.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
-        <tr><td><b>Total assets</b></td><td className="num"><b>{fmt(bs.totalAssets, ccy)}</b></td></tr>
-        <tr><td colSpan={2}><b>Liabilities</b></td></tr>
+        <tr><td><b>{reportsCopy.totalAssets}</b></td><td className="num"><b>{fmt(bs.totalAssets, ccy)}</b></td></tr>
+        <tr><td colSpan={2}><b>{reportsCopy.liabilities}</b></td></tr>
         {bs.liabilities.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
-        <tr><td colSpan={2}><b>Equity</b></td></tr>
+        <tr><td colSpan={2}><b>{reportsCopy.equity}</b></td></tr>
         {bs.equity.map((r: any) => <tr key={r.code}><td style={{ paddingLeft: 24 }}>{r.code} {r.name}</td><td className="num">{fmt(r.amount, ccy)}</td></tr>)}
-        <tr><td style={{ paddingLeft: 24 }}>Current earnings</td><td className="num">{fmt(bs.currentEarnings, ccy)}</td></tr>
-        <tr><td><b>Total liabilities &amp; equity</b></td><td className="num"><b>{fmt(bs.totalLiabilitiesAndEquity, ccy)}</b></td></tr>
-      </tbody></table>
+        <tr><td style={{ paddingLeft: 24 }}>{reportsCopy.currentEarnings}</td><td className="num">{fmt(bs.currentEarnings, ccy)}</td></tr>
+        <tr><td><b>{reportsCopy.totalLiabilitiesEquity}</b></td><td className="num"><b>{fmt(bs.totalLiabilitiesAndEquity, ccy)}</b></td></tr>
+      </tbody></table></div>}
     </div>}
-    {tab === "ar" && ar && <div className="panel">
-      <h2>Aged Receivables</h2>
+    {tab === "ar" && <div className="panel" role="tabpanel" id="report-panel-ar" aria-labelledby="report-tab-ar" tabIndex={0}>
+      <h2>{reportsCopy.agedReceivablesTitle}</h2>
+      {!ar ? <p className="sub" role="status">{reportsCopy.loading}</p> : <>
       {(ar as AgedReceivablesView).currencies.map((currency) => (
         <div key={currency.currency}>
           <h3>{currency.currency}</h3>
@@ -3129,25 +3154,25 @@ function Reports({ ccy }: { ccy: string }) {
           </div>
         </div>
       ))}
-      <table><thead><tr><th>Invoice</th><th>Customer</th><th className="num">Outstanding</th><th className="num">Days overdue</th></tr></thead>
+      <div className="table-scroll" role="region" aria-label={reportsCopy.agedReceivablesTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{reportsCopy.invoice}</th><th>{reportsCopy.customer}</th><th className="num">{reportsCopy.outstanding}</th><th className="num">{reportsCopy.daysOverdue}</th></tr></thead>
         <tbody>{(ar as AgedReceivablesView).items.map((r) => (
           <tr key={r.invoiceId}><td>{r.number}</td><td>{r.contact}</td><td className="num">{fmt(r.outstanding, r.currency)}</td><td className="num">{r.daysOverdue}</td></tr>
-        ))}</tbody></table>
+        ))}</tbody></table></div></>}
     </div>}
-    {tab === "journal" && journal && <div className="panel">
-      <h2>Journal (read-only audit view)</h2>
-      {journal.map((e: any) => (
+    {tab === "journal" && <div className="panel" role="tabpanel" id="report-panel-journal" aria-labelledby="report-tab-journal" tabIndex={0}>
+      <h2>{reportsCopy.journalTitle}</h2>
+      {!journal ? <p className="sub" role="status">{reportsCopy.loading}</p> : journal.map((e: any) => (
         <div key={e.id} style={{ marginBottom: 14, borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
           <b>{new Date(e.date).toLocaleDateString()} — {e.memo}</b> <span className="sub" style={{ display: "inline" }}>({e.source_type})</span>
-          <table><tbody>{e.lines.map((l: any, i: number) => (
+          <div className="table-scroll" role="region" aria-label={reportsCopy.journalEntryTable.replace("{date}", new Date(e.date).toLocaleDateString()).replace("{memo}", e.memo)} tabIndex={0}><table><tbody>{e.lines.map((l: any, i: number) => (
             <tr key={i}><td style={{ paddingLeft: Number(l.credit) > 0 ? 40 : 10 }}>{l.accountCode} {l.accountName}</td>
               <td className="num">{Number(l.debit) > 0 ? fmt(l.debit, ccy) : ""}</td>
               <td className="num">{Number(l.credit) > 0 ? fmt(l.credit, ccy) : ""}</td></tr>
-          ))}</tbody></table>
+          ))}</tbody></table></div>
         </div>
       ))}
     </div>}
-    {tab === "vat" && <div className="panel">
+    {tab === "vat" && <div className="panel" role="tabpanel" id="report-panel-vat" aria-labelledby="report-tab-vat" tabIndex={0}>
       <h2>{copy.title}</h2>
       <div className="banner warn">{copy.notFilingReady}</div>
       <div className="grid3" style={{ marginTop: 14 }}>
@@ -3155,14 +3180,14 @@ function Reports({ ccy }: { ccy: string }) {
           onChange={(event) => setVatPeriod({ ...vatPeriod, from: event.target.value })} /></div>
         <div className="field"><label htmlFor="vat-to">{copy.to}</label><input id="vat-to" type="date" value={vatPeriod.to}
           onChange={(event) => setVatPeriod({ ...vatPeriod, to: event.target.value })} /></div>
-        <div className="field"><label>{copy.actions}</label><div className="row">
+        <div className="report-actions" role="group" aria-label={copy.actions}><div className="row">
           <button className="btn sm" onClick={() => setVatApplied(vatPeriod)}>{copy.apply}</button>
           <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("csv")}>{copy.csv}</button>
           <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("pdf")}>{copy.pdf}</button>
         </div></div>
       </div>
-      {vatLoading && <p className="sub">{copy.loading}</p>}
-      {vatError && <div className="err-text">{vatError}</div>}
+      {vatLoading && <p className="sub" role="status">{copy.loading}</p>}
+      {vatError && <div className="err-text" role="alert">{vatError}</div>}
       {vat && !vatLoading && <>
         <div className="cards">
           <div className="card"><div className="k">{copy.outputVat}</div><div className="v">{fmt(vat.totals.outputVat, vat.currency)}</div></div>
@@ -3170,8 +3195,8 @@ function Reports({ ccy }: { ccy: string }) {
           <div className="card"><div className="k">{copy.netVat}</div><div className="v">{fmt(vat.totals.netVat, vat.currency)}</div><div className="sub">{copy.positions[vat.totals.position]}</div></div>
         </div>
         <p className="sub">{copy.inputCoverage}</p>
-        {vat.evidence.length === 0 ? <p className="sub">{copy.empty}</p> : <div style={{ overflowX: "auto" }}>
-          <table><thead><tr><th>{copy.date}</th><th>{copy.account}</th><th>{copy.source}</th><th className="num">{copy.debit}</th><th className="num">{copy.credit}</th><th className="num">{copy.impact}</th></tr></thead>
+        {vat.evidence.length === 0 ? <p className="sub">{copy.empty}</p> : <div className="table-scroll" role="region" aria-label={copy.evidenceTableLabel} tabIndex={0}>
+          <table className="dense-data-table"><thead><tr><th>{copy.date}</th><th>{copy.account}</th><th>{copy.source}</th><th className="num">{copy.debit}</th><th className="num">{copy.credit}</th><th className="num">{copy.impact}</th></tr></thead>
             <tbody>{vat.evidence.map((row) => <tr key={row.journalLineId}>
               <td>{new Date(row.date).toLocaleDateString()}</td><td>{row.account}</td><td>{row.invoice?.number ?? row.sourceType}</td>
               <td className="num">{fmt(row.debit, vat.currency)}</td><td className="num">{fmt(row.credit, vat.currency)}</td><td className="num">{fmt(row.impact, vat.currency)}</td>
@@ -3179,7 +3204,7 @@ function Reports({ ccy }: { ccy: string }) {
         </div>}
       </>}
     </div>}
-    {tab === "statutory" && <div className="panel">
+    {tab === "statutory" && <div className="panel" role="tabpanel" id="report-panel-statutory" aria-labelledby="report-tab-statutory" tabIndex={0}>
       <h2>{statutoryCopy.title}</h2>
       <div className="banner warn">{statutoryCopy.notFilingReady}</div>
       <div className="grid3" style={{ marginTop: 14 }}>
@@ -3187,12 +3212,12 @@ function Reports({ ccy }: { ccy: string }) {
         <div className="field"><label htmlFor="statutory-to">{statutoryCopy.to}</label><input id="statutory-to" type="date" value={statutoryPeriod.to} onChange={(event) => setStatutoryPeriod({ ...statutoryPeriod, to: event.target.value })} /></div>
         <div className="field"><label htmlFor="statutory-as-at">{statutoryCopy.asAt}</label><input id="statutory-as-at" type="date" value={statutoryPeriod.asAt} onChange={(event) => setStatutoryPeriod({ ...statutoryPeriod, asAt: event.target.value })} /></div>
       </div>
-      <div className="row" style={{ marginBottom: 14 }}>
+      <div className="row report-actions" role="group" aria-label={statutoryCopy.actions}>
         <button className="btn sm" onClick={() => setStatutoryApplied(statutoryPeriod)}>{statutoryCopy.apply}</button>
         <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("csv")}>{statutoryCopy.csv}</button>
         <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("pdf")}>{statutoryCopy.pdf}</button>
       </div>
-      {statutoryLoading && <p className="sub">{statutoryCopy.loading}</p>}
+      {statutoryLoading && <p className="sub" role="status">{statutoryCopy.loading}</p>}
       {statutoryError && <div className="err-text" role="alert">{statutoryError}</div>}
       {statutory && !statutoryLoading && <>
         <div className="cards">
@@ -3214,6 +3239,7 @@ function Reports({ ccy }: { ccy: string }) {
 function Upgrade() {
   const [sub] = useLoad(() => api("/billing/subscription"));
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busyPlan, setBusyPlan] = useState("");
   const copy = appEnglish.upgrade;
   const currentPlan = sub?.plan?.name as string | undefined;
@@ -3228,8 +3254,10 @@ function Upgrade() {
         body: { requestedPlan },
       });
       setMessage(copy.recorded.replace("{plan}", requestedPlan));
+      setMessageTone("status");
     } catch (error: any) {
       setMessage(error.message);
+      setMessageTone("error");
     }
     setBusyPlan("");
   };
@@ -3270,34 +3298,35 @@ function Upgrade() {
       <p>{copy.notes}</p>
       <p>{copy.planned}</p>
     </div>
-    {message && <div className="banner warn">{message}</div>}
+    {message && <div className="banner warn" role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
   </>);
 }
 
 function Billing() {
   const [sub] = useLoad(() => api("/billing/subscription"));
   const [invs] = useLoad(() => api("/billing/invoices"));
+  const copy = appEnglish.billing;
   return (<>
-    <h1>Billing &amp; Plan</h1><div className="sub">Your platform subscription with monthly usage summaries</div>
+    <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
     {sub && <div className="cards">
-      <div className="card"><div className="k">Plan</div><div className="v">{sub.plan.name}</div></div>
-      <div className="card"><div className="k">Status</div><div className="v"><span className={`pill ${sub.status}`}>{sub.status}</span></div></div>
-      <div className="card"><div className="k">Monthly fee</div><div className="v">{fmt(sub.plan.priceAmount)}</div></div>
-      <div className="card"><div className="k">Active users</div><div className="v">{sub.currentUsage.activeUsers} / {sub.plan.userLimit}</div></div>
+      <div className="card"><div className="k">{copy.plan}</div><div className="v">{sub.plan.name}</div></div>
+      <div className="card"><div className="k">{copy.status}</div><div className="v"><span className={`pill ${sub.status}`}>{sub.status}</span></div></div>
+      <div className="card"><div className="k">{copy.monthlyFee}</div><div className="v">{fmt(sub.plan.priceAmount)}</div></div>
+      <div className="card"><div className="k">{copy.activeUsers}</div><div className="v">{sub.currentUsage.activeUsers} / {sub.plan.userLimit}</div></div>
     </div>}
-    <div className="panel"><h2>Platform invoices</h2>
-      {(!invs || invs.length === 0) ? <p className="sub">No invoices yet — your first invoice arrives when your free onboarding period ends.</p> :
-        <table><thead><tr><th>Period</th><th className="num">Amount</th><th>Status</th><th>Usage summary</th></tr></thead>
+    <div className="panel"><h2>{copy.invoicesTitle}</h2>
+      {(!invs || invs.length === 0) ? <p className="sub">{copy.noInvoices}</p> :
+        <div className="table-scroll" role="region" aria-label={copy.invoicesTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.period}</th><th className="num">{copy.amount}</th><th>{copy.status}</th><th>{copy.usageSummary}</th></tr></thead>
           <tbody>{invs.map((i: any) => (
             <tr key={i.id}>
               <td>{new Date(i.periodStart).toLocaleDateString()} – {new Date(i.periodEnd).toLocaleDateString()}</td>
               <td className="num">{fmt(i.amount)}</td>
               <td><span className={`pill ${i.status}`}>{i.status}</span></td>
-              <td className="sub" style={{ margin: 0 }}>{i.usageSummary ? `${i.usageSummary.activeUsers} users · ${i.usageSummary.invoicesIssued} invoices · ${i.usageSummary.contacts} contacts · ${i.usageSummary.products} products` : "—"}</td>
+              <td className="sub" style={{ margin: 0 }}>{i.usageSummary ? `${i.usageSummary.activeUsers} ${copy.users} · ${i.usageSummary.invoicesIssued} ${copy.invoices} · ${i.usageSummary.contacts} ${copy.contacts} · ${i.usageSummary.products} ${copy.products}` : "—"}</td>
             </tr>
-          ))}</tbody></table>}
+          ))}</tbody></table></div>}
       <p className="sub" style={{ marginTop: 12 }}>
-        Missed payments: reminders → read-only access after ~2–3 months. <b>Your data is never deleted for non-payment</b> — it is retained in escrow and full access is restored when the balance and a reactivation fee are settled. You can export your data at any time, in any account state.
+        {copy.protection} <b>{copy.protectionStrong}</b> {copy.protectionDetail}
       </p>
     </div>
   </>);
