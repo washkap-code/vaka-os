@@ -48,6 +48,20 @@ async function draftStockInvoice(opts: {
   });
 }
 
+async function expectAppendOnlyRejection(operation: Promise<unknown>) {
+  let rejection: unknown;
+  try {
+    await operation;
+  } catch (error) {
+    rejection = error;
+  }
+
+  expect(rejection).toBeInstanceOf(Error);
+  const wrapped = rejection as Error & { cause?: unknown };
+  const causeMessage = wrapped.cause instanceof Error ? wrapped.cause.message : "";
+  expect(`${wrapped.message}\n${causeMessage}`).toMatch(/append-only/);
+}
+
 describe("P5-003 weighted-average inventory valuation", () => {
   it("values receipts at different costs, partial issues and COGS from immutable weighted-average evidence", async () => {
     const tenant = await signupFinanceTenant("wa-math");
@@ -90,11 +104,11 @@ describe("P5-003 weighted-average inventory valuation", () => {
       costAfterCents: 22_500n,
       valuationMethod: "WEIGHTED_AVERAGE",
     });
-    await expect(db.update(schema.stockMovementValuations)
+    await expectAppendOnlyRejection(db.update(schema.stockMovementValuations)
       .set({ movementCostCents: 1n })
-      .where(eq(schema.stockMovementValuations.id, valuation.id))).rejects.toThrow(/append-only/);
-    await expect(db.delete(schema.stockMovementValuations)
-      .where(eq(schema.stockMovementValuations.id, valuation.id))).rejects.toThrow(/append-only/);
+      .where(eq(schema.stockMovementValuations.id, valuation.id)));
+    await expectAppendOnlyRejection(db.delete(schema.stockMovementValuations)
+      .where(eq(schema.stockMovementValuations.id, valuation.id)));
 
     const [layer] = await db.select().from(schema.inventoryValuationLayers).where(and(
       eq(schema.inventoryValuationLayers.tenantId, tenant.tenantId),
