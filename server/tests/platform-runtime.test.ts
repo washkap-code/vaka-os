@@ -106,6 +106,7 @@ describe("platform runtime composition (P1-002)", () => {
       },
       reconcileTenant: async () => {},
       reindexCustomer: async () => {},
+      reindexSupplier: async () => {},
       reindexInvoice: async () => {},
       reindexProduct: async () => {},
     };

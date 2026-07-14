@@ -28,7 +28,7 @@ test("owner-only activity stays hidden from non-owners and visible to owners", (
 
 test("a forbidden current page falls back to the first visible destination", () => {
   const navigation = visibleWorkspaceNavigation(["inventory.read"], false);
-  assert.equal(resolveWorkspacePage("dashboard", navigation), "products");
+  assert.equal(resolveWorkspacePage("dashboard", navigation), "suppliers");
   assert.equal(resolveWorkspacePage("pos", navigation), "pos");
 });
 
@@ -106,6 +106,15 @@ test("workspace search maps only the governed object and destination pair", () =
   }] });
   assert.deepEqual(workspaceSearchTarget(result), { page: "invoices", entityType: "invoice", recordId: "invoice-one" });
   assert.equal(workspaceSearchTarget({ ...result, object: { ...result.object, navigation: { section: "crm", recordView: "invoice" } } }), null);
+});
+
+test("workspace search maps the canonical supplier projection to procurement", () => {
+  const [result] = parseWorkspaceSearchResponse({ results: [{
+    id: "supplier-one", entityType: "supplier", title: "Mbare Supply",
+    document: { id: "supplier-one", entityType: "supplier", name: "Mbare Supply", contactType: "COMPANY", supplierCode: "SUP-001", supplierCurrency: "USD" },
+    object: { key: "supplier", fallbackLabel: "Supplier", navigation: { section: "procurement", recordView: "supplier" } },
+  }] });
+  assert.deepEqual(workspaceSearchTarget(result), { page: "suppliers", entityType: "supplier", recordId: "supplier-one" });
 });
 
 test("idle sign-out policy enforces the minimum, warning and expired phases", () => {

@@ -6,6 +6,7 @@ export const DOMAIN_EVENTS = {
   STOCK_ADJUSTED: "stock.adjusted",
   TENANT_LIFECYCLE_CHANGED: "tenant.lifecycle_changed",
   CUSTOMER_CHANGED: "customer.changed",
+  SUPPLIER_CHANGED: "supplier.changed",
   PRODUCT_CHANGED: "product.changed",
   INVOICE_CHANGED: "invoice.changed",
   ACTIVITY_RECORDED: "activity.recorded",
@@ -19,6 +20,7 @@ export type DomainEventPayloads = {
   "stock.adjusted": { movementId: string; productId: string; warehouseId: string; quantityDelta: string };
   "tenant.lifecycle_changed": { tenantId: string; from: string; to: string };
   "customer.changed": { customerId: string; change: "created" | "updated" | "imported" | "bulk-updated" | "removed" };
+  "supplier.changed": { supplierId: string; change: "created" | "updated" | "imported" | "bulk-updated" | "removed" };
   "product.changed": { productId: string; change: "created" | "imported" | "updated" };
   "invoice.changed": { invoiceId: string; change: "drafted" | "updated" };
   "activity.recorded": { activityId: string; customerId: string };

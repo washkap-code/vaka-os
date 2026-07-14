@@ -1,7 +1,7 @@
 import type { WorkspacePage } from "./navigation";
 
 type SearchObject = {
-  key: "customer" | "invoice" | "product";
+  key: "customer" | "supplier" | "invoice" | "product";
   fallbackLabel: string;
   navigation: { section: string; recordView: string | null };
 };
@@ -11,6 +11,15 @@ type CustomerSearchDocument = {
   entityType: "customer";
   name: string;
   contactType: "INDIVIDUAL" | "COMPANY";
+};
+
+type SupplierSearchDocument = {
+  id: string;
+  entityType: "supplier";
+  name: string;
+  contactType: "INDIVIDUAL" | "COMPANY";
+  supplierCode: string | null;
+  supplierCurrency: "USD" | "ZWG" | null;
 };
 
 type InvoiceSearchDocument = {
@@ -36,20 +45,21 @@ type ProductSearchDocument = {
 
 export type WorkspaceSearchResult = {
   id: string;
-  entityType: "customer" | "invoice" | "product";
+  entityType: "customer" | "supplier" | "invoice" | "product";
   title: string;
-  document: CustomerSearchDocument | InvoiceSearchDocument | ProductSearchDocument;
+  document: CustomerSearchDocument | SupplierSearchDocument | InvoiceSearchDocument | ProductSearchDocument;
   object: SearchObject;
 };
 
 export type WorkspaceSearchTarget = {
-  page: Extract<WorkspacePage, "contacts" | "invoices" | "products">;
+  page: Extract<WorkspacePage, "contacts" | "suppliers" | "invoices" | "products">;
   entityType: WorkspaceSearchResult["entityType"];
   recordId: string;
 };
 
 const navigationByEntity = {
   customer: { page: "contacts", section: "crm", recordView: "customer" },
+  supplier: { page: "suppliers", section: "procurement", recordView: "supplier" },
   invoice: { page: "invoices", section: "accounting", recordView: "invoice" },
   product: { page: "products", section: "inventory", recordView: "product" },
 } as const;
@@ -87,6 +97,15 @@ function parseDocument(value: unknown, entityType: WorkspaceSearchResult["entity
     && (candidate.contactType === "INDIVIDUAL" || candidate.contactType === "COMPANY")) {
     return { id, entityType, name: candidate.name, contactType: candidate.contactType } satisfies CustomerSearchDocument;
   }
+  if (entityType === "supplier" && string(candidate.name)
+    && (candidate.contactType === "INDIVIDUAL" || candidate.contactType === "COMPANY")
+    && (candidate.supplierCode === null || string(candidate.supplierCode))
+    && (candidate.supplierCurrency === null || currency(candidate.supplierCurrency))) {
+    return {
+      id, entityType, name: candidate.name, contactType: candidate.contactType,
+      supplierCode: candidate.supplierCode, supplierCurrency: candidate.supplierCurrency,
+    } satisfies SupplierSearchDocument;
+  }
   if (entityType === "invoice" && (candidate.number === null || string(candidate.number))
     && string(candidate.status) && currency(candidate.currency) && string(candidate.total)
     && string(candidate.customerName)) {
@@ -109,7 +128,7 @@ function parseDocument(value: unknown, entityType: WorkspaceSearchResult["entity
 function parseResult(value: unknown): WorkspaceSearchResult | null {
   const candidate = record(value);
   if (!candidate || !string(candidate.id) || !string(candidate.title)
-    || !["customer", "invoice", "product"].includes(String(candidate.entityType))) return null;
+    || !["customer", "supplier", "invoice", "product"].includes(String(candidate.entityType))) return null;
   const entityType = candidate.entityType as WorkspaceSearchResult["entityType"];
   const object = parseObject(candidate.object, entityType);
   const document = parseDocument(candidate.document, entityType, candidate.id);

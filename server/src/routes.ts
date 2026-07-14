@@ -74,6 +74,11 @@ import {
   bulkUpdateContacts, decideContactDeletionRequest, deleteOrRequestContacts,
   listContactDeletionRequests,
 } from "./contact-records.js";
+import { queuePartyRoleEvents } from "./party-events.js";
+import {
+  assertActiveSupplier, createSupplier, getSupplier, listSuppliers,
+  supplierCreateSchema, supplierUpdateSchema, updateSupplier,
+} from "./suppliers.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1014,8 +1019,9 @@ api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [c] = await tx.insert(schema.contacts).values({ ...body, tenantId: tid }).returning();
     await audit(tx, tid, req.auth!.userId, "contact.created", "contact", c.id);
-    queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${c.id}:created`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
-      tenantId: tid, actorUserId: req.auth!.userId, payload: { customerId: c.id, change: "created" } });
+    queuePartyRoleEvents(queue, {
+      tenantId: tid, actorUserId: req.auth!.userId, contactId: c.id, change: "created", after: c,
+    });
     return c;
   }));
 }));
@@ -1023,13 +1029,19 @@ api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
   const body = contactSchema.partial().parse(req.body);
   const tid = tenantId(req);
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    const [before] = await tx.select().from(schema.contacts).where(and(
+      eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid),
+      isNull(schema.contacts.deletedAt),
+    )).for("update");
+    if (!before) throw notFound("Contact not found");
     const [c] = await tx.update(schema.contacts).set(body)
-      .where(and(eq(schema.contacts.id, routeParam(req, "id")), eq(schema.contacts.tenantId, tid),
+      .where(and(eq(schema.contacts.id, before.id), eq(schema.contacts.tenantId, tid),
         isNull(schema.contacts.deletedAt))).returning();
     if (!c) throw notFound("Contact not found");
     await audit(tx, tid, req.auth!.userId, "contact.updated", "contact", c.id);
-    queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${c.id}:updated`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
-      tenantId: tid, actorUserId: req.auth!.userId, payload: { customerId: c.id, change: "updated" } });
+    queuePartyRoleEvents(queue, {
+      tenantId: tid, actorUserId: req.auth!.userId, contactId: c.id, change: "updated", before, after: c,
+    });
     return c;
   }));
 }));
@@ -1135,6 +1147,22 @@ api.get("/contacts/:id/timeline", requirePermission("crm.read"), wrap(async (req
     throw error;
   }
 }));
+
+// Supplier is a procurement/finance role projection of the canonical contact.
+api.get("/suppliers", requirePermission("inventory.read"), wrap(async (req) =>
+  listSuppliers(tenantId(req))));
+api.post("/suppliers", requirePermission("inventory.write"), wrap(async (req) =>
+  createSupplier({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    input: supplierCreateSchema.parse(req.body),
+  })));
+api.get("/suppliers/:id", requirePermission("inventory.read"), wrap(async (req) =>
+  getSupplier(tenantId(req), routeParam(req, "id"))));
+api.patch("/suppliers/:id", requirePermission("inventory.write"), wrap(async (req) =>
+  updateSupplier({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId, supplierId: routeParam(req, "id"),
+    input: supplierUpdateSchema.parse(req.body),
+  })));
 
 const dealSchema = z.object({
   contactId: z.string().uuid(), title: z.string().min(1),
@@ -1332,12 +1360,13 @@ const poSchema = z.object({
   lines: z.array(z.object({
     productId: z.string().uuid(), warehouseId: z.string().uuid(),
     quantity: z.string(), unitCost: z.string(),
-  })).min(1),
-});
+  }).strict()).min(1),
+}).strict();
 api.post("/purchase-orders", requirePermission("inventory.write"), wrap(async (req) => {
   const body = poSchema.parse(req.body);
   const tid = tenantId(req);
   return db.transaction(async (tx) => {
+    await assertActiveSupplier(tx, tid, body.vendorContactId);
     const { toCents, fromCents, mulRate } = await import("./lib.js");
     let total = 0n;
     const lines = body.lines.map((l) => {
@@ -1549,11 +1578,7 @@ api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => 
       ));
     if (!categoryAccount) throw notFound("Expense category account not found");
     if (body.vendorContactId) {
-      const [vendor] = await tx.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
-        eq(schema.contacts.id, body.vendorContactId),
-        eq(schema.contacts.tenantId, tid),
-      ));
-      if (!vendor) throw notFound("Vendor contact not found");
+      await assertActiveSupplier(tx, tid, body.vendorContactId);
     }
     const [exp] = await tx.insert(schema.expenses).values({
       ...body,

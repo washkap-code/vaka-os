@@ -5,6 +5,7 @@ import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } 
 import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import { queuePartyRoleEvents } from "./party-events.js";
 import type { TaxTreatment } from "./platform/localisation/types.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 
@@ -522,7 +523,11 @@ export async function commitContactImport(opts: {
       ownerUserId: opts.actorUserId,
     }));
     const created = values.length
-      ? await tx.insert(schema.contacts).values(values).returning({ id: schema.contacts.id })
+      ? await tx.insert(schema.contacts).values(values).returning({
+        id: schema.contacts.id,
+        isCustomer: schema.contacts.isCustomer,
+        isVendor: schema.contacts.isVendor,
+      })
       : [];
     for (let index = 0; index < rows.length; index++) {
       await tx.update(schema.importRows).set({
@@ -540,9 +545,10 @@ export async function commitContactImport(opts: {
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
     for (const contact of created) {
-      queue({ id: `${DOMAIN_EVENTS.CUSTOMER_CHANGED}:${contact.id}:imported`, type: DOMAIN_EVENTS.CUSTOMER_CHANGED,
-        tenantId: opts.tenantId, actorUserId: opts.actorUserId,
-        payload: { customerId: contact.id, change: "imported" } });
+      queuePartyRoleEvents(queue, {
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId, contactId: contact.id,
+        change: "imported", after: contact,
+      });
     }
     return { batch: completed, importedRows: created.length };
   }));

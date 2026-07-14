@@ -24,6 +24,13 @@ Core flow: `need -> requisition -> approval -> sourcing/RFQ -> PO -> receipt -> 
 
 No receipt or bill may silently overstate stock, AP or tax. Tolerances are versioned rules. Supplier verification and sanctions/regulatory checks are legally governed per country.
 
+Current implementation uses `contacts.is_vendor` as the Supplier role on the
+one canonical party record. Inventory-authorised users can maintain supplier
+contact details and procurement defaults, while purchase orders and expenses
+fail closed unless the selected record is an active same-tenant vendor.
+Requisitions, RFQ, approvals, goods receipt, supplier bills and three-way match
+remain follow-on missions.
+
 ## 4. Inventory and warehousing
 
 Scope: products/SKUs/categories/units; warehouses/locations/bins; append-only receipt/issue/transfer/adjustment/opening movements; balances; reservations; lots/batches/serials/expiry; counts; replenishment; picking/packing; fulfilment; returns; valuation; barcode/QR/mobile capture; and intelligence.

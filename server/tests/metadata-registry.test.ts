@@ -38,7 +38,7 @@ describe("P1-008 canonical metadata registry", () => {
   it("seeds unique governed projections and excludes restricted fields from future AI", async () => {
     const service = new MetadataService(new CanonicalMetadataProvider());
     const objects = await service.objects("tenant-1");
-    expect(objects.map((object) => object.key)).toEqual(["company", "customer", "invoice", "product"]);
+    expect(objects.map((object) => object.key)).toEqual(["company", "customer", "supplier", "invoice", "product"]);
     expect(Object.isFrozen(objects)).toBe(true);
     expect(objects.every((object) => Object.isFrozen(object) && Object.isFrozen(object.fields))).toBe(true);
     expect(new Set(objects.map((object) => object.key)).size).toBe(objects.length);
@@ -51,6 +51,9 @@ describe("P1-008 canonical metadata registry", () => {
     });
     expect(objects.find((object) => object.key === "company")?.surrogateNote).toContain("not a LegalEntity");
     expect(objects.find((object) => object.key === "customer")?.surrogateNote).toContain("CustomerAccount");
+    expect(objects.find((object) => object.key === "supplier")).toMatchObject({
+      canonicalName: "SupplierAccount", sourceTable: "contacts", readPermission: "inventory.read",
+    });
     for (const object of objects) {
       expect(new Set(object.fields.map((field) => field.key)).size).toBe(object.fields.length);
       expect(object.fields.filter((field) => field.classification === "restricted")
@@ -72,7 +75,7 @@ describe("P1-008 canonical metadata registry", () => {
     expect(owner.headers["cache-control"]).toBe("private, no-store");
     expect(owner.body.registryVersion).toBe(METADATA_REGISTRY_VERSION);
     expect(owner.body.objects.map((object: { key: string }) => object.key)).toEqual([
-      "company", "customer", "invoice", "product",
+      "company", "customer", "supplier", "invoice", "product",
     ]);
     expect(JSON.stringify(owner.body)).not.toContain("Finance Kernel metadata-api");
 

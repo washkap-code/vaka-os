@@ -13,7 +13,7 @@ export type MetadataAiExposure = "allowed" | "excluded";
 
 export interface MetadataFieldDefinition extends MetadataDefinition {
   sourceField: string;
-  format: "uuid" | "text" | "enum" | "boolean" | "date" | "money" | "currency" | "string-list";
+  format: "uuid" | "text" | "enum" | "boolean" | "date" | "money" | "currency" | "integer" | "string-list";
   classification: MetadataClassification;
   labelKey: string;
   searchable: boolean;

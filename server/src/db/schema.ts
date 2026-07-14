@@ -195,7 +195,7 @@ export const searchDocuments = pgTable("search_documents", {
 }, (t) => [
   uniqueIndex("search_documents_tenant_entity").on(t.tenantId, t.entityType, t.entityId),
   index("search_documents_tenant_title").on(t.tenantId, t.entityType, t.title),
-  check("search_documents_entity_type_check", sql`${t.entityType} IN ('customer', 'invoice', 'product')`),
+  check("search_documents_entity_type_check", sql`${t.entityType} IN ('customer', 'supplier', 'invoice', 'product')`),
   check("search_documents_permission_check", sql`${t.permission} IN ('crm.read', 'accounting.read', 'inventory.read')`),
 ]);
 
@@ -403,6 +403,10 @@ export const contacts = pgTable("contacts", {
   tags: text("tags").array().default(sql`'{}'`).notNull(),
   isCustomer: boolean("is_customer").default(true).notNull(),
   isVendor: boolean("is_vendor").default(false).notNull(),
+  supplierCode: text("supplier_code"),
+  supplierCurrency: currency("supplier_currency"),
+  supplierPaymentTermsDays: integer("supplier_payment_terms_days"),
+  supplierLeadTimeDays: integer("supplier_lead_time_days"),
   ownerUserId: uuid("owner_user_id"),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   deletedBy: uuid("deleted_by").references(() => users.id),
@@ -411,6 +415,12 @@ export const contacts = pgTable("contacts", {
   index("contacts_tenant_name").on(t.tenantId, t.name),
   index("contacts_tenant_active_name").on(t.tenantId, t.deletedAt, t.name),
   index("contacts_deleted_by").on(t.deletedBy),
+  uniqueIndex("contacts_tenant_active_supplier_code").on(t.tenantId, sql`lower(${t.supplierCode})`)
+    .where(sql`${t.supplierCode} IS NOT NULL AND ${t.deletedAt} IS NULL`),
+  check("contacts_supplier_payment_terms_days_check",
+    sql`${t.supplierPaymentTermsDays} IS NULL OR ${t.supplierPaymentTermsDays} BETWEEN 0 AND 3650`),
+  check("contacts_supplier_lead_time_days_check",
+    sql`${t.supplierLeadTimeDays} IS NULL OR ${t.supplierLeadTimeDays} BETWEEN 0 AND 3650`),
 ]);
 
 // Consequential record removal is owner-controlled. Requests preserve exact
