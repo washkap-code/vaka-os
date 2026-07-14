@@ -625,6 +625,18 @@ export const appEnglish = {
     limitations: "Control-centre limitations",
     loadingOperations: "Loading the protected operational snapshot…",
   },
+  stepUp: {
+    title: "Confirm it's you",
+    description: "This sensitive action needs a fresh check that it's really you. Enter your password to continue.",
+    password: "Current password",
+    codeLabel: "Authenticator or recovery code",
+    codeHelp: "Enter the 6-digit code from your authenticator app, or one of your saved recovery codes.",
+    confirm: "Confirm identity",
+    cancel: "Cancel",
+    cancelled: "Reauthentication was cancelled. The action was not performed.",
+    failed: "Reauthentication failed. Check your password and try again.",
+    codeRequired: "Enter your authenticator or recovery code to continue.",
+  },
   auth: {
     referralCode: "Referral code (optional)",
     referralPlaceholder: "VAKA-XXXXX",

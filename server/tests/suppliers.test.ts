@@ -106,7 +106,12 @@ describe("P4-001 canonical supplier records", () => {
     expect(imported.body.results[0].entityType).toBe("supplier");
 
     const supplierId = imported.body.results[0].id as string;
+    // P9-011: owner-immediate deletion requires a fresh step-up proof.
+    const stepUpRes = await request(app).post("/api/v1/auth/step-up")
+      .set(tenant.auth).send({ currentPassword: "Finance-Test-123!" });
+    expect(stepUpRes.status).toBe(200);
     expect((await request(app).post("/api/v1/contacts/deletions").set(tenant.auth)
+      .set({ "X-Vaka-Step-Up": stepUpRes.body.proof as string })
       .send({ ids: [supplierId], reason: "Owner-approved duplicate cleanup" })).status).toBe(200);
     expect((await request(app).get("/api/v1/search").query({ q: "Imported Vendor" }).set(tenant.auth)).body.results).toEqual([]);
   });

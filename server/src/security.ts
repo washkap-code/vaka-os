@@ -56,7 +56,7 @@ export function corsMiddleware(env: RuntimeEnvironment = process.env) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
       res.setHeader("Access-Control-Allow-Headers",
-        "Content-Type, Authorization, Idempotency-Key, X-Vaka-Client, X-Vaka-App-Version");
+        "Content-Type, Authorization, Idempotency-Key, X-Vaka-Client, X-Vaka-App-Version, X-Vaka-Step-Up");
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
       res.setHeader("Access-Control-Max-Age", "600");
     }

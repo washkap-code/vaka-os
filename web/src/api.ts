@@ -48,7 +48,14 @@ export async function api(path: string, opts: {
     if (renewedToken) res = await send(renewedToken);
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || data.details?.join("; ") || `Request failed (${res.status})`);
+  if (!res.ok) {
+    const error = new Error(data.message || data.details?.join("; ") || `Request failed (${res.status})`) as Error & {
+      code?: string; status?: number;
+    };
+    error.code = typeof data.error === "string" ? data.error : undefined;
+    error.status = res.status;
+    throw error;
+  }
   return data;
 }
 

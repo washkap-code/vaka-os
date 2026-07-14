@@ -9,6 +9,14 @@ import { createContact, signupFinanceTenant } from "./finance/helpers.js";
 
 const app = createApp();
 
+// P9-011: owner-immediate deletions and APPROVE decisions require a fresh
+// step-up proof. Owners in these tests use the shared finance-helper password.
+async function stepUpProof(ownerAuth: { Authorization: string }, currentPassword = "Finance-Test-123!") {
+  const res = await request(app).post("/api/v1/auth/step-up").set(ownerAuth).send({ currentPassword });
+  expect(res.status).toBe(200);
+  return { "X-Vaka-Step-Up": res.body.proof as string };
+}
+
 async function userAuth(tenantId: string, permissions: string[], label: string) {
   const [tenant] = await db.select({ subdomain: schema.tenants.subdomain })
     .from(schema.tenants).where(eq(schema.tenants.id, tenantId));
@@ -77,9 +85,11 @@ describe("P3-004 customer record management", () => {
     expect((await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(staff.auth)
       .send({ decision: "APPROVE", reason: "Not my authority" })).status).toBe(403);
     expect((await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(tenantB.auth)
+      .set(await stepUpProof(tenantB.auth))
       .send({ decision: "APPROVE", reason: "Cross-tenant attempt" })).status).toBe(404);
 
     const approved = await request(app).post(`/api/v1/contacts/deletion-requests/${requestId}/decision`).set(tenantA.auth)
+      .set(await stepUpProof(tenantA.auth))
       .send({ decision: "APPROVE", reason: "Confirmed duplicate after review" });
     expect(approved.status).toBe(200);
     expect(approved.body.status).toBe("APPROVED");
@@ -110,9 +120,10 @@ describe("P3-004 customer record management", () => {
       ids: [first.id, second.id], operation: { action: "ADD_TAG", tag: "priority" },
     });
     expect(tagged.body.updated).toBe(2);
-    const removed = await request(app).post("/api/v1/contacts/deletions").set(tenant.auth).send({
-      ids: [first.id, second.id], reason: "Owner-approved test cleanup",
-    });
+    const removed = await request(app).post("/api/v1/contacts/deletions").set(tenant.auth)
+      .set(await stepUpProof(tenant.auth)).send({
+        ids: [first.id, second.id], reason: "Owner-approved test cleanup",
+      });
     expect(removed.body).toEqual({ outcome: "REMOVED", count: 2 });
     expect((await request(app).get("/api/v1/contacts").set(tenant.auth)).body).toEqual([]);
   });

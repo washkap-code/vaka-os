@@ -17,6 +17,7 @@ import {
 } from "./invoices/invoice-workspace-model";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
+import { useStepUp } from "./shell/step-up-dialog";
 import { Dropdown } from "./design-system/primitives";
 import { isPositiveMoney, isPositiveStockQuantity, suggestProductSku } from "./inventory/product-entry-model";
 import { isLightBrandColour, warehouseSettingsAccess } from "./settings/warehouse-settings-model";
@@ -789,16 +790,17 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"status" | "error">("status");
   const [busy, setBusy] = useState(false);
+  const stepUp = useStepUp();
   const create = async () => {
     setBusy(true); setMessage("");
     try {
-      const result = await api("/platform/staff", { method: "POST", body: {
+      const result = await stepUp.run((headers) => api("/platform/staff", { method: "POST", body: {
         ...editing,
         managerUserId: editing.managerUserId || null,
         startDate: editing.startDate || null,
         endDate: editing.endDate || null,
         initialPassword: editing.initialPassword || undefined,
-      } });
+      }, headers }));
       setMessage(copy.staffCreated.replace("{password}", result.temporaryPassword));
       setMessageTone("status");
       setEditing(null); await onReload();
@@ -808,12 +810,12 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
   const save = async () => {
     setBusy(true); setMessage("");
     try {
-      await api(`/platform/staff/${editing.id}`, { method: "PATCH", body: {
+      await stepUp.run((headers) => api(`/platform/staff/${editing.id}`, { method: "PATCH", body: {
         ...editing,
         managerUserId: editing.managerUserId || null,
         startDate: editing.startDate || null,
         endDate: editing.endDate || null,
-      } });
+      }, headers }));
       setEditing(null); await onReload();
     } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
     setBusy(false);
@@ -821,7 +823,8 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
   const issueTemporaryPassword = async (staffId: string) => {
     if (!window.confirm(copy.temporaryPasswordConfirm)) return;
     try {
-      const result = await api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {} });
+      const result = await stepUp.run((headers) =>
+        api(`/platform/staff/${staffId}/temporary-password`, { method: "POST", body: {}, headers }));
       setMessage(copy.temporaryPasswordIssued.replace("{password}", result.temporaryPassword));
       setMessageTone("status");
       await onReload();
@@ -866,6 +869,7 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
       {!editing.id && <PasswordField label={copy.initialPassword} value={editing.initialPassword ?? ""} onChange={(value) => setEditing({ ...editing, initialPassword: value })} autoComplete="new-password" />}
       <div className="row end modal-actions"><button className="btn ghost" onClick={closeEditor}>{copy.cancel}</button><button className="btn accent" disabled={busy} onClick={editing.id ? save : create}>{editing.id ? copy.saveStaff : copy.createStaff}</button></div>
     </LegacyModal>}
+    {stepUp.dialog}
   </>;
 }
 
@@ -2580,12 +2584,13 @@ function UsersActivity() {
     setNewUser({ fullName: "", email: "", roleId: defaultRole?.id ?? "", initialPassword: "" });
     setShowAdd(true);
   };
+  const stepUp = useStepUp();
   const createUser = async () => {
     setBusy(true); setMessage("");
     try {
-      const result = await api("/security/users", { method: "POST", body: {
+      const result = await stepUp.run((headers) => api("/security/users", { method: "POST", body: {
         ...newUser, initialPassword: newUser.initialPassword || undefined,
-      } });
+      }, headers }));
       setCreatedPassword(result.temporaryPassword);
       setNewUser({ fullName: "", email: "", roleId: "", initialPassword: "" });
       reload();
@@ -2595,7 +2600,11 @@ function UsersActivity() {
   const updateUserStatus = async (user: any) => {
     if (!window.confirm(copy.statusUpdatePrompt)) return;
     setBusy(true);
-    try { await api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST" }); reload(); }
+    try {
+      await stepUp.run((headers) =>
+        api(`/security/users/${user.id}/${user.status === "disabled" ? "active" : "disabled"}`, { method: "POST", headers }));
+      reload();
+    }
     catch (error: any) { setMessage(error.message || copy.statusUpdateFailed); }
     finally { setBusy(false); }
   };
@@ -2656,6 +2665,7 @@ function UsersActivity() {
       {createdPassword && <div className="banner warn security-sensitive-message" role="status">{copy.userCreated.replace("{password}", createdPassword)}</div>}
       <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShowAdd(false)}>{copy.cancel}</button><button className="btn accent" disabled={busy || !newUser.roleId} onClick={createUser}>{copy.createUser}</button></div>
     </LegacyModal>}
+    {stepUp.dialog}
   </>);
 }
 
@@ -2792,12 +2802,16 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
     catch (error: any) { alert(error.message); }
     finally { setBusy(false); }
   };
+  const stepUp = useStepUp();
   const remove = async (ids: string[]) => {
     const reason = window.prompt(isTenantOwner ? copy.deleteReasonOwner : copy.deleteReasonRequest);
     if (!reason) return;
     setBusy(true);
     try {
-      const result = await api("/contacts/deletions", { method: "POST", body: { ids, reason } });
+      // Owner deletions are immediate and step-up protected; staff requests
+      // pass straight through without reauthentication.
+      const result = await stepUp.run((headers) =>
+        api("/contacts/deletions", { method: "POST", body: { ids, reason }, headers }));
       alert(result.outcome === "REMOVED" ? copy.deleted : copy.requestSubmitted);
       setSelected(null); refresh();
     } catch (error: any) { alert(error.message); }
@@ -2807,7 +2821,11 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
     const reason = window.prompt(decision === "APPROVE" ? copy.approvalReason : copy.rejectionReason);
     if (!reason) return;
     setBusy(true);
-    try { await api(`/contacts/deletion-requests/${requestId}/decision`, { method: "POST", body: { decision, reason } }); refresh(); }
+    try {
+      await stepUp.run((headers) =>
+        api(`/contacts/deletion-requests/${requestId}/decision`, { method: "POST", body: { decision, reason }, headers }));
+      refresh();
+    }
     catch (error: any) { alert(error.message); }
     finally { setBusy(false); }
   };
@@ -2848,6 +2866,7 @@ function Contacts({ readonly, canWrite, isTenantOwner, searchTarget, onSearchTar
       <div className="row end modal-actions"><button className="btn ghost" onClick={() => setShow(false)}>{copy.cancel}</button><button className="btn" disabled={busy || !String(f.name ?? "").trim()} onClick={save}>{busy ? copy.saving : copy.saveContact}</button></div>
     </LegacyModal>}
     {selected && <CustomerTimeline contact={selected} canWrite={!readonly && canWrite} onDelete={() => remove([selected.id])} onSaved={(contact) => { setSelected(contact); reload(); }} onClose={() => setSelected(null)} />}
+    {stepUp.dialog}
   </>);
 }
 

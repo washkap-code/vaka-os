@@ -251,6 +251,28 @@ export function createMfaLoginChallenge(userId: string): string {
   return jwt.sign({ sub: userId, purpose: "mfa-login" }, SECRET, { expiresIn: "5m" });
 }
 
+/**
+ * P9-011: verify a TOTP or one-time recovery code for the user's VERIFIED
+ * factor inside the caller's transaction. Locks the factor row so a recovery
+ * code is consumed exactly once (the existing atomic path). Returns the
+ * verified method, or null when the factor is missing or the code is wrong.
+ */
+export async function verifyMfaCodeWithinTransaction(
+  tx: DB, userId: string, code: string,
+): Promise<"totp" | "recovery" | null> {
+  const result = await tx.execute(sql`
+    SELECT id FROM user_mfa_factors
+    WHERE user_id = ${userId} AND status = 'VERIFIED'
+    FOR UPDATE
+  `);
+  const raw = (result as unknown as { rows: Array<Record<string, unknown>> }).rows[0];
+  if (!raw) return null;
+  const [factor] = await tx.select().from(schema.userMfaFactors)
+    .where(eq(schema.userMfaFactors.id, String(raw.id)));
+  if (!factor) return null;
+  return verifyFactorCode(tx, factor, code);
+}
+
 async function verifyFactorCode(
   tx: DB,
   factor: typeof schema.userMfaFactors.$inferSelect,
