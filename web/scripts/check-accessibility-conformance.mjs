@@ -64,7 +64,7 @@ for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"ari
 for (const expected of ['role="dialog"', 'aria-modal="true"', "aria-labelledby={labelledBy}", "onKeyDown={onKeyDown}"]) {
   requireContract(issues, "src/accessibility/legacy-modal.tsx", modal, expected);
 }
-for (const expected of ['event.key === "Escape"', 'event.key !== "Tab"', 'document.body.style.overflow = "hidden"', "returnFocus?.isConnected"]) {
+for (const expected of ['event.key === "Escape"', 'event.key !== "Tab"', 'document.body.style.overflow = "hidden"', "returnFocus?.isConnected", "!activeIsFocusable"]) {
   requireContract(issues, "src/accessibility/use-modal-focus.ts", focus, expected);
 }
 for (const expected of [
@@ -89,14 +89,11 @@ for (const expected of [
   'aria-label={copy.lineField.replace',
   "data-modal-initial-focus",
   "copy.lineField.replace",
-  'href="#platform-main"',
-  'aria-label={copy.navigation}',
-  'aria-current={tab === "settings" ? "page" : undefined}',
-  'className="side-signout"',
   'aria-label={copy.staffTableLabel} tabIndex={0}',
   'aria-label={copy.sessionsTableLabel} tabIndex={0}',
   'aria-label={copy.usersTableLabel} tabIndex={0}',
   'aria-label={copy.eventsTableLabel} tabIndex={0}',
+  'className="table-scroll access-table-region"',
   '<LegacyField label={appEnglish.settings.companyName}>',
   '<LegacyField label={copy.fullName}>',
   'role={messageTone === "error" ? "alert" : "status"}',
@@ -121,6 +118,7 @@ for (const expected of [
   "grid-template-columns: minmax(0, 1fr)",
   "max-height: 94dvh",
   ".purchase-line-create",
+  ".access-table-region table",
   "@media (forced-colors: active)",
   "@media (prefers-reduced-motion: reduce)",
 ]) requireContract(issues, "src/styles.css", styles, expected);

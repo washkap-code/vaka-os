@@ -674,7 +674,7 @@ function PlatformWorkforce({ me, staff, roles, onReload }: {
       {canManage && <button className="btn accent" onClick={() => openEditor({ ...emptyPlatformStaff, platformRoleKey: roles[0]?.key ?? "SUPPORT_ANALYST" })}>{copy.addStaff}</button>}
     </div>
     {message && <div className="banner warn security-sensitive-message" role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
-    <div className="panel"><div className="table-scroll" role="region" aria-label={copy.staffTableLabel} tabIndex={0}><table><thead><tr>
+    <div className="panel"><div className="table-scroll access-table-region" role="region" aria-label={copy.staffTableLabel} tabIndex={0}><table><thead><tr>
       <th>{copy.users}</th><th>{copy.role}</th><th>{copy.function}</th><th>{copy.jobTitle}</th><th>{copy.location}</th><th>{copy.staffStatus}</th>{canManage && <th>{copy.review}</th>}
     </tr></thead><tbody>{staff.map((member) => <tr key={member.id}>
       <td><strong>{member.fullName}</strong><small>{member.email}</small></td><td>{member.roleName}</td>
@@ -799,7 +799,7 @@ function PlatformSecuritySettings({ me, onSaved, onLogout }: {
           <LegacyField label={appEnglish.auth.authenticationCode}><input inputMode="numeric" autoComplete="one-time-code" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></LegacyField></div>
         <div className="row"><button className="btn ghost" onClick={replaceCodes}>{copy.replaceRecoveryCodes}</button><button className="btn danger" onClick={disable}>{copy.disableMfa}</button></div></>}
     </div>
-    <div className="panel"><h2>{copy.activeSessionsHeading}</h2><div className="table-scroll" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.client}</th><th>{copy.device}</th><th>{copy.lastSeen}</th><th>{copy.created}</th><th></th></tr></thead>
+    <div className="panel"><h2>{copy.activeSessionsHeading}</h2><div className="table-scroll access-table-region" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.client}</th><th>{copy.device}</th><th>{copy.lastSeen}</th><th>{copy.created}</th><th></th></tr></thead>
       <tbody>{sessions.map((session) => <tr key={session.id}><td>{session.clientType}</td><td>{session.deviceDescription ?? "—"}</td><td>{new Date(session.lastSeenAt).toLocaleString()}</td><td>{new Date(session.createdAt).toLocaleString()}</td><td>{!session.revokedAt && <button className="btn ghost sm" onClick={() => void revoke(session.id)}>{copy.revokeSession}</button>}</td></tr>)}
       {!sessions.length && <tr><td colSpan={5}>{copy.noSessions}</td></tr>}</tbody></table></div></div>
   </>;
@@ -2036,7 +2036,7 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <div className="panel-heading"><h2>{copy.usersTitle}</h2><button className="btn sm" onClick={openAdd}>{copy.addUser}</button></div>
-      <div className="table-scroll" role="region" aria-label={copy.usersTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.role}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th><th /></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.usersTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.email}</th><th>{copy.role}</th><th>{copy.status}</th><th>{copy.sessions}</th><th>{copy.lastLogin}</th><th>{copy.lastSeen}</th><th /></tr></thead>
         <tbody>{users.map((user: any) => <tr key={user.id}>
           <td><b>{user.full_name}</b></td><td>{user.email}</td><td>{user.role_name ?? "—"}</td><td>{user.status}</td><td>{user.valid_sessions ?? 0}</td>
           <td>{formatDate(user.last_login_at)}</td><td>{formatDate(user.last_seen_at)}</td>
@@ -2046,7 +2046,7 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <h2>{copy.sessionsTitle}</h2>
-      <div className="table-scroll" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.client}</th><th>{copy.device}</th><th>{copy.created}</th><th>{copy.lastSeen}</th><th>{copy.status}</th><th /></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.sessionsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.name}</th><th>{copy.client}</th><th>{copy.device}</th><th>{copy.created}</th><th>{copy.lastSeen}</th><th>{copy.status}</th><th /></tr></thead>
         <tbody>{sessions.map((session: any) => <tr key={session.id}>
           <td><b>{session.full_name}</b><div className="sub">{session.email}</div></td><td>{session.client_type}{session.app_version ? ` · ${session.app_version}` : ""}</td>
           <td>{session.device_description ?? "—"}</td><td>{formatDate(session.created_at)}</td><td>{formatDate(session.last_seen_at)}</td>
@@ -2056,7 +2056,7 @@ function UsersActivity() {
     </div>
     <div className="panel">
       <h2>{copy.eventsTitle}</h2>
-      <div className="table-scroll" role="region" aria-label={copy.eventsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.time}</th><th>{copy.actor}</th><th>{copy.action}</th><th>{copy.evidence}</th></tr></thead>
+      <div className="table-scroll access-table-region" role="region" aria-label={copy.eventsTableLabel} tabIndex={0}><table><thead><tr><th>{copy.time}</th><th>{copy.actor}</th><th>{copy.action}</th><th>{copy.evidence}</th></tr></thead>
         <tbody>{events.map((event: any) => <tr key={event.id}><td>{formatDate(event.createdAt)}</td><td>{users.find((user: any) => user.id === event.userId)?.full_name ?? "—"}</td><td>{event.action}</td><td className="sub">{event.metadata ? JSON.stringify(event.metadata).slice(0, 280) : "—"}</td></tr>)}{!events.length && <tr><td colSpan={4}>{copy.noEvents}</td></tr>}</tbody>
       </table></div>
     </div>
