@@ -2,6 +2,8 @@ import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
 import { parsePdfImage } from "./invoice-documents.js";
 import type { FinanceReportBranding } from "./report-branding.js";
 
+export const FINANCE_REPORT_PDF_VERSION = "finance-report-pdf-v1" as const;
+
 export type FinanceReportPdfLine = { text: string; emphasis?: "section" | "total" | "warning" | "table" };
 
 function pdfText(value: string): string {

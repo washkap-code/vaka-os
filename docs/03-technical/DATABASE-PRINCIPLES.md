@@ -131,6 +131,10 @@ Events do not replace transactions for immediate invariants.
 - Collect only required data.
 - Define retention per record type and market.
 - Separate operational deletion from immutable legal/audit retention.
+- Treat generated finance-report snapshots as append-only integrity evidence;
+  preserve tenant, source/template versions, exact checksum and creation actor.
+  Retention, legal hold and privacy erasure require an explicit reviewed
+  lifecycle rather than an ad-hoc delete path.
 - Support lawful export/correction/deletion processes.
 - Mask data in non-production environments.
 - Restrict production access and record privileged access.

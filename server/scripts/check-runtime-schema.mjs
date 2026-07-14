@@ -49,6 +49,11 @@ const required = [
   ["contacts", "deleted_by"],
   ["record_deletion_requests", "id"],
   ["record_deletion_requests", "status"],
+  ["finance_report_snapshots", "tenant_id"],
+  ["finance_report_snapshots", "report_document"],
+  ["finance_report_snapshots", "branding_document"],
+  ["finance_report_snapshots", "checksum"],
+  ["finance_report_snapshots", "idempotency_key"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

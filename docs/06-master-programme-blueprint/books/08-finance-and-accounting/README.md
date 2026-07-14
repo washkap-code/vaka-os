@@ -92,6 +92,16 @@ Approved inventory valuation (currently weighted-average foundations) derives CO
 
 Budgets/forecasts are versioned planning data and never posted history. Trial balance, P&L, balance sheet, cash flow, ledgers, AR/AP ageing, tax and management reports reconcile to source balances with as-at/currency/dimension disclosure. Close includes task ownership, reconciliations, exceptions, period lock and sign-off. Multi-entity consolidation adds elimination, translation and ownership rules only after legal-entity isolation exists.
 
+P7-002 adds an immutable distribution prerequisite for the existing VAT and
+management-accounts technical previews: canonical report and tenant-branding
+inputs, renderer versions, period, creator, byte size and SHA-256 are captured
+as tenant-scoped append-only evidence. Retrieval rerenders and verifies the
+exact artifact. This is document evidence only: it does not post a journal,
+change a report calculation, create professional approval, make a filing, or
+authorise external delivery. Public links and email/WhatsApp sending require
+separate recipient-consent, expiry/revocation, provider and delivery-audit
+controls.
+
 P2-006 implements a bounded read-only technical preview over the posted tenant
 ledger: trial balance, P&L, balance sheet, invoice-source AR and supported PO-
 receipt-source AP, with exact control tie-outs and audited CSV/PDF exports. It

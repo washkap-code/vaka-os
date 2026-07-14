@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --fileParallelism=false",
     "test:db:guard": "node --import tsx tests/finance/test-db-guard.ts",
-    "test:db:prepare": "npm run test:db:guard && drizzle-kit push --force && node --import tsx scripts/apply-finance-integrity-controls.ts && node --import tsx src/seed.ts",
+    "test:db:prepare": "npm run test:db:guard && drizzle-kit push --force && node --import tsx scripts/apply-finance-integrity-controls.ts && node --import tsx scripts/apply-finance-report-snapshot-controls.ts && node --import tsx src/seed.ts",
     "test:finance": "npm run test:db:guard && vitest run --fileParallelism=false tests/finance/*.test.ts",
     "test:ai-evaluation": "vitest run tests/ai-evaluation.test.ts tests/ai-evaluation-runner.test.ts tests/business-summary.contract.test.ts",
     "test:integration": "vitest run --fileParallelism=false tests/critical.test.ts tests/business-summary.test.ts",

@@ -60,6 +60,9 @@ import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js"
 import { getStatutoryReportPack, statutoryReportPeriodSchema } from "./statutory-report-pack.js";
 import { renderStatutoryReportCsv, renderStatutoryReportPdf } from "./statutory-report-exports.js";
 import { getFinanceReportBranding } from "./report-branding.js";
+import {
+  createFinanceReportSnapshot, getFinanceReportSnapshot, listFinanceReportSnapshots,
+} from "./finance-report-snapshots.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
 import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
@@ -67,7 +70,8 @@ import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
 import {
-  DOCUMENT_KINDS, captureDocumentId, documentDataUrl, invoicePdfDocumentId, rawDocumentId,
+  DOCUMENT_KINDS, captureDocumentId, documentDataUrl, financeReportPdfDocumentId,
+  invoicePdfDocumentId, rawDocumentId,
 } from "./documents.js";
 import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
@@ -101,6 +105,10 @@ const prepareReconciliationSchema = reconciliationWorksheetQuerySchema.extend({
   notes: z.string().trim().max(1000).optional(),
 });
 const financeDeliveryConfirmationSchema = z.object({ confirm: z.literal(true) });
+const financeReportSnapshotCreateSchema = z.discriminatedUnion("reportType", [
+  z.object({ reportType: z.literal("VAT"), period: vatReportPeriodSchema, confirm: z.literal(true) }),
+  z.object({ reportType: z.literal("STATUTORY"), period: statutoryReportPeriodSchema, confirm: z.literal(true) }),
+]);
 const emailPreferenceSchema = z.object({
   status: z.enum(["CONSENTED", "OPTED_OUT"]),
   locale: z.enum(FINANCE_DELIVERY_LOCALES),
@@ -1533,6 +1541,47 @@ api.get("/journal", requirePermission("accounting.read"), wrap(async (req) => {
 // ---------------------------------------------------------------------------
 // Reports & dashboard (cross-module)
 // ---------------------------------------------------------------------------
+api.post("/reports/snapshots", requirePermission("reports.read"), wrap(async (req, res) => {
+  const body = financeReportSnapshotCreateSchema.parse(req.body);
+  const result = await createFinanceReportSnapshot({
+    ...body,
+    tenantId: tenantId(req),
+    actorUserId: req.auth!.userId,
+    idempotencyKey: financialIdempotencyKey(req),
+  });
+  res.status(result.deduplicated ? 200 : 201);
+  return result;
+}));
+api.get("/reports/snapshots", requirePermission("reports.read"), wrap(async (req) => {
+  const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50) }).parse(req.query);
+  return listFinanceReportSnapshots(tenantId(req), limit);
+}));
+api.get("/reports/snapshots/:id", requirePermission("reports.read"), wrap(async (req) =>
+  getFinanceReportSnapshot(tenantId(req), z.string().uuid().parse(routeParam(req, "id")))));
+api.get("/reports/snapshots/:id/pdf", requirePermission("reports.read"), async (req, res, next) => {
+  try {
+    const request = req as AuthedRequest;
+    const snapshotId = z.string().uuid().parse(routeParam(request, "id"));
+    const document = await platformKernel().container.get(DOCUMENT_SERVICE).get(
+      financeReportPdfDocumentId(snapshotId),
+      { tenantId: tenantId(request), actorUserId: request.auth!.userId },
+    );
+    if (!document) throw notFound("Finance report snapshot not found");
+    await audit(db, tenantId(request), request.auth!.userId,
+      "report.snapshot_opened", "finance_report_snapshot", snapshotId, {
+        reportType: document.descriptor.classification,
+        pdfTemplateVersion: document.descriptor.version,
+        byteSize: document.descriptor.byteSize,
+        checksum: document.descriptor.checksum,
+      });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${document.descriptor.fileName}"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Content-Length", String(document.bytes.byteLength));
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.end(Buffer.from(document.bytes));
+  } catch (error) { next(error); }
+});
 api.get("/reports/dashboard", requirePermission("reports.read"), wrap(async (req) => dashboard(tenantId(req))));
 api.get("/reports/trial-balance", requirePermission("reports.read"), wrap(async (req) =>
   trialBalance(tenantId(req), req.query.asAt ? new Date(String(req.query.asAt)) : new Date())));

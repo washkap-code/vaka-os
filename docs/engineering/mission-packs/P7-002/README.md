@@ -1,6 +1,6 @@
 # P7-002 — Immutable finance report snapshots
 
-**Status:** Approved for implementation
+**Status:** Implemented and locally verified; remote review and release pending
 **Programme:** 7 — Business communications and document delivery
 **Priority:** P1 trust boundary for governed report delivery
 **Depends on:** P1-007 document service; P2-003 VAT technical report; P2-006
@@ -155,3 +155,22 @@ production evidence. Revert routes, snapshot coordinator, document-adapter
 extension, schema mapping, tests and documentation. The additive append-only
 table may remain dormant; do not drop production evidence without a separate
 retention/legal review. No accounting or financial-data rollback is required.
+
+## Implementation evidence — 2026-07-14
+
+- Additive migration `0027_finance_report_snapshots.sql` defines tenant-scoped
+  source/version/checksum evidence, tenant idempotency, database append-only
+  enforcement and direct-role revocation.
+- VAT and statutory snapshot creation, replay, list/detail and authenticated PDF
+  retrieval are implemented through canonical report services and the governed
+  document adapter. Existing live report routes remain unchanged.
+- Focused report/document regression: 6 files and 15 tests passed. Full server
+  regression: 72 files passed, 1 skipped; 247 tests passed, 1 skipped.
+- Guarded test schema preparation, finance controls, snapshot trigger, reference
+  seed and explicit runtime-schema deployment gate passed.
+- Server/web typechecks, production web build, design-token/accessibility gates,
+  all focused browser-script suites and `git diff --check` passed.
+- Production dependency audits reported 0 vulnerabilities for server and web.
+- GitHub review, remote CI, migration deployment and authenticated production
+  verification remain pending because the local GitHub CLI credential is
+  expired. No merge, deployment or live activation is claimed.

@@ -12,6 +12,15 @@
 
 ### Added
 
+- **Immutable finance report snapshots (P7-002):** Added explicitly confirmed,
+  idempotent and tenant-scoped evidence snapshots for VAT and management-
+  accounts technical-preview PDFs. Canonical report/branding inputs, renderer
+  versions, creator, period, byte size and SHA-256 are append-only; authenticated
+  retrieval rerenders through the document service and fails closed on any
+  integrity mismatch. Existing live reports and finance calculations are
+  unchanged. Public links, email/WhatsApp sending, recipient consent, provider
+  delivery and retention/erasure policy remain separately gated.
+
 - **Operational record accessibility and reflow (P6-007):** Extended the
   governed P6-005 labelled-field and modal-focus patterns to deal, product,
   reorder-rule and purchase-order creation. Added line-qualified accessible
