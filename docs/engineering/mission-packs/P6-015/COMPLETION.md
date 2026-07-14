@@ -1,7 +1,7 @@
 # P6-015 Completion Report
 
 **Date:** 2026-07-14
-**Status:** Implementation complete; all local release gates passed; remote quality and production release pending
+**Status:** Released (PR #77); local, remote, production and live-bundle gates passed
 
 ## Delivered
 
@@ -70,7 +70,13 @@ shipped in the application bundle.
 
 ## Release evidence
 
-P6-015 remains unreleased until the GitHub quality gate, Vercel preview,
-approved merge, post-merge main gate, Production deployment and exact live-bundle
-verification pass. Rollback requires reverting only the helper, test, script,
-CI and documentation commits; no database rollback is required.
+P6-015 was squash-merged through [PR #77](https://github.com/washkap-code/vaka-os/pull/77)
+at commit `2411581166056ff4eb50d58b15e6e32c7c28796b` after the GitHub quality gate,
+Vercel preview and preview-comment checks passed. The post-merge `main` quality
+gate [run 29315248738](https://github.com/washkap-code/vaka-os/actions/runs/29315248738)
+passed in 2m59s. GitHub deployment `5437031106` recorded the exact commit in
+the Production environment with state `success`. The public site served the
+matching `/assets/index-DbTt0hsz.js` and `/assets/index-DZGhws9Y.css` bundle.
+
+Rollback requires reverting only the helper, test, script, CI and documentation
+commits; no database rollback is required.
