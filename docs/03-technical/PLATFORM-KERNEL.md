@@ -146,10 +146,14 @@ Party/Organisation/LegalEntity model and any AI context builder remain gated.
 ## Document adoption seam (P1-007)
 
 The composition root exposes `DOCUMENT_SERVICE` over the existing immutable
-invoice issue snapshots and encrypted capture payloads. Authenticated invoice
-downloads, opaque public invoice share links, and capture create/detail paths
+invoice issue snapshots, immutable finance-report snapshots and encrypted
+capture payloads. Authenticated invoice downloads, opaque public invoice share
+links, finance-report snapshot retrieval, and capture create/detail paths
 consume this service without changing their HTTP contracts. Kind-qualified
 identifiers, explicit tenant/actor scope and provider-level tenant filters fail
-closed across document domains. Capture list/review remains its existing
-workflow; external object storage, malware scanning, OCR, retention automation
-and general document management remain gated.
+closed across document domains. P7-002 rerenders finance documents only from
+captured report/branding inputs and verifies stored byte size and SHA-256 before
+release. It does not create a public report link or provider delivery. Capture
+list/review remains its existing workflow; external object storage, malware
+scanning, OCR, retention automation and general document management remain
+gated.

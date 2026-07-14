@@ -70,6 +70,11 @@ const required = [
   ["subscription_payment_attempts", "merchant_reference"],
   ["subscription_payment_attempts", "encrypted_poll_url"],
   ["subscription_payment_attempts", "status"],
+  ["finance_report_snapshots", "tenant_id"],
+  ["finance_report_snapshots", "report_document"],
+  ["finance_report_snapshots", "branding_document"],
+  ["finance_report_snapshots", "checksum"],
+  ["finance_report_snapshots", "idempotency_key"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

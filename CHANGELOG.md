@@ -51,6 +51,15 @@
 
 ### Added
 
+- **Immutable finance report snapshots (P7-002):** Added explicitly confirmed,
+  idempotent and tenant-scoped evidence snapshots for VAT and management-
+  accounts technical-preview PDFs. Canonical report/branding inputs, renderer
+  versions, creator, period, byte size and SHA-256 are append-only; authenticated
+  retrieval rerenders through the document service and fails closed on any
+  integrity mismatch. Existing live reports and finance calculations are
+  unchanged. Public links, email/WhatsApp sending, recipient consent, provider
+  delivery and retention/erasure policy remain separately gated.
+
 - **Supplier performance and spend analytics (P4-004):** Added a read-only,
   tenant-scoped Procurement report over canonical suppliers, purchase orders,
   goods receipts, strict-match supplier bills and append-only ledger evidence.
