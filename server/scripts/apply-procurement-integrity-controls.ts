@@ -10,6 +10,7 @@ assertSafeFinanceTestDatabase();
 const migrationPaths = [
   "drizzle/0026_canonical_supplier_fields.sql",
   "drizzle/0027_controlled_procurement_lifecycle.sql",
+  "drizzle/0028_supplier_bill_three_way_match.sql",
 ];
 const client = new Client({ connectionString: databaseUrl });
 
