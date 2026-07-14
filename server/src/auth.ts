@@ -8,9 +8,10 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { db, schema, unauthorized, forbidden, badRequest, conflict, notFound, DEFAULT_ROLES, audit, Permission } from "./lib.js";
+import { recordAuditInTransaction } from "./platform/audit-facade.js";
 import { seedChartOfAccounts } from "./accounting.js";
 import { accessLevelFor } from "./billing.js";
 import { jwtSecret } from "./config.js";
@@ -111,6 +112,52 @@ export async function signupTenant(opts: {
 type LoginContext = { clientType?: string; appVersion?: string; userAgent?: string; ip?: string };
 
 const hashSessionValue = (value: string) => createHash("sha256").update(`${JWT_SECRET}:${value}`).digest("hex");
+// Domain-separated from access-token hashing so a value can never validate in
+// both roles. Raw refresh credentials are never persisted or logged.
+const hashRefreshValue = (value: string) => createHash("sha256").update(`${JWT_SECRET}:refresh:${value}`).digest("hex");
+const mintRefreshToken = () => randomBytes(32).toString("base64url");
+const REFRESH_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+// ---------------------------------------------------------------------------
+// Refresh cookie transport. HttpOnly + SameSite=Strict + path-restricted so
+// the credential is only ever presented to the renewal endpoint and is never
+// readable by application JavaScript. `Secure` is enforced in production.
+// ---------------------------------------------------------------------------
+export const REFRESH_COOKIE_NAME = "vaka_refresh";
+export const REFRESH_COOKIE_PATH = "/api/v1/auth/refresh";
+const REFRESH_COOKIE_MAX_AGE_MS = 30 * 86_400_000; // matches the idle window
+
+const refreshCookieOptions = () => ({
+  httpOnly: true as const,
+  sameSite: "strict" as const,
+  secure: process.env.NODE_ENV?.trim() === "production",
+  path: REFRESH_COOKIE_PATH,
+});
+
+export function setRefreshCookie(res: Response, rawRefreshToken: string) {
+  res.cookie(REFRESH_COOKIE_NAME, rawRefreshToken, {
+    ...refreshCookieOptions(),
+    maxAge: REFRESH_COOKIE_MAX_AGE_MS,
+  });
+}
+
+export function clearRefreshCookie(res: Response) {
+  res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+}
+
+/** Read the refresh credential from the request cookie header (no other transport is accepted). */
+export function readRefreshCookie(req: Request): string | null {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) continue;
+    if (part.slice(0, separator).trim() !== REFRESH_COOKIE_NAME) continue;
+    const value = decodeURIComponent(part.slice(separator + 1).trim());
+    return REFRESH_TOKEN_PATTERN.test(value) ? value : null;
+  }
+  return null;
+}
 
 export async function createTenantUser(opts: {
   tenantId: string; actorUserId: string; email: string; fullName: string; roleId: string; initialPassword?: string;
@@ -225,10 +272,13 @@ export async function issueAuthenticatedSession(
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
 
   const sessionId = randomUUID();
+  // `jti` guarantees every minted access token is unique, so rotation always
+  // supersedes the previous token even within the same second.
   const token = jwt.sign(
-    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId, aal: assuranceLevel },
+    { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: sessionId, aal: assuranceLevel, jti: randomUUID() },
     JWT_SECRET, { expiresIn: ACCESS_TTL },
   );
+  const refreshToken = mintRefreshToken();
   const now = new Date();
   const idleExpiresAt = new Date(now.getTime() + 30 * 86_400_000);
   const absoluteExpiresAt = new Date(now.getTime() + 90 * 86_400_000);
@@ -237,6 +287,8 @@ export async function issueAuthenticatedSession(
     tenantId: user.tenantId,
     userId: user.id,
     tokenHash: hashSessionValue(token),
+    refreshTokenHash: hashRefreshValue(refreshToken),
+    assuranceLevel,
     clientType: context.clientType?.trim().slice(0, 32) || "web",
     appVersion: context.appVersion?.trim().slice(0, 80) || null,
     deviceDescription: context.userAgent?.trim().slice(0, 160) || null,
@@ -253,11 +305,125 @@ export async function issueAuthenticatedSession(
   } else {
     await db.insert(schema.platformAuditLogs).values({ userId: user.id, action: "platform_admin.session_created", metadata: { sessionId } });
   }
-  return { mfaRequired: false as const, token, user: {
+  // `refreshToken` is raw credential material: routes deliver it only via the
+  // HttpOnly refresh cookie and must never include it in a JSON response.
+  return { mfaRequired: false as const, token, refreshToken, user: {
     id: user.id, email: user.email, fullName: user.fullName,
     tenantId: user.tenantId, isPlatformAdmin: user.isPlatformAdmin,
     mustChangePassword: user.mustChangePassword,
   } };
+}
+
+// ---------------------------------------------------------------------------
+// P9-010: session renewal with refresh-token rotation and replay containment.
+// The refresh credential is single-use: every successful renewal atomically
+// rotates both the access token and the refresh credential, retaining only
+// the immediately previous refresh hash for replay detection. Replay of a
+// superseded credential revokes the affected session (fail closed, scoped to
+// that session) and records redacted security evidence.
+// ---------------------------------------------------------------------------
+type RenewalOutcome =
+  | { outcome: "rotated"; token: string; refreshToken: string }
+  | { outcome: "denied" | "replay" | "unknown" };
+
+export async function renewSession(rawRefreshToken: string) {
+  if (!REFRESH_TOKEN_PATTERN.test(rawRefreshToken)) throw unauthorized("Session renewal failed");
+  const presentedHash = hashRefreshValue(rawRefreshToken);
+
+  const result = await db.transaction(async (tx): Promise<RenewalOutcome> => {
+    const [session] = await tx.select().from(schema.userSessions)
+      .where(eq(schema.userSessions.refreshTokenHash, presentedHash))
+      .for("update");
+
+    if (session) {
+      const now = new Date();
+      if (session.revokedAt || session.idleExpiresAt <= now || session.absoluteExpiresAt <= now) {
+        return { outcome: "denied" };
+      }
+      const [user] = await tx.select().from(schema.users).where(and(
+        eq(schema.users.id, session.userId),
+        eq(schema.users.status, "active"),
+      ));
+      if (!user) return { outcome: "denied" };
+      // MFA-inconsistent sessions may not renew: an aal1 session whose user
+      // has since verified an MFA factor must re-authenticate interactively.
+      if (session.assuranceLevel !== "aal2" && await hasVerifiedMfa(user.id)) {
+        return { outcome: "denied" };
+      }
+
+      const assuranceLevel = session.assuranceLevel === "aal2" ? "aal2" as const : "aal1" as const;
+      const token = jwt.sign(
+        { sub: user.id, tenantId: user.tenantId, admin: user.isPlatformAdmin, sid: session.id, aal: assuranceLevel, jti: randomUUID() },
+        JWT_SECRET, { expiresIn: ACCESS_TTL },
+      );
+      const refreshToken = mintRefreshToken();
+      await tx.update(schema.userSessions).set({
+        tokenHash: hashSessionValue(token),
+        refreshTokenHash: hashRefreshValue(refreshToken),
+        previousRefreshTokenHash: presentedHash,
+        refreshRotatedAt: now,
+        lastSeenAt: now,
+        // Renewal is activity: the idle window slides, the original absolute
+        // session limit is preserved.
+        idleExpiresAt: new Date(Math.min(now.getTime() + 30 * 86_400_000, session.absoluteExpiresAt.getTime())),
+      }).where(eq(schema.userSessions.id, session.id));
+
+      if (session.tenantId) {
+        await recordAuditInTransaction(tx, {
+          tenantId: session.tenantId,
+          actorUserId: user.id,
+          action: "security.session_refreshed",
+          entityType: "session",
+          entityId: session.id,
+          metadata: { clientType: session.clientType, reason: "rotation" },
+        });
+      } else {
+        await tx.insert(schema.platformAuditLogs).values({
+          userId: user.id,
+          action: "platform_admin.session_refreshed",
+          metadata: { sessionId: session.id, clientType: session.clientType, reason: "rotation" },
+        });
+      }
+      return { outcome: "rotated", token, refreshToken };
+    }
+
+    const [replayed] = await tx.select().from(schema.userSessions)
+      .where(eq(schema.userSessions.previousRefreshTokenHash, presentedHash))
+      .for("update");
+    if (replayed) {
+      if (!replayed.revokedAt) {
+        await tx.update(schema.userSessions).set({
+          revokedAt: new Date(),
+          revokedBy: null,
+          revokedReason: "refresh_replay",
+        }).where(eq(schema.userSessions.id, replayed.id));
+        if (replayed.tenantId) {
+          await recordAuditInTransaction(tx, {
+            tenantId: replayed.tenantId,
+            actorUserId: replayed.userId,
+            action: "security.session_refresh_replay",
+            entityType: "session",
+            entityId: replayed.id,
+            metadata: { clientType: replayed.clientType, reason: "superseded_credential_reuse" },
+          });
+        } else {
+          await tx.insert(schema.platformAuditLogs).values({
+            userId: replayed.userId,
+            action: "platform_admin.session_refresh_replay",
+            metadata: { sessionId: replayed.id, clientType: replayed.clientType, reason: "superseded_credential_reuse" },
+          });
+        }
+      }
+      return { outcome: "replay" };
+    }
+
+    // Unknown credential: fail with a generic error and record nothing, so an
+    // anonymous caller cannot amplify the audit log.
+    return { outcome: "unknown" };
+  });
+
+  if (result.outcome !== "rotated") throw unauthorized("Session renewal failed");
+  return { token: result.token, refreshToken: result.refreshToken };
 }
 
 // ---------------------------------------------------------------------------

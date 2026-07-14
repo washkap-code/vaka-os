@@ -23,6 +23,7 @@ export function createApp() {
   // public document links. (Per-process windows; add an edge limiter when
   // scaling horizontally — see docs/02-security-compliance.md.)
   app.use("/api/v1/auth/login", createRateLimiter({ windowMs: 5 * 60_000, max: 20, label: "login attempts" }));
+  app.use("/api/v1/auth/refresh", createRateLimiter({ windowMs: 5 * 60_000, max: 30, label: "session renewals" }));
   app.use("/api/v1/auth/signup", createRateLimiter({ windowMs: 10 * 60_000, max: 10, label: "signup attempts" }));
   app.use("/api/v1/auth/password-reset/request", createRateLimiter({ windowMs: 15 * 60_000, max: 5, label: "password reset requests" }));
   app.use("/api/v1/auth/password-reset/complete", createRateLimiter({ windowMs: 15 * 60_000, max: 10, label: "password reset attempts" }));
