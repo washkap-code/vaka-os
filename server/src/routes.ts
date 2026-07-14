@@ -74,6 +74,7 @@ import {
   bulkUpdateContacts, decideContactDeletionRequest, deleteOrRequestContacts,
   listContactDeletionRequests,
 } from "./contact-records.js";
+import { canManageHoldingPageAdvertising, resolveHoldingPageAdvert } from "./holding-advertising.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -199,8 +200,30 @@ api.get("/public/workspaces/:subdomain/holding", wrap(async (req, res) => {
     holdingOfferBody: schema.tenants.holdingOfferBody,
     holdingOfferCtaLabel: schema.tenants.holdingOfferCtaLabel,
     holdingOfferCtaUrl: schema.tenants.holdingOfferCtaUrl,
-  }).from(schema.tenants).where(eq(schema.tenants.subdomain, subdomain));
+    planFeatures: schema.plans.features,
+  }).from(schema.tenants)
+    .leftJoin(schema.subscriptions, eq(schema.subscriptions.tenantId, schema.tenants.id))
+    .leftJoin(schema.plans, eq(schema.plans.id, schema.subscriptions.planId))
+    .where(eq(schema.tenants.subdomain, subdomain));
   if (!tenant || tenant.status === "CLOSED") throw notFound("Workspace not found");
+  const [platformAdvert] = await db.select({
+    enabled: schema.platformHoldingAdvertSettings.enabled,
+    title: schema.platformHoldingAdvertSettings.title,
+    body: schema.platformHoldingAdvertSettings.body,
+    ctaLabel: schema.platformHoldingAdvertSettings.ctaLabel,
+    ctaUrl: schema.platformHoldingAdvertSettings.ctaUrl,
+  }).from(schema.platformHoldingAdvertSettings)
+    .where(eq(schema.platformHoldingAdvertSettings.key, "LOWER_TIER_DEFAULT"));
+  const resolvedAdvert = resolveHoldingPageAdvert({
+    planFeatures: tenant.planFeatures,
+    tenantAdvert: {
+      title: tenant.holdingOfferTitle,
+      body: tenant.holdingOfferBody,
+      ctaLabel: tenant.holdingOfferCtaLabel,
+      ctaUrl: tenant.holdingOfferCtaUrl,
+    },
+    platformAdvert,
+  });
   res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
   return {
     companyName: tenant.companyName,
@@ -210,12 +233,7 @@ api.get("/public/workspaces/:subdomain/holding", wrap(async (req, res) => {
     brandSecondaryColor: tenant.brandSecondaryColor,
     heading: tenant.holdingPageHeading,
     message: tenant.holdingPageMessage,
-    offer: tenant.holdingOfferTitle || tenant.holdingOfferBody ? {
-      title: tenant.holdingOfferTitle,
-      body: tenant.holdingOfferBody,
-      ctaLabel: tenant.holdingOfferCtaLabel,
-      ctaUrl: tenant.holdingOfferCtaUrl,
-    } : null,
+    offer: resolvedAdvert.advert,
   };
 }));
 
@@ -246,6 +264,12 @@ api.get("/me", wrap(async (req) => {
       jobTitle: schema.platformStaffProfiles.jobTitle,
     }).from(schema.platformStaffProfiles).where(eq(schema.platformStaffProfiles.userId, req.auth!.userId))
     : [];
+  const [subscriptionPlan] = t
+    ? await db.select({ name: schema.plans.name, features: schema.plans.features })
+      .from(schema.subscriptions)
+      .innerJoin(schema.plans, eq(schema.plans.id, schema.subscriptions.planId))
+      .where(eq(schema.subscriptions.tenantId, t.id))
+    : [];
   return {
     ...req.auth,
     user: { ...currentUser, ...staffProfile },
@@ -263,7 +287,9 @@ api.get("/me", wrap(async (req) => {
       invoiceBankSwiftCode: t.invoiceBankSwiftCode,
       invoiceBankCurrency: t.invoiceBankCurrency,
       showVatNumberOnInvoices: t.showVatNumberOnInvoices,
-      signOutDestination: t.signOutDestination,
+      signOutDestination: "HOLDING_PAGE" as const,
+      planName: subscriptionPlan?.name ?? null,
+      holdingPageAdvertisingEntitled: canManageHoldingPageAdvertising(subscriptionPlan?.features),
       idleSignOutEnabled: t.idleSignOutEnabled,
       idleSignOutMinutes: t.idleSignOutMinutes,
       holdingPageHeading: t.holdingPageHeading,
@@ -572,18 +598,18 @@ api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(a
   const nullableText = (max: number) => z.string().trim().max(max)
     .transform((value) => value || null);
   const body = z.object({
-    signOutDestination: z.enum(["PUBLIC_HOME", "HOLDING_PAGE"]),
+    signOutDestination: z.literal("HOLDING_PAGE").optional(),
     idleSignOutEnabled: z.boolean(),
     idleSignOutMinutes: z.number().int().min(5).max(480),
     holdingPageHeading: nullableText(100),
     holdingPageMessage: nullableText(500),
-    holdingOfferTitle: nullableText(100),
-    holdingOfferBody: nullableText(500),
-    holdingOfferCtaLabel: nullableText(50),
+    holdingOfferTitle: nullableText(100).optional(),
+    holdingOfferBody: nullableText(500).optional(),
+    holdingOfferCtaLabel: nullableText(50).optional(),
     holdingOfferCtaUrl: z.union([
       z.string().url().refine((value) => new URL(value).protocol === "https:", "Offer link must use HTTPS"),
       z.literal(""),
-    ]).transform((value) => value || null),
+    ]).transform((value) => value || null).optional(),
   }).superRefine((value, ctx) => {
     if (Boolean(value.holdingOfferCtaLabel) !== Boolean(value.holdingOfferCtaUrl)) {
       ctx.addIssue({ code: "custom", path: ["holdingOfferCtaLabel"], message: "Offer button label and HTTPS link must be configured together" });
@@ -593,15 +619,39 @@ api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(a
     }
   }).parse(req.body);
   const tid = tenantId(req);
-  const [updated] = await db.update(schema.tenants).set(body)
+  const [plan] = await db.select({ features: schema.plans.features })
+    .from(schema.subscriptions)
+    .innerJoin(schema.plans, eq(schema.plans.id, schema.subscriptions.planId))
+    .where(eq(schema.subscriptions.tenantId, tid));
+  const tenantManagedAdvertising = canManageHoldingPageAdvertising(plan?.features);
+  const advertFields = ["holdingOfferTitle", "holdingOfferBody", "holdingOfferCtaLabel", "holdingOfferCtaUrl"] as const;
+  const attemptedAdvertChange = advertFields.some((field) => Object.prototype.hasOwnProperty.call(req.body ?? {}, field));
+  const clearingAdvert = attemptedAdvertChange && advertFields.every((field) => body[field] == null);
+  if (attemptedAdvertChange && !tenantManagedAdvertising && !clearingAdvert) {
+    throw forbidden("Holding-page advertising is available on Business and Enterprise plans");
+  }
+  const holdingUpdate = {
+    signOutDestination: "HOLDING_PAGE" as const,
+    idleSignOutEnabled: body.idleSignOutEnabled,
+    idleSignOutMinutes: body.idleSignOutMinutes,
+    holdingPageHeading: body.holdingPageHeading,
+    holdingPageMessage: body.holdingPageMessage,
+    ...(tenantManagedAdvertising || clearingAdvert ? Object.fromEntries(advertFields
+      .filter((field) => Object.prototype.hasOwnProperty.call(body, field))
+      .map((field) => [field, body[field]])) : {}),
+  };
+  const [updated] = await db.update(schema.tenants).set(holdingUpdate)
     .where(eq(schema.tenants.id, tid)).returning();
   await audit(db, tid, req.auth!.userId, "settings.holding_page_updated", "tenant", tid, {
-    signOutDestination: body.signOutDestination,
+    signOutDestination: "HOLDING_PAGE",
     idleSignOutEnabled: body.idleSignOutEnabled,
     idleSignOutMinutes: body.idleSignOutMinutes,
     customHeading: Boolean(body.holdingPageHeading),
-    offerConfigured: Boolean(body.holdingOfferTitle || body.holdingOfferBody),
-    offerLinkConfigured: Boolean(body.holdingOfferCtaUrl),
+    tenantManagedAdvertising,
+    offerChanged: attemptedAdvertChange,
+    offerCleared: clearingAdvert,
+    offerConfigured: attemptedAdvertChange ? Boolean(body.holdingOfferTitle || body.holdingOfferBody) : undefined,
+    offerLinkConfigured: attemptedAdvertChange ? Boolean(body.holdingOfferCtaUrl) : undefined,
   });
   return updated;
 }));
@@ -1795,6 +1845,63 @@ const platformStaffProfileSchema = z.object({
   endDate: z.string().date().optional().nullable(),
   operationalNotes: z.string().trim().max(1000).optional().nullable(),
 });
+
+const platformHoldingAdvertSchema = z.object({
+  enabled: z.boolean(),
+  title: z.string().trim().max(100).transform((value) => value || null),
+  body: z.string().trim().max(500).transform((value) => value || null),
+  ctaLabel: z.string().trim().max(50).transform((value) => value || null),
+  ctaUrl: z.union([
+    z.string().url().refine((value) => new URL(value).protocol === "https:", "Advert link must use HTTPS"),
+    z.literal(""),
+  ]).transform((value) => value || null),
+}).superRefine((value, ctx) => {
+  if (value.enabled && !value.title && !value.body) {
+    ctx.addIssue({ code: "custom", path: ["title"], message: "Advert content is required before publishing" });
+  }
+  if (Boolean(value.ctaLabel) !== Boolean(value.ctaUrl)) {
+    ctx.addIssue({ code: "custom", path: ["ctaLabel"], message: "Advert button label and HTTPS link must be configured together" });
+  }
+  if (value.ctaUrl && !value.title && !value.body) {
+    ctx.addIssue({ code: "custom", path: ["title"], message: "Advert content is required before adding a button" });
+  }
+});
+
+api.get("/platform/holding-advert", requirePlatformPermission("platform.settings.manage"), wrap(async () => {
+  const [advert] = await db.select().from(schema.platformHoldingAdvertSettings)
+    .where(eq(schema.platformHoldingAdvertSettings.key, "LOWER_TIER_DEFAULT"));
+  return advert ?? {
+    key: "LOWER_TIER_DEFAULT", enabled: false, title: null, body: null,
+    ctaLabel: null, ctaUrl: null, updatedBy: null, updatedAt: null,
+  };
+}));
+
+api.patch("/platform/holding-advert", requirePlatformPermission("platform.settings.manage"), wrap(async (req) => {
+  const body = platformHoldingAdvertSchema.parse(req.body);
+  const [updated] = await db.transaction(async (tx) => {
+    const rows = await tx.insert(schema.platformHoldingAdvertSettings).values({
+      key: "LOWER_TIER_DEFAULT",
+      ...body,
+      updatedBy: req.auth!.userId,
+      updatedAt: new Date(),
+    }).onConflictDoUpdate({
+      target: schema.platformHoldingAdvertSettings.key,
+      set: { ...body, updatedBy: req.auth!.userId, updatedAt: new Date() },
+    }).returning();
+    await tx.insert(schema.platformAuditLogs).values({
+      userId: req.auth!.userId,
+      action: "platform.holding_advert_updated",
+      metadata: {
+        enabled: body.enabled,
+        contentConfigured: Boolean(body.title || body.body),
+        linkConfigured: Boolean(body.ctaUrl),
+        audience: "LOWER_TIER_HOLDING_PAGES",
+      },
+    });
+    return rows;
+  });
+  return updated;
+}));
 
 api.get("/platform/staff/roles", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformRoles()));
 api.get("/platform/staff", requirePlatformPermission("platform.staff.read"), wrap(async () => listPlatformStaff()));

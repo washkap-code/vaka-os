@@ -61,6 +61,8 @@ const required = [
   ["subscription_payment_attempts", "merchant_reference"],
   ["subscription_payment_attempts", "encrypted_poll_url"],
   ["subscription_payment_attempts", "status"],
+  ["platform_holding_advert_settings", "enabled"],
+  ["platform_holding_advert_settings", "updated_by"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

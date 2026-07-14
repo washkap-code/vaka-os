@@ -7,7 +7,7 @@ import { db, schema } from "../src/lib.js";
 const app = createApp();
 const uniq = Date.now().toString(36);
 
-async function createSettingsTenant(suffix = "") {
+async function createSettingsTenant(suffix = "", planName = "Business") {
   const response = await request(app).post("/api/v1/auth/signup").send({
     companyName: "Original Company",
     subdomain: `settings${uniq}${suffix}`,
@@ -15,7 +15,7 @@ async function createSettingsTenant(suffix = "") {
     ownerEmail: `settings-${uniq}${suffix}@test.zw`,
     ownerPassword: "Settings-Password-123!",
     ownerName: "Original Owner",
-    planName: "Business",
+    planName,
   });
   expect(response.status).toBe(200);
   return response.body;
@@ -160,5 +160,87 @@ describe("profile and company settings", () => {
       holdingOfferCtaLabel: "Click", holdingOfferCtaUrl: "http://example.com/offer",
     });
     expect(unsafe.status).toBe(400);
+  });
+
+  it("keeps lower-tier campaigns platform-controlled and sign-out tenant-bound", async () => {
+    const account = await createSettingsTenant("starter", "Starter");
+    const auth = { Authorization: `Bearer ${account.token}` };
+    const me = await request(app).get("/api/v1/me").set(auth);
+    expect(me.status).toBe(200);
+    expect(me.body.tenant).toMatchObject({
+      planName: "Starter",
+      holdingPageAdvertisingEntitled: false,
+      signOutDestination: "HOLDING_PAGE",
+    });
+
+    const forbiddenCampaign = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      signOutDestination: "HOLDING_PAGE",
+      idleSignOutEnabled: false,
+      idleSignOutMinutes: 5,
+      holdingPageHeading: "Welcome back",
+      holdingPageMessage: "Sign in to continue.",
+      holdingOfferTitle: "Tenant campaign",
+      holdingOfferBody: "This must not publish.",
+      holdingOfferCtaLabel: "Open",
+      holdingOfferCtaUrl: "https://tenant.example/offer",
+    });
+    expect(forbiddenCampaign.status).toBe(403);
+
+    const clearedCampaign = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      signOutDestination: "HOLDING_PAGE",
+      idleSignOutEnabled: false,
+      idleSignOutMinutes: 5,
+      holdingPageHeading: "Welcome back",
+      holdingPageMessage: "Sign in to continue.",
+      holdingOfferTitle: "",
+      holdingOfferBody: "",
+      holdingOfferCtaLabel: "",
+      holdingOfferCtaUrl: "",
+    });
+    expect(clearedCampaign.status).toBe(200);
+
+    const saved = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      signOutDestination: "HOLDING_PAGE",
+      idleSignOutEnabled: false,
+      idleSignOutMinutes: 5,
+      holdingPageHeading: "Welcome back",
+      holdingPageMessage: "Sign in to continue.",
+    });
+    expect(saved.status).toBe(200);
+
+    await db.update(schema.tenants).set({
+      holdingOfferTitle: "Retained tenant draft",
+      holdingOfferBody: "Must stay hidden on Starter.",
+    }).where(eq(schema.tenants.id, account.tenant.id));
+    await db.insert(schema.platformHoldingAdvertSettings).values({
+      key: "LOWER_TIER_DEFAULT",
+      enabled: true,
+      title: "VAKA platform campaign",
+      body: "Available to growing businesses.",
+      ctaLabel: "Learn more",
+      ctaUrl: "https://www.vakaos.com/offer",
+    }).onConflictDoUpdate({
+      target: schema.platformHoldingAdvertSettings.key,
+      set: {
+        enabled: true,
+        title: "VAKA platform campaign",
+        body: "Available to growing businesses.",
+        ctaLabel: "Learn more",
+        ctaUrl: "https://www.vakaos.com/offer",
+      },
+    });
+    try {
+      const publicPage = await request(app)
+        .get(`/api/v1/public/workspaces/${account.tenant.subdomain}/holding`);
+      expect(publicPage.status).toBe(200);
+      expect(publicPage.body.offer).toMatchObject({
+        title: "VAKA platform campaign",
+        ctaUrl: "https://www.vakaos.com/offer",
+      });
+      expect(JSON.stringify(publicPage.body)).not.toContain("Retained tenant draft");
+    } finally {
+      await db.update(schema.platformHoldingAdvertSettings).set({ enabled: false })
+        .where(eq(schema.platformHoldingAdvertSettings.key, "LOWER_TIER_DEFAULT"));
+    }
   });
 });

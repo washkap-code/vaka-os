@@ -393,12 +393,12 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 input, select, textarea { border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-control); padding: var(--vaka-workspace-control-padding-block) var(--vaka-workspace-control-padding-inline); font-size: var(--vaka-workspace-type-control); font-family: inherit; background: var(--vaka-workspace-surface); width: 100%; }
 :where(a, button, input, select, textarea, [tabindex]):focus-visible { border-color: transparent; outline: var(--vaka-focus-width) solid var(--vaka-color-focus); outline-offset: var(--vaka-focus-offset); scroll-margin-block: 5rem; }
 label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
-.field { margin-bottom: 12px; }
+.field { margin-bottom: var(--vaka-space-4); min-width: 0; }
 .password-control { align-items: stretch; display: flex; gap: 7px; }
 .password-control input { min-width: 0; }
 .password-toggle { background: var(--vaka-workspace-surface); border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-control); color: var(--text); cursor: pointer; flex: 0 0 auto; font: inherit; font-size: 12px; font-weight: 700; padding: 0 11px; }
 .password-toggle:hover { background: var(--vaka-workspace-surface-hover); color: var(--brand); }
-.field-help { color: var(--muted); display: block; margin: -7px 0 12px; }
+.field-help { color: var(--muted); display: block; font-size: var(--vaka-type-label); line-height: var(--vaka-leading-label); margin: var(--vaka-space-2) 0 0; overflow-wrap: anywhere; }
 .full-width { width: 100%; }
 .secret-box { background: var(--vaka-workspace-surface-subtle); border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-control); margin: 10px 0; padding: 12px; }
 .breakable-code { overflow-wrap: anywhere; word-break: break-word; }
@@ -518,6 +518,10 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
   padding-top: var(--vaka-space-5);
 }
 .settings-document-section h3 { margin: var(--vaka-space-4) 0 var(--vaka-space-2); }
+.holding-tier-notice { align-items: flex-start; background: var(--vaka-workspace-surface-subtle); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--vaka-workspace-radius-control); display: flex; flex-direction: column; gap: var(--vaka-space-1); margin: var(--vaka-space-4) 0; padding: var(--vaka-space-4); }
+.holding-tier-notice span { color: var(--muted); line-height: 1.5; }
+.holding-tier-notice.lower-tier { border-left-color: var(--brand); }
+.holding-advert-settings { border-top: 1px solid var(--line); margin-top: var(--vaka-space-5); padding-top: var(--vaka-space-4); }
 .checkbox-line { align-items: center; display: flex; gap: var(--vaka-space-3); margin: var(--vaka-space-4) 0; }
 .checkbox-line input { min-height: 1.25rem; width: 1.25rem; }
 @media (max-width: 760px) {

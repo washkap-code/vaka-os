@@ -50,3 +50,8 @@ export function resolveWorkspacePage(
   if (visible.some((item) => item.key === requested)) return requested;
   return visible[0]?.key ?? "billing";
 }
+
+export function tenantSignOutPath(subdomain: string | null | undefined): string {
+  const workspace = subdomain?.trim();
+  return workspace ? `/workspace/${encodeURIComponent(workspace)}` : "/";
+}

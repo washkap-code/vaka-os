@@ -56,7 +56,7 @@ export const tenants = pgTable("tenants", {
   invoiceBankSwiftCode: text("invoice_bank_swift_code"),
   invoiceBankCurrency: currency("invoice_bank_currency"),
   showVatNumberOnInvoices: boolean("show_vat_number_on_invoices").default(true).notNull(),
-  signOutDestination: text("sign_out_destination").default("PUBLIC_HOME").notNull(),
+  signOutDestination: text("sign_out_destination").default("HOLDING_PAGE").notNull(),
   idleSignOutEnabled: boolean("idle_sign_out_enabled").default(false).notNull(),
   idleSignOutMinutes: integer("idle_sign_out_minutes").default(5).notNull(),
   holdingPageHeading: text("holding_page_heading"),
@@ -96,6 +96,21 @@ export const users = pgTable("users", {
   uniqueIndex("users_tenant_email").on(t.tenantId, t.email),
   uniqueIndex("platform_users_email_unique").on(t.email).where(sql`${t.tenantId} IS NULL`),
   index("users_platform_role").on(t.platformRoleKey),
+]);
+
+export const platformHoldingAdvertSettings = pgTable("platform_holding_advert_settings", {
+  key: text("key").primaryKey(),
+  enabled: boolean("enabled").default(false).notNull(),
+  title: text("title"),
+  body: text("body"),
+  ctaLabel: text("cta_label"),
+  ctaUrl: text("cta_url"),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("platform_holding_advert_updated_by").on(t.updatedBy),
+  check("platform_holding_advert_key_check", sql`${t.key} = 'LOWER_TIER_DEFAULT'`),
+  check("platform_holding_advert_cta_pair_check", sql`(${t.ctaLabel} IS NULL) = (${t.ctaUrl} IS NULL)`),
 ]);
 
 export const passwordResetRequests = pgTable("password_reset_requests", {

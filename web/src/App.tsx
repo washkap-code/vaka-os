@@ -5,7 +5,7 @@ import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
 import { PlatformAdminIcon, PlatformAdminShell, type PlatformAdminNavigationItem } from "./platform/platform-admin-shell";
 import { filterPlatformTenants, visiblePlatformAdminPages, type PlatformAdminPage } from "./platform/platform-admin-model";
-import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
+import { resolveWorkspacePage, tenantSignOutPath, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
 import { WorkspaceShell } from "./shell/workspace-shell";
 import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
 import type { WorkspaceSearchTarget } from "./shell/command-search-model";
@@ -45,7 +45,8 @@ type Me = {
     invoiceBankAccountNumber: string | null; invoiceBankBranch: string | null;
     invoiceBankSwiftCode: string | null; invoiceBankCurrency: "USD" | "ZWG" | null;
     showVatNumberOnInvoices: boolean;
-    signOutDestination: "PUBLIC_HOME" | "HOLDING_PAGE";
+    signOutDestination: "HOLDING_PAGE";
+    planName: string | null; holdingPageAdvertisingEntitled: boolean;
     idleSignOutEnabled: boolean; idleSignOutMinutes: number;
     holdingPageHeading: string | null; holdingPageMessage: string | null;
     holdingOfferTitle: string | null; holdingOfferBody: string | null;
@@ -57,6 +58,10 @@ type HoldingPageConfig = {
   brandPrimaryColor: string; brandSecondaryColor: string;
   heading: string | null; message: string | null;
   offer: null | { title: string | null; body: string | null; ctaLabel: string | null; ctaUrl: string | null };
+};
+type PlatformHoldingAdvert = {
+  enabled: boolean; title: string | null; body: string | null;
+  ctaLabel: string | null; ctaUrl: string | null; updatedAt?: string | null;
 };
 type BillingRunResult = { invoiced: number; movedPastDue: number; suspended: number; activatedFromTrial: number };
 type ArrearsStatus = {
@@ -300,8 +305,7 @@ export default function App() {
   const logout = (reason: "EXPLICIT" | "IDLE" = "EXPLICIT") => {
     const tenant = me?.tenant;
     void api("/auth/logout", { method: "POST", body: { reason } }).finally(() => {
-      const useHolding = Boolean(tenant) && (reason === "IDLE" || tenant?.signOutDestination === "HOLDING_PAGE");
-      const target = useHolding ? `/workspace/${encodeURIComponent(tenant!.subdomain)}` : "/";
+      const target = tenantSignOutPath(tenant?.subdomain);
       window.history.replaceState({}, "", target);
       setToken(null); setMe(null); setGate("landing");
     });
@@ -708,7 +712,10 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         </>}
         {tab === "operations" && !controlCenter && !msg && <div className="panel">{copy.loadingOperations}</div>}
         {tab === "staff" && <PlatformWorkforce me={me} staff={staff} roles={platformRoles} onReload={load} />}
-        {tab === "settings" && <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />}
+        {tab === "settings" && <>
+          {can("platform.settings.manage") && <PlatformHoldingAdvertSettings />}
+          <PlatformSecuritySettings me={me} onSaved={async () => { await load(); await onRefresh(); }} onLogout={onLogout} />
+        </>}
         {tab === "guide" && <Suspense fallback={<div className="panel" role="status">{copy.loadingGuide}</div>}><PlatformAdminGuide /></Suspense>}
     </PlatformAdminShell>
   );
@@ -717,6 +724,65 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
 // ---------------------------------------------------------------------------
 // Platform workforce and administrator security settings
 // ---------------------------------------------------------------------------
+function PlatformHoldingAdvertSettings() {
+  const copy = appEnglish.platformAdmin;
+  const [advert, setAdvert] = useState<PlatformHoldingAdvert | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
+  useEffect(() => {
+    api("/platform/holding-advert")
+      .then((value) => setAdvert(value as PlatformHoldingAdvert))
+      .catch((error: Error) => { setMessage(error.message); setMessageTone("error"); });
+  }, []);
+  const update = (field: keyof PlatformHoldingAdvert, value: string | boolean) => {
+    if (advert) setAdvert({ ...advert, [field]: value });
+  };
+  const save = async () => {
+    if (!advert) return;
+    setBusy(true); setMessage("");
+    try {
+      const updated = await api("/platform/holding-advert", { method: "PATCH", body: {
+        enabled: advert.enabled,
+        title: advert.title ?? "",
+        body: advert.body ?? "",
+        ctaLabel: advert.ctaLabel ?? "",
+        ctaUrl: advert.ctaUrl ?? "",
+      } });
+      setAdvert(updated as PlatformHoldingAdvert);
+      setMessage(copy.defaultAdvertSaved); setMessageTone("status");
+    } catch (error: any) { setMessage(error.message); setMessageTone("error"); }
+    setBusy(false);
+  };
+  return <section className="panel" aria-labelledby="platform-holding-advert-heading">
+    <div className="panel-heading"><div>
+      <h2 id="platform-holding-advert-heading">{copy.defaultAdvertHeading}</h2>
+      <p className="sub">{copy.defaultAdvertHelp}</p>
+    </div>{advert && <span className={`status-chip state-${advert.enabled ? "ready" : "planned"}`}>
+      {advert.enabled ? copy.published : copy.notPublished}</span>}</div>
+    {!advert && !message && <p className="sub">{copy.loadingDefaultAdvert}</p>}
+    {advert && <>
+      <label className="checkbox-line">
+        <input type="checkbox" checked={advert.enabled} onChange={(event) => update("enabled", event.target.checked)} />
+        <span>{copy.publishDefaultAdvert}</span>
+      </label>
+      <div className="grid2">
+        <LegacyField label={copy.defaultAdvertTitle}><input maxLength={100} value={advert.title ?? ""}
+          onChange={(event) => update("title", event.target.value)} /></LegacyField>
+        <LegacyField label={copy.defaultAdvertButtonLabel}><input maxLength={50} value={advert.ctaLabel ?? ""}
+          onChange={(event) => update("ctaLabel", event.target.value)} /></LegacyField>
+      </div>
+      <LegacyField label={copy.defaultAdvertBody} hint={copy.defaultAdvertContentHelp}><textarea maxLength={500}
+        value={advert.body ?? ""} onChange={(event) => update("body", event.target.value)} /></LegacyField>
+      <LegacyField label={copy.defaultAdvertButtonUrl} hint={copy.defaultAdvertUrlHelp}><input type="url"
+        value={advert.ctaUrl ?? ""} onChange={(event) => update("ctaUrl", event.target.value)} placeholder="https://www.vakaos.com/offer" /></LegacyField>
+      <button className="btn accent" disabled={busy} onClick={save}>{busy ? copy.savingDefaultAdvert : copy.saveDefaultAdvert}</button>
+    </>}
+    {message && <div className={messageTone === "error" ? "banner err" : "banner success"}
+      role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
+  </section>;
+}
+
 const emptyPlatformStaff = {
   fullName: "", email: "", platformRoleKey: "SUPPORT_ANALYST", employeeNumber: "",
   businessFunction: "Customer Support", jobTitle: "", workPhone: "", location: "Zimbabwe",
@@ -2039,7 +2105,6 @@ function Settings({ me, readonly, onSaved }: {
     invoiceBankSwiftCode: t.invoiceBankSwiftCode ?? "",
     invoiceBankCurrency: t.invoiceBankCurrency ?? "",
     showVatNumberOnInvoices: t.showVatNumberOnInvoices,
-    signOutDestination: t.signOutDestination,
     idleSignOutEnabled: t.idleSignOutEnabled,
     idleSignOutMinutes: t.idleSignOutMinutes,
     holdingPageHeading: t.holdingPageHeading ?? "",
@@ -2071,7 +2136,7 @@ function Settings({ me, readonly, onSaved }: {
           setLogoData(null);
         }
         const {
-          logoUrl: storedLogo, signOutDestination, idleSignOutEnabled, idleSignOutMinutes,
+          logoUrl: storedLogo, idleSignOutEnabled, idleSignOutMinutes,
           holdingPageHeading, holdingPageMessage, holdingOfferTitle, holdingOfferBody,
           holdingOfferCtaLabel, holdingOfferCtaUrl, ...branding
         } = company;
@@ -2080,9 +2145,11 @@ function Settings({ me, readonly, onSaved }: {
           ...(logoUrl && !logoUrl.startsWith("data:") ? { logoUrl } : {}),
         } });
         await api("/settings/holding-page", { method: "PATCH", body: {
-          signOutDestination, idleSignOutEnabled, idleSignOutMinutes,
-          holdingPageHeading, holdingPageMessage, holdingOfferTitle, holdingOfferBody,
-          holdingOfferCtaLabel, holdingOfferCtaUrl,
+          signOutDestination: "HOLDING_PAGE", idleSignOutEnabled, idleSignOutMinutes,
+          holdingPageHeading, holdingPageMessage,
+          ...(t.holdingPageAdvertisingEntitled ? {
+            holdingOfferTitle, holdingOfferBody, holdingOfferCtaLabel, holdingOfferCtaUrl,
+          } : {}),
         } });
       }
       setMessage(appEnglish.settings.saved);
@@ -2190,14 +2257,11 @@ function Settings({ me, readonly, onSaved }: {
         <div className="settings-document-section">
           <h3>{appEnglish.settings.holdingPage}</h3>
           <p className="sub">{appEnglish.settings.holdingPageHelp}</p>
+          <div className="holding-tier-notice" role="note">
+            <strong>{appEnglish.settings.tenantHoldingPage}</strong>
+            <span>{appEnglish.settings.mandatoryHoldingDestination}</span>
+          </div>
           <div className="grid2">
-            <LegacyField label={appEnglish.settings.signOutDestination}>
-              <select disabled={!canManageCompany} value={company.signOutDestination}
-                onChange={(event) => setCompany({ ...company, signOutDestination: event.target.value as "PUBLIC_HOME" | "HOLDING_PAGE" })}>
-                <option value="HOLDING_PAGE">{appEnglish.settings.tenantHoldingPage}</option>
-                <option value="PUBLIC_HOME">{appEnglish.settings.publicHomePage}</option>
-              </select>
-            </LegacyField>
             <LegacyField label={appEnglish.settings.idleMinutes} hint={appEnglish.settings.idleMinutesHelp}>
               <input type="number" min={5} max={480} disabled={!canManageCompany || !company.idleSignOutEnabled}
                 value={company.idleSignOutMinutes}
@@ -2213,24 +2277,31 @@ function Settings({ me, readonly, onSaved }: {
             <LegacyField label={appEnglish.settings.holdingHeading}>
               <input disabled={!canManageCompany} maxLength={100} value={company.holdingPageHeading}
                 onChange={setCompanyField("holdingPageHeading")} /></LegacyField>
-            <LegacyField label={appEnglish.settings.offerTitle}>
-              <input disabled={!canManageCompany} maxLength={100} value={company.holdingOfferTitle}
-                onChange={setCompanyField("holdingOfferTitle")} /></LegacyField>
           </div>
           <LegacyField label={appEnglish.settings.holdingMessage}>
             <textarea disabled={!canManageCompany} maxLength={500} value={company.holdingPageMessage}
               onChange={setCompanyField("holdingPageMessage")} /></LegacyField>
-          <LegacyField label={appEnglish.settings.offerBody} hint={appEnglish.settings.offerHelp}>
-            <textarea disabled={!canManageCompany} maxLength={500} value={company.holdingOfferBody}
-              onChange={setCompanyField("holdingOfferBody")} /></LegacyField>
-          <div className="grid2">
-            <LegacyField label={appEnglish.settings.offerButtonLabel}>
-              <input disabled={!canManageCompany} maxLength={50} value={company.holdingOfferCtaLabel}
-                onChange={setCompanyField("holdingOfferCtaLabel")} /></LegacyField>
-            <LegacyField label={appEnglish.settings.offerButtonUrl} hint={appEnglish.settings.offerUrlHelp}>
-              <input type="url" disabled={!canManageCompany} value={company.holdingOfferCtaUrl}
-                onChange={setCompanyField("holdingOfferCtaUrl")} placeholder="https://example.com/offer" /></LegacyField>
-          </div>
+          {t.holdingPageAdvertisingEntitled ? <div className="holding-advert-settings">
+            <h3>{appEnglish.settings.advertisingHeading}</h3>
+            <p className="sub">{appEnglish.settings.advertisingEntitledHelp.replace("{plan}", t.planName ?? appEnglish.settings.higherTier)}</p>
+            <LegacyField label={appEnglish.settings.offerTitle}>
+              <input disabled={!canManageCompany} maxLength={100} value={company.holdingOfferTitle}
+                onChange={setCompanyField("holdingOfferTitle")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.offerBody} hint={appEnglish.settings.offerHelp}>
+              <textarea disabled={!canManageCompany} maxLength={500} value={company.holdingOfferBody}
+                onChange={setCompanyField("holdingOfferBody")} /></LegacyField>
+            <div className="grid2">
+              <LegacyField label={appEnglish.settings.offerButtonLabel}>
+                <input disabled={!canManageCompany} maxLength={50} value={company.holdingOfferCtaLabel}
+                  onChange={setCompanyField("holdingOfferCtaLabel")} /></LegacyField>
+              <LegacyField label={appEnglish.settings.offerButtonUrl} hint={appEnglish.settings.offerUrlHelp}>
+                <input type="url" disabled={!canManageCompany} value={company.holdingOfferCtaUrl}
+                  onChange={setCompanyField("holdingOfferCtaUrl")} placeholder="https://example.com/offer" /></LegacyField>
+            </div>
+          </div> : <div className="holding-tier-notice lower-tier" role="note">
+            <strong>{appEnglish.settings.platformAdvertManaged}</strong>
+            <span>{appEnglish.settings.platformAdvertManagedHelp}</span>
+          </div>}
           <a className="btn ghost" href={`/workspace/${encodeURIComponent(t.subdomain)}?previewHolding=1`} target="_blank" rel="noreferrer">
             {appEnglish.settings.previewHoldingPage}
           </a>

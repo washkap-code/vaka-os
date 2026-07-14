@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveWorkspacePage, visibleWorkspaceNavigation } from "../src/shell/navigation.ts";
+import { resolveWorkspacePage, tenantSignOutPath, visibleWorkspaceNavigation } from "../src/shell/navigation.ts";
 import { notificationCopy } from "../src/shell/notification-copy.ts";
 import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "../src/shell/workbench-model.ts";
 import { parseWorkspaceSearchResponse, workspaceSearchTarget } from "../src/shell/command-search-model.ts";
@@ -34,6 +34,12 @@ test("a forbidden current page falls back to the first visible destination", () 
 
 test("billing and settings remain available without domain permissions", () => {
   assert.deepEqual(visibleWorkspaceNavigation([], false).map((item) => item.key), ["billing", "settings"]);
+});
+
+test("tenant sign-out always resolves to the tenant holding page", () => {
+  assert.equal(tenantSignOutPath("waskap"), "/workspace/waskap");
+  assert.equal(tenantSignOutPath("acme africa"), "/workspace/acme%20africa");
+  assert.equal(tenantSignOutPath(null), "/");
 });
 
 test("platform administration navigation exposes only authorised operating areas", () => {

@@ -12,7 +12,7 @@ VAKA sells trustworthy outcomes and declared availability, not roadmap promises.
 
 The catalogue defines product/module, plan/tier, country/industry pack, user/usage/provider allowance, support/SLA, AI autonomy, prerequisites, price/tax/currency/effective dates, trial, availability and grandfathering. Server-side entitlement checks are authoritative. UI visibility and payment-provider state are not authorization.
 
-Starter, Growth, Business and Enterprise packaging remains subject to approved catalogue and pricing decisions. Proposed prices or features are not public commitments until accepted and implemented.
+Starter, Growth, Business and Enterprise packaging remains subject to approved catalogue and pricing decisions. Proposed prices or features are not public commitments until accepted and implemented. The first narrow server-enforced presentation entitlement is implemented for holding-page advertising: Business and Enterprise may manage their own bounded plain-text campaign, while Starter and Growth receive only the governed platform default. This entitlement does not introduce advertising telemetry, targeting, third-party content or a general-purpose catalogue service.
 
 ## 3. Quote-to-cash
 
