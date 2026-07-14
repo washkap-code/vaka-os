@@ -79,6 +79,10 @@ describe("P2-006 statutory report pack", () => {
 
   it("serves tenant-safe private exports, audits them, and enforces reports.read", async () => {
     const tenant = await signupFinanceTenant("statutory-api");
+    await db.update(schema.tenants).set({
+      companyName: "Management Accounts Company", logoUrl: "https://remote.example.test/logo.png",
+      brandPrimaryColor: "#25425F", brandSecondaryColor: "#D4A72C", registrationNumber: "REG-200",
+    }).where(eq(schema.tenants.id, tenant.tenantId));
     const period = { from: today(), to: today(), asAt: today() };
     const json = await request(app).get("/api/v1/reports/statutory-pack").query(period).set(tenant.auth);
     expect(json.status).toBe(200);
@@ -93,12 +97,17 @@ describe("P2-006 statutory report pack", () => {
     const pdf = await request(app).get("/api/v1/reports/statutory-pack.pdf").query(period).set(tenant.auth);
     expect(pdf.status).toBe(200);
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
-    expect(pdf.body.toString("latin1")).toContain("technical preview");
+    expect(pdf.body.toString("latin1")).toContain("Management accounts and statutory report pack");
+    expect(pdf.body.toString("latin1")).toContain("Management Accounts Company");
+    expect(pdf.body.toString("latin1")).toContain("Owner's Capital");
+    expect(pdf.body.toString("latin1")).not.toContain("/Im1");
     expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const audits = await db.select().from(schema.auditLogs).where(and(eq(schema.auditLogs.tenantId, tenant.tenantId), eq(schema.auditLogs.action, "report.statutory_pack_exported")));
     expect(audits).toHaveLength(2);
     expect(audits.map((row) => (row.metadata as { format: string }).format).sort()).toEqual(["csv", "pdf"]);
+    expect((audits.find((row) => (row.metadata as { format: string }).format === "pdf")?.metadata as { brandingVersion: string }).brandingVersion)
+      .toBe("finance-report-branding-v1");
 
     const [tenantRow] = await db.select({ subdomain: schema.tenants.subdomain }).from(schema.tenants).where(eq(schema.tenants.id, tenant.tenantId));
     const token = await restrictedToken(tenant.tenantId, tenantRow.subdomain);

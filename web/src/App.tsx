@@ -10,6 +10,7 @@ import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbe
 import type { WorkspaceSearchTarget } from "./shell/command-search-model";
 import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
+import { fetchReportPdf, reportPdfFilename } from "./reports/report-pdf";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
 
@@ -3244,6 +3245,11 @@ function Reports({ ccy }: { ccy: string }) {
   const [statutory, setStatutory] = useState<StatutoryReportPackView | null>(null);
   const [statutoryLoading, setStatutoryLoading] = useState(false);
   const [statutoryError, setStatutoryError] = useState("");
+  const [reportPdfBusy, setReportPdfBusy] = useState<"vat" | "management-accounts" | null>(null);
+  const [reportPreview, setReportPreview] = useState<null | { url: string; title: string; filename: string }>(null);
+  useEffect(() => () => {
+    if (reportPreview?.url) URL.revokeObjectURL(reportPreview.url);
+  }, [reportPreview?.url]);
   const onReportTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, current: typeof reportTabs[number]) => {
     const currentIndex = reportTabs.indexOf(current);
     const nextIndex = event.key === "ArrowRight" ? (currentIndex + 1) % reportTabs.length
@@ -3277,10 +3283,10 @@ function Reports({ ccy }: { ccy: string }) {
       .finally(() => { if (active) setStatutoryLoading(false); });
     return () => { active = false; };
   }, [tab, statutoryApplied]);
-  const downloadVat = async (format: "csv" | "pdf") => {
+  const downloadVatCsv = async () => {
     setVatError("");
     try {
-      const response = await fetch(`/api/v1/reports/vat.${format}?from=${encodeURIComponent(vatApplied.from)}&to=${encodeURIComponent(vatApplied.to)}`, {
+      const response = await fetch(`/api/v1/reports/vat.csv?from=${encodeURIComponent(vatApplied.from)}&to=${encodeURIComponent(vatApplied.to)}`, {
         headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {},
       });
       if (!response.ok) {
@@ -3290,27 +3296,44 @@ function Reports({ ccy }: { ccy: string }) {
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
       link.href = url;
-      link.download = `vat-technical-preview-${vatApplied.from}-${vatApplied.to}.${format}`;
+      link.download = `vat-technical-preview-${vatApplied.from}-${vatApplied.to}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
     } catch (error) { setVatError(error instanceof Error ? error.message : copy.downloadFailed); }
   };
-  const downloadStatutory = async (format: "csv" | "pdf") => {
+  const downloadStatutoryCsv = async () => {
     setStatutoryError("");
     try {
       const query = new URLSearchParams(statutoryApplied).toString();
-      const response = await fetch(`/api/v1/reports/statutory-pack.${format}?${query}`, { headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {} });
+      const response = await fetch(`/api/v1/reports/statutory-pack.csv?${query}`, { headers: getToken() ? { Authorization: `Bearer ${getToken()}` } : {} });
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new Error(error.message || statutoryCopy.downloadFailed);
       }
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
-      link.href = url; link.download = `statutory-report-technical-preview-${statutoryApplied.from}-${statutoryApplied.to}.${format}`;
+      link.href = url; link.download = `statutory-report-technical-preview-${statutoryApplied.from}-${statutoryApplied.to}.csv`;
       document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
     } catch (error) { setStatutoryError(error instanceof Error ? error.message : statutoryCopy.downloadFailed); }
+  };
+  const previewReportPdf = async (kind: "vat" | "management-accounts") => {
+    const period = kind === "vat" ? vatApplied : statutoryApplied;
+    const query = new URLSearchParams(period).toString();
+    const path = kind === "vat" ? `/reports/vat.pdf?${query}` : `/reports/statutory-pack.pdf?${query}`;
+    const setError = kind === "vat" ? setVatError : setStatutoryError;
+    setError(""); setReportPdfBusy(kind);
+    try {
+      const url = URL.createObjectURL(await fetchReportPdf(path, getToken()));
+      setReportPreview({
+        url,
+        title: kind === "vat" ? copy.previewTitle : statutoryCopy.previewTitle,
+        filename: reportPdfFilename(kind, period.from, period.to),
+      });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : (kind === "vat" ? copy.downloadFailed : statutoryCopy.downloadFailed));
+    } finally { setReportPdfBusy(null); }
   };
   return (<>
     <h1>{reportsCopy.title}</h1><div className="sub">{reportsCopy.subtitle.replace("{currency}", ccy)}</div>
@@ -3388,8 +3411,8 @@ function Reports({ ccy }: { ccy: string }) {
           onChange={(event) => setVatPeriod({ ...vatPeriod, to: event.target.value })} /></div>
         <div className="report-actions" role="group" aria-label={copy.actions}><div className="row">
           <button className="btn sm" onClick={() => setVatApplied(vatPeriod)}>{copy.apply}</button>
-          <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("csv")}>{copy.csv}</button>
-          <button className="btn ghost sm" disabled={!vat} onClick={() => downloadVat("pdf")}>{copy.pdf}</button>
+          <button className="btn ghost sm" disabled={!vat} onClick={() => void downloadVatCsv()}>{copy.csv}</button>
+          <button className="btn ghost sm" disabled={!vat || reportPdfBusy === "vat"} onClick={() => void previewReportPdf("vat")}>{reportPdfBusy === "vat" ? reportsCopy.previewingPdf : copy.pdf}</button>
         </div></div>
       </div>
       {vatLoading && <p className="sub" role="status">{copy.loading}</p>}
@@ -3420,8 +3443,8 @@ function Reports({ ccy }: { ccy: string }) {
       </div>
       <div className="row report-actions" role="group" aria-label={statutoryCopy.actions}>
         <button className="btn sm" onClick={() => setStatutoryApplied(statutoryPeriod)}>{statutoryCopy.apply}</button>
-        <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("csv")}>{statutoryCopy.csv}</button>
-        <button className="btn ghost sm" disabled={!statutory} onClick={() => downloadStatutory("pdf")}>{statutoryCopy.pdf}</button>
+        <button className="btn ghost sm" disabled={!statutory} onClick={() => void downloadStatutoryCsv()}>{statutoryCopy.csv}</button>
+        <button className="btn ghost sm" disabled={!statutory || reportPdfBusy === "management-accounts"} onClick={() => void previewReportPdf("management-accounts")}>{reportPdfBusy === "management-accounts" ? reportsCopy.previewingPdf : statutoryCopy.pdf}</button>
       </div>
       {statutoryLoading && <p className="sub" role="status">{statutoryCopy.loading}</p>}
       {statutoryError && <div className="err-text" role="alert">{statutoryError}</div>}
@@ -3436,6 +3459,13 @@ function Reports({ ccy }: { ccy: string }) {
         <div className={`banner ${statutory.agedPayables.requiresReconciliation ? "warn" : ""}`}>{statutoryCopy.apCoverage} {statutoryCopy.unallocated.replace("{amount}", fmt(statutory.agedPayables.unallocatedBalance, statutory.currency))}</div>
       </>}
     </div>}
+    {reportPreview && <LegacyModal labelledBy="report-preview-title" onClose={() => setReportPreview(null)} className="invoice-preview-modal" backdropClassName="invoice-preview-backdrop">
+      <div className="invoice-preview-heading">
+        <div><h2 id="report-preview-title" tabIndex={-1} data-modal-initial-focus>{reportPreview.title}</h2><p className="sub">{reportsCopy.previewHelp}</p></div>
+        <div className="row"><a className="btn ghost sm" href={reportPreview.url} download={reportPreview.filename}>{reportsCopy.downloadPreviewedPdf}</a><button className="btn ghost sm" onClick={() => setReportPreview(null)}>{reportsCopy.closePreview}</button></div>
+      </div>
+      <iframe className="invoice-preview-frame" src={reportPreview.url} title={reportsCopy.previewFrameTitle.replace("{title}", reportPreview.title)} />
+    </LegacyModal>}
   </>);
 }
 

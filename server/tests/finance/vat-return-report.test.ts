@@ -123,6 +123,11 @@ describe("P2-003 VAT technical report", () => {
 
   it("serves tenant-safe JSON/CSV/PDF, audits exports, and enforces permission", async () => {
     const tenantA = await signupFinanceTenant("vat-report-api-a");
+    const logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+    await db.update(schema.tenants).set({
+      companyName: "Branded VAT Company", logoUrl: logo, brandPrimaryColor: "#123456", brandSecondaryColor: "#E8B44F",
+      physicalAddress: "12 Report Avenue", registrationNumber: "REG-(VAT)", taxNumber: "TAX-100", vatNumber: "VAT-200",
+    }).where(eq(schema.tenants.id, tenantA.tenantId));
     const customer = await createContact(tenantA, "VAT Export Customer");
     const draft = await createDraftInvoice({
       tenantId: tenantA.tenantId,
@@ -150,7 +155,10 @@ describe("P2-003 VAT technical report", () => {
     expect(pdf.headers["content-type"]).toContain("application/pdf");
     expect(pdf.headers["cache-control"]).toBe("private, no-store");
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
-    expect(pdf.body.toString("latin1")).toContain("VAT technical preview - not filing-ready");
+    expect(pdf.body.toString("latin1")).toContain("VAT technical preview");
+    expect(pdf.body.toString("latin1")).toContain("Branded VAT Company");
+    expect(pdf.body.toString("latin1")).toContain("Registration REG-\\(VAT\\)");
+    expect(pdf.body.toString("latin1")).toContain("/Im1");
     expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const audits = await db.select().from(schema.auditLogs).where(and(
@@ -159,6 +167,8 @@ describe("P2-003 VAT technical report", () => {
     ));
     expect(audits).toHaveLength(2);
     expect(audits.map((row) => (row.metadata as { format: string }).format).sort()).toEqual(["csv", "pdf"]);
+    expect((audits.find((row) => (row.metadata as { format: string }).format === "pdf")?.metadata as { brandingVersion: string }).brandingVersion)
+      .toBe("finance-report-branding-v1");
 
     const tenantB = await signupFinanceTenant("vat-report-api-b");
     const isolated = await request(app).get("/api/v1/reports/vat").query(period).set(tenantB.auth);

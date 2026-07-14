@@ -59,6 +59,7 @@ import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-repor
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
 import { getStatutoryReportPack, statutoryReportPeriodSchema } from "./statutory-report-pack.js";
 import { renderStatutoryReportCsv, renderStatutoryReportPdf } from "./statutory-report-exports.js";
+import { getFinanceReportBranding } from "./report-branding.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
 import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
@@ -1567,19 +1568,22 @@ api.get("/reports/vat.csv", requirePermission("reports.read"), async (req, res, 
 api.get("/reports/vat.pdf", requirePermission("reports.read"), async (req, res, next) => {
   try {
     const period = vatReportPeriodSchema.parse(req.query);
-    const report = await getVatTechnicalReport({ tenantId: tenantId(req as AuthedRequest), period });
+    const tid = tenantId(req as AuthedRequest);
+    const [report, branding] = await Promise.all([
+      getVatTechnicalReport({ tenantId: tid, period }), getFinanceReportBranding(tid),
+    ]);
     await recordAudit({
       tenantId: tenantId(req as AuthedRequest),
       actorUserId: (req as AuthedRequest).auth!.userId,
       action: "report.vat_exported",
       entityType: "tenant",
       entityId: tenantId(req as AuthedRequest),
-      metadata: { format: "pdf", from: period.from, to: period.to, evidenceCount: report.evidence.length },
+      metadata: { format: "pdf", from: period.from, to: period.to, evidenceCount: report.evidence.length, brandingVersion: branding.version },
     });
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="vat-technical-preview-${period.from}-${period.to}.pdf"`);
     res.setHeader("Cache-Control", "private, no-store");
-    res.send(renderVatReportPdf(report));
+    res.send(renderVatReportPdf(report, branding));
   } catch (error) { next(error); }
 });
 api.get("/reports/statutory-pack", requirePermission("reports.read"), wrap(async (req, res) => {
@@ -1589,7 +1593,9 @@ api.get("/reports/statutory-pack", requirePermission("reports.read"), wrap(async
 }));
 async function exportStatutoryPack(req: AuthedRequest, res: Response, format: "csv" | "pdf") {
   const period = statutoryReportPeriodSchema.parse(req.query);
-  const report = await getStatutoryReportPack({ tenantId: tenantId(req), period });
+  const tid = tenantId(req);
+  const report = await getStatutoryReportPack({ tenantId: tid, period });
+  const branding = format === "pdf" ? await getFinanceReportBranding(tid) : null;
   await recordAudit({
     tenantId: tenantId(req), actorUserId: req.auth!.userId, action: "report.statutory_pack_exported",
     entityType: "tenant", entityId: tenantId(req),
@@ -1597,12 +1603,13 @@ async function exportStatutoryPack(req: AuthedRequest, res: Response, format: "c
       format, ...period, version: report.version, currency: report.currency, checks: report.checks,
       trialBalanceRows: report.trialBalance.length, receivableRows: report.agedReceivables.items.length,
       payableRows: report.agedPayables.items.length,
+      ...(branding ? { brandingVersion: branding.version } : {}),
     },
   });
   res.setHeader("Content-Type", format === "csv" ? "text/csv; charset=utf-8" : "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="statutory-report-technical-preview-${period.from}-${period.to}.${format}"`);
   res.setHeader("Cache-Control", "private, no-store");
-  res.send(format === "csv" ? renderStatutoryReportCsv(report) : renderStatutoryReportPdf(report));
+  res.send(format === "csv" ? renderStatutoryReportCsv(report) : renderStatutoryReportPdf(report, branding!));
 }
 api.get("/reports/statutory-pack.csv", requirePermission("reports.read"), (req, res, next) => {
   exportStatutoryPack(req as AuthedRequest, res, "csv").catch(next);

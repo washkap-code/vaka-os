@@ -21,7 +21,7 @@ function escapePdfText(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)").replace(/[\r\n]/g, " ");
 }
 
-type PdfImage = {
+export type PdfImage = {
   width: number;
   height: number;
   colorSpace: "DeviceGray" | "DeviceRGB";
@@ -29,7 +29,17 @@ type PdfImage = {
   data: Buffer;
 };
 
+const MAX_PDF_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_PDF_IMAGE_DIMENSION = 4096;
+const MAX_PDF_IMAGE_PIXELS = 4_000_000;
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function supportedPdfImageDimensions(width: number, height: number): boolean {
+  return Number.isSafeInteger(width) && Number.isSafeInteger(height)
+    && width > 0 && height > 0
+    && width <= MAX_PDF_IMAGE_DIMENSION && height <= MAX_PDF_IMAGE_DIMENSION
+    && width * height <= MAX_PDF_IMAGE_PIXELS;
+}
 
 function paeth(left: number, up: number, upperLeft: number): number {
   const estimate = left + up - upperLeft;
@@ -73,12 +83,13 @@ function decodePng(data: Buffer): PdfImage | null {
   }
   const channelsByColorType: Record<number, number | undefined> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
   const channels = channelsByColorType[colorType];
-  if (!width || !height || bitDepth !== 8 || interlace !== 0 || channels === undefined || !idat.length) return null;
+  if (!supportedPdfImageDimensions(width, height) || bitDepth !== 8 || interlace !== 0 || channels === undefined || !idat.length) return null;
   if (colorType === 3 && (!palette || palette.length % 3 !== 0)) return null;
-  let decoded: Buffer;
-  try { decoded = inflateSync(Buffer.concat(idat)); } catch { return null; }
   const rowLength = width * channels;
-  if (decoded.length < height * (rowLength + 1)) return null;
+  const expectedDecodedBytes = height * (rowLength + 1);
+  let decoded: Buffer;
+  try { decoded = inflateSync(Buffer.concat(idat), { maxOutputLength: expectedDecodedBytes }); } catch { return null; }
+  if (decoded.length !== expectedDecodedBytes) return null;
   const rgb = Buffer.alloc(width * height * 3);
   let decodedOffset = 0;
   let outputOffset = 0;
@@ -145,7 +156,7 @@ function decodeJpeg(data: Buffer): PdfImage | null {
       const height = data.readUInt16BE(offset + 3);
       const width = data.readUInt16BE(offset + 5);
       const components = data[offset + 7];
-      if (!width || !height || (components !== 1 && components !== 3)) return null;
+      if (!supportedPdfImageDimensions(width, height) || (components !== 1 && components !== 3)) return null;
       return { width, height, colorSpace: components === 1 ? "DeviceGray" : "DeviceRGB", filter: "jpeg", data };
     }
     offset += length;
@@ -153,18 +164,19 @@ function decodeJpeg(data: Buffer): PdfImage | null {
   return null;
 }
 
-function parseLogo(logoUrl: string | null | undefined): PdfImage | null {
+export function parsePdfImage(logoUrl: string | null | undefined): PdfImage | null {
   if (!logoUrl) return null;
   const match = /^data:image\/(png|jpeg|jpg);base64,([A-Za-z0-9+/=]+)$/.exec(logoUrl);
   if (!match) return null;
+  if (match[2].length > Math.ceil(MAX_PDF_IMAGE_BYTES / 3) * 4) return null;
   let data: Buffer;
   try { data = Buffer.from(match[2], "base64"); } catch { return null; }
-  if (!data.length) return null;
+  if (!data.length || data.length > MAX_PDF_IMAGE_BYTES) return null;
   return match[1] === "png" ? decodePng(data) : decodeJpeg(data);
 }
 
 export function renderInvoicePdf(document: InvoiceSnapshotDocument): Buffer {
-  const logo = parseLogo(document.issuer.logoUrl);
+  const logo = parsePdfImage(document.issuer.logoUrl);
   const lines: string[] = [];
   const add = (text: string, size = 10) => {
     const y = 760 - lines.length * 18;

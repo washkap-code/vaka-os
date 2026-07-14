@@ -1,6 +1,6 @@
 # P2-008 — Branded finance report preview
 
-**Status:** Approved for implementation
+**Status:** Implemented and locally verified; remote review and release pending
 **Priority:** P1 report trust and document usability
 **Depends on:** P2-003 VAT technical report; P2-006 statutory report pack;
 P1-007 document boundary; P6-005 accessibility foundation
@@ -150,3 +150,24 @@ Release only after remote review, CI, deployment and live authenticated preview
 evidence. Revert the report renderers, shared safe image boundary and preview UI
 together. Existing JSON/CSV report routes and report calculations remain
 available; no migration or data rollback is required.
+
+## Implementation evidence — 2026-07-14
+
+- VAT and statutory technical-preview PDFs now use one tenant-scoped branding
+  snapshot and one bounded PDF renderer; invalid/remote logos safely fall back
+  to text identity.
+- The browser validates successful `application/pdf` responses and the `%PDF-`
+  signature before opening an accessible preview. Download reuses those exact
+  validated bytes.
+- Existing CSV rendering and accounting/report calculations are unchanged.
+- Focused finance/document regression: 4 files, 10 tests passed. Full server
+  regression: 71 files passed, 1 skipped; 244 tests passed, 1 skipped.
+- Server/web typechecks, web production build, runtime schema check, design-token
+  gate, accessibility gate and all focused browser-script tests passed.
+- Representative one-page VAT and two-page management-accounts PDFs were
+  checked with Poppler and visually inspected for alignment, safe fallback,
+  page numbering, multi-page footers and VAKA attribution.
+- Production dependency audits reported 0 vulnerabilities for server and web.
+- GitHub review, remote CI, deployment and authenticated live verification are
+  pending because the local GitHub CLI credential has expired. No deployment or
+  live activation is claimed.
