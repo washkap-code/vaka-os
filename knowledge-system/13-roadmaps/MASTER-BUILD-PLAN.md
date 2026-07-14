@@ -94,8 +94,8 @@ Every tax rate is effective-dated and configurable — never hard-coded. Account
 |---|---|---|---|
 | P4-001 | Supplier records unified with finance vendor (one canonical Supplier) | — | ✅ Technically verified; production DDL hand-apply pending |
 | P4-002 | Purchase requisition → RFQ → purchase order → goods receipt with approvals | P1-002 | ✅ Technically verified; production DDL hand-apply pending |
-| P4-003 | Three-way match (PO ↔ receipt ↔ bill) before posting AP | P4-002, P2-001 | Implementation complete; full gate in progress; production DDL hand-apply pending |
-| P4-004 | Supplier performance & spend analytics | P1-006 | Planned |
+| P4-003 | Three-way match (PO ↔ receipt ↔ bill) before posting AP | P4-002, P2-001 | ✅ Technically verified; production DDL hand-apply pending |
+| P4-004 | Supplier performance & spend analytics | P1-006 | Implementation complete; hosted full DB gate in progress |
 
 ---
 
@@ -221,3 +221,9 @@ claim external or guaranteed delivery or automatic replenishment. The supplied
 P2-003 → P1-006 → P1-008 → P3-003 → P5-004 sequence is complete;
 cross-cutting operations work remains tracked in the permanent `OPS-*`
 namespace.
+
+P4-004 adds a live, read-only canonical report for supplier spend, completed-
+delivery performance, current strict-match exceptions and reconciled GRNI/AP
+source exposure. It does not create an analytics balance, financial write or
+schema. Complete AP allocation, historical rejected-attempt evidence and
+qualified accounting approval remain gated.

@@ -60,6 +60,44 @@ type MatchResult = {
   reasons: Array<{ code: MatchReasonCode; message: string; purchaseOrderLineItemId?: string }>;
   evaluatedAt: string;
 };
+type SupplierAnalyticsReport = {
+  generatedAt: string;
+  baseCurrency: Currency;
+  summary: {
+    supplierCount: number; baseSpend: string; onTimeOrders: number; eligibleDeliveryOrders: number;
+    onTimeRateBasisPoints: number | null; openGrniBase: string; sourceScheduledApBase: string;
+    currentBlockedDrafts: number;
+  };
+  spend: { baseGrossTiesToApSource: boolean; rows: Array<{
+    supplierId: string; supplierName: string; currency: Currency; postedBillCount: number;
+    originalGross: string; baseGross: string;
+  }> };
+  delivery: { rows: Array<{
+    supplierId: string; supplierName: string; completedOrders: number; eligibleOrders: number;
+    onTimeOrders: number; lateOrders: number; missingExpectedDate: number; onTimeRateBasisPoints: number | null;
+  }> };
+  priceVariance: { postedPolicy: "STRICT_EXACT_MATCH"; postedBaseVariance: string; rows: Array<{
+    billId: string; supplierName: string; supplierInvoiceNumber: string; currency: Currency;
+    quantity: string; approvedUnitPrice: string; billUnitPrice: string; originalVariance: string;
+    baseVarianceAtPoRate: string;
+  }> };
+  matchExceptions: {
+    historicalAttemptCoverage: "NOT_RECORDED_ROLLED_BACK_ATTEMPTS";
+    draftsEvaluated: number; blockedDrafts: number;
+    reasonCounts: Array<{ code: MatchReasonCode; count: number }>;
+  };
+  exposure: {
+    grni: {
+      rows: Array<{ supplierId: string; supplierName: string; currency: Currency; openOriginal: string; openBase: string }>;
+      selectedScheduleBase: string; tenantControlBase: string; tenantUnallocatedBase: string; tenantTies: boolean;
+    };
+    accountsPayable: {
+      rows: Array<{ supplierId: string; supplierName: string; currency: Currency; postedBillCount: number; originalGross: string; baseGross: string }>;
+      completeOpenItemSubledger: false; selectedScheduleBase: string; tenantControlBase: string;
+      tenantUnallocatedBase: string; tenantTies: boolean;
+    };
+  };
+};
 type EntryLine = { productId: string; warehouseId: string; quantity: string; unitCost: string };
 type Dialog =
   | { kind: "requisition" }
@@ -81,7 +119,7 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
   readonly: boolean; permissions: readonly string[]; currentUserId: string; baseCurrency: Currency;
 }) {
   const copy = appEnglish.procurement;
-  const [tab, setTab] = useState<"requisitions" | "rfqs" | "orders" | "receipts" | "bills">("requisitions");
+  const [tab, setTab] = useState<"requisitions" | "rfqs" | "orders" | "receipts" | "bills" | "analytics">("requisitions");
   const [reference, setReference] = useState<ReferenceData | null>(null);
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [rfqs, setRfqs] = useState<RequestForQuote[]>([]);
@@ -146,6 +184,7 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
     ["orders", copy.tabs.orders, orders.length],
     ["receipts", copy.tabs.receipts, receipts.length],
     ["bills", copy.tabs.bills, bills.length],
+    ["analytics", copy.tabs.analytics, null],
   ] as const;
 
   return <section className="procurement-workspace">
@@ -160,7 +199,7 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
     <div className="procurement-control-note" role="note"><strong>{copy.controlTitle}</strong><span>{copy.controlDetail}</span></div>
     <div className="tabs procurement-tabs" role="tablist" aria-label={copy.workspaceSections}>
       {tabs.map(([key, label, count]) => <button key={key} role="tab" aria-selected={tab === key}
-        className={tab === key ? "active" : ""} onClick={() => setTab(key)}>{label}<span>{count}</span></button>)}
+        className={tab === key ? "active" : ""} onClick={() => setTab(key)}>{label}{count !== null && <span>{count}</span>}</button>)}
     </div>
     {error && <div className="err-text procurement-error" role="alert">{error} <button className="auth-link" onClick={() => void load()}>{copy.retry}</button></div>}
     {loading ? <div className="panel procurement-loading" aria-live="polite">{copy.loading}</div> : <>
@@ -228,6 +267,7 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
           </div>
         </article>;
       })}</RecordGrid>}
+      {tab === "analytics" && reference && <SupplierAnalyticsPanel suppliers={reference.suppliers} />}
     </>}
     {dialog?.kind === "requisition" && reference && <RequisitionDialog reference={reference} baseCurrency={baseCurrency} busy={busy} error={error}
       onClose={() => setDialog(null)} onSave={(body) => finish(() => api("/purchase-requisitions", { method: "POST", body }))} />}
@@ -250,6 +290,120 @@ export function ProcurementWorkspace({ readonly, permissions, currentUserId, bas
         { method: dialog.bill ? "PUT" : "POST", body },
       ))} />}
   </section>;
+}
+
+function SupplierAnalyticsPanel({ suppliers }: { suppliers: ReferenceData["suppliers"] }) {
+  const copy = appEnglish.procurement.analytics;
+  const currentDate = new Date().toISOString().slice(0, 10);
+  const [from, setFrom] = useState(`${currentDate.slice(0, 7)}-01`);
+  const [to, setTo] = useState(currentDate);
+  const [asAt, setAsAt] = useState(currentDate);
+  const [supplierId, setSupplierId] = useState("");
+  const [report, setReport] = useState<SupplierAnalyticsReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadReport = useCallback(async (period: { from: string; to: string; asAt: string; supplierId: string }) => {
+    setLoading(true); setError("");
+    const query = new URLSearchParams({ from: period.from, to: period.to, asAt: period.asAt });
+    if (period.supplierId) query.set("supplierId", period.supplierId);
+    try {
+      setReport(await api(`/reports/supplier-performance?${query.toString()}`) as SupplierAnalyticsReport);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : copy.loadError);
+    } finally { setLoading(false); }
+  }, [copy.loadError]);
+
+  useEffect(() => {
+    void loadReport({ from: `${currentDate.slice(0, 7)}-01`, to: currentDate, asAt: currentDate, supplierId: "" });
+  }, [currentDate, loadReport]);
+
+  const percent = (basisPoints: number | null) => basisPoints === null
+    ? copy.notAvailable : `${(basisPoints / 100).toFixed(1)}%`;
+  const noRows = report && report.spend.rows.length === 0 && report.delivery.rows.length === 0
+    && report.priceVariance.rows.length === 0 && report.exposure.grni.rows.length === 0
+    && report.exposure.accountsPayable.rows.length === 0;
+
+  return <section className="supplier-analytics" aria-labelledby="supplier-analytics-title">
+    <header className="supplier-analytics-heading">
+      <div><h2 id="supplier-analytics-title">{copy.title}</h2><p className="sub">{copy.help}</p></div>
+      {report && <span className="sub">{copy.generated.replace("{date}", new Date(report.generatedAt).toLocaleString())}</span>}
+    </header>
+    <form className="supplier-analytics-filters panel" onSubmit={(event) => {
+      event.preventDefault(); void loadReport({ from, to, asAt, supplierId });
+    }}>
+      <LegacyField label={copy.from}><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} required /></LegacyField>
+      <LegacyField label={copy.to}><input type="date" value={to} onChange={(event) => setTo(event.target.value)} required /></LegacyField>
+      <LegacyField label={copy.asAt}><input type="date" value={asAt} min={to} onChange={(event) => setAsAt(event.target.value)} required /></LegacyField>
+      <LegacyField label={copy.supplier}><select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}>
+        <option value="">{copy.allSuppliers}</option>
+        {suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+      </select></LegacyField>
+      <button className="btn" type="submit" disabled={loading}>{loading ? copy.refreshing : copy.refresh}</button>
+    </form>
+    {error && <div className="err-text procurement-error" role="alert">{error} <button className="auth-link" onClick={() => void loadReport({ from, to, asAt, supplierId })}>{copy.retry}</button></div>}
+    {loading && !report ? <div className="panel procurement-loading" role="status">{copy.loading}</div> : report && <>
+      <div className="supplier-analytics-metrics" aria-label={copy.summaryLabel}>
+        <AnalyticsMetric label={copy.baseSpend} value={fmt(report.summary.baseSpend, report.baseCurrency)} detail={copy.postedBillsBasis} />
+        <AnalyticsMetric label={copy.onTimeRate} value={percent(report.summary.onTimeRateBasisPoints)} detail={copy.onTimeDetail.replace("{onTime}", String(report.summary.onTimeOrders)).replace("{eligible}", String(report.summary.eligibleDeliveryOrders))} />
+        <AnalyticsMetric label={copy.openGrni} value={fmt(report.summary.openGrniBase, report.baseCurrency)} detail={copy.asAtDetail.replace("{date}", asAt)} />
+        <AnalyticsMetric label={copy.apSchedule} value={fmt(report.summary.sourceScheduledApBase, report.baseCurrency)} detail={copy.incompleteAp} />
+        <AnalyticsMetric label={copy.blockedDrafts} value={String(report.summary.currentBlockedDrafts)} detail={copy.currentDraftBasis} />
+      </div>
+      {noRows && <div className="panel procurement-empty">{copy.empty}</div>}
+      <AnalyticsSection title={copy.spendTitle} help={copy.spendHelp}>
+        <AnalyticsTable label={copy.spendTableLabel} headers={[copy.supplierColumn, copy.billsColumn, copy.originalGross, copy.baseGross]} empty={copy.noSpend}>
+          {report.spend.rows.map((row) => <tr key={`${row.supplierId}-${row.currency}`}><td>{row.supplierName}</td><td className="num">{row.postedBillCount}</td><td className="num">{fmt(row.originalGross, row.currency)}</td><td className="num">{fmt(row.baseGross, report.baseCurrency)}</td></tr>)}
+        </AnalyticsTable>
+        <ReconciliationStatus ties={report.spend.baseGrossTiesToApSource} success={copy.spendTies} warning={copy.spendDifference} />
+      </AnalyticsSection>
+      <AnalyticsSection title={copy.deliveryTitle} help={copy.deliveryHelp}>
+        <AnalyticsTable label={copy.deliveryTableLabel} headers={[copy.supplierColumn, copy.completedColumn, copy.onTimeColumn, copy.lateColumn, copy.rateColumn]} empty={copy.noDelivery}>
+          {report.delivery.rows.map((row) => <tr key={row.supplierId}><td>{row.supplierName}</td><td className="num">{row.completedOrders}</td><td className="num">{row.onTimeOrders}</td><td className="num">{row.lateOrders}</td><td className="num">{percent(row.onTimeRateBasisPoints)}</td></tr>)}
+        </AnalyticsTable>
+      </AnalyticsSection>
+      <AnalyticsSection title={copy.exceptionsTitle} help={copy.exceptionsHelp}>
+        <div className="supplier-analytics-exceptions">
+          <div><h4>{copy.blockReasons}</h4>{report.matchExceptions.reasonCounts.length > 0
+            ? <ul>{report.matchExceptions.reasonCounts.map((row) => <li key={row.code}><strong>{row.count}</strong><span>{appEnglish.procurement.matchReasons[row.code]}</span></li>)}</ul>
+            : <p className="sub">{copy.noBlocks}</p>}</div>
+          <div><h4>{copy.priceVariance}</h4>{report.priceVariance.rows.length > 0
+            ? <ul>{report.priceVariance.rows.map((row) => <li key={`${row.billId}-${row.supplierInvoiceNumber}`}><strong>{row.supplierName}</strong><span>{copy.varianceDetail.replace("{reference}", row.supplierInvoiceNumber).replace("{amount}", fmt(row.originalVariance, row.currency))}</span></li>)}</ul>
+            : <p className="sub">{copy.noVariance}</p>}</div>
+        </div>
+        <p className="supplier-analytics-disclosure" role="note">{copy.attemptDisclosure}</p>
+      </AnalyticsSection>
+      <AnalyticsSection title={copy.exposureTitle} help={copy.exposureHelp}>
+        <div className="supplier-analytics-exposure-grid">
+          <div><h4>{copy.grniTitle}</h4><AnalyticsTable label={copy.grniTableLabel} headers={[copy.supplierColumn, copy.originalOpen, copy.baseOpen]} empty={copy.noGrni}>
+            {report.exposure.grni.rows.map((row) => <tr key={`${row.supplierId}-${row.currency}`}><td>{row.supplierName}</td><td className="num">{fmt(row.openOriginal, row.currency)}</td><td className="num">{fmt(row.openBase, report.baseCurrency)}</td></tr>)}
+          </AnalyticsTable><ReconciliationStatus ties={report.exposure.grni.tenantTies} success={copy.grniTies} warning={copy.controlDifference.replace("{amount}", fmt(report.exposure.grni.tenantUnallocatedBase, report.baseCurrency))} /></div>
+          <div><h4>{copy.apTitle}</h4><AnalyticsTable label={copy.apTableLabel} headers={[copy.supplierColumn, copy.originalGross, copy.baseGross]} empty={copy.noAp}>
+            {report.exposure.accountsPayable.rows.map((row) => <tr key={`${row.supplierId}-${row.currency}`}><td>{row.supplierName}</td><td className="num">{fmt(row.originalGross, row.currency)}</td><td className="num">{fmt(row.baseGross, report.baseCurrency)}</td></tr>)}
+          </AnalyticsTable><ReconciliationStatus ties={report.exposure.accountsPayable.tenantTies} success={copy.apTies} warning={copy.controlDifference.replace("{amount}", fmt(report.exposure.accountsPayable.tenantUnallocatedBase, report.baseCurrency))} /></div>
+        </div>
+        <p className="supplier-analytics-disclosure" role="note">{copy.apDisclosure}</p>
+      </AnalyticsSection>
+    </>}
+  </section>;
+}
+
+function AnalyticsMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return <article className="supplier-analytics-metric"><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>;
+}
+
+function AnalyticsSection({ title, help, children }: { title: string; help: string; children: React.ReactNode }) {
+  return <section className="supplier-analytics-section panel"><header><h3>{title}</h3><p className="sub">{help}</p></header>{children}</section>;
+}
+
+function AnalyticsTable({ label, headers, empty, children }: {
+  label: string; headers: string[]; empty: string; children: React.ReactNode;
+}) {
+  return <div className="table-scroll" role="region" aria-label={label} tabIndex={0}><table><thead><tr>{headers.map((header, index) => <th key={header} className={index > 0 ? "num" : undefined}>{header}</th>)}</tr></thead><tbody>{Children.count(children) > 0 ? children : <tr><td colSpan={headers.length}>{empty}</td></tr>}</tbody></table></div>;
+}
+
+function ReconciliationStatus({ ties, success, warning }: { ties: boolean; success: string; warning: string }) {
+  return <p className={`supplier-analytics-reconciliation ${ties ? "ties" : "difference"}`}><strong>{ties ? appEnglish.procurement.analytics.reconciled : appEnglish.procurement.analytics.reviewRequired}</strong><span>{ties ? success : warning}</span></p>;
 }
 
 function RecordGrid({ empty, children }: { empty: string; children: React.ReactNode }) {

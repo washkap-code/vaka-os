@@ -27,6 +27,19 @@
 
 ### Added
 
+- **Supplier performance and spend analytics (P4-004):** Added a read-only,
+  tenant-scoped Procurement report over canonical suppliers, purchase orders,
+  goods receipts, strict-match supplier bills and append-only ledger evidence.
+  It presents posted spend in original and base currencies, final-receipt
+  on-time rates, current draft price/match exceptions, and open GRNI/AP source
+  schedules with tenant control-account differences. Exact minor-unit and
+  six-decimal rate arithmetic avoids floating-point accumulation. The
+  responsive Supplier Analytics workspace includes governed period/supplier
+  filters, loading/error/empty states and textual reconciliation disclosures.
+  AP payment allocation, historical rejected-attempt tracking and professional
+  accounting approval remain explicit gates. No schema or financial write was
+  added, and no production database command was run.
+
 - **Supplier bills and enforced three-way match (P4-003):** Added tenant-scoped
   supplier-bill drafts against approved purchase orders, effective-dated input
   tax snapshots, deterministic PO/receipt/bill match evidence and

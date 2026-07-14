@@ -91,6 +91,7 @@ import {
   createSupplierBill, evaluateSupplierBillMatch, getSupplierBill, listSupplierBills,
   postSupplierBill, supplierBillCreateSchema, supplierBillPostSchema, supplierBillUpdateSchema, updateSupplierBill,
 } from "./supplier-bills.js";
+import { getSupplierAnalytics, supplierAnalyticsQuerySchema } from "./supplier-analytics.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -1458,6 +1459,13 @@ api.get("/supplier-bills/:id", requireAnyPermission("procurement.read", "account
   getSupplierBill(tenantId(req), uuidRouteParam(req, "id"))));
 api.get("/supplier-bills/:id/match", requireAnyPermission("procurement.read", "accounting.read"), wrap(async (req) =>
   evaluateSupplierBillMatch(tenantId(req), uuidRouteParam(req, "id"))));
+api.get("/reports/supplier-performance", requireAnyPermission("procurement.read", "accounting.read", "reports.read"), wrap(async (req, res) => {
+  const report = await getSupplierAnalytics({
+    tenantId: tenantId(req), query: supplierAnalyticsQuerySchema.parse(req.query),
+  });
+  res.setHeader("Cache-Control", "private, no-store");
+  return report;
+}));
 api.post("/supplier-bills", requirePermission("accounting.post"), wrap(async (req) =>
   createSupplierBill({ tenantId: tenantId(req), actorUserId: req.auth!.userId,
     input: supplierBillCreateSchema.parse(req.body) })));

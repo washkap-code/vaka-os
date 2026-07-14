@@ -78,6 +78,16 @@ journal, audit and post-commit event commit atomically. Posted bills are
 immutable. Payment allocation, credit/debit notes, non-PO bills and
 registration-aware tax eligibility remain future controlled work.
 
+P4-004 adds a bounded read-only management report over those canonical source
+records. Posted supplier-bill spend retains original currency and ties base
+gross to AP journal evidence; final-receipt delivery rates use disclosed UTC
+calendar dates; current draft price/match exceptions reuse the strict P4-003
+evaluator; and receipt/bill GRNI plus bill-source AP schedules reconcile to
+tenant control accounts. It does not create a new balance or posting. Rolled-
+back match attempts are not invented as history, and AP remains explicitly
+incomplete until payment allocation exists. Legal-entity and qualified
+accounting approval gates remain open.
+
 ## 6. Banking, cash and treasury
 
 Bank accounts, statement imports, normalized transactions, matching, reconciliation, cash positioning, transfers and payment integrations are provider-neutral. Browser scraping and stored internet-banking credentials are prohibited. Read-only ingestion and deterministic reconciliation precede outbound payment capability. Payment initiation requires step-up/approval, idempotency, signed provider evidence and reconciliation.
