@@ -1,6 +1,6 @@
 # P6-014 — Imports, Capture and Bank Review Accessibility
 
-**Status:** Implementation complete; all local release gates passed; remote release pending
+**Status:** Released (PR #75); local, remote, production and live-bundle gates passed
 **Programme:** 6 — Application shell, navigation and workbench
 **Type:** Frontend accessibility remediation and localisation adoption
 **Depends on:** P6-001 design system; P6-005 legacy field and modal patterns; existing import, capture and bank-reconciliation services

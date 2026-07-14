@@ -1,7 +1,7 @@
 # P6-009 Completion Report
 
 **Date:** 2026-07-14
-**Status:** Implementation complete; all local release gates passed; remote quality and production release pending
+**Status:** Released (PR #74); local, remote, production and live-bundle gates passed
 
 ## Delivered
 
@@ -82,9 +82,15 @@ gated.
 
 ## Release evidence
 
-P6-008 and the refined Platform Administration release are live prerequisites.
-P6-009 remains unreleased until its GitHub quality gate, Vercel preview,
-approved merge, post-merge main gate, Production deployment and live-bundle
-verification pass. Release evidence will be retained in the PR and deployment
-records. Rollback requires only reverting the scoped frontend and documentation
-commits.
+P6-008 and the refined Platform Administration release were live prerequisites.
+P6-009 was squash-merged through [PR #74](https://github.com/washkap-code/vaka-os/pull/74)
+at commit `51bdf1ffd59ff713f8e9e318f548e8c6c2af4f58` after the GitHub quality gate,
+Vercel preview and preview-comment checks passed. The post-merge `main` quality
+gate [run 29307557969](https://github.com/washkap-code/vaka-os/actions/runs/29307557969)
+passed. GitHub deployment `5435534716` recorded the exact commit in the
+Production environment with state `success`. The public site subsequently
+served the matching production assets `/assets/index-CIJ-03AW.js` and
+`/assets/index-BxUHYgxr.css` over HTTPS with status 200.
+
+Rollback requires only reverting the scoped frontend and documentation commit;
+no database rollback is required.
