@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Definition:** Accepted commercial-control target  
-**Implementation:** Plans/subscriptions/dunning and referral foundations; governed catalogue/entitlements and full commercial readiness partial
+**Implementation:** Plans/subscriptions/dunning and referral foundations; configuration-gated verified Paynow subscription collection in progress; governed catalogue/entitlements and full commercial readiness partial
 
 ## 1. Commercial doctrine
 

@@ -1,8 +1,8 @@
 # CO-006 — Verified Paynow Subscription Collection
 
-**Status:** Approved by the product owner for implementation  
-**Programme:** Commercial operations  
-**Type:** VAKA subscription payment collection, provider reconciliation and billing-run clarity  
+**Status:** Implementation complete and locally verified; remote database gates and live merchant activation pending
+**Programme:** Commercial operations
+**Type:** VAKA subscription payment collection, provider reconciliation and billing-run clarity
 **Depends on:** Existing recurring subscription billing; P1-005 events; platform audit; Zimbabwe provider catalogue
 
 ## Outcome

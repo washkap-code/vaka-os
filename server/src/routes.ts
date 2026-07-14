@@ -3,7 +3,7 @@
 // every write is permission-checked and audited; suspended tenants pass
 // through the lifecycle gate (read-only + billing + export).
 // ============================================================================
-import { Router, Response } from "express";
+import { Router, Response, text as expressText } from "express";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { and, eq, desc, isNull, sql } from "drizzle-orm";
@@ -66,6 +66,10 @@ import { latestEmailPreference, recordEmailPreference } from "./communication-pr
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
 import { sendFinanceDocument } from "./finance-document-delivery.js";
 import { listNotifications } from "./notifications.js";
+import {
+  initiateSubscriptionPayment, listSubscriptionPaymentAttempts, processPaynowResult,
+  refreshSubscriptionPayment, subscriptionPaymentAvailability,
+} from "./subscription-payments.js";
 import {
   bulkUpdateContacts, decideContactDeletionRequest, deleteOrRequestContacts,
   listContactDeletionRequests,
@@ -178,6 +182,51 @@ api.get("/public/invoices/:token/pdf", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+api.get("/public/workspaces/:subdomain/holding", wrap(async (req, res) => {
+  const subdomain = z.string().trim().toLowerCase()
+    .regex(/^[a-z0-9](?:[a-z0-9-]{1,29}[a-z0-9])?$/)
+    .parse(routeParam(req, "subdomain"));
+  const [tenant] = await db.select({
+    companyName: schema.tenants.companyName,
+    subdomain: schema.tenants.subdomain,
+    status: schema.tenants.status,
+    logoUrl: schema.tenants.logoUrl,
+    brandPrimaryColor: schema.tenants.brandPrimaryColor,
+    brandSecondaryColor: schema.tenants.brandSecondaryColor,
+    holdingPageHeading: schema.tenants.holdingPageHeading,
+    holdingPageMessage: schema.tenants.holdingPageMessage,
+    holdingOfferTitle: schema.tenants.holdingOfferTitle,
+    holdingOfferBody: schema.tenants.holdingOfferBody,
+    holdingOfferCtaLabel: schema.tenants.holdingOfferCtaLabel,
+    holdingOfferCtaUrl: schema.tenants.holdingOfferCtaUrl,
+  }).from(schema.tenants).where(eq(schema.tenants.subdomain, subdomain));
+  if (!tenant || tenant.status === "CLOSED") throw notFound("Workspace not found");
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  return {
+    companyName: tenant.companyName,
+    subdomain: tenant.subdomain,
+    logoUrl: tenant.logoUrl,
+    brandPrimaryColor: tenant.brandPrimaryColor,
+    brandSecondaryColor: tenant.brandSecondaryColor,
+    heading: tenant.holdingPageHeading,
+    message: tenant.holdingPageMessage,
+    offer: tenant.holdingOfferTitle || tenant.holdingOfferBody ? {
+      title: tenant.holdingOfferTitle,
+      body: tenant.holdingOfferBody,
+      ctaLabel: tenant.holdingOfferCtaLabel,
+      ctaUrl: tenant.holdingOfferCtaUrl,
+    } : null,
+  };
+}));
+
+api.post("/public/payments/paynow/result",
+  expressText({ type: "application/x-www-form-urlencoded", limit: "16kb" }),
+  wrap(async (req, res) => {
+    const result = await processPaynowResult(z.string().max(16_384).parse(req.body));
+    res.setHeader("Cache-Control", "no-store");
+    return { received: true, status: result.attempt.status };
+  }));
+
 // everything below requires auth + lifecycle gate
 api.use(authenticate as any, lifecycleGate as any);
 
@@ -214,6 +263,15 @@ api.get("/me", wrap(async (req) => {
       invoiceBankSwiftCode: t.invoiceBankSwiftCode,
       invoiceBankCurrency: t.invoiceBankCurrency,
       showVatNumberOnInvoices: t.showVatNumberOnInvoices,
+      signOutDestination: t.signOutDestination,
+      idleSignOutEnabled: t.idleSignOutEnabled,
+      idleSignOutMinutes: t.idleSignOutMinutes,
+      holdingPageHeading: t.holdingPageHeading,
+      holdingPageMessage: t.holdingPageMessage,
+      holdingOfferTitle: t.holdingOfferTitle,
+      holdingOfferBody: t.holdingOfferBody,
+      holdingOfferCtaLabel: t.holdingOfferCtaLabel,
+      holdingOfferCtaUrl: t.holdingOfferCtaUrl,
     } : null,
   };
 }));
@@ -263,12 +321,14 @@ api.post("/auth/change-password", wrap(async (req) => {
 }));
 
 api.post("/auth/logout", wrap(async (req) => {
+  const body = z.object({ reason: z.enum(["EXPLICIT", "IDLE"]).default("EXPLICIT") })
+    .parse(req.body ?? {});
   if (!req.auth!.sessionId) return { revoked: false };
   return revokeSession({
     tenantId: req.auth!.tenantId,
     sessionId: req.auth!.sessionId,
     actorUserId: req.auth!.userId,
-    reason: "user_sign_out",
+    reason: body.reason === "IDLE" ? "idle_sign_out" : "user_sign_out",
   });
 }));
 
@@ -505,6 +565,43 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
   await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, {
     changedFields,
     documentPaymentDetailsChanged: changedFields.some((field) => field.startsWith("invoiceBank") || field === "invoicePaymentTerms"),
+  });
+  return updated;
+}));
+api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(async (req) => {
+  const nullableText = (max: number) => z.string().trim().max(max)
+    .transform((value) => value || null);
+  const body = z.object({
+    signOutDestination: z.enum(["PUBLIC_HOME", "HOLDING_PAGE"]),
+    idleSignOutEnabled: z.boolean(),
+    idleSignOutMinutes: z.number().int().min(5).max(480),
+    holdingPageHeading: nullableText(100),
+    holdingPageMessage: nullableText(500),
+    holdingOfferTitle: nullableText(100),
+    holdingOfferBody: nullableText(500),
+    holdingOfferCtaLabel: nullableText(50),
+    holdingOfferCtaUrl: z.union([
+      z.string().url().refine((value) => new URL(value).protocol === "https:", "Offer link must use HTTPS"),
+      z.literal(""),
+    ]).transform((value) => value || null),
+  }).superRefine((value, ctx) => {
+    if (Boolean(value.holdingOfferCtaLabel) !== Boolean(value.holdingOfferCtaUrl)) {
+      ctx.addIssue({ code: "custom", path: ["holdingOfferCtaLabel"], message: "Offer button label and HTTPS link must be configured together" });
+    }
+    if (value.holdingOfferCtaUrl && !value.holdingOfferTitle && !value.holdingOfferBody) {
+      ctx.addIssue({ code: "custom", path: ["holdingOfferTitle"], message: "Offer content is required before adding an offer button" });
+    }
+  }).parse(req.body);
+  const tid = tenantId(req);
+  const [updated] = await db.update(schema.tenants).set(body)
+    .where(eq(schema.tenants.id, tid)).returning();
+  await audit(db, tid, req.auth!.userId, "settings.holding_page_updated", "tenant", tid, {
+    signOutDestination: body.signOutDestination,
+    idleSignOutEnabled: body.idleSignOutEnabled,
+    idleSignOutMinutes: body.idleSignOutMinutes,
+    customHeading: Boolean(body.holdingPageHeading),
+    offerConfigured: Boolean(body.holdingOfferTitle || body.holdingOfferBody),
+    offerLinkConfigured: Boolean(body.holdingOfferCtaUrl),
   });
   return updated;
 }));
@@ -1633,6 +1730,22 @@ api.get("/billing/subscription", wrap(async (req) => {
 api.get("/billing/invoices", wrap(async (req) =>
   db.select().from(schema.subscriptionInvoices).where(eq(schema.subscriptionInvoices.tenantId, tenantId(req)))
     .orderBy(desc(schema.subscriptionInvoices.issuedAt))));
+api.get("/billing/payment-provider", wrap(async () => subscriptionPaymentAvailability()));
+api.get("/billing/payment-attempts", requirePermission("billing.manage"), wrap(async (req) =>
+  listSubscriptionPaymentAttempts(tenantId(req))));
+api.post("/billing/invoices/:id/payment-attempts", requirePermission("billing.manage"), wrap(async (req) =>
+  initiateSubscriptionPayment({
+    tenantId: tenantId(req),
+    invoiceId: routeParam(req, "id"),
+    actorUserId: req.auth!.userId,
+    idempotencyKey: financialIdempotencyKey(req),
+  })));
+api.post("/billing/payment-attempts/:id/refresh", requirePermission("billing.manage"), wrap(async (req) =>
+  refreshSubscriptionPayment({
+    tenantId: tenantId(req),
+    attemptId: routeParam(req, "id"),
+    actorUserId: req.auth!.userId,
+  })));
 api.get("/billing/plans", wrap(async () => db.select().from(schema.plans)));
 api.get("/billing/arrears-status", wrap(async (req) => {
   const tenant = (req as any).tenant as { status: string };

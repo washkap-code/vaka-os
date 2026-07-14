@@ -5,6 +5,7 @@ import { notificationCopy } from "../src/shell/notification-copy.ts";
 import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "../src/shell/workbench-model.ts";
 import { parseWorkspaceSearchResponse, workspaceSearchTarget } from "../src/shell/command-search-model.ts";
 import { filterPlatformTenants, visiblePlatformAdminPages } from "../src/platform/platform-admin-model.ts";
+import { idleSignOutPhase, normalizeIdleSignOutMinutes } from "../src/shell/idle-signout-model.ts";
 
 const notificationCatalogue = {
   lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
@@ -105,4 +106,14 @@ test("workspace search maps only the governed object and destination pair", () =
   }] });
   assert.deepEqual(workspaceSearchTarget(result), { page: "invoices", entityType: "invoice", recordId: "invoice-one" });
   assert.equal(workspaceSearchTarget({ ...result, object: { ...result.object, navigation: { section: "crm", recordView: "invoice" } } }), null);
+});
+
+test("idle sign-out policy enforces the minimum, warning and expired phases", () => {
+  assert.equal(normalizeIdleSignOutMinutes(1), 5);
+  assert.equal(normalizeIdleSignOutMinutes(30.9), 30);
+  assert.equal(normalizeIdleSignOutMinutes(999), 480);
+  assert.equal(idleSignOutPhase(600_000, 539_999), "ACTIVE");
+  assert.equal(idleSignOutPhase(600_000, 540_000), "WARNING");
+  assert.equal(idleSignOutPhase(600_000, 600_000), "EXPIRED");
+  assert.equal(idleSignOutPhase(600_000, 900_000), "EXPIRED");
 });

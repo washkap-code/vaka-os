@@ -1,8 +1,8 @@
 # P6-018 — Tenant-branded Secure Holding and Sign-out Experience
 
-**Status:** Approved by the product owner for implementation  
-**Programme:** 6 — Application shell, navigation and workbench  
-**Type:** Public tenant entry, explicit sign-out destination and inactivity privacy policy  
+**Status:** Implementation complete and locally verified; remote database and release gates pending
+**Programme:** 6 — Application shell, navigation and workbench
+**Type:** Public tenant entry, explicit sign-out destination and inactivity privacy policy
 **Depends on:** P6-001 design system; P6-002 shell; P9-008 session controls; existing tenant branding
 
 ## Outcome

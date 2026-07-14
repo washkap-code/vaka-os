@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import type { ChangeEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, CSSProperties, KeyboardEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
 import { appEnglish } from "./locales/app.en";
@@ -9,6 +9,7 @@ import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } 
 import { WorkspaceShell } from "./shell/workspace-shell";
 import { UniversalWorkbench, type WorkbenchData } from "./shell/universal-workbench";
 import type { WorkspaceSearchTarget } from "./shell/command-search-model";
+import { idleSignOutPhase, normalizeIdleSignOutMinutes } from "./shell/idle-signout-model";
 import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 import { LegacyField } from "./accessibility/legacy-field";
@@ -44,8 +45,20 @@ type Me = {
     invoiceBankAccountNumber: string | null; invoiceBankBranch: string | null;
     invoiceBankSwiftCode: string | null; invoiceBankCurrency: "USD" | "ZWG" | null;
     showVatNumberOnInvoices: boolean;
+    signOutDestination: "PUBLIC_HOME" | "HOLDING_PAGE";
+    idleSignOutEnabled: boolean; idleSignOutMinutes: number;
+    holdingPageHeading: string | null; holdingPageMessage: string | null;
+    holdingOfferTitle: string | null; holdingOfferBody: string | null;
+    holdingOfferCtaLabel: string | null; holdingOfferCtaUrl: string | null;
   } | null;
 };
+type HoldingPageConfig = {
+  companyName: string; subdomain: string; logoUrl: string | null;
+  brandPrimaryColor: string; brandSecondaryColor: string;
+  heading: string | null; message: string | null;
+  offer: null | { title: string | null; body: string | null; ctaLabel: string | null; ctaUrl: string | null };
+};
+type BillingRunResult = { invoiced: number; movedPastDue: number; suspended: number; activatedFromTrial: number };
 type ArrearsStatus = {
   stage: "CLEAR" | "DUE_SOON" | "OVERDUE" | "SUSPENDED";
   overdueInvoiceCount: number;
@@ -284,26 +297,84 @@ export default function App() {
     document.title = me?.tenant ? `${me.tenant.companyName} — VAKA OS` : "VAKA OS";
   }, [me]);
 
-  const logout = () => {
-    void api("/auth/logout", { method: "POST" }).finally(() => {
+  const logout = (reason: "EXPLICIT" | "IDLE" = "EXPLICIT") => {
+    const tenant = me?.tenant;
+    void api("/auth/logout", { method: "POST", body: { reason } }).finally(() => {
+      const useHolding = Boolean(tenant) && (reason === "IDLE" || tenant?.signOutDestination === "HOLDING_PAGE");
+      const target = useHolding ? `/workspace/${encodeURIComponent(tenant!.subdomain)}` : "/";
+      window.history.replaceState({}, "", target);
       setToken(null); setMe(null); setGate("landing");
     });
   };
   const resetToken = new URLSearchParams(window.location.search).get("resetToken");
   const [gate, setGate] = useState<"landing" | "login" | "signup">(resetToken ? "login" : "landing");
+  const workspaceMatch = /^\/workspace\/([^/]+)\/?$/.exec(window.location.pathname);
+  const holdingPreview = new URLSearchParams(window.location.search).get("previewHolding") === "1";
+  let workspaceSubdomain: string | null = null;
+  try { workspaceSubdomain = workspaceMatch ? decodeURIComponent(workspaceMatch[1]) : null; } catch { workspaceSubdomain = null; }
 
   if (!booted) return null;
+  if (workspaceSubdomain && holdingPreview) return <HoldingPage subdomain={workspaceSubdomain} onDone={() => {
+    window.history.replaceState({}, "", `/workspace/${encodeURIComponent(workspaceSubdomain!)}`);
+    void refresh();
+  }} />;
   if (!me) {
     if (resetToken) return <PasswordReset token={resetToken} onDone={() => {
       window.history.replaceState({}, "", window.location.pathname);
       setGate("login");
     }} />;
+    if (workspaceSubdomain) return <HoldingPage subdomain={workspaceSubdomain} onDone={refresh} />;
     if (gate === "landing") return <Landing onLogin={() => setGate("login")} onSignup={() => setGate("signup")} />;
     return <Auth initialMode={gate} onBack={() => setGate("landing")} onDone={refresh} />;
   }
-  if (me.mustChangePassword) return <PasswordChange onDone={refresh} onLogout={logout} />;
-  if (!me.tenant) return <PlatformAdmin me={me} onLogout={logout} onRefresh={refresh} />;
+  if (me.mustChangePassword) return <PasswordChange onDone={refresh} onLogout={() => logout()} />;
+  if (!me.tenant) return <PlatformAdmin me={me} onLogout={() => logout()} onRefresh={refresh} />;
   return <Shell me={me} onLogout={logout} onRefresh={refresh} />;
+}
+
+function HoldingPage({ subdomain, onDone }: { subdomain: string; onDone: () => void }) {
+  const [config, setConfig] = useState<HoldingPageConfig | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    api(`/public/workspaces/${encodeURIComponent(subdomain)}/holding`, { signal: controller.signal })
+      .then((value) => setConfig(value as HoldingPageConfig))
+      .catch(() => setFailed(true));
+    return () => controller.abort();
+  }, [subdomain]);
+  if (!config && !failed) return <div className="holding-loading" role="status">{appEnglish.holding.loading}</div>;
+  if (!config) return <div className="auth"><div className="box"><div className="brandline">VAKA OS</div>
+    <h1>{appEnglish.holding.unavailable}</h1><p>{appEnglish.holding.unavailableHelp}</p>
+    <a className="btn accent" href="/">{appEnglish.holding.home}</a></div></div>;
+  let offerUrl: string | null = null;
+  try {
+    if (config.offer?.ctaUrl && new URL(config.offer.ctaUrl).protocol === "https:") offerUrl = config.offer.ctaUrl;
+  } catch { offerUrl = null; }
+  return <main className="holding-page" style={{
+    "--holding-primary": config.brandPrimaryColor,
+    "--holding-accent": config.brandSecondaryColor,
+    "--brand": config.brandPrimaryColor,
+    "--accent": config.brandSecondaryColor,
+  } as CSSProperties}>
+    <section className="holding-brand-panel" aria-labelledby="holding-heading">
+      <div className="holding-brand-mark">{config.logoUrl
+        ? <img src={config.logoUrl} alt={`${config.companyName} logo`} />
+        : <span aria-hidden="true">{config.companyName.slice(0, 1).toUpperCase()}</span>}</div>
+      <p className="holding-eyebrow">{config.companyName}</p>
+      <h1 id="holding-heading">{config.heading || appEnglish.holding.defaultHeading.replace("{company}", config.companyName)}</h1>
+      <p>{config.message || appEnglish.holding.defaultMessage}</p>
+      {config.offer && <aside className="holding-offer">
+        {config.offer.title && <h2>{config.offer.title}</h2>}
+        {config.offer.body && <p>{config.offer.body}</p>}
+        {config.offer.ctaLabel && offerUrl && <a href={offerUrl} className="holding-offer-link">{config.offer.ctaLabel}</a>}
+      </aside>}
+      <a href="/" className="holding-home-link">{appEnglish.holding.home}</a>
+      <small>{appEnglish.holding.poweredBy}</small>
+    </section>
+    <section className="holding-login" aria-label={appEnglish.holding.signInLabel}>
+      <Auth initialMode="login" initialSubdomain={config.subdomain} lockedSubdomain onDone={onDone} />
+    </section>
+  </main>;
 }
 
 function PasswordField({ label, value, onChange, autoComplete, disabled = false, hint }: {
@@ -413,6 +484,9 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
   const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
+  const [billingMessage, setBillingMessage] = useState("");
+  const [billingResult, setBillingResult] = useState<BillingRunResult | null>(null);
+  const [billingRunAt, setBillingRunAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const copy = appEnglish.platformAdmin;
   const can = (permission: string) => me.platformPermissions.includes(permission);
@@ -448,10 +522,13 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   }, [adminNavigation, tab]);
   const runBilling = async () => {
     if (!window.confirm(copy.billingConfirm)) return;
-    setBusy(true); setMsg("");
+    setBusy(true); setMsg(""); setBillingMessage("");
     try {
-      const r = await api("/platform/billing/run", { method: "POST", body: {} });
-      setMsg(copy.billingComplete.replace("{result}", JSON.stringify(r)).slice(0, 400));
+      const r = await api("/platform/billing/run", { method: "POST", body: {} }) as BillingRunResult;
+      setBillingResult(r);
+      setBillingRunAt(new Date().toISOString());
+      const actionCount = r.invoiced + r.movedPastDue + r.suspended + r.activatedFromTrial;
+      setBillingMessage(actionCount === 0 ? copy.billingNoActions : copy.billingActionsCompleted.replace("{count}", String(actionCount)));
       await load();
     } catch (e: any) { setMsg(e.message); }
     setBusy(false);
@@ -487,6 +564,18 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
           {tab === "overview" && can("platform.billing.run") && <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>}
         </div>
         {msg && <div className="banner warn" role="status">{msg}</div>}
+        {billingMessage && <div className="banner success" role="status">{billingMessage}</div>}
+        {billingResult && <section className="panel billing-run-result" aria-labelledby="billing-run-result-heading">
+          <div><h2 id="billing-run-result-heading">{copy.billingResultHeading}</h2>
+            {billingRunAt && <p className="sub">{copy.billingRunAt.replace("{time}", new Date(billingRunAt).toLocaleString())}</p>}</div>
+          <div className="cards">
+            <div className="card"><div className="k">{copy.billingInvoicesCreated}</div><div className="v">{billingResult.invoiced}</div></div>
+            <div className="card"><div className="k">{copy.billingTrialsActivated}</div><div className="v">{billingResult.activatedFromTrial}</div></div>
+            <div className="card"><div className="k">{copy.billingMovedPastDue}</div><div className="v">{billingResult.movedPastDue}</div></div>
+            <div className="card"><div className="k">{copy.billingSuspended}</div><div className="v">{billingResult.suspended}</div></div>
+          </div>
+          <p className="sub">{copy.billingRunExplanation}</p>
+        </section>}
         {tab === "overview" && <section className="platform-admin-shortcuts" aria-labelledby="platform-shortcuts-heading">
           <div className="platform-admin-section-heading"><div><span>{copy.getThereFaster}</span><h2 id="platform-shortcuts-heading">{copy.commonDestinations}</h2></div></div>
           <div className="platform-admin-shortcut-grid">{adminNavigation.filter((item) => item.key !== "overview").slice(0, 4).map((item) =>
@@ -823,7 +912,10 @@ function PlatformSecuritySettings({ me, onSaved, onLogout }: {
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
-function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; initialMode?: "login" | "signup"; onBack?: () => void }) {
+function Auth({ onDone, initialMode = "login", onBack, initialSubdomain = "", lockedSubdomain = false }: {
+  onDone: () => void; initialMode?: "login" | "signup"; onBack?: () => void;
+  initialSubdomain?: string; lockedSubdomain?: boolean;
+}) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [recovering, setRecovering] = useState(false);
   const [mfaChallenge, setMfaChallenge] = useState("");
@@ -831,6 +923,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
   const [f, setF] = useState<any>({
     baseCurrency: "USD",
     planName: "Starter",
+    subdomain: initialSubdomain,
     referralCode: new URLSearchParams(window.location.search).get("ref") ?? "",
   });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
@@ -892,7 +985,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
     <div className="brandline">VAKA Operating System</div>
     <h1>{appEnglish.auth.recoverAccess}</h1><p>{appEnglish.auth.recoveryHelp}</p>
     <LegacyField label="Company subdomain (workspace accounts)">
-      <input value={f.subdomain ?? ""} onChange={set("subdomain")} autoComplete="organization" />
+      <input value={f.subdomain ?? ""} onChange={set("subdomain")} autoComplete="organization" disabled={lockedSubdomain} />
     </LegacyField>
     <LegacyField label="Email"><input type="email" value={f.email ?? ""} onChange={set("email")} autoComplete="email" /></LegacyField>
     <button className="btn accent full-width" disabled={busy} onClick={requestRecovery}>{appEnglish.auth.recoverAccess}</button>
@@ -914,7 +1007,7 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
         </div>
         <LegacyField label="Your full name"><input value={f.ownerName ?? ""} onChange={set("ownerName")} autoComplete="name" /></LegacyField>
       </>}
-      {mode === "login" && <LegacyField label="Company subdomain (optional)" hint="Workspace users can enter their company subdomain. Platform administrators should leave this blank."><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" /></LegacyField>}
+      {mode === "login" && <LegacyField label={lockedSubdomain ? appEnglish.holding.workspace : "Company subdomain (optional)"} hint={lockedSubdomain ? appEnglish.holding.workspaceLocked : "Workspace users can enter their company subdomain. Platform administrators should leave this blank."}><input value={f.subdomain ?? ""} onChange={set("subdomain")} placeholder="harare-retail" autoComplete="organization" disabled={lockedSubdomain} /></LegacyField>}
       <LegacyField label="Email"><input type="email" value={(mode === "login" ? f.email : f.ownerEmail) ?? ""} onChange={set(mode === "login" ? "email" : "ownerEmail")} autoComplete="email" /></LegacyField>
       <PasswordField label="Password" value={(mode === "login" ? f.password : f.ownerPassword) ?? ""}
         onChange={(value) => setF({ ...f, [mode === "login" ? "password" : "ownerPassword"]: value })}
@@ -934,10 +1027,10 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
       </button>
       {err && <div className="err-text" role="alert">{err}</div>}
       <div className="alt">
-        {mode === "login" && <><button type="button" className="auth-link" onClick={() => { setRecovering(true); setErr(""); }}>{appEnglish.auth.forgotPassword}</button> · </>}
-        {mode === "login"
+        {mode === "login" && <><button type="button" className="auth-link" onClick={() => { setRecovering(true); setErr(""); }}>{appEnglish.auth.forgotPassword}</button>{(!lockedSubdomain || onBack) && <> · </>}</>}
+        {mode === "login" && !lockedSubdomain
           ? <>New here? <button type="button" className="auth-link" onClick={() => setMode("signup")}>Create your company</button></>
-          : <>Already registered? <button type="button" className="auth-link" onClick={() => setMode("login")}>Sign in</button></>}
+          : mode === "signup" ? <>Already registered? <button type="button" className="auth-link" onClick={() => setMode("login")}>Sign in</button></> : null}
         {onBack && <> · <button type="button" className="auth-link" onClick={onBack}>Back to home</button></>}
       </div>
     </div></div>
@@ -947,8 +1040,9 @@ function Auth({ onDone, initialMode = "login", onBack }: { onDone: () => void; i
 // ---------------------------------------------------------------------------
 // Shell + navigation
 // ---------------------------------------------------------------------------
-function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRefresh: () => void }) {
-  const [requestedPage, setRequestedPage] = useState<WorkspacePage>("dashboard");
+function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLICIT" | "IDLE") => void; onRefresh: () => void }) {
+  const returningFromPayment = new URLSearchParams(window.location.search).has("paymentAttempt");
+  const [requestedPage, setRequestedPage] = useState<WorkspacePage>(returningFromPayment ? "billing" : "dashboard");
   const [searchTarget, setSearchTarget] = useState<WorkspaceSearchTarget | null>(null);
   const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
@@ -964,7 +1058,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
   const trialDays = Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86400000));
   return (
     <WorkspaceShell tenant={t} user={me.user} navigation={visibleNav} currentPage={page}
-      onNavigate={setRequestedPage} onSearchSelect={selectSearchTarget} onLogout={onLogout}>
+      onNavigate={setRequestedPage} onSearchSelect={selectSearchTarget} onLogout={() => onLogout("EXPLICIT")}>
+        {t.idleSignOutEnabled && <IdleSignOutGuard minutes={t.idleSignOutMinutes} onIdle={() => onLogout("IDLE")} />}
         {arrears && arrears.stage !== "CLEAR" && (
           <ArrearsBar status={arrears as ArrearsStatus} onBilling={() => setRequestedPage("billing")} />
         )}
@@ -989,11 +1084,64 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: () => void; onRe
           canPostBankFees={me.permissions.includes("bank_transactions.match") && me.permissions.includes("accounting.post")}
           canMatchBankTransfers={me.permissions.includes("bank_transactions.match") && me.permissions.includes("accounting.post")}
         />}
-        {page === "billing" && <Billing />}
+        {page === "billing" && <Billing canManage={me.permissions.includes("billing.manage")} />}
         {page === "upgrade" && <Upgrade />}
         {page === "settings" && <Settings me={me} readonly={suspended} onSaved={onRefresh} />}
     </WorkspaceShell>
   );
+}
+
+function IdleSignOutGuard({ minutes, onIdle }: { minutes: number; onIdle: () => void }) {
+  const [generation, setGeneration] = useState(0);
+  const [warning, setWarning] = useState(false);
+  const onIdleRef = useRef(onIdle);
+  const warningRef = useRef(false);
+  useEffect(() => { onIdleRef.current = onIdle; }, [onIdle]);
+  const safeMinutes = normalizeIdleSignOutMinutes(minutes);
+  useEffect(() => {
+    let warningTimer: number;
+    let logoutTimer: number;
+    let deadline = Date.now() + safeMinutes * 60_000;
+    const clear = () => {
+      window.clearTimeout(warningTimer);
+      window.clearTimeout(logoutTimer);
+    };
+    const showWarning = () => { warningRef.current = true; setWarning(true); };
+    const schedule = () => {
+      clear();
+      const remaining = deadline - Date.now();
+      const phase = idleSignOutPhase(deadline, Date.now());
+      if (phase === "EXPIRED") { onIdleRef.current(); return; }
+      if (phase === "WARNING") showWarning();
+      else warningTimer = window.setTimeout(showWarning, remaining - 60_000);
+      logoutTimer = window.setTimeout(() => onIdleRef.current(), remaining);
+    };
+    const arm = () => {
+      deadline = Date.now() + safeMinutes * 60_000;
+      warningRef.current = false;
+      setWarning(false);
+      schedule();
+    };
+    const activity = () => { if (!warningRef.current) arm(); };
+    const visibility = () => { if (document.visibilityState === "visible") schedule(); };
+    const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart"];
+    events.forEach((event) => window.addEventListener(event, activity, { passive: true }));
+    document.addEventListener("visibilitychange", visibility);
+    arm();
+    return () => {
+      clear();
+      events.forEach((event) => window.removeEventListener(event, activity));
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, [generation, safeMinutes]);
+  if (!warning) return null;
+  const staySignedIn = () => setGeneration((value) => value + 1);
+  return <LegacyModal labelledBy="idle-warning-heading" onClose={staySignedIn}
+    backdropClassName="idle-warning" className="idle-warning-dialog">
+    <div><h2 id="idle-warning-heading">{appEnglish.holding.idleWarning}</h2>
+      <p>{appEnglish.holding.idleWarningHelp}</p>
+      <button className="btn accent" data-modal-initial-focus onClick={staySignedIn}>{appEnglish.holding.staySignedIn}</button></div>
+  </LegacyModal>;
 }
 
 function ArrearsBar({ status, onBilling }: { status: ArrearsStatus; onBilling: () => void }) {
@@ -1891,6 +2039,15 @@ function Settings({ me, readonly, onSaved }: {
     invoiceBankSwiftCode: t.invoiceBankSwiftCode ?? "",
     invoiceBankCurrency: t.invoiceBankCurrency ?? "",
     showVatNumberOnInvoices: t.showVatNumberOnInvoices,
+    signOutDestination: t.signOutDestination,
+    idleSignOutEnabled: t.idleSignOutEnabled,
+    idleSignOutMinutes: t.idleSignOutMinutes,
+    holdingPageHeading: t.holdingPageHeading ?? "",
+    holdingPageMessage: t.holdingPageMessage ?? "",
+    holdingOfferTitle: t.holdingOfferTitle ?? "",
+    holdingOfferBody: t.holdingOfferBody ?? "",
+    holdingOfferCtaLabel: t.holdingOfferCtaLabel ?? "",
+    holdingOfferCtaUrl: t.holdingOfferCtaUrl ?? "",
   });
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"status" | "error">("status");
@@ -1913,10 +2070,19 @@ function Settings({ me, readonly, onSaved }: {
           logoUrl = uploaded.logoUrl;
           setLogoData(null);
         }
-        const { logoUrl: storedLogo, ...branding } = company;
+        const {
+          logoUrl: storedLogo, signOutDestination, idleSignOutEnabled, idleSignOutMinutes,
+          holdingPageHeading, holdingPageMessage, holdingOfferTitle, holdingOfferBody,
+          holdingOfferCtaLabel, holdingOfferCtaUrl, ...branding
+        } = company;
         await api("/settings/branding", { method: "PATCH", body: {
           ...branding,
           ...(logoUrl && !logoUrl.startsWith("data:") ? { logoUrl } : {}),
+        } });
+        await api("/settings/holding-page", { method: "PATCH", body: {
+          signOutDestination, idleSignOutEnabled, idleSignOutMinutes,
+          holdingPageHeading, holdingPageMessage, holdingOfferTitle, holdingOfferBody,
+          holdingOfferCtaLabel, holdingOfferCtaUrl,
         } });
       }
       setMessage(appEnglish.settings.saved);
@@ -2020,6 +2186,54 @@ function Settings({ me, readonly, onSaved }: {
               <option value="">{appEnglish.settings.notSpecified}</option><option value="USD">USD</option><option value="ZWG">ZWG</option>
             </select></LegacyField>
           </div>
+        </div>
+        <div className="settings-document-section">
+          <h3>{appEnglish.settings.holdingPage}</h3>
+          <p className="sub">{appEnglish.settings.holdingPageHelp}</p>
+          <div className="grid2">
+            <LegacyField label={appEnglish.settings.signOutDestination}>
+              <select disabled={!canManageCompany} value={company.signOutDestination}
+                onChange={(event) => setCompany({ ...company, signOutDestination: event.target.value as "PUBLIC_HOME" | "HOLDING_PAGE" })}>
+                <option value="HOLDING_PAGE">{appEnglish.settings.tenantHoldingPage}</option>
+                <option value="PUBLIC_HOME">{appEnglish.settings.publicHomePage}</option>
+              </select>
+            </LegacyField>
+            <LegacyField label={appEnglish.settings.idleMinutes} hint={appEnglish.settings.idleMinutesHelp}>
+              <input type="number" min={5} max={480} disabled={!canManageCompany || !company.idleSignOutEnabled}
+                value={company.idleSignOutMinutes}
+                onChange={(event) => setCompany({ ...company, idleSignOutMinutes: Number(event.target.value) })} />
+            </LegacyField>
+          </div>
+          <label className="checkbox-line">
+            <input type="checkbox" disabled={!canManageCompany} checked={company.idleSignOutEnabled}
+              onChange={(event) => setCompany({ ...company, idleSignOutEnabled: event.target.checked })} />
+            <span>{appEnglish.settings.enableIdleSignOut}</span>
+          </label>
+          <div className="grid2">
+            <LegacyField label={appEnglish.settings.holdingHeading}>
+              <input disabled={!canManageCompany} maxLength={100} value={company.holdingPageHeading}
+                onChange={setCompanyField("holdingPageHeading")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.offerTitle}>
+              <input disabled={!canManageCompany} maxLength={100} value={company.holdingOfferTitle}
+                onChange={setCompanyField("holdingOfferTitle")} /></LegacyField>
+          </div>
+          <LegacyField label={appEnglish.settings.holdingMessage}>
+            <textarea disabled={!canManageCompany} maxLength={500} value={company.holdingPageMessage}
+              onChange={setCompanyField("holdingPageMessage")} /></LegacyField>
+          <LegacyField label={appEnglish.settings.offerBody} hint={appEnglish.settings.offerHelp}>
+            <textarea disabled={!canManageCompany} maxLength={500} value={company.holdingOfferBody}
+              onChange={setCompanyField("holdingOfferBody")} /></LegacyField>
+          <div className="grid2">
+            <LegacyField label={appEnglish.settings.offerButtonLabel}>
+              <input disabled={!canManageCompany} maxLength={50} value={company.holdingOfferCtaLabel}
+                onChange={setCompanyField("holdingOfferCtaLabel")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.offerButtonUrl} hint={appEnglish.settings.offerUrlHelp}>
+              <input type="url" disabled={!canManageCompany} value={company.holdingOfferCtaUrl}
+                onChange={setCompanyField("holdingOfferCtaUrl")} placeholder="https://example.com/offer" /></LegacyField>
+          </div>
+          <a className="btn ghost" href={`/workspace/${encodeURIComponent(t.subdomain)}?previewHolding=1`} target="_blank" rel="noreferrer">
+            {appEnglish.settings.previewHoldingPage}
+          </a>
         </div>
       </div>
       <button className="btn accent" disabled={busy || readonly} onClick={save}>
@@ -3362,10 +3576,58 @@ function Upgrade() {
   </>);
 }
 
-function Billing() {
+function Billing({ canManage }: { canManage: boolean }) {
   const [sub] = useLoad(() => api("/billing/subscription"));
-  const [invs] = useLoad(() => api("/billing/invoices"));
+  const [invs, reloadInvoices] = useLoad(() => api("/billing/invoices"));
+  const [provider] = useLoad(() => api("/billing/payment-provider"));
+  const [attempts, reloadAttempts] = useLoad(() => canManage ? api("/billing/payment-attempts") : Promise.resolve([]), [canManage]);
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [paymentError, setPaymentError] = useState(false);
+  const [busyPayment, setBusyPayment] = useState("");
+  const returnHandled = useRef(false);
   const copy = appEnglish.billing;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const attemptId = params.get("paymentAttempt");
+    if (!attemptId || !canManage || returnHandled.current) return;
+    returnHandled.current = true;
+    setBusyPayment(attemptId);
+    api(`/billing/payment-attempts/${encodeURIComponent(attemptId)}/refresh`, { method: "POST", body: {} })
+      .then((result) => {
+        setPaymentMessage(result.attempt?.status === "PAID" ? copy.paymentConfirmed : copy.paymentPending);
+        setPaymentError(false);
+        reloadInvoices(); reloadAttempts();
+      })
+      .catch((error: Error) => { setPaymentMessage(error.message); setPaymentError(true); })
+      .finally(() => setBusyPayment(""));
+    params.delete("paymentAttempt");
+    const query = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, [canManage]);
+
+  const startPayment = async (invoiceId: string) => {
+    setBusyPayment(invoiceId); setPaymentMessage("");
+    try {
+      const response = await api(`/billing/invoices/${encodeURIComponent(invoiceId)}/payment-attempts`, {
+        method: "POST", body: {}, headers: { "Idempotency-Key": idempotencyKey(`subscription-payment:${invoiceId}`) },
+      });
+      if (!response.redirectUrl) throw new Error(copy.paymentNeedsReview);
+      window.location.assign(response.redirectUrl);
+    } catch (error: any) {
+      setPaymentMessage(error.message); setPaymentError(true); setBusyPayment("");
+      reloadAttempts();
+    }
+  };
+  const refreshPayment = async (attemptId: string) => {
+    setBusyPayment(attemptId); setPaymentMessage("");
+    try {
+      const result = await api(`/billing/payment-attempts/${encodeURIComponent(attemptId)}/refresh`, { method: "POST", body: {} });
+      setPaymentMessage(result.attempt?.status === "PAID" ? copy.paymentConfirmed : copy.paymentPending);
+      setPaymentError(false); reloadInvoices(); reloadAttempts();
+    } catch (error: any) { setPaymentMessage(error.message); setPaymentError(true); }
+    setBusyPayment("");
+  };
+  const latestAttempt = (invoiceId: string) => (attempts as any[] | null)?.find((attempt) => attempt.subscriptionInvoiceId === invoiceId);
   return (<>
     <h1>{copy.title}</h1><div className="sub">{copy.subtitle}</div>
     {sub && <div className="cards">
@@ -3374,17 +3636,29 @@ function Billing() {
       <div className="card"><div className="k">{copy.monthlyFee}</div><div className="v">{fmt(sub.plan.priceAmount)}</div></div>
       <div className="card"><div className="k">{copy.activeUsers}</div><div className="v">{sub.currentUsage.activeUsers} / {sub.plan.userLimit}</div></div>
     </div>}
+    <div className="panel"><div className="billing-payment-heading"><div><h2>{copy.paymentHeading}</h2>
+      <p className="sub">{copy.paymentHelp}</p></div>
+      {provider?.available && <span className="pill ACTIVE">{copy.paymentActive}</span>}</div>
+      {provider?.available ? <p className="sub">{copy.paymentMethods}</p>
+        : <div className="banner warn">{copy.paymentUnavailable}</div>}
+      {paymentMessage && <div className={`banner ${paymentError ? "err" : "success"}`} role={paymentError ? "alert" : "status"}>{paymentMessage}</div>}
+    </div>
     <div className="panel"><h2>{copy.invoicesTitle}</h2>
       {(!invs || invs.length === 0) ? <p className="sub">{copy.noInvoices}</p> :
-        <div className="table-scroll" role="region" aria-label={copy.invoicesTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.period}</th><th className="num">{copy.amount}</th><th>{copy.status}</th><th>{copy.usageSummary}</th></tr></thead>
-          <tbody>{invs.map((i: any) => (
-            <tr key={i.id}>
+        <div className="table-scroll" role="region" aria-label={copy.invoicesTableLabel} tabIndex={0}><table className="dense-data-table"><thead><tr><th>{copy.period}</th><th className="num">{copy.amount}</th><th>{copy.status}</th><th>{copy.payment}</th><th>{copy.usageSummary}</th></tr></thead>
+          <tbody>{invs.map((i: any) => {
+            const attempt = latestAttempt(i.id);
+            const open = i.status === "pending" || i.status === "overdue";
+            return <tr key={i.id}>
               <td>{new Date(i.periodStart).toLocaleDateString()} – {new Date(i.periodEnd).toLocaleDateString()}</td>
-              <td className="num">{fmt(i.amount)}</td>
+              <td className="num">{fmt(i.amount, i.currency)}</td>
               <td><span className={`pill ${i.status}`}>{i.status}</span></td>
+              <td>{attempt ? <div className="billing-payment-action"><span className={`pill ${attempt.status}`}>{attempt.status}</span>
+                {attempt.status !== "PAID" && attempt.status !== "FAILED" && <button className="btn ghost sm" disabled={Boolean(busyPayment)} onClick={() => refreshPayment(attempt.id)}>{busyPayment === attempt.id ? copy.checking : copy.checkStatus}</button>}</div>
+                : open && canManage && provider?.available ? <button className="btn accent sm" disabled={Boolean(busyPayment)} onClick={() => startPayment(i.id)}>{busyPayment === i.id ? copy.startingPayment : copy.payOnline}</button> : "—"}</td>
               <td className="sub" style={{ margin: 0 }}>{i.usageSummary ? `${i.usageSummary.activeUsers} ${copy.users} · ${i.usageSummary.invoicesIssued} ${copy.invoices} · ${i.usageSummary.contacts} ${copy.contacts} · ${i.usageSummary.products} ${copy.products}` : "—"}</td>
-            </tr>
-          ))}</tbody></table></div>}
+            </tr>;
+          })}</tbody></table></div>}
       <p className="sub" style={{ marginTop: 12 }}>
         {copy.protection} <b>{copy.protectionStrong}</b> {copy.protectionDetail}
       </p>

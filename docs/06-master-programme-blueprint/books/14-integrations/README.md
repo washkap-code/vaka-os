@@ -35,7 +35,16 @@ Email, SMS, WhatsApp, push, calendar and meeting providers use Notifications or 
 
 ## 5. Payments and mobile money
 
-Payment adapters normalize intent/request, pending, authorized, successful, failed, cancelled, reversed/refunded and disputed states. Webhooks enter a signed idempotent inbox. Allocation/posting happens through Finance services after verified state. Zimbabwe candidates such as Paynow, EcoCash, InnBucks and licensed providers require official technical/commercial verification; documentation does not claim a live connection.
+Payment adapters normalize intent/request, pending, authorized, successful, failed, cancelled, reversed/refunded and disputed states. Webhooks enter a signed idempotent inbox. Allocation/posting happens through Finance services after verified state. Zimbabwe candidates such as Paynow, EcoCash, InnBucks and licensed providers require official technical/commercial verification.
+
+CO-006 adds a configuration-gated Paynow adapter for VAKA's own subscription
+invoices. It verifies signed initiation/status messages, encrypts poll references,
+re-polls important callbacks server-to-server and settles through the controlled
+commercial billing service only on verified `Paid` evidence. This is not a
+claim of a live production connection: merchant approval, environment secrets,
+matching currency, callback configuration and reconciled live evidence remain
+mandatory activation gates. Tenant customer-invoice collection is outside this
+bounded adapter.
 
 ## 6. Banking
 

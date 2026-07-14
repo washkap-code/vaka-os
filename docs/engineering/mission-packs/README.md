@@ -46,6 +46,8 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P6-014 | Imports, Capture and Bank Review Accessibility | ✅ Released (PR #75); full remote quality gate, production deployment and live bundle verification passed |
 | P6-015 | Homepage Regression and Redesign Baseline | ✅ Released (PR #77); full remote quality gate, production deployment and live bundle verification passed |
 | P6-016 | Homepage Visual Modernisation I: Navigation, Hero and Product Proof | ✅ Released (PR #78); full remote quality gate, production deployment and live browser verification passed |
+| CO-006 | Verified Paynow Subscription Collection | ✅ Implementation complete and locally verified; remote DB gates and live merchant activation pending |
+| P6-018 | Tenant-branded Secure Holding and Sign-out Experience | ✅ Implementation complete and locally verified; remote DB and release gates pending |
 | HOTFIX-2026-07-13-INVOICE-PDF-PREVIEW | Reliable invoice PDF download, preview and VAKA document footer | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P9-003 | Backup, Disaster-Recovery Evidence and RPO/RTO Tiers | ✅ Implemented foundation; full DB-backed suite verified green (2026-07-12) |
 | OPS-010 | Super Admin control centre and in-product user guide | Implemented; focused/browser verification passed; full suite environment-blocked |

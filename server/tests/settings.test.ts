@@ -112,4 +112,53 @@ describe("profile and company settings", () => {
     ));
     expect(events).toHaveLength(1);
   });
+
+  it("publishes an allowlisted holding page and audits tenant-controlled sign-out policy", async () => {
+    const account = await createSettingsTenant("holding");
+    const auth = { Authorization: `Bearer ${account.token}` };
+    const configured = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      signOutDestination: "HOLDING_PAGE",
+      idleSignOutEnabled: true,
+      idleSignOutMinutes: 5,
+      holdingPageHeading: "Welcome to the company workspace",
+      holdingPageMessage: "Sign in to continue securely.",
+      holdingOfferTitle: "July customer offer",
+      holdingOfferBody: "Ask our team about this month's service package.",
+      holdingOfferCtaLabel: "View offer",
+      holdingOfferCtaUrl: "https://example.com/offer",
+    });
+    expect(configured.status).toBe(200);
+
+    const publicPage = await request(app)
+      .get(`/api/v1/public/workspaces/${account.tenant.subdomain}/holding`);
+    expect(publicPage.status).toBe(200);
+    expect(publicPage.body).toMatchObject({
+      companyName: "Original Company",
+      subdomain: account.tenant.subdomain,
+      heading: "Welcome to the company workspace",
+      offer: { title: "July customer offer", ctaUrl: "https://example.com/offer" },
+    });
+    expect(publicPage.body).not.toHaveProperty("id");
+    expect(publicPage.body).not.toHaveProperty("status");
+    expect(publicPage.body).not.toHaveProperty("trialEndsAt");
+
+    const me = await request(app).get("/api/v1/me").set(auth);
+    expect(me.body.tenant).toMatchObject({
+      signOutDestination: "HOLDING_PAGE", idleSignOutEnabled: true, idleSignOutMinutes: 5,
+    });
+    const events = await db.select().from(schema.auditLogs).where(and(
+      eq(schema.auditLogs.tenantId, account.tenant.id),
+      eq(schema.auditLogs.action, "settings.holding_page_updated"),
+    ));
+    expect(events).toHaveLength(1);
+    expect(events[0].metadata).toMatchObject({ offerConfigured: true, offerLinkConfigured: true });
+    expect(JSON.stringify(events[0].metadata)).not.toContain("July customer offer");
+
+    const unsafe = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      signOutDestination: "HOLDING_PAGE", idleSignOutEnabled: true, idleSignOutMinutes: 4,
+      holdingPageHeading: "", holdingPageMessage: "", holdingOfferTitle: "", holdingOfferBody: "",
+      holdingOfferCtaLabel: "Click", holdingOfferCtaUrl: "http://example.com/offer",
+    });
+    expect(unsafe.status).toBe(400);
+  });
 });
