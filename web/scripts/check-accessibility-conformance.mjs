@@ -42,6 +42,7 @@ const files = [
   "src/shell/workspace-shell.tsx",
   "src/platform/platform-admin-shell.tsx",
   "src/shell/command-palette.tsx",
+  "src/procurement/procurement-workspace.tsx",
 ];
 const sources = new Map();
 const issues = [];
@@ -59,6 +60,7 @@ const modal = sources.get("src/accessibility/legacy-modal.tsx");
 const focus = sources.get("src/accessibility/use-modal-focus.ts");
 const primitives = sources.get("src/design-system/primitives.tsx");
 const platformShell = sources.get("src/platform/platform-admin-shell.tsx");
+const procurement = sources.get("src/procurement/procurement-workspace.tsx");
 
 for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"aria-invalid": error ? true']) {
   requireContract(issues, "src/accessibility/legacy-field.tsx", field, expected);
@@ -85,17 +87,11 @@ for (const expected of [
   'labelledBy="new-deal-title"',
   'labelledBy="new-product-title"',
   'labelledBy="reorder-rule-title"',
-  'labelledBy="new-purchase-order-title"',
   'labelledBy="platform-staff-dialog-title"',
   'labelledBy="add-team-member-title"',
   "const copy = appEnglish.products;",
-  "const copy = appEnglish.purchaseOrders;",
   'aria-label={copy.listLabel} tabIndex={0}',
-  'className="purchase-line-create"',
-  'copy.line.replace("{number}", String(i + 1))',
-  'aria-label={copy.lineField.replace',
   "data-modal-initial-focus",
-  "copy.lineField.replace",
   'aria-label={copy.staffTableLabel} tabIndex={0}',
   'aria-label={copy.sessionsTableLabel} tabIndex={0}',
   'aria-label={copy.usersTableLabel} tabIndex={0}',
@@ -133,6 +129,22 @@ for (const expected of [
 ]) requireContract(issues, "src/App.tsx", app, expected);
 
 for (const expected of [
+  'role="tablist" aria-label={copy.workspaceSections}',
+  'role="tab" aria-selected={tab === key}',
+  'labelledBy="new-requisition-title"',
+  'labelledBy="requisition-decision-title"',
+  'labelledBy="issue-rfq-title"',
+  'labelledBy="award-rfq-title"',
+  'labelledBy="new-direct-po-title"',
+  'labelledBy="approve-po-title"',
+  'labelledBy="receive-po-title"',
+  '<LegacyField label={copy.product}>',
+  '<LegacyField label={copy.warehouse}>',
+  "data-modal-initial-focus",
+  'role="alert"',
+]) requireContract(issues, "src/procurement/procurement-workspace.tsx", procurement, expected);
+
+for (const expected of [
   'href="#platform-main"',
   'aria-label={labels.navigation}',
   'aria-current={currentPage === item.key ? "page" : undefined}',
@@ -150,7 +162,8 @@ for (const expected of [
   ":where(a, button, input, select, textarea, [tabindex]):focus-visible",
   "grid-template-columns: minmax(0, 1fr)",
   "max-height: 94dvh",
-  ".purchase-line-create",
+  ".procurement-line-fields",
+  "@media (max-width: 420px)",
   ".access-table-region table",
   ".report-tabs .btn { min-height: var(--vaka-control-height-md); }",
   ".report-tabs [role=\"tab\"][aria-selected=\"true\"]",

@@ -10,6 +10,7 @@ export const DOMAIN_EVENTS = {
   PRODUCT_CHANGED: "product.changed",
   INVOICE_CHANGED: "invoice.changed",
   ACTIVITY_RECORDED: "activity.recorded",
+  PROCUREMENT_APPROVAL_REQUESTED: "procurement.approval_requested",
 } as const;
 
 export type DomainEventPayloads = {
@@ -24,6 +25,12 @@ export type DomainEventPayloads = {
   "product.changed": { productId: string; change: "created" | "imported" | "updated" };
   "invoice.changed": { invoiceId: string; change: "drafted" | "updated" };
   "activity.recorded": { activityId: string; customerId: string };
+  "procurement.approval_requested": {
+    kind: "purchase_requisition" | "purchase_order";
+    entityId: string;
+    number: string | null;
+    requesterUserId: string;
+  };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;

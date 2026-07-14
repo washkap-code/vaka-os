@@ -27,6 +27,17 @@
 
 ### Added
 
+- **Controlled procurement lifecycle (P4-002):** Added tenant-scoped purchase
+  requisitions, independent approval/rejection, RFQs to canonical suppliers,
+  supplier award into draft purchase orders, independent PO approval, and
+  idempotent partial/final goods receipts. Receipts append stock through the
+  inventory service, emit `stock.moved`, and post balanced Inventory/GRNI
+  journals without recognising Accounts Payable or input VAT. Added separated
+  procurement roles, bounded approval notifications, a responsive Procurement
+  workspace, additive migration `0027_controlled_procurement_lifecycle.sql`,
+  concurrency/RBAC/tenant/finance tests, and exact hand-apply production DDL in
+  the completion report. No production database command was run.
+
 - **Canonical supplier records (P4-001):** Added an inventory-authorised
   Supplier workspace and APIs over the existing `contacts.is_vendor` role,
   with supplier code/currency/payment-term/lead-time defaults, atomic audit,

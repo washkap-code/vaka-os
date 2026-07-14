@@ -31,6 +31,7 @@ originating request or prevent sibling subscribers from receiving the event.
 | `product.changed` | Product create/import and reorder-rule update | `productId`, `change` |
 | `invoice.changed` | Invoice draft creation | `invoiceId`, `change` |
 | `activity.recorded` | Manual CRM activity creation | `activityId`, `customerId` |
+| `procurement.approval_requested` | Submitted requisition or draft purchase order | `kind`, `entityId`, `number`, `requesterUserId` |
 
 Money values use integer-cent strings. Quantity deltas remain exact decimal
 strings. Stable event identifiers are derived from the event type and committed

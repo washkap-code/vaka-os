@@ -3,6 +3,7 @@ import { expect } from "vitest";
 import { db, fromCents, mulRate, nextDocNumber, schema, toCents } from "../../src/lib.js";
 import { login, signupTenant } from "../../src/auth.js";
 import { createDraftInvoice, issueInvoice } from "../../src/invoicing.js";
+import { postGoodsReceipt } from "../../src/procurement.js";
 import { assertSafeFinanceTestDatabase } from "./test-db-guard.js";
 
 assertSafeFinanceTestDatabase();
@@ -137,16 +138,38 @@ export async function createPurchaseOrder(
       currency: "USD",
       total: lineTotal,
       createdBy: tenant.userId,
+      approvedBy: tenant.userId,
+      approvedAt: new Date(),
+      approvalReason: "Finance test fixture approval",
     }).returning();
-    await tx.insert(schema.purchaseOrderLineItems).values({
+    const [line] = await tx.insert(schema.purchaseOrderLineItems).values({
       purchaseOrderId: po.id,
       productId,
       warehouseId,
       quantity,
       unitCost,
       lineTotal,
-    });
-    return po;
+    }).returning();
+    return { ...po, lines: [line] };
+  });
+}
+
+export async function receiveTestPurchaseOrder(
+  tenant: TestTenant,
+  purchaseOrder: Awaited<ReturnType<typeof createPurchaseOrder>>,
+  idempotencyKey: string,
+) {
+  return postGoodsReceipt({
+    tenantId: tenant.tenantId,
+    actorUserId: tenant.userId,
+    purchaseOrderId: purchaseOrder.id,
+    idempotencyKey,
+    input: {
+      lines: purchaseOrder.lines.map((line) => ({
+        purchaseOrderLineItemId: line.id,
+        quantity: line.quantity,
+      })),
+    },
   });
 }
 

@@ -2,10 +2,10 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db, schema } from "../../src/lib.js";
 import { createDraftInvoice, issueInvoice, voidInvoice } from "../../src/invoicing.js";
-import { adjustStock, receivePurchaseOrder } from "../../src/inventory.js";
+import { adjustStock } from "../../src/inventory.js";
 import {
   createContact, createProduct, createPurchaseOrder, defaultWarehouse,
-  stockLevelQuantity, stockQuantityFromMovements, signupFinanceTenant,
+  receiveTestPurchaseOrder, stockLevelQuantity, stockQuantityFromMovements, signupFinanceTenant,
 } from "./helpers.js";
 
 describe("finance kernel - stock ledger integrity", () => {
@@ -14,7 +14,7 @@ describe("finance kernel - stock ledger integrity", () => {
     const warehouse = await defaultWarehouse(tenant);
     const product = await createProduct(tenant, "stock-integrity", { costPrice: "5.00", salePrice: "9.00" });
     const po = await createPurchaseOrder(tenant, product.id, warehouse.id, "10", "5.00");
-    await db.transaction((tx) => receivePurchaseOrder(tx, { tenantId: tenant.tenantId, purchaseOrderId: po.id, createdBy: tenant.userId }));
+    await receiveTestPurchaseOrder(tenant, po, "goods-receipt-stock-integrity-1");
 
     await db.transaction((tx) => adjustStock(tx, {
       tenantId: tenant.tenantId,
@@ -60,7 +60,7 @@ describe("finance kernel - stock ledger integrity", () => {
     const warehouse = await defaultWarehouse(tenant);
     const product = await createProduct(tenant, "stock-mutable");
     const po = await createPurchaseOrder(tenant, product.id, warehouse.id, "2", "10.00");
-    await db.transaction((tx) => receivePurchaseOrder(tx, { tenantId: tenant.tenantId, purchaseOrderId: po.id, createdBy: tenant.userId }));
+    await receiveTestPurchaseOrder(tenant, po, "goods-receipt-stock-mutable-1");
     const [movement] = await db.select().from(schema.stockMovements).where(eq(schema.stockMovements.productId, product.id));
     expect(movement).toBeTruthy();
 

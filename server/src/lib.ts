@@ -104,6 +104,8 @@ export const PERMISSIONS = [
   "crm.read", "crm.write",
   "accounting.read", "accounting.post",
   "inventory.read", "inventory.write",
+  "procurement.read", "procurement.request", "procurement.write",
+  "procurement.approve", "procurement.receive",
   "reports.read",
   "billing.manage",
   "users.manage",
@@ -120,11 +122,19 @@ export const DEFAULT_ROLES: { name: string; permissions: Permission[] }[] = [
   { name: "Admin", permissions: [...PERMISSIONS] },
   { name: "Accountant", permissions: [
     "accounting.read", "accounting.post", "reports.read", "crm.read", "inventory.read",
+    "procurement.read",
     "bank_accounts.read", "bank_transactions.read", "bank_transactions.match",
     "bank_reconciliation.prepare",
   ] },
   { name: "Sales", permissions: ["crm.read", "crm.write", "accounting.read", "inventory.read"] },
-  { name: "Stock Controller", permissions: ["inventory.read", "inventory.write", "crm.read"] },
+  { name: "Stock Controller", permissions: [
+    "inventory.read", "inventory.write", "crm.read",
+    "procurement.read", "procurement.request", "procurement.write", "procurement.receive",
+  ] },
+  { name: "Procurement Officer", permissions: [
+    "procurement.read", "procurement.request", "procurement.write", "procurement.receive",
+  ] },
+  { name: "Procurement Approver", permissions: ["procurement.read", "procurement.approve"] },
   { name: "Staff", permissions: ["crm.read", "inventory.read"] },
 ];
 

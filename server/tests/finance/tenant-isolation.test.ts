@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db, schema } from "../../src/lib.js";
 import { recordPayment } from "../../src/invoicing.js";
-import { receivePurchaseOrder } from "../../src/inventory.js";
+import { postGoodsReceipt } from "../../src/procurement.js";
 import { postJournal, systemAccount } from "../../src/accounting.js";
 import {
   accountByCode, createIssuedServiceInvoice, createProduct, createPurchaseOrder,
@@ -115,11 +115,13 @@ describe("finance kernel - tenant isolation", () => {
     const productA = await createProduct(tenantA, "po-isolation");
     const poA = await createPurchaseOrder(tenantA, productA.id, warehouseA.id);
 
-    await expect(db.transaction((tx) => receivePurchaseOrder(tx, {
+    await expect(postGoodsReceipt({
       tenantId: tenantB.tenantId,
       purchaseOrderId: poA.id,
-      createdBy: tenantB.userId,
-    }))).rejects.toThrow(/Purchase order not found/);
+      actorUserId: tenantB.userId,
+      idempotencyKey: "goods-receipt-cross-tenant-1",
+      input: { lines: [{ purchaseOrderLineItemId: poA.lines[0].id, quantity: "1" }] },
+    })).rejects.toThrow(/Purchase order not found/);
     expect(await db.select().from(schema.stockMovements).where(eq(schema.stockMovements.tenantId, tenantB.tenantId))).toHaveLength(0);
   });
 });

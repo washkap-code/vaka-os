@@ -12,6 +12,8 @@ const notificationCatalogue = {
   deliverySentTitle: "Sent", deliverySentDetail: "{documentType} to {recipientName}",
   deliveryFailedTitle: "Failed", deliveryFailedDetail: "{documentType} to {recipientName}",
   securityTitle: "Security", securityDetail: "Security detail",
+  procurementApprovalTitle: "Approval needed", procurementApprovalDetail: "{kind} {reference}",
+  procurementRequisition: "Requisition", procurementPurchaseOrder: "Purchase order", procurementReference: "record",
   genericTitle: "Workspace update", genericDetail: "Generic safe detail",
   stockItem: "Stock item", unknownAmount: "unknown", document: "Document", recipient: "recipient",
 };
@@ -29,7 +31,8 @@ test("owner-only activity stays hidden from non-owners and visible to owners", (
 test("a forbidden current page falls back to the first visible destination", () => {
   const navigation = visibleWorkspaceNavigation(["inventory.read"], false);
   assert.equal(resolveWorkspacePage("dashboard", navigation), "suppliers");
-  assert.equal(resolveWorkspacePage("pos", navigation), "pos");
+  assert.equal(resolveWorkspacePage("pos", navigation), "suppliers");
+  assert.equal(resolveWorkspacePage("pos", visibleWorkspaceNavigation(["procurement.read"], false)), "pos");
 });
 
 test("billing and settings remain available without domain permissions", () => {
@@ -73,6 +76,15 @@ test("known notifications use only their catalogue-owned display fields", () => 
     variables: { name: "Cooking Oil", onHand: "2", threshold: "5", secret: "must-not-render" },
   }, notificationCatalogue);
   assert.deepEqual(formatted, { title: "Low stock", detail: "Cooking Oil: 2/5" });
+  assert.equal(JSON.stringify(formatted).includes("must-not-render"), false);
+});
+
+test("procurement approval notifications expose only bounded catalogue copy", () => {
+  const formatted = notificationCopy({
+    id: "approval", template: "procurement.approval_requested.v1", locale: "en-ZW", status: "accepted", createdAt: "2026-07-14",
+    variables: { kind: "purchase_requisition", reference: "PR-00001", supplierTaxNumber: "must-not-render" },
+  }, notificationCatalogue);
+  assert.deepEqual(formatted, { title: "Approval needed", detail: "Requisition PR-00001" });
   assert.equal(JSON.stringify(formatted).includes("must-not-render"), false);
 });
 

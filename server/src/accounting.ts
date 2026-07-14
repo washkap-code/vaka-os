@@ -145,6 +145,7 @@ export const ZW_DEFAULT_COA: CoARow[] = [
   { code: "1500", name: "Equipment & Fixtures", type: "ASSET" },
   // Liabilities
   { code: "2000", name: "Accounts Payable", type: "LIABILITY", systemKey: "AP" },
+  { code: "2050", name: "Goods Received Not Invoiced", type: "LIABILITY", systemKey: "GRNI" },
   { code: "2100", name: "VAT Output (Payable to ZIMRA)", type: "LIABILITY", systemKey: "VAT_OUTPUT" },
   { code: "2200", name: "PAYE Payable", type: "LIABILITY" },
   { code: "2210", name: "NSSA Payable", type: "LIABILITY" },

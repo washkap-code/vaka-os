@@ -4,11 +4,12 @@ import request from "supertest";
 import { createApp } from "../../src/app.js";
 import { db, schema } from "../../src/lib.js";
 import { recordPayment } from "../../src/invoicing.js";
-import { adjustStock, receivePurchaseOrder } from "../../src/inventory.js";
+import { adjustStock } from "../../src/inventory.js";
+import { postGoodsReceipt } from "../../src/procurement.js";
 import { commitBankStatementImport, previewBankStatementImport } from "../../src/imports.js";
 import {
   accountByCode, createContact, createIssuedServiceInvoice, createProduct, createPurchaseOrder,
-  defaultWarehouse, journalEntriesBySource, signupFinanceTenant,
+  defaultWarehouse, journalEntriesBySource, receiveTestPurchaseOrder, signupFinanceTenant,
 } from "./helpers.js";
 
 const app = createApp();
@@ -24,13 +25,17 @@ describe("finance kernel - current source duplicate protections", () => {
     const warehouse = await defaultWarehouse(tenant);
     const product = await createProduct(tenant, "state-protection");
     const po = await createPurchaseOrder(tenant, product.id, warehouse.id, "2", "10.00");
-    await db.transaction((tx) => receivePurchaseOrder(tx, { tenantId: tenant.tenantId, purchaseOrderId: po.id, createdBy: tenant.userId }));
-    await expect(db.transaction((tx) => receivePurchaseOrder(tx, {
+    const receipt = await receiveTestPurchaseOrder(tenant, po, "goods-receipt-state-protection-1");
+    const replay = await receiveTestPurchaseOrder(tenant, po, "goods-receipt-state-protection-1");
+    expect(replay).toMatchObject({ replayed: true, receipt: { id: receipt.receipt.id } });
+    await expect(postGoodsReceipt({
       tenantId: tenant.tenantId,
       purchaseOrderId: po.id,
-      createdBy: tenant.userId,
-    }))).rejects.toThrow(/already received/);
-    expect(await journalEntriesBySource(tenant.tenantId, "po_receipt", po.id)).toHaveLength(1);
+      actorUserId: tenant.userId,
+      idempotencyKey: "goods-receipt-state-protection-1",
+      input: { lines: [{ purchaseOrderLineItemId: po.lines[0].id, quantity: "1" }] },
+    })).rejects.toThrow(/different goods receipt details/);
+    expect(await journalEntriesBySource(tenant.tenantId, "goods_receipt", receipt.receipt.id)).toHaveLength(1);
   });
 
   it("requires explicit idempotency keys and detects conflicting payment, expense, and stock adjustment retries", async () => {
@@ -102,7 +107,7 @@ describe("finance kernel - current source duplicate protections", () => {
     const warehouse = await defaultWarehouse(tenant);
     const product = await createProduct(tenant, "duplicate-effects-stock");
     const po = await createPurchaseOrder(tenant, product.id, warehouse.id, "5", "10.00");
-    await db.transaction((tx) => receivePurchaseOrder(tx, { tenantId: tenant.tenantId, purchaseOrderId: po.id, createdBy: tenant.userId }));
+    await receiveTestPurchaseOrder(tenant, po, "goods-receipt-duplicate-effects-1");
     const adjustmentBody = { productId: product.id, warehouseId: warehouse.id, quantityDelta: "-1", note: "Repeated adjustment", idempotencyKey: "stock-duplicate-effects-1" };
     await db.transaction((tx) => adjustStock(tx, { tenantId: tenant.tenantId, ...adjustmentBody, createdBy: tenant.userId }));
     await db.transaction((tx) => adjustStock(tx, { tenantId: tenant.tenantId, ...adjustmentBody, createdBy: tenant.userId }));
