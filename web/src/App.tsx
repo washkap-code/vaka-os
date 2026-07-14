@@ -13,6 +13,7 @@ import { useListSelection } from "./records/use-list-selection";
 import { fetchInvoicePdf, invoicePdfFilename } from "./invoices/invoice-pdf";
 import { LegacyField } from "./accessibility/legacy-field";
 import { LegacyModal } from "./accessibility/legacy-modal";
+import { Dropdown } from "./design-system/primitives";
 
 const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
 
@@ -38,6 +39,11 @@ type Me = {
     brandPrimaryColor: string; brandSecondaryColor: string; logoUrl: string | null;
     taxNumber: string | null; vatNumber: string | null;
     registrationNumber: string | null; physicalAddress: string | null;
+    invoicePaymentTerms: string | null;
+    invoiceBankName: string | null; invoiceBankAccountName: string | null;
+    invoiceBankAccountNumber: string | null; invoiceBankBranch: string | null;
+    invoiceBankSwiftCode: string | null; invoiceBankCurrency: "USD" | "ZWG" | null;
+    showVatNumberOnInvoices: boolean;
   } | null;
 };
 type ArrearsStatus = {
@@ -1877,6 +1883,14 @@ function Settings({ me, readonly, onSaved }: {
     vatNumber: t.vatNumber ?? "",
     registrationNumber: t.registrationNumber ?? "",
     physicalAddress: t.physicalAddress ?? "",
+    invoicePaymentTerms: t.invoicePaymentTerms ?? "",
+    invoiceBankName: t.invoiceBankName ?? "",
+    invoiceBankAccountName: t.invoiceBankAccountName ?? "",
+    invoiceBankAccountNumber: t.invoiceBankAccountNumber ?? "",
+    invoiceBankBranch: t.invoiceBankBranch ?? "",
+    invoiceBankSwiftCode: t.invoiceBankSwiftCode ?? "",
+    invoiceBankCurrency: t.invoiceBankCurrency ?? "",
+    showVatNumberOnInvoices: t.showVatNumberOnInvoices,
   });
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"status" | "error">("status");
@@ -1975,7 +1989,38 @@ function Settings({ me, readonly, onSaved }: {
         <LegacyField label={appEnglish.settings.address}>
           <textarea disabled={!canManageCompany} value={company.physicalAddress}
             onChange={setCompanyField("physicalAddress")} /></LegacyField>
-        <small>{appEnglish.settings.invoiceHelp}</small>
+        <div className="settings-document-section">
+          <h3>{appEnglish.settings.invoiceDocuments}</h3>
+          <p className="sub">{appEnglish.settings.invoiceHelp}</p>
+          <label className="checkbox-line">
+            <input type="checkbox" disabled={!canManageCompany || !company.vatNumber}
+              checked={company.showVatNumberOnInvoices}
+              onChange={(event) => setCompany({ ...company, showVatNumberOnInvoices: event.target.checked })} />
+            <span>{appEnglish.settings.showVatNumber}</span>
+          </label>
+          <LegacyField label={appEnglish.settings.paymentTerms} hint={appEnglish.settings.paymentTermsHelp}>
+            <textarea disabled={!canManageCompany} value={company.invoicePaymentTerms}
+              onChange={setCompanyField("invoicePaymentTerms")} /></LegacyField>
+          <h3>{appEnglish.settings.bankDetails}</h3>
+          <p className="sub">{appEnglish.settings.bankDetailsHelp}</p>
+          <div className="grid2">
+            <LegacyField label={appEnglish.settings.bankName}><input disabled={!canManageCompany}
+              value={company.invoiceBankName} onChange={setCompanyField("invoiceBankName")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.accountName}><input disabled={!canManageCompany}
+              value={company.invoiceBankAccountName} onChange={setCompanyField("invoiceBankAccountName")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.accountNumber}><input disabled={!canManageCompany}
+              value={company.invoiceBankAccountNumber} onChange={setCompanyField("invoiceBankAccountNumber")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.branch}><input disabled={!canManageCompany}
+              value={company.invoiceBankBranch} onChange={setCompanyField("invoiceBankBranch")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.swiftCode}><input disabled={!canManageCompany}
+              value={company.invoiceBankSwiftCode} onChange={setCompanyField("invoiceBankSwiftCode")} /></LegacyField>
+            <LegacyField label={appEnglish.settings.bankCurrency}><select disabled={!canManageCompany}
+              value={company.invoiceBankCurrency}
+              onChange={(event) => setCompany({ ...company, invoiceBankCurrency: event.target.value })}>
+              <option value="">{appEnglish.settings.notSpecified}</option><option value="USD">USD</option><option value="ZWG">ZWG</option>
+            </select></LegacyField>
+          </div>
+        </div>
       </div>
       <button className="btn accent" disabled={busy || readonly} onClick={save}>
         {busy ? appEnglish.settings.saving : appEnglish.settings.save}
@@ -2608,34 +2653,36 @@ function Invoices({ readonly, baseCcy, canPost, searchTarget, onSearchTargetCons
       <button className="btn ghost sm" onClick={selection.clear}>{appEnglish.invoices.clearSelection}</button>
       <span className="sub">{appEnglish.invoices.bulkSafety}</span>
     </div>}
-    <div className="panel table-scroll" role="region" aria-label={appEnglish.invoices.listLabel} tabIndex={0}>
-      <table><thead><tr><th className="select-column"><input type="checkbox" aria-label={appEnglish.invoices.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>Actions</th></tr></thead>
-        <tbody>{rows.map((i: any) => (
-          <tr key={i.id}>
+    <div className="panel table-scroll invoice-table-region" role="region" aria-label={appEnglish.invoices.listLabel} tabIndex={0}>
+      <table className="invoice-table"><thead><tr><th className="select-column"><input type="checkbox" aria-label={appEnglish.invoices.selectAll} checked={selection.allSelected} ref={(node) => { if (node) node.indeterminate = selection.someSelected && !selection.allSelected; }} onChange={selection.toggleAll} /></th><th>Number</th><th>Customer</th><th>Status</th><th className="num">Total</th><th className="num">Paid</th><th>{appEnglish.invoices.actions}</th></tr></thead>
+        <tbody>{rows.map((i: any) => {
+          const hasActions = i.status !== "DRAFT" || (!readonly && canPost);
+          return <tr key={i.id}>
             <td><input type="checkbox" aria-label={appEnglish.invoices.selectInvoice.replace("{number}", i.number ?? appEnglish.invoices.draft)} checked={selection.selectedIds.has(i.id)} onChange={() => selection.toggle(i.id)} /></td>
             <td><button className="link-button" onClick={() => setSelectedInvoiceId(i.id)}><b>{i.number ?? `(${appEnglish.invoices.draft})`}</b></button></td><td>{i.contact_name}</td>
             <td><span className={`pill ${i.status}`}>{i.status}</span></td>
             <td className="num">{fmt(i.total, i.currency)}</td><td className="num">{fmt(i.amount_paid, i.currency)}</td>
-            <td><div className="row">
-              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => previewPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
-              {i.status !== "DRAFT" && <button className="btn ghost sm" disabled={pdfBusyId === i.id} onClick={() => downloadPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
+            <td>{hasActions ? <Dropdown label={appEnglish.invoices.actions} align="end" className="invoice-action-menu"
+              ariaLabel={appEnglish.invoices.actionsFor.replace("{number}", i.number ?? appEnglish.invoices.draft)}>
+              {i.status !== "DRAFT" && <button disabled={pdfBusyId === i.id} onClick={() => previewPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.previewPdf}</button>}
+              {i.status !== "DRAFT" && <button disabled={pdfBusyId === i.id} onClick={() => downloadPdf(i)}>{pdfBusyId === i.id ? appEnglish.invoices.preparingPdf : appEnglish.invoices.downloadPdf}</button>}
               {!readonly && canPost && <>
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
-              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button className="btn ghost sm" onClick={() => openWhatsAppShare(i)}>{appEnglish.invoices.whatsappInvoice}</button>}
-              {i.status === "DRAFT" && <button className="btn sm" onClick={() => act(`/invoices/${i.id}/issue`)}>Issue</button>}
-              {(i.status === "ISSUED" || i.status === "PARTIAL") && <button className="btn accent sm" onClick={() => {
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => createShareLink(i)}>{appEnglish.invoices.createShareLink}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => manageShareLinks(i)}>{appEnglish.invoices.manageShareLinks}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => openEmailComposer(i)}>{appEnglish.invoices.emailInvoice}</button>}
+              {["ISSUED", "PARTIAL", "PAID"].includes(i.status) && <button onClick={() => openWhatsAppShare(i)}>{appEnglish.invoices.whatsappInvoice}</button>}
+              {i.status === "DRAFT" && <button onClick={() => act(`/invoices/${i.id}/issue`)}>{appEnglish.invoices.issue}</button>}
+              {(i.status === "ISSUED" || i.status === "PARTIAL") && <button onClick={() => {
                 const amount = prompt("Payment amount:", String(Number(i.total) - Number(i.amount_paid)));
                 if (amount) act(`/invoices/${i.id}/payments`, { amount, idempotencyKey: idempotencyKey(`payment:${i.id}`) });
-              }}>Record payment</button>}
-              {i.status !== "VOID" && i.status !== "PAID" && <button className="btn ghost sm" onClick={() => {
+              }}>{appEnglish.invoices.recordPayment}</button>}
+              {i.status !== "VOID" && i.status !== "PAID" && <button onClick={() => {
                 const reason = prompt("Reason for voiding:"); if (reason) act(`/invoices/${i.id}/void`, { reason });
-              }}>Void</button>}
+              }}>{appEnglish.invoices.void}</button>}
               </>}
-            </div></td>
-          </tr>
-        ))}</tbody></table>
+            </Dropdown> : "—"}</td>
+          </tr>;
+        })}</tbody></table>
       {loadedRows && rows.length === 0 && <p className="sub" style={{ marginTop: 10 }}>No invoices yet.</p>}
     </div>
     {pdfPreview && <LegacyModal labelledBy="invoice-preview-title" onClose={() => setPdfPreview(null)} className="invoice-preview-modal" backdropClassName="invoice-preview-backdrop">

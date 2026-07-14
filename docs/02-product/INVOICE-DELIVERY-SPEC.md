@@ -52,7 +52,7 @@ later add statements, payment status, and preferences.
 | Company logo field and branding update API | Partial; URL only |
 | Managed logo upload | Missing |
 | Immutable issued invoice-document snapshot | Implemented foundation |
-| Branded invoice template | Implemented foundation from immutable issue snapshot; template expansion/review pending |
+| Branded invoice template | Professional A4 v3 implemented from immutable issue snapshot; qualified statutory review pending |
 | PDF generation/download | Implemented through P1-007 document service |
 | Invoice email delivery and delivery history | P7-001 bounded explicit-send foundation implemented; provider/retry/webhook operations gated |
 | Secure customer invoice link/portal | Expiring/revocable PDF link foundation implemented; fuller portal missing |
@@ -70,6 +70,8 @@ review:
 - line descriptions, quantities, unit prices, tax, subtotals, and total;
 - payment instructions when configured;
 - notes and approved terms;
+- explicitly configured bank/remittance instructions that contain no banking
+  credentials or access secrets;
 - a clear VAKA-powered attribution policy where required; and
 - a stable document/template version.
 
@@ -127,6 +129,11 @@ test one approach.
 - English is the initial reviewed document language; Shona and Ndebele
   templates remain disabled until terminology and layouts are professionally
   reviewed.
+- Template v3 uses the shared enterprise-document roles for A4 margins, brand
+  header, metadata, party boxes, repeated line-item headings, totals,
+  remittance/terms panels, page numbering and attribution. Management,
+  statutory and operational report missions must reuse these roles rather than
+  introduce separate PDF visual systems.
 
 ## 7. Sending and delivery
 

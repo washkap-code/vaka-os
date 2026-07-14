@@ -40,6 +40,14 @@ describe("profile and company settings", () => {
       taxNumber: "BP-456",
       vatNumber: "VAT-789",
       physicalAddress: "Harare, Zimbabwe",
+      invoicePaymentTerms: "Payment due within 14 days.",
+      invoiceBankName: "Commercial Bank of Zimbabwe",
+      invoiceBankAccountName: "Updated Company",
+      invoiceBankAccountNumber: "0011223344",
+      invoiceBankBranch: "Harare Main",
+      invoiceBankSwiftCode: "CBZAZWHX",
+      invoiceBankCurrency: "USD",
+      showVatNumberOnInvoices: true,
     });
     expect(branding.status).toBe(200);
 
@@ -51,6 +59,11 @@ describe("profile and company settings", () => {
       brandPrimaryColor: "#112233",
       registrationNumber: "REG-123",
       physicalAddress: "Harare, Zimbabwe",
+      invoicePaymentTerms: "Payment due within 14 days.",
+      invoiceBankName: "Commercial Bank of Zimbabwe",
+      invoiceBankAccountNumber: "0011223344",
+      invoiceBankCurrency: "USD",
+      showVatNumberOnInvoices: true,
     });
 
     const events = await db.select().from(schema.auditLogs).where(and(
@@ -58,6 +71,11 @@ describe("profile and company settings", () => {
       eq(schema.auditLogs.action, "settings.branding_updated"),
     ));
     expect(events).toHaveLength(1);
+    expect(events[0].metadata).toMatchObject({
+      documentPaymentDetailsChanged: true,
+      changedFields: expect.arrayContaining(["invoicePaymentTerms", "invoiceBankAccountNumber"]),
+    });
+    expect(JSON.stringify(events[0].metadata)).not.toContain("0011223344");
   });
 
   it("rejects unsafe or malformed branding values", async () => {
@@ -72,6 +90,11 @@ describe("profile and company settings", () => {
       brandPrimaryColor: "not-a-colour",
     });
     expect(response.status).toBe(400);
+
+    const bankCurrency = await request(app).patch("/api/v1/settings/branding").set(auth).send({
+      invoiceBankCurrency: "EUR",
+    });
+    expect(bankCurrency.status).toBe(400);
   });
 
   it("accepts a tenant-scoped PNG logo upload with signature and size validation", async () => {

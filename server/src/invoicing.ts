@@ -260,7 +260,7 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
     await tx.insert(schema.invoiceDocumentSnapshots).values({
       tenantId: opts.tenantId,
       invoiceId: inv.id,
-      templateVersion: "invoice-document-v2",
+      templateVersion: "invoice-document-v3",
       document: {
         issuedAt: issueDate.toISOString(),
         issuer: {
@@ -271,11 +271,26 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
           physicalAddress: issuer.physicalAddress,
           registrationNumber: issuer.registrationNumber,
           taxNumber: issuer.taxNumber,
-          vatNumber: issuer.vatNumber,
+          vatNumber: issuer.showVatNumberOnInvoices ? issuer.vatNumber : null,
+          paymentTerms: issuer.invoicePaymentTerms,
+          bankDetails: {
+            bankName: issuer.invoiceBankName,
+            accountName: issuer.invoiceBankAccountName,
+            accountNumber: issuer.invoiceBankAccountNumber,
+            branch: issuer.invoiceBankBranch,
+            swiftCode: issuer.invoiceBankSwiftCode,
+            currency: issuer.invoiceBankCurrency,
+          },
         },
         customer: {
           name: customer.name,
-          address: customer.address,
+          address: [
+            customer.addressLine1,
+            customer.addressLine2,
+            [customer.city, customer.region, customer.postalCode].filter(Boolean).join(", "),
+            customer.countryCode,
+          ].filter(Boolean).join("\n") || customer.address,
+          registrationNumber: customer.registrationNumber,
           taxNumber: customer.taxNumber,
         },
         invoice: {

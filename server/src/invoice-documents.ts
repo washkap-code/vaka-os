@@ -1,9 +1,36 @@
-import { deflateSync, inflateSync } from "node:zlib";
 import { VAKA_DOCUMENT_FOOTER } from "./document-branding.js";
+import {
+  ENTERPRISE_DOCUMENT,
+  PdfDocument,
+  type PdfColour,
+  type PdfPage,
+  fitImage,
+  parseDocumentImage,
+  pdfColour,
+  wrapPdfText,
+} from "./document-layout.js";
 
 export type InvoiceSnapshotDocument = {
-  issuer: { companyName: string; logoUrl?: string | null; physicalAddress: string | null; registrationNumber: string | null; taxNumber: string | null; vatNumber: string | null };
-  customer: { name: string; address: string | null; taxNumber: string | null };
+  issuer: {
+    companyName: string;
+    logoUrl?: string | null;
+    brandPrimaryColor?: string | null;
+    brandSecondaryColor?: string | null;
+    physicalAddress: string | null;
+    registrationNumber: string | null;
+    taxNumber: string | null;
+    vatNumber: string | null;
+    paymentTerms?: string | null;
+    bankDetails?: {
+      bankName?: string | null;
+      accountName?: string | null;
+      accountNumber?: string | null;
+      branch?: string | null;
+      swiftCode?: string | null;
+      currency?: string | null;
+    } | null;
+  };
+  customer: { name: string; address: string | null; registrationNumber?: string | null; taxNumber: string | null };
   invoice: {
     number: string | null; issueDate: string; dueDate: string | null; currency: string;
     taxJurisdiction?: string | null; taxDate?: string | null; taxTreatment?: string | null;
@@ -17,213 +44,278 @@ export type InvoiceSnapshotDocument = {
   }>;
 };
 
-function escapePdfText(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)").replace(/[\r\n]/g, " ");
+const { page, colour, type } = ENTERPRISE_DOCUMENT;
+const contentWidth = page.width - page.margin * 2;
+
+function date(value: string | null | undefined): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value.slice(0, 10);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${String(parsed.getUTCDate()).padStart(2, "0")} ${months[parsed.getUTCMonth()]} ${parsed.getUTCFullYear()}`;
 }
 
-type PdfImage = {
-  width: number;
-  height: number;
-  colorSpace: "DeviceGray" | "DeviceRGB";
-  filter: "jpeg" | "flate";
-  data: Buffer;
-};
-
-const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-
-function paeth(left: number, up: number, upperLeft: number): number {
-  const estimate = left + up - upperLeft;
-  const leftDistance = Math.abs(estimate - left);
-  const upDistance = Math.abs(estimate - up);
-  const upperLeftDistance = Math.abs(estimate - upperLeft);
-  if (leftDistance <= upDistance && leftDistance <= upperLeftDistance) return left;
-  if (upDistance <= upperLeftDistance) return up;
-  return upperLeft;
+function displayTreatment(value: string | null | undefined): string {
+  if (value === "zero-rated") return "Zero-rated";
+  if (value === "exempt") return "Exempt";
+  if (value === "mixed") return "Mixed";
+  return value === "standard" ? "Standard-rated" : "-";
 }
 
-function decodePng(data: Buffer): PdfImage | null {
-  if (!data.subarray(0, pngSignature.length).equals(pngSignature)) return null;
-  let offset = pngSignature.length;
-  let width = 0;
-  let height = 0;
-  let bitDepth = 0;
-  let colorType = 0;
-  let interlace = 0;
-  let palette: Buffer | null = null;
-  let transparency: Buffer | null = null;
-  const idat: Buffer[] = [];
-  while (offset + 12 <= data.length) {
-    const length = data.readUInt32BE(offset);
-    const type = data.subarray(offset + 4, offset + 8).toString("ascii");
-    const chunkStart = offset + 8;
-    const chunkEnd = chunkStart + length;
-    if (chunkEnd + 4 > data.length) return null;
-    const chunk = data.subarray(chunkStart, chunkEnd);
-    if (type === "IHDR" && chunk.length >= 13) {
-      width = chunk.readUInt32BE(0);
-      height = chunk.readUInt32BE(4);
-      bitDepth = chunk[8];
-      colorType = chunk[9];
-      interlace = chunk[12];
-    } else if (type === "PLTE") palette = chunk;
-    else if (type === "tRNS") transparency = chunk;
-    else if (type === "IDAT") idat.push(chunk);
-    else if (type === "IEND") break;
-    offset = chunkEnd + 4;
+function formatAmount(value: string): string {
+  const match = /^(-?)(\d+)(\.\d+)?$/.exec(value.trim());
+  if (!match) return value;
+  return `${match[1]}${match[2].replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${match[3] ?? ""}`;
+}
+
+function nonEmpty(values: Array<string | null | undefined>): string[] {
+  return values.map((value) => value?.trim()).filter((value): value is string => Boolean(value));
+}
+
+function addressLines(value: string | null | undefined, width: number, maxLines = 4): string[] {
+  return wrapPdfText(value ?? "", width, type.body, maxLines).filter(Boolean);
+}
+
+function drawLabel(pageView: PdfPage, label: string, x: number, y: number, accent: PdfColour) {
+  pageView.text(label.toUpperCase(), x, y, { size: type.caption, font: "bold", colour: accent });
+}
+
+function drawBox(pageView: PdfPage, x: number, y: number, width: number, height: number) {
+  pageView.rect(x, y, width, height, { fill: colour.white, stroke: colour.line });
+}
+
+function drawFirstPageHeader(pageView: PdfPage, document: InvoiceSnapshotDocument, logo: ReturnType<typeof parseDocumentImage>, accent: PdfColour) {
+  pageView.rect(page.margin, 812, contentWidth, 4, { fill: accent });
+  pageView.text(document.issuer.companyName, page.margin, 786, { size: type.company, font: "bold", width: 350 });
+  const issuerSummary = nonEmpty([
+    ...addressLines(document.issuer.physicalAddress, 345, 3),
+    document.issuer.registrationNumber ? `Company registration: ${document.issuer.registrationNumber}` : null,
+    document.issuer.taxNumber ? `Tax number: ${document.issuer.taxNumber}` : null,
+    document.issuer.vatNumber ? `VAT registration: ${document.issuer.vatNumber}` : null,
+  ]).slice(0, 6);
+  pageView.lines(issuerSummary, page.margin, 766, { size: type.small, colour: colour.muted, leading: 10 });
+  if (logo) {
+    const fitted = fitImage(logo, 112, 62);
+    pageView.image(page.width - page.margin - fitted.width, 746, fitted.width, fitted.height);
   }
-  const channelsByColorType: Record<number, number | undefined> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
-  const channels = channelsByColorType[colorType];
-  if (!width || !height || bitDepth !== 8 || interlace !== 0 || channels === undefined || !idat.length) return null;
-  if (colorType === 3 && (!palette || palette.length % 3 !== 0)) return null;
-  let decoded: Buffer;
-  try { decoded = inflateSync(Buffer.concat(idat)); } catch { return null; }
-  const rowLength = width * channels;
-  if (decoded.length < height * (rowLength + 1)) return null;
-  const rgb = Buffer.alloc(width * height * 3);
-  let decodedOffset = 0;
-  let outputOffset = 0;
-  let previous = Buffer.alloc(rowLength);
-  for (let y = 0; y < height; y++) {
-    const filter = decoded[decodedOffset++];
-    const row = Buffer.from(decoded.subarray(decodedOffset, decodedOffset + rowLength));
-    decodedOffset += rowLength;
-    if (row.length !== rowLength || filter > 4) return null;
-    const bytesPerPixel = channels;
-    for (let i = 0; i < row.length; i++) {
-      const left = i >= bytesPerPixel ? row[i - bytesPerPixel] : 0;
-      const up = previous[i] ?? 0;
-      const upperLeft = i >= bytesPerPixel ? (previous[i - bytesPerPixel] ?? 0) : 0;
-      if (filter === 1) row[i] = (row[i] + left) & 0xff;
-      else if (filter === 2) row[i] = (row[i] + up) & 0xff;
-      else if (filter === 3) row[i] = (row[i] + Math.floor((left + up) / 2)) & 0xff;
-      else if (filter === 4) row[i] = (row[i] + paeth(left, up, upperLeft)) & 0xff;
+
+  pageView.text("INVOICE", page.margin, 690, { size: type.title, font: "bold" });
+  pageView.text("Authoritative issued document", page.margin, 674, { size: type.small, colour: colour.muted });
+  pageView.text(`VAT treatment: ${displayTreatment(document.invoice.taxTreatment)}`, page.margin, 661,
+    { size: type.small, colour: colour.muted });
+  if (document.invoice.taxDate) pageView.text(`Tax date: ${date(document.invoice.taxDate)}`, page.margin + 142, 661,
+    { size: type.small, colour: colour.muted });
+
+  const metaX = 286;
+  const metaY = 660;
+  const metaWidth = page.width - page.margin - metaX;
+  drawBox(pageView, metaX, metaY, metaWidth, 61);
+  const leftX = metaX + 12;
+  const rightX = metaX + 150;
+  drawLabel(pageView, "Invoice number", leftX, 704, accent);
+  pageView.text(document.invoice.number ?? "Issued invoice", leftX, 688, { size: type.heading, font: "bold" });
+  drawLabel(pageView, "Currency", rightX, 704, accent);
+  pageView.text(document.invoice.currency, rightX, 688, { size: type.heading, font: "bold" });
+  drawLabel(pageView, "Issue date", leftX, 675, accent);
+  pageView.text(date(document.invoice.issueDate), leftX, 663, { size: type.small });
+  drawLabel(pageView, "Due date", rightX, 675, accent);
+  pageView.text(date(document.invoice.dueDate), rightX, 663, { size: type.small });
+
+  const partyY = 540;
+  const partyHeight = 104;
+  const gap = 12;
+  const partyWidth = (contentWidth - gap) / 2;
+  drawBox(pageView, page.margin, partyY, partyWidth, partyHeight);
+  drawBox(pageView, page.margin + partyWidth + gap, partyY, partyWidth, partyHeight);
+  drawLabel(pageView, "From", page.margin + 12, partyY + partyHeight - 17, accent);
+  pageView.text(document.issuer.companyName, page.margin + 12, partyY + partyHeight - 34, { size: type.heading, font: "bold" });
+  const fromLines = nonEmpty([
+    ...addressLines(document.issuer.physicalAddress, partyWidth - 24, 4),
+    document.issuer.registrationNumber ? `Registration: ${document.issuer.registrationNumber}` : null,
+    document.issuer.vatNumber ? `VAT: ${document.issuer.vatNumber}` : null,
+  ]).slice(0, 6);
+  pageView.lines(fromLines, page.margin + 12, partyY + partyHeight - 49, { size: type.small, colour: colour.muted, leading: 9 });
+
+  const customerX = page.margin + partyWidth + gap;
+  drawLabel(pageView, "Bill to", customerX + 12, partyY + partyHeight - 17, accent);
+  pageView.text(document.customer.name, customerX + 12, partyY + partyHeight - 34, { size: type.heading, font: "bold" });
+  const customerLines = nonEmpty([
+    ...addressLines(document.customer.address, partyWidth - 24, 4),
+    document.customer.registrationNumber ? `Registration: ${document.customer.registrationNumber}` : null,
+    document.customer.taxNumber ? `Tax / BP: ${document.customer.taxNumber}` : null,
+  ]).slice(0, 6);
+  pageView.lines(customerLines, customerX + 12, partyY + partyHeight - 49, { size: type.small, colour: colour.muted, leading: 9 });
+}
+
+function drawContinuationHeader(pageView: PdfPage, document: InvoiceSnapshotDocument, accent: PdfColour) {
+  pageView.rect(page.margin, 812, contentWidth, 4, { fill: accent });
+  pageView.text(document.issuer.companyName, page.margin, 786, { size: 12, font: "bold" });
+  pageView.text(`Invoice ${document.invoice.number ?? "Issued invoice"}`, page.width - page.margin - 190, 786,
+    { size: type.heading, font: "bold", align: "right", width: 190 });
+  pageView.text("Line items continued", page.margin, 769, { size: type.small, colour: colour.muted });
+}
+
+const tableColumns = [
+  { label: "Description", x: 36, width: 220, align: "left" as const },
+  { label: "Qty", x: 256, width: 46, align: "right" as const },
+  { label: "Unit price", x: 302, width: 82, align: "right" as const },
+  { label: "VAT", x: 384, width: 76, align: "right" as const },
+  { label: "Amount", x: 460, width: 99, align: "right" as const },
+];
+
+type PreparedLine = InvoiceSnapshotDocument["lines"][number] & { descriptionLines: string[]; height: number };
+
+function prepareLines(document: InvoiceSnapshotDocument): PreparedLine[] {
+  return document.lines.map((line) => {
+    const descriptionLines = wrapPdfText(line.description, tableColumns[0].width - 18, type.body, 5);
+    return { ...line, descriptionLines, height: Math.max(28, descriptionLines.length * 10 + 10) };
+  });
+}
+
+function drawTableHeader(pageView: PdfPage, top: number, accent: PdfColour) {
+  pageView.rect(page.margin, top - 24, contentWidth, 24, { fill: accent, stroke: accent });
+  for (const column of tableColumns) {
+    pageView.text(column.label.toUpperCase(), column.x + (column.align === "left" ? 8 : 0), top - 16,
+      { size: type.caption, font: "bold", colour: colour.white, align: column.align, width: column.width - 8 });
+  }
+}
+
+function drawRows(pageView: PdfPage, document: InvoiceSnapshotDocument, rows: PreparedLine[], top: number): number {
+  let y = top - 24;
+  rows.forEach((line, index) => {
+    const bottom = y - line.height;
+    if (index % 2 === 1) pageView.rect(page.margin, bottom, contentWidth, line.height, { fill: colour.surface });
+    pageView.line(page.margin, bottom, page.margin + contentWidth, bottom);
+    pageView.lines(line.descriptionLines, tableColumns[0].x + 8, y - 12, { size: type.body, leading: 10 });
+    pageView.text(line.quantity, tableColumns[1].x, y - 14, { size: type.body, align: "right", width: tableColumns[1].width - 8 });
+    pageView.text(`${document.invoice.currency} ${formatAmount(line.unitPrice)}`, tableColumns[2].x, y - 14, { size: type.body, align: "right", width: tableColumns[2].width - 8 });
+    pageView.text(`${line.taxRate}%`, tableColumns[3].x, y - 12, { size: type.body, align: "right", width: tableColumns[3].width - 8 });
+    pageView.text(`${document.invoice.currency} ${formatAmount(line.taxAmount ?? "0.00")}`, tableColumns[3].x, y - 22, { size: type.caption, colour: colour.muted, align: "right", width: tableColumns[3].width - 8 });
+    pageView.text(`${document.invoice.currency} ${formatAmount(line.lineTotal)}`, tableColumns[4].x, y - 14, { size: type.body, font: "bold", align: "right", width: tableColumns[4].width - 8 });
+    y = bottom;
+  });
+  pageView.rect(page.margin, y, contentWidth, top - 24 - y, { stroke: colour.line });
+  for (const column of tableColumns.slice(1)) pageView.line(column.x, top, column.x, y);
+  return y;
+}
+
+function drawSummary(pageView: PdfPage, document: InvoiceSnapshotDocument, tableBottom: number, accent: PdfColour) {
+  const top = Math.min(tableBottom - 14, 315);
+  const boxHeight = 82;
+  const bottom = top - boxHeight;
+  const gap = 12;
+  const totalsWidth = 214;
+  const notesWidth = contentWidth - totalsWidth - gap;
+  drawBox(pageView, page.margin, bottom, notesWidth, boxHeight);
+  drawLabel(pageView, "Invoice notes", page.margin + 12, top - 17, accent);
+  const noteText = document.invoice.notes?.trim() || "Please quote the invoice number with all correspondence.";
+  pageView.lines(wrapPdfText(noteText, notesWidth - 24, type.small, 5), page.margin + 12, top - 34,
+    { size: type.small, colour: colour.muted, leading: 10 });
+
+  const totalsX = page.margin + notesWidth + gap;
+  pageView.rect(totalsX, bottom, totalsWidth, boxHeight, { fill: colour.surface, stroke: colour.line });
+  const totalRows = [
+    ["Subtotal", document.invoice.subtotal],
+    ["VAT", document.invoice.taxTotal],
+    ["TOTAL", document.invoice.total],
+  ];
+  totalRows.forEach(([label, value], index) => {
+    const y = top - 19 - index * 22;
+    pageView.text(label, totalsX + 12, y, { size: index === 2 ? type.heading : type.body, font: index === 2 ? "bold" : "regular" });
+    pageView.text(`${document.invoice.currency} ${formatAmount(value)}`, totalsX + 92, y,
+      { size: index === 2 ? type.heading : type.body, font: "bold", align: "right", width: totalsWidth - 104 });
+    if (index < 2) pageView.line(totalsX + 12, y - 8, totalsX + totalsWidth - 12, y - 8);
+  });
+
+  const paymentTop = bottom - 12;
+  const paymentHeight = 88;
+  const paymentBottom = paymentTop - paymentHeight;
+  drawBox(pageView, page.margin, paymentBottom, contentWidth, paymentHeight);
+  const half = (contentWidth - gap) / 2;
+  drawLabel(pageView, "Payment details", page.margin + 12, paymentTop - 17, accent);
+  const bank = document.issuer.bankDetails;
+  const bankLines = nonEmpty([
+    bank?.bankName,
+    bank?.accountName ? `Account name: ${bank.accountName}` : null,
+    bank?.accountNumber ? `Account number: ${bank.accountNumber}` : null,
+    bank?.branch ? `Branch: ${bank.branch}` : null,
+    bank?.swiftCode ? `SWIFT / BIC: ${bank.swiftCode}` : null,
+    bank?.currency ? `Account currency: ${bank.currency}` : null,
+  ]);
+  const paymentLines = bankLines.length ? bankLines : [`Payment reference: ${document.invoice.number ?? "invoice number"}`];
+  pageView.lines(paymentLines.slice(0, 6), page.margin + 12, paymentTop - 34,
+    { size: type.small, colour: colour.muted, leading: 9 });
+  const termsX = page.margin + half + gap;
+  pageView.line(termsX - gap / 2, paymentBottom + 10, termsX - gap / 2, paymentTop - 10);
+  drawLabel(pageView, "Payment terms", termsX, paymentTop - 17, accent);
+  const terms = document.issuer.paymentTerms?.trim()
+    || (document.invoice.dueDate ? `Payment due by ${date(document.invoice.dueDate)}.` : "Payment is due on receipt.");
+  pageView.lines(wrapPdfText(terms, half - 12, type.small, 6), termsX, paymentTop - 34,
+    { size: type.small, colour: colour.muted, leading: 9 });
+}
+
+function drawFooter(pageView: PdfPage, pageNumber: number, pageCount: number) {
+  pageView.line(page.margin, 43, page.width - page.margin, 43);
+  pageView.text(VAKA_DOCUMENT_FOOTER, page.margin, page.footerY, { size: type.caption, colour: colour.muted });
+  pageView.text(`Page ${pageNumber} of ${pageCount}`, page.width - page.margin - 90, page.footerY,
+    { size: type.caption, colour: colour.muted, align: "right", width: 90 });
+}
+
+function partitionLines(lines: PreparedLine[]): PreparedLine[][] {
+  const pages: PreparedLine[][] = [];
+  let index = 0;
+  while (index < lines.length) {
+    const tableTop = pages.length === 0 ? 535 : 750;
+    const remaining = lines.slice(index);
+    const remainingHeight = remaining.reduce((sum, line) => sum + line.height, 0);
+    const finalCapacity = tableTop - 335;
+    const normalCapacity = tableTop - 72;
+    if (remainingHeight <= finalCapacity) {
+      pages.push(remaining);
+      break;
     }
-    for (let x = 0; x < width; x++) {
-      let red = 255;
-      let green = 255;
-      let blue = 255;
-      let alpha = 255;
-      if (colorType === 0) {
-        red = green = blue = row[x];
-        if (transparency && transparency.length >= 2 && row[x] === transparency.readUInt16BE(0)) alpha = 0;
-      } else if (colorType === 2) {
-        red = row[x * 3]; green = row[x * 3 + 1]; blue = row[x * 3 + 2];
-      } else if (colorType === 3) {
-        const index = row[x];
-        if (!palette || index * 3 + 2 >= palette.length) return null;
-        red = palette[index * 3]; green = palette[index * 3 + 1]; blue = palette[index * 3 + 2];
-        alpha = transparency?.[index] ?? 255;
-      } else if (colorType === 4) {
-        red = green = blue = row[x * 2]; alpha = row[x * 2 + 1];
-      } else {
-        red = row[x * 4]; green = row[x * 4 + 1]; blue = row[x * 4 + 2]; alpha = row[x * 4 + 3];
+    const nextFinalCapacity = 750 - 335;
+    if (remainingHeight <= normalCapacity + nextFinalCapacity) {
+      let bestSplit = 1;
+      let bestScore = Number.POSITIVE_INFINITY;
+      for (let split = 1; split < remaining.length; split++) {
+        const leftHeight = remaining.slice(0, split).reduce((sum, line) => sum + line.height, 0);
+        const rightHeight = remainingHeight - leftHeight;
+        if (leftHeight > normalCapacity || rightHeight > nextFinalCapacity) continue;
+        const score = Math.abs(leftHeight - rightHeight);
+        if (score < bestScore) { bestSplit = split; bestScore = score; }
       }
-      rgb[outputOffset++] = Math.round((red * alpha + 255 * (255 - alpha)) / 255);
-      rgb[outputOffset++] = Math.round((green * alpha + 255 * (255 - alpha)) / 255);
-      rgb[outputOffset++] = Math.round((blue * alpha + 255 * (255 - alpha)) / 255);
+      pages.push(remaining.slice(0, bestSplit));
+      index += bestSplit;
+      continue;
     }
-    previous = row;
-  }
-  return { width, height, colorSpace: "DeviceRGB", filter: "flate", data: deflateSync(rgb) };
-}
-
-function decodeJpeg(data: Buffer): PdfImage | null {
-  if (data.length < 4 || data[0] !== 0xff || data[1] !== 0xd8) return null;
-  let offset = 2;
-  while (offset + 4 <= data.length) {
-    if (data[offset] !== 0xff) { offset++; continue; }
-    while (data[offset] === 0xff) offset++;
-    const marker = data[offset++];
-    if (marker === 0xd9 || marker === 0xda) break;
-    if (marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7)) continue;
-    if (offset + 2 > data.length) return null;
-    const length = data.readUInt16BE(offset);
-    if (length < 2 || offset + length > data.length) return null;
-    const isFrame = (marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7)
-      || (marker >= 0xc9 && marker <= 0xcb) || (marker >= 0xcd && marker <= 0xcf);
-    if (isFrame && length >= 8) {
-      const height = data.readUInt16BE(offset + 3);
-      const width = data.readUInt16BE(offset + 5);
-      const components = data[offset + 7];
-      if (!width || !height || (components !== 1 && components !== 3)) return null;
-      return { width, height, colorSpace: components === 1 ? "DeviceGray" : "DeviceRGB", filter: "jpeg", data };
+    const pageRows: PreparedLine[] = [];
+    let available = normalCapacity;
+    while (index < lines.length - 1 && lines[index].height <= available) {
+      pageRows.push(lines[index]);
+      available -= lines[index].height;
+      index++;
     }
-    offset += length;
+    if (!pageRows.length) pageRows.push(lines[index++]);
+    pages.push(pageRows);
   }
-  return null;
-}
-
-function parseLogo(logoUrl: string | null | undefined): PdfImage | null {
-  if (!logoUrl) return null;
-  const match = /^data:image\/(png|jpeg|jpg);base64,([A-Za-z0-9+/=]+)$/.exec(logoUrl);
-  if (!match) return null;
-  let data: Buffer;
-  try { data = Buffer.from(match[2], "base64"); } catch { return null; }
-  if (!data.length) return null;
-  return match[1] === "png" ? decodePng(data) : decodeJpeg(data);
+  return pages.length ? pages : [[]];
 }
 
 export function renderInvoicePdf(document: InvoiceSnapshotDocument): Buffer {
-  const logo = parseLogo(document.issuer.logoUrl);
-  const lines: string[] = [];
-  const add = (text: string, size = 10) => {
-    const y = 760 - lines.length * 18;
-    lines.push(`BT /F1 ${size} Tf 40 ${y} Td (${escapePdfText(text)}) Tj ET`);
-  };
-  add(document.issuer.companyName, 18);
-  add("VAKA invoice", 11);
-  add(`Invoice: ${document.invoice.number ?? "Issued invoice"}`);
-  add(`Issued: ${document.invoice.issueDate.slice(0, 10)}    Due: ${document.invoice.dueDate?.slice(0, 10) ?? "—"}`);
-  if (document.invoice.taxTreatment) {
-    add(`VAT treatment: ${document.invoice.taxTreatment}    Jurisdiction: ${document.invoice.taxJurisdiction ?? "—"}    Tax date: ${document.invoice.taxDate ?? "—"}`, 9);
-  }
-  add(`Customer: ${document.customer.name}`);
-  if (document.customer.address) add(document.customer.address);
-  add(" ");
-  add("Description                         Qty       Unit price       Total", 9);
-  for (const line of document.lines) {
-    add(`${line.description}    ${line.quantity}    ${document.invoice.currency} ${line.unitPrice}    ${document.invoice.currency} ${line.lineTotal}`, 9);
-    if (line.taxTreatment) {
-      add(`  VAT: ${line.taxTreatment} at ${line.taxRate}% = ${document.invoice.currency} ${line.taxAmount ?? "0.00"}`, 8);
-    }
-  }
-  add(" ");
-  add(`Subtotal: ${document.invoice.currency} ${document.invoice.subtotal}`);
-  add(`Tax: ${document.invoice.currency} ${document.invoice.taxTotal}`);
-  add(`Total: ${document.invoice.currency} ${document.invoice.total}`, 13);
-  if (document.invoice.notes) add(`Notes: ${document.invoice.notes}`);
-  add("Generated from the issued VAKA invoice record.", 8);
-  lines.push(`BT /F1 7 Tf 40 22 Td (${escapePdfText(VAKA_DOCUMENT_FOOTER)}) Tj ET`);
-
-  if (logo) {
-    const boxWidth = 110;
-    const boxHeight = 60;
-    const scale = Math.min(boxWidth / logo.width, boxHeight / logo.height);
-    const width = Math.max(1, Math.round(logo.width * scale));
-    const height = Math.max(1, Math.round(logo.height * scale));
-    const x = 612 - 40 - width;
-    const y = 792 - 40 - height;
-    lines.unshift(`q ${width} 0 0 ${height} ${x} ${y} cm /Im1 Do Q`);
-  }
-  const content = lines.join("\n");
-  const imageObject = logo ? `<< /Type /XObject /Subtype /Image /Width ${logo.width} /Height ${logo.height} /ColorSpace /${logo.colorSpace} /BitsPerComponent 8 /Filter [ /ASCIIHexDecode /${logo.filter === "jpeg" ? "DCTDecode" : "FlateDecode"} ] /Length ${logo.data.length * 2 + 1} >>\nstream\n${logo.data.toString("hex").toUpperCase()}>\nendstream` : null;
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >>${logo ? " /XObject << /Im1 6 0 R >>" : ""} >> /Contents 5 0 R >>`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    `<< /Length ${Buffer.byteLength(content, "utf8")} >>\nstream\n${content}\nendstream`,
-  ];
-  if (imageObject) objects.push(imageObject);
-  let output = "%PDF-1.4\n%\xFF\xFF\xFF\xFF\n";
-  const offsets = [0];
-  objects.forEach((object, index) => {
-    offsets.push(Buffer.byteLength(output, "utf8"));
-    output += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  const logo = parseDocumentImage(document.issuer.logoUrl);
+  const accent = pdfColour(document.issuer.brandSecondaryColor ?? document.issuer.brandPrimaryColor);
+  const pdf = new PdfDocument(logo);
+  const linePages = partitionLines(prepareLines(document));
+  linePages.forEach((rows, index) => {
+    const pageView = pdf.addPage();
+    const tableTop = index === 0 ? 535 : 750;
+    if (index === 0) drawFirstPageHeader(pageView, document, logo, accent);
+    else drawContinuationHeader(pageView, document, accent);
+    drawTableHeader(pageView, tableTop, accent);
+    const tableBottom = drawRows(pageView, document, rows, tableTop);
+    if (index === linePages.length - 1) drawSummary(pageView, document, tableBottom, accent);
   });
-  const xrefOffset = Buffer.byteLength(output, "utf8");
-  output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  for (let index = 1; index <= objects.length; index++) output += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-  return Buffer.from(output, "utf8");
+  pdf.pages.forEach((pageView, index) => drawFooter(pageView, index + 1, pdf.pages.length));
+  return pdf.build();
 }

@@ -260,16 +260,34 @@ export function Dropdown({
   children,
   align = "start",
   className,
+  ariaLabel,
 }: {
   label: ReactNode;
   children: ReactNode;
   align?: "start" | "end";
   className?: string;
+  ariaLabel?: string;
 }) {
+  const root = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => {
+      if (root.current?.open && !root.current.contains(event.target as Node)) root.current.open = false;
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, []);
   return (
-    <details className={cx("vds-dropdown", `vds-dropdown--${align}`, className)}>
-      <summary>{label}</summary>
-      <div className="vds-dropdown-menu">{children}</div>
+    <details ref={root} className={cx("vds-dropdown", `vds-dropdown--${align}`, className)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && root.current?.open) {
+          root.current.open = false;
+          root.current.querySelector("summary")?.focus();
+        }
+      }}>
+      <summary aria-label={ariaLabel}>{label}</summary>
+      <div className="vds-dropdown-menu" onClick={(event) => {
+        if ((event.target as HTMLElement).closest("button, a")) root.current?.removeAttribute("open");
+      }}>{children}</div>
     </details>
   );
 }

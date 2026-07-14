@@ -13,6 +13,14 @@ if (!databaseUrl) {
 
 const required = [
   ["tenants", "country_code"],
+  ["tenants", "invoice_payment_terms"],
+  ["tenants", "invoice_bank_name"],
+  ["tenants", "invoice_bank_account_name"],
+  ["tenants", "invoice_bank_account_number"],
+  ["tenants", "invoice_bank_branch"],
+  ["tenants", "invoice_bank_swift_code"],
+  ["tenants", "invoice_bank_currency"],
+  ["tenants", "show_vat_number_on_invoices"],
   ["users", "must_change_password"],
   ["users", "platform_role_key"],
   ["user_sessions", "id"],

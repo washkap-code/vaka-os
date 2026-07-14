@@ -18,9 +18,20 @@ describe("finance kernel - invoice document snapshots", () => {
       registrationNumber: "REG-100",
       vatNumber: "VAT-200",
       logoUrl: logo,
+      invoicePaymentTerms: "Payment due within 14 days. Quote the invoice number.",
+      invoiceBankName: "VAKA Commercial Bank",
+      invoiceBankAccountName: "Snapshot Trading",
+      invoiceBankAccountNumber: "00123456789",
+      invoiceBankBranch: "Harare Main",
+      invoiceBankSwiftCode: "VAKAZWHX",
+      invoiceBankCurrency: "USD",
+      showVatNumberOnInvoices: true,
     }).where(eq(schema.tenants.id, tenant.tenantId));
     const customer = await createContact(tenant, "Snapshot Customer", {
-      address: "Bulawayo, Zimbabwe",
+      addressLine1: "45 Main Street",
+      city: "Bulawayo",
+      countryCode: "ZW",
+      registrationNumber: "CUSTOMER-400",
       taxNumber: "BP-300",
     });
     const draft = await createDraftInvoice({
@@ -37,14 +48,25 @@ describe("finance kernel - invoice document snapshots", () => {
       eq(schema.invoiceDocumentSnapshots.invoiceId, issued.id),
       eq(schema.invoiceDocumentSnapshots.tenantId, tenant.tenantId),
     ));
-    expect(snapshot.templateVersion).toBe("invoice-document-v2");
+    expect(snapshot.templateVersion).toBe("invoice-document-v3");
     expect(snapshot.document).toMatchObject({
       issuer: {
         companyName: "Snapshot Trading (Private) Limited",
         physicalAddress: "12 Samora Machel Avenue, Harare",
         logoUrl: logo,
+        paymentTerms: "Payment due within 14 days. Quote the invoice number.",
+        bankDetails: {
+          bankName: "VAKA Commercial Bank",
+          accountNumber: "00123456789",
+          swiftCode: "VAKAZWHX",
+          currency: "USD",
+        },
       },
-      customer: { name: "Snapshot Customer", address: "Bulawayo, Zimbabwe" },
+      customer: {
+        name: "Snapshot Customer",
+        address: "45 Main Street\nBulawayo\nZW",
+        registrationNumber: "CUSTOMER-400",
+      },
       invoice: {
         id: issued.id,
         number: issued.number,
@@ -79,8 +101,10 @@ describe("finance kernel - invoice document snapshots", () => {
     expect(pdf.body.subarray(0, 8).toString()).toBe("%PDF-1.4");
     expect(pdf.body.toString("latin1")).toContain("/Subtype /Image");
     expect(pdf.body.toString("latin1")).toContain("/Im1 Do");
-    expect(pdf.body.toString("latin1")).toContain("VAT treatment: standard");
-    expect(pdf.body.toString("latin1")).toContain("VAT: standard at 15.00% = USD 30.00");
+    expect(pdf.body.toString("latin1")).toContain("VAT treatment: Standard-rated");
+    expect(pdf.body.toString("latin1")).toContain("VAT registration: VAT-200");
+    expect(pdf.body.toString("latin1")).toContain("VAKA Commercial Bank");
+    expect(pdf.body.toString("latin1")).toContain("Payment due within 14 days");
     expect(pdf.body.toString("latin1")).toContain("Powered by VAKA OS  |  www.vakaos.com");
 
     const share = await request(app).post(`/api/v1/invoices/${issued.id}/share-links`).set(tenant.auth)

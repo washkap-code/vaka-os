@@ -38,6 +38,7 @@ const files = [
   "src/accessibility/legacy-field.tsx",
   "src/accessibility/legacy-modal.tsx",
   "src/accessibility/use-modal-focus.ts",
+  "src/design-system/primitives.tsx",
   "src/shell/workspace-shell.tsx",
   "src/platform/platform-admin-shell.tsx",
   "src/shell/command-palette.tsx",
@@ -56,6 +57,7 @@ const landing = sources.get("src/landing.css");
 const field = sources.get("src/accessibility/legacy-field.tsx");
 const modal = sources.get("src/accessibility/legacy-modal.tsx");
 const focus = sources.get("src/accessibility/use-modal-focus.ts");
+const primitives = sources.get("src/design-system/primitives.tsx");
 const platformShell = sources.get("src/platform/platform-admin-shell.tsx");
 
 for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"aria-invalid": error ? true']) {
@@ -67,6 +69,9 @@ for (const expected of ['role="dialog"', 'aria-modal="true"', "aria-labelledby={
 for (const expected of ['event.key === "Escape"', 'event.key !== "Tab"', 'document.body.style.overflow = "hidden"', "returnFocus?.isConnected", "!activeIsFocusable"]) {
   requireContract(issues, "src/accessibility/use-modal-focus.ts", focus, expected);
 }
+for (const expected of ['aria-label={ariaLabel}', 'event.key === "Escape"', 'document.addEventListener("pointerdown", closeOutside)', 'closest("button, a")']) {
+  requireContract(issues, "src/design-system/primitives.tsx", primitives, expected);
+}
 for (const expected of [
   '<LegacyField label={appEnglish.auth.authenticationCode}>',
   '<LegacyField label={copy.name}>',
@@ -75,6 +80,8 @@ for (const expected of [
   'labelledBy="new-invoice-title"',
   'labelledBy="invoice-record-title"',
   'labelledBy="invoice-preview-title"',
+  'ariaLabel={appEnglish.invoices.actionsFor.replace',
+  'className="invoice-action-menu"',
   'labelledBy="new-deal-title"',
   'labelledBy="new-product-title"',
   'labelledBy="reorder-rule-title"',
@@ -150,6 +157,8 @@ for (const expected of [
   ".import-workspace .btn.btn { min-height: var(--vaka-control-height-md); }",
   ".import-workspace .import-summary",
   ".capture-review-modal",
+  ".invoice-table { min-width: 62rem; table-layout: fixed; }",
+  ".invoice-action-menu[open] .vds-dropdown-menu",
   "@media (forced-colors: active)",
   "@media (prefers-reduced-motion: reduce)",
 ]) requireContract(issues, "src/styles.css", styles, expected);
