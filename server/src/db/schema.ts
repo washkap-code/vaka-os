@@ -190,10 +190,21 @@ export const userSessions = pgTable("user_sessions", {
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
   revokedBy: uuid("revoked_by").references(() => users.id),
   revokedReason: text("revoked_reason"),
+  // P9-010: hashed, single-use refresh credential state. Nullable for a
+  // compatible migration — pre-rotation sessions simply cannot renew.
+  refreshTokenHash: text("refresh_token_hash"),
+  previousRefreshTokenHash: text("previous_refresh_token_hash"),
+  refreshRotatedAt: timestamp("refresh_rotated_at", { withTimezone: true }),
+  assuranceLevel: text("assurance_level").default("aal1").notNull(),
 }, (t) => [
   uniqueIndex("user_sessions_token_hash").on(t.tokenHash),
   index("user_sessions_tenant_activity").on(t.tenantId, t.lastSeenAt),
   index("user_sessions_user_activity").on(t.userId, t.lastSeenAt),
+  uniqueIndex("user_sessions_refresh_token_hash").on(t.refreshTokenHash)
+    .where(sql`${t.refreshTokenHash} IS NOT NULL`),
+  uniqueIndex("user_sessions_previous_refresh_token_hash").on(t.previousRefreshTokenHash)
+    .where(sql`${t.previousRefreshTokenHash} IS NOT NULL`),
+  check("user_sessions_assurance_level_check", sql`${t.assuranceLevel} IN ('aal1', 'aal2')`),
 ]);
 
 // Rebuildable tenant search index. Canonical business records remain in their

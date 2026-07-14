@@ -15,7 +15,7 @@ import {
   AuthedRequest, authenticate, lifecycleGate, requireAnyPermission, requirePermission,
   requirePlatformPermission, tenantId, signupTenant, login, changePassword,
   requireCompletedPasswordChange, requireTenantOwner, revokeSession, createTenantUser, setTenantUserStatus,
-  issueAuthenticatedSession,
+  issueAuthenticatedSession, renewSession, setRefreshCookie, clearRefreshCookie, readRefreshCookie,
 } from "./auth.js";
 import {
   beginMfaEnrollment, completePasswordReset, disableMfa, mfaStatus,
@@ -142,7 +142,16 @@ const signupSchema = z.object({
   planName: z.string().optional(),
   referralCode: z.string().max(32).optional(),
 });
-api.post("/auth/signup", wrap(async (req) => {
+// The raw refresh credential travels only in the HttpOnly refresh cookie:
+// strip it from every JSON session payload before responding.
+const deliverSession = <S extends { mfaRequired: boolean; refreshToken?: string }>(res: Response, session: S) => {
+  if (session.mfaRequired || !session.refreshToken) return session;
+  setRefreshCookie(res, session.refreshToken);
+  const { refreshToken: _refreshToken, ...safe } = session;
+  return safe;
+};
+
+api.post("/auth/signup", wrap(async (req, res) => {
   const body = signupSchema.parse(req.body);
   const { tenant, owner } = await signupTenant(body);
   const session = await login(body.ownerEmail, body.ownerPassword, tenant.subdomain, {
@@ -151,19 +160,41 @@ api.post("/auth/signup", wrap(async (req) => {
     userAgent: req.header("User-Agent") ?? undefined,
     ip: req.ip,
   });
-  return { tenant: { id: tenant.id, subdomain: tenant.subdomain, companyName: tenant.companyName, trialEndsAt: tenant.trialEndsAt }, ...session };
+  return { tenant: { id: tenant.id, subdomain: tenant.subdomain, companyName: tenant.companyName, trialEndsAt: tenant.trialEndsAt }, ...deliverSession(res, session) };
 }));
 
-api.post("/auth/login", wrap(async (req) => {
+api.post("/auth/login", wrap(async (req, res) => {
   const { email, password, subdomain } = z.object({
     email: z.string().email(), password: z.string(), subdomain: z.string().optional(),
   }).parse(req.body);
-  return login(email, password, subdomain, {
+  const session = await login(email, password, subdomain, {
     clientType: req.header("X-Vaka-Client") ?? "web",
     appVersion: req.header("X-Vaka-App-Version") ?? undefined,
     userAgent: req.header("User-Agent") ?? undefined,
     ip: req.ip,
   });
+  return deliverSession(res, session);
+}));
+
+// P9-010: renew an authenticated session from the HttpOnly refresh cookie.
+// Public but rate limited (see app.ts). Every renewal rotates the refresh
+// credential; replay of a superseded credential revokes the session. All
+// failures are a generic 401 that also clears the cookie.
+api.post("/auth/refresh", wrap(async (req, res) => {
+  const rawRefreshToken = readRefreshCookie(req);
+  if (!rawRefreshToken) {
+    clearRefreshCookie(res);
+    res.status(401).json({ error: "UNAUTHORIZED", message: "Session renewal failed" });
+    return;
+  }
+  try {
+    const renewed = await renewSession(rawRefreshToken);
+    setRefreshCookie(res, renewed.refreshToken);
+    return { token: renewed.token };
+  } catch (error) {
+    clearRefreshCookie(res);
+    throw error;
+  }
 }));
 
 api.post("/auth/password-reset/request", wrap(async (req) => {
@@ -182,18 +213,19 @@ api.post("/auth/password-reset/complete", wrap(async (req) => {
   return completePasswordReset(body.token, body.newPassword);
 }));
 
-api.post("/auth/mfa/verify-login", wrap(async (req) => {
+api.post("/auth/mfa/verify-login", wrap(async (req, res) => {
   const body = z.object({
     challengeToken: z.string().min(32).max(2048),
     code: z.string().trim().min(6).max(32),
   }).parse(req.body);
   const verified = await verifyMfaLogin(body.challengeToken, body.code);
-  return issueAuthenticatedSession(verified.userId, {
+  const session = await issueAuthenticatedSession(verified.userId, {
     clientType: req.header("X-Vaka-Client") ?? "web",
     appVersion: req.header("X-Vaka-App-Version") ?? undefined,
     userAgent: req.header("User-Agent") ?? undefined,
     ip: req.ip,
   }, "aal2");
+  return deliverSession(res, session);
 }));
 
 // Public customer document access. The opaque, expiry-bound share token is
@@ -347,9 +379,10 @@ api.post("/auth/change-password", wrap(async (req) => {
   return changePassword({ userId: req.auth!.userId, ...body });
 }));
 
-api.post("/auth/logout", wrap(async (req) => {
+api.post("/auth/logout", wrap(async (req, res) => {
   const body = z.object({ reason: z.enum(["EXPLICIT", "IDLE"]).default("EXPLICIT") })
     .parse(req.body ?? {});
+  clearRefreshCookie(res);
   if (!req.auth!.sessionId) return { revoked: false };
   return revokeSession({
     tenantId: req.auth!.tenantId,
