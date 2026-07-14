@@ -67,3 +67,13 @@ DROP TRIGGER IF EXISTS "stock_movements_append_only" ON "public"."stock_movement
 CREATE TRIGGER "stock_movements_append_only"
 BEFORE UPDATE OR DELETE ON "public"."stock_movements"
 FOR EACH ROW EXECUTE FUNCTION "public"."prevent_financial_history_mutation"();
+
+DO $$
+BEGIN
+  IF to_regclass('public.stock_movement_valuations') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS "stock_movement_valuations_append_only" ON "public"."stock_movement_valuations";
+    CREATE TRIGGER "stock_movement_valuations_append_only"
+    BEFORE UPDATE OR DELETE ON "public"."stock_movement_valuations"
+    FOR EACH ROW EXECUTE FUNCTION "public"."prevent_financial_history_mutation"();
+  END IF;
+END $$;

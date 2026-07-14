@@ -35,6 +35,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | P3-004 | Customer records, bulk actions and controlled deletion | ✅ Released (PR #61); physical privacy erasure and merge/deduplication remain gated |
 | P2-007 | Invoice detail and draft amendment | ✅ Released (PR #61); issued/posted history remains immutable |
 | P5-004 | Product reorder rules and in-app low-stock alerts | ✅ Technically verified; durable delivery, external channels and auto-replenishment gated |
+| P5-003 | Weighted-average inventory valuation feeding COGS | Implementation complete; hosted DB verification and Zimbabwean accountant sign-off pending |
 | P6-006 | Platform Admin Control Centre | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
 | P6-003 | Universal Workbench | ✅ Released (PR #65); full remote quality gate and production deployment passed |
 | P6-004 | Universal Command and Search Palette | ✅ Released (PR #66); full remote quality gate and production deployment passed |

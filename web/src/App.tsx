@@ -94,6 +94,27 @@ type StatutoryReportPackView = {
   agedReceivables: { controlBalance: string; scheduledBalance: string; unallocatedBalance: string; items: unknown[] };
   agedPayables: { controlBalance: string; scheduledBalance: string; unallocatedBalance: string; requiresReconciliation: boolean; completeOpenItemSubledger: false; items: unknown[] };
 };
+type InventoryValuationReconciliationView = {
+  generatedAt: string;
+  currency: "USD" | "ZWG";
+  valuationMethod: "WEIGHTED_AVERAGE";
+  status: "RECONCILED" | "NEEDS_REVIEW";
+  inventoryGlBalance: string;
+  stockValuation: string;
+  difference: string;
+  missingLayerCount: number;
+  missingStockLevelCount: number;
+  quantityMismatchCount: number;
+  isAudited: false;
+  accountantSignOff: "REQUIRED_BEFORE_GA";
+  items: Array<{
+    productId: string; sku: string; productName: string;
+    warehouseId: string; warehouseName: string;
+    stockQuantity: string | null; valuedQuantity: string | null;
+    weightedAverageUnitCost: string | null; totalValue: string | null;
+    status: "ALIGNED" | "MISSING_LAYER" | "MISSING_STOCK_LEVEL" | "QUANTITY_MISMATCH";
+  }>;
+};
 
 type CustomerTimelineItem = {
   id: string;
@@ -3629,11 +3650,12 @@ function Reports({ ccy }: { ccy: string }) {
   const localDate = (value: Date) => new Date(value.getTime() - value.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
   const defaultTo = localDate(today);
   const defaultFrom = localDate(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "vat" | "statutory">("pl");
+  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "inventory" | "vat" | "statutory">("pl");
   const [pl] = useLoad(() => api("/reports/profit-loss"), [tab]);
   const [bs] = useLoad(() => api("/reports/balance-sheet"), [tab]);
   const [ar] = useLoad(() => api("/reports/aged-receivables"), [tab]);
   const [journal] = useLoad(() => api("/journal"), [tab]);
+  const inventory = useLoadState<InventoryValuationReconciliationView>(() => api("/reports/inventory-valuation"), [tab]);
   const [vatPeriod, setVatPeriod] = useState({ from: defaultFrom, to: defaultTo });
   const [vatApplied, setVatApplied] = useState(vatPeriod);
   const [vat, setVat] = useState<VatTechnicalReportView | null>(null);
@@ -3642,12 +3664,13 @@ function Reports({ ccy }: { ccy: string }) {
   const reportsCopy = appEnglish.reports;
   const copy = reportsCopy.vat;
   const statutoryCopy = reportsCopy.statutory;
-  const reportTabs = ["pl", "bs", "ar", "journal", "vat", "statutory"] as const;
+  const reportTabs = ["pl", "bs", "ar", "journal", "inventory", "vat", "statutory"] as const;
   const reportTabLabels = {
     pl: reportsCopy.tabs.pl,
     bs: reportsCopy.tabs.bs,
     ar: reportsCopy.tabs.ar,
     journal: reportsCopy.tabs.journal,
+    inventory: reportsCopy.inventory.tab,
     vat: copy.tab,
     statutory: statutoryCopy.tab,
   };
@@ -3790,6 +3813,38 @@ function Reports({ ccy }: { ccy: string }) {
           ))}</tbody></table></div>
         </div>
       ))}
+    </div>}
+    {tab === "inventory" && <div className="panel" role="tabpanel" id="report-panel-inventory" aria-labelledby="report-tab-inventory" tabIndex={0}>
+      <h2>{reportsCopy.inventory.title}</h2>
+      <div className="banner warn">{reportsCopy.inventory.signOffGate}</div>
+      {inventory.loading && <p className="sub" role="status">{reportsCopy.inventory.loading}</p>}
+      {inventory.error && <div className="err-text" role="alert">
+        {inventory.error} <button className="btn ghost sm" onClick={inventory.reload}>{reportsCopy.inventory.retry}</button>
+      </div>}
+      {inventory.data && !inventory.loading && <>
+        <div className="cards">
+          <div className="card"><div className="k">{reportsCopy.inventory.glBalance}</div><div className="v">{fmt(inventory.data.inventoryGlBalance, inventory.data.currency)}</div></div>
+          <div className="card"><div className="k">{reportsCopy.inventory.stockValuation}</div><div className="v">{fmt(inventory.data.stockValuation, inventory.data.currency)}</div></div>
+          <div className="card"><div className="k">{reportsCopy.inventory.difference}</div><div className="v">{fmt(inventory.data.difference, inventory.data.currency)}</div></div>
+          <div className="card"><div className="k">{reportsCopy.inventory.status}</div><div className="v">{reportsCopy.inventory.statuses[inventory.data.status]}</div></div>
+        </div>
+        <p className="sub">{reportsCopy.inventory.method} · {reportsCopy.inventory.generated.replace("{date}", new Date(inventory.data.generatedAt).toLocaleString())}</p>
+        {inventory.data.items.length === 0 ? <p className="sub">{reportsCopy.inventory.empty}</p> :
+          <div className="table-scroll" role="region" aria-label={reportsCopy.inventory.tableLabel} tabIndex={0}>
+            <table className="dense-data-table"><thead><tr>
+              <th>{reportsCopy.inventory.product}</th><th>{reportsCopy.inventory.warehouse}</th>
+              <th className="num">{reportsCopy.inventory.stockQuantity}</th><th className="num">{reportsCopy.inventory.valuedQuantity}</th>
+              <th className="num">{reportsCopy.inventory.averageCost}</th><th className="num">{reportsCopy.inventory.totalValue}</th>
+              <th>{reportsCopy.inventory.lineStatus}</th>
+            </tr></thead><tbody>{inventory.data.items.map((row) => <tr key={`${row.productId}:${row.warehouseId}`}>
+              <td><b>{row.sku}</b><div className="sub">{row.productName}</div></td><td>{row.warehouseName}</td>
+              <td className="num">{row.stockQuantity ?? "—"}</td><td className="num">{row.valuedQuantity ?? "—"}</td>
+              <td className="num">{row.weightedAverageUnitCost === null ? "—" : fmt(row.weightedAverageUnitCost, inventory.data!.currency)}</td>
+              <td className="num">{row.totalValue === null ? "—" : fmt(row.totalValue, inventory.data!.currency)}</td>
+              <td>{reportsCopy.inventory.itemStatuses[row.status]}</td>
+            </tr>)}</tbody></table>
+          </div>}
+      </>}
     </div>}
     {tab === "vat" && <div className="panel" role="tabpanel" id="report-panel-vat" aria-labelledby="report-tab-vat" tabIndex={0}>
       <h2>{copy.title}</h2>

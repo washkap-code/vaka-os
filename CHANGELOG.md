@@ -37,6 +37,20 @@
 
 ### Added
 
+- **Weighted-average inventory valuation feeding COGS (P5-003):** Added an
+  exact base-currency valuation layer per canonical Product/Warehouse plus
+  immutable allocation evidence per append-only stock movement. Sale issues now
+  derive COGS from weighted-average stock history and post balanced Dr COGS / Cr
+  Inventory through the existing journal service; full-layer issues consume
+  every residual cent, receipt FX reuses the Inventory/GRNI base total, and
+  voids restore the original allocation. Added stable locking, tenant-scoped
+  idempotency, bounded audit evidence, identifier-only post-commit events and a
+  permission-protected Inventory-control reconciliation technical preview.
+  Added migration `0029_weighted_average_inventory_valuation.sql`, strict
+  finance/tenant/rollback/concurrency tests and exact hand-apply production DDL.
+  No production database command was run. Qualified Zimbabwean accountant
+  sign-off remains mandatory before GA or audited-financial-output claims.
+
 - **Supplier bills and enforced three-way match (P4-003):** Added tenant-scoped
   supplier-bill drafts against approved purchase orders, effective-dated input
   tax snapshots, deterministic PO/receipt/bill match evidence and

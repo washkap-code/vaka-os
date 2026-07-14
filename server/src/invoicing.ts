@@ -10,7 +10,7 @@
 // If ANY step fails, everything rolls back — the three modules can never
 // disagree with each other.
 // ============================================================================
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   DB, db, schema, badRequest, conflict, notFound,
   toCents, fromCents, mulRate, audit, nextDocNumber,
@@ -18,7 +18,7 @@ import {
 } from "./lib.js";
 import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accounting.js";
 import type { JournalLineInput } from "./accounting.js";
-import { recordStockMovement } from "./inventory.js";
+import { quantityToUnits, recordStockMovement, unitsToQuantity } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 import type { TaxTreatment } from "./platform/localisation/types.js";
 import {
@@ -236,6 +236,12 @@ export async function updateDraftInvoice(opts: {
 
 export async function issueInvoice(opts: { tenantId: string; invoiceId: string; createdBy?: string | null }) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    // Serialize lifecycle, numbering and all downstream financial effects.
+    await tx.execute(sql`
+      SELECT id FROM invoices
+      WHERE id = ${opts.invoiceId} AND tenant_id = ${opts.tenantId}
+      FOR UPDATE
+    `);
     const [inv] = await tx.select().from(schema.invoices).where(and(
       eq(schema.invoices.id, opts.invoiceId), eq(schema.invoices.tenantId, opts.tenantId)));
     if (!inv) throw notFound("Invoice not found");
@@ -343,10 +349,23 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
 
     // 3+4. stock decrement + COGS for tracked product lines
     let cogsBase = 0n;
+    const valuedIssues: Array<{
+      movementId: string;
+      valuationId: string;
+      movementCostCents: string;
+      productId: string;
+      warehouseId: string;
+      quantityDelta: string;
+    }> = [];
+    const stockLines: Array<{
+      line: (typeof lines)[number];
+      productId: string;
+      warehouseId: string;
+    }> = [];
     for (const line of lines) {
       if (!line.productId) continue;
       const [product] = await tx.select().from(schema.products)
-        .where(eq(schema.products.id, line.productId));
+        .where(and(eq(schema.products.id, line.productId), eq(schema.products.tenantId, opts.tenantId)));
       if (!product || !product.trackStock) continue;
       let warehouseId = line.warehouseId;
       if (!warehouseId) {
@@ -355,22 +374,46 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
         if (!wh) throw badRequest(`Line "${line.description}" has no warehouse and no default warehouse exists`);
         warehouseId = wh.id;
       }
+      stockLines.push({ line, productId: product.id, warehouseId });
+    }
+    stockLines.sort((left, right) =>
+      `${left.productId}:${left.warehouseId}:${left.line.id}`.localeCompare(`${right.productId}:${right.warehouseId}:${right.line.id}`));
+    for (const { line, productId, warehouseId } of stockLines) {
+      const idempotencyFingerprint = payloadFingerprint({
+        action: "invoice_stock_issue",
+        invoiceId: inv.id,
+        invoiceLineId: line.id,
+        productId,
+        warehouseId,
+        quantity: line.quantity,
+      });
       const movement = await recordStockMovement(tx, {
-        tenantId: opts.tenantId, productId: line.productId, warehouseId,
-        quantityDelta: `-${line.quantity}`, unitCost: product.costPrice,
+        tenantId: opts.tenantId, productId, warehouseId,
+        quantityDelta: `-${line.quantity}`,
         reason: "SALE", sourceType: "invoice", sourceId: inv.id, createdBy: opts.createdBy,
+        idempotencyKey: `invoice-issue:${inv.id}:${line.id}`,
+        idempotencyFingerprint,
       });
       queue({
         id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
         type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
-        payload: { movementId: movement.movementId, productId: line.productId, warehouseId, quantityDelta: `-${line.quantity}`, kind: "SALE" },
+        payload: { movementId: movement.movementId, productId, warehouseId, quantityDelta: `-${line.quantity}`, kind: "SALE" },
       });
-      cogsBase += mulRate(mulRate(toCents(product.costPrice), Number(line.quantity).toFixed(6)), "1");
+      cogsBase += BigInt(movement.valuation.movementCostCents);
+      valuedIssues.push({
+        movementId: movement.movementId,
+        valuationId: movement.valuation.id,
+        movementCostCents: movement.valuation.movementCostCents,
+        productId,
+        warehouseId,
+        quantityDelta: `-${line.quantity}`,
+      });
     }
+    let cogsJournalEntryId: string | null = null;
     if (cogsBase > 0n) {
       const cogs = await systemAccount(tx, opts.tenantId, "COGS");
       const inventory = await systemAccount(tx, opts.tenantId, "INVENTORY");
-      await postJournal(tx, {
+      cogsJournalEntryId = await postJournal(tx, {
         tenantId: opts.tenantId, date: issueDate, memo: `COGS — Invoice ${number}`,
         sourceType: "invoice", sourceId: inv.id, createdBy: opts.createdBy,
         lines: [
@@ -378,6 +421,28 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
           { accountId: inventory.id, credit: fromCents(cogsBase) },
         ],
       });
+    }
+    if (valuedIssues.length) {
+      await audit(tx, opts.tenantId, opts.createdBy ?? null, "inventory.issue_valued", "invoice", inv.id, {
+        journalEntryId: cogsJournalEntryId,
+        totalCostCents: cogsBase.toString(),
+        movements: valuedIssues.map(({ movementId, valuationId, movementCostCents }) => ({
+          movementId, valuationId, movementCostCents,
+        })),
+      });
+      for (const valued of valuedIssues) {
+        queue({
+          id: `${DOMAIN_EVENTS.INVENTORY_VALUED}:${valued.valuationId}`,
+          type: DOMAIN_EVENTS.INVENTORY_VALUED,
+          tenantId: opts.tenantId,
+          actorUserId: opts.createdBy ?? null,
+          payload: {
+            movementId: valued.movementId,
+            valuationId: valued.valuationId,
+            journalEntryId: cogsJournalEntryId,
+          },
+        });
+      }
     }
 
     // 5. lock the invoice as ISSUED
@@ -499,6 +564,11 @@ export async function recordPayment(opts: {
  */
 export async function voidInvoice(opts: { tenantId: string; invoiceId: string; reason: string; createdBy?: string | null }) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+    await tx.execute(sql`
+      SELECT id FROM invoices
+      WHERE id = ${opts.invoiceId} AND tenant_id = ${opts.tenantId}
+      FOR UPDATE
+    `);
     const [inv] = await tx.select().from(schema.invoices).where(and(
       eq(schema.invoices.id, opts.invoiceId), eq(schema.invoices.tenantId, opts.tenantId)));
     if (!inv) throw notFound("Invoice not found");
@@ -527,16 +597,33 @@ export async function voidInvoice(opts: { tenantId: string; invoiceId: string; r
         eq(schema.stockMovements.sourceType, "invoice"),
         eq(schema.stockMovements.sourceId, inv.id)));
       for (const m of moves) {
+        const [originalValuation] = await tx.select().from(schema.stockMovementValuations).where(and(
+          eq(schema.stockMovementValuations.tenantId, opts.tenantId),
+          eq(schema.stockMovementValuations.stockMovementId, m.id),
+        ));
+        if (!originalValuation) throw conflict("Invoice stock issue is missing immutable valuation evidence");
+        const returnQuantity = unitsToQuantity(-quantityToUnits(m.quantityDelta));
+        const idempotencyFingerprint = payloadFingerprint({
+          action: "invoice_stock_return",
+          invoiceId: inv.id,
+          originalMovementId: m.id,
+          quantity: returnQuantity,
+          costCents: originalValuation.movementCostCents.toString(),
+        });
         const movement = await recordStockMovement(tx, {
           tenantId: opts.tenantId, productId: m.productId, warehouseId: m.warehouseId,
-          quantityDelta: String(-Number(m.quantityDelta)), unitCost: m.unitCost ?? undefined,
+          quantityDelta: returnQuantity,
+          unitCost: m.unitCost ?? undefined,
+          totalCostBaseCents: originalValuation.movementCostCents,
           reason: "ADJUSTMENT", sourceType: "invoice_void", sourceId: inv.id,
           note: `Void of invoice ${inv.number}`, createdBy: opts.createdBy, allowNegative: true,
+          idempotencyKey: `invoice-void:${inv.id}:${m.id}`,
+          idempotencyFingerprint,
         });
         queue({
           id: `${DOMAIN_EVENTS.STOCK_MOVED}:${movement.movementId}`,
           type: DOMAIN_EVENTS.STOCK_MOVED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
-          payload: { movementId: movement.movementId, productId: m.productId, warehouseId: m.warehouseId, quantityDelta: String(-Number(m.quantityDelta)), kind: "ADJUSTMENT" },
+          payload: { movementId: movement.movementId, productId: m.productId, warehouseId: m.warehouseId, quantityDelta: returnQuantity, kind: "ADJUSTMENT" },
         });
       }
     }

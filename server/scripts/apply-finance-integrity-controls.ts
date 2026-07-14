@@ -9,13 +9,18 @@ if (!databaseUrl) {
 }
 assertSafeFinanceTestDatabase();
 
-const sql = readFileSync(resolve("drizzle/0007_financial_integrity_controls.sql"), "utf8");
+const sqlFiles = [
+  "drizzle/0007_financial_integrity_controls.sql",
+  "drizzle/0029_weighted_average_inventory_valuation.sql",
+];
 const client = new Client({ connectionString: databaseUrl });
 
 await client.connect();
 try {
-  await client.query(sql);
-  console.log("Applied finance integrity controls to guarded test database.");
+  for (const file of sqlFiles) {
+    await client.query(readFileSync(resolve(file), "utf8"));
+  }
+  console.log("Applied finance integrity and inventory valuation controls to guarded test database.");
 } finally {
   await client.end();
 }

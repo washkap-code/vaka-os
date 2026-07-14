@@ -108,6 +108,18 @@ Transactions preserve original currency, functional currency, exchange-rate snap
 
 Approved inventory valuation (currently weighted-average foundations) derives COGS and inventory journals from append-only stock movements and snapshotted costs. Negative stock/oversell is refused where required. Fixed assets cover capitalization, classes, depreciation, impairment, disposal and reconciliation through controlled events.
 
+P5-003 implements the weighted-average technical foundation in exact base-
+currency integer cents. Each product/warehouse has a rebuildable current layer
+and every stock movement has immutable quantity/value allocation evidence. Sale
+issues allocate from the layer under lock and post balanced Dr COGS / Cr
+Inventory exclusively through the journal service; receipt FX uses the same
+base total as its Inventory/GRNI journal. A current-position report reconciles
+the Inventory control account to the valuation subledger and reports missing or
+quantity/value exceptions without auto-posting. This is not audited financial
+output: the valuation policy, historical conversion, rounding, FX treatment and
+operating reconciliation require qualified Zimbabwean accountant sign-off
+before GA.
+
 ## 10. Budgets, reporting, close and consolidation
 
 Budgets/forecasts are versioned planning data and never posted history. Trial balance, P&L, balance sheet, cash flow, ledgers, AR/AP ageing, tax and management reports reconcile to source balances with as-at/currency/dimension disclosure. Close includes task ownership, reconciliations, exceptions, period lock and sign-off. Multi-entity consolidation adds elimination, translation and ownership rules only after legal-entity isolation exists.

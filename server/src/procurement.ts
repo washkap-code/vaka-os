@@ -661,6 +661,7 @@ export async function postGoodsReceipt(opts: {
       const receivedQuantity = inputByPoLine.get(poLine.id)!;
       const total = lineTotal(poLine.unitCost, receivedQuantity);
       const baseUnitCost = fromCents(mulRate(toCents(poLine.unitCost), po.rateToBase));
+      const baseLineTotalCents = mulRate(toCents(total), po.rateToBase);
       const [receiptLine] = await tx.insert(schema.goodsReceiptLineItems).values({
         tenantId: opts.tenantId,
         goodsReceiptId: receipt.id,
@@ -678,6 +679,7 @@ export async function postGoodsReceipt(opts: {
         warehouseId: poLine.warehouseId,
         quantityDelta: receivedQuantity,
         unitCost: baseUnitCost,
+        totalCostBaseCents: baseLineTotalCents,
         reason: "PURCHASE",
         sourceType: "goods_receipt",
         sourceId: receipt.id,
@@ -703,7 +705,7 @@ export async function postGoodsReceipt(opts: {
         eq(schema.products.tenantId, opts.tenantId),
       ));
       goodsOriginal += toCents(total);
-      goodsBase += mulRate(toCents(total), po.rateToBase);
+      goodsBase += baseLineTotalCents;
       if (goodsBase > 99_999_999_999_999n) throw badRequest("Goods receipt value exceeds the supported money range");
       receivedByPoLine.set(poLine.id,
         (receivedByPoLine.get(poLine.id) ?? 0n) + quantityUnits(receivedQuantity));
