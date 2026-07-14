@@ -2,7 +2,7 @@
 
 **Implementation:** Complete for the approved bounded explicit-send scope
 **Technical verification:** Complete
-**Availability:** Authenticated finance send APIs; no dedicated confirmation UI
+**Availability:** Authenticated finance send APIs plus invoice-record confirmation UI
 **Production gate:** Provider/domain approval, retry/webhook/rate/deliverability operations remain open
 **Completed on:** 2026-07-13
 
@@ -35,6 +35,9 @@
   without message bodies, bearer tokens or unnecessary customer data.
 - Provider failure evidence that never changes invoice, payment, journal,
   ledger, tax, stock or numbering state.
+- Invoice-record UI adoption with explicit recipient confirmation, a fresh
+  idempotency key and visible delivery success/failure. Customer consent and
+  the provider/domain production gate remain server-enforced.
 
 ## Verification evidence
 
@@ -90,9 +93,9 @@
    governed delegation.
 5. ChiShona and isiNdebele finance templates require qualified native and
    professional review before enablement; English fallback is explicit today.
-6. There is no dedicated recipient-preview/confirmation screen in this mission.
-   The authenticated API requires `confirm: true`; UI adoption remains future
-   work.
+6. Invoice delivery now has a dedicated confirmation action in the invoice
+   record. Statement/reminder confirmation UI, recipient preview and delivery
+   history/operations views remain future work.
 7. Automatic/bulk dunning, SMS/WhatsApp/push, attachments, customer portal,
    statement PDF and provider analytics are not provided.
 

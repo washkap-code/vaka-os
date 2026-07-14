@@ -71,6 +71,7 @@ Goal: trustworthy, ZIMRA-aware financial operations; Zimbabwe rules configurable
 | P2-005 | Financial period close (lock posted periods; adjustments as offsetting entries only) | — | Planned |
 | P2-006 | Statutory report pack (trial balance, P&L, balance sheet, aged receivables/payables) export to PDF/CSV | P2-002 | ✅ Technically verified preview; AP/legal-entity/professional gates open |
 | P2-007 | Payroll foundation — PAYE (ZIMRA tables) + NSSA, effective-dated, **gated behind accountant sign-off**, never marketed live | P2-001 | Planned (post-core) |
+| P2-HF-2026-07-14 | Reliable invoice-customer selection, modern entry and record-level document actions | P2-007 invoice-detail pack, P2-008, P7-001 | ✅ Implemented on repair branch; hosted DB/merge gate pending |
 
 Every tax rate is effective-dated and configurable — never hard-coded. Accountant sign-off is a release gate for P2-002/003/006/007.
 

@@ -10,6 +10,7 @@
     "test:design-tokens": "npm run test:design-tokens --workspace web",
     "test:accessibility": "npm run test:accessibility --workspace web",
     "test:product-entry": "npm run test:product-entry --workspace web",
+    "test:invoice-workspace": "npm run test:invoice-workspace --workspace web",
     "test:homepage": "npm run test:homepage --workspace web",
     "test:ai-evaluation": "npm run test:ai-evaluation --workspace server"
   }

@@ -4,6 +4,16 @@
 
 ### Fixed
 
+- **Invoice customer selection and record actions:** Invoice create and draft
+  amendment now load active tenant customers through an accounting-authorised
+  read model over the canonical Contact entity, with distinct loading, empty,
+  failure and retry states instead of a silently empty selector. Invoice records
+  now expose preview/download, governed email delivery, secure-link management,
+  email-link and WhatsApp-link actions inside the record. Create/edit fields use
+  persistent labels, grouped responsive line cards and clearer date/tax guidance;
+  posted history remains immutable. No migration or financial posting behaviour
+  changed.
+
 - **Company-settings field spacing and stock setup:** Removed the shared
   negative help-text margin that caused settings guidance to overlap logo,
   payment-term, inactivity and holding-page controls. Product creation now

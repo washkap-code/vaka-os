@@ -119,6 +119,33 @@ describe("P3-004 customer record management", () => {
 });
 
 describe("P2-007 invoice detail and draft amendment", () => {
+  it("lists active tenant customers for accounting users without broad CRM access", async () => {
+    const tenantA = await signupFinanceTenant("invoice-customer-options-a");
+    const tenantB = await signupFinanceTenant("invoice-customer-options-b");
+    const activeCustomer = await createContact(tenantA, "Active Invoice Customer");
+    const vendorOnly = await createContact(tenantA, "Vendor Only");
+    const removedCustomer = await createContact(tenantA, "Removed Customer");
+    await createContact(tenantB, "Other Tenant Customer");
+    await db.update(schema.contacts).set({ isCustomer: false, isVendor: true })
+      .where(and(eq(schema.contacts.id, vendorOnly.id), eq(schema.contacts.tenantId, tenantA.tenantId)));
+    await db.update(schema.contacts).set({ deletedAt: new Date(), deletedBy: tenantA.userId })
+      .where(and(eq(schema.contacts.id, removedCustomer.id), eq(schema.contacts.tenantId, tenantA.tenantId)));
+
+    const accountingReader = await userAuth(tenantA.tenantId, ["accounting.read"], "invoice-customer-reader");
+    expect((await request(app).get("/api/v1/contacts").set(accountingReader.auth)).status).toBe(403);
+    const response = await request(app).get("/api/v1/invoice-customers").set(accountingReader.auth);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([{
+      id: activeCustomer.id,
+      name: activeCustomer.name,
+      email: activeCustomer.email,
+      phone: activeCustomer.phone,
+    }]);
+
+    const crmReader = await userAuth(tenantA.tenantId, ["crm.read"], "invoice-customer-crm-only");
+    expect((await request(app).get("/api/v1/invoice-customers").set(crmReader.auth)).status).toBe(403);
+  });
+
   it("replaces a tenant-owned draft atomically, recomputes tax, audits, and locks issued history", async () => {
     const tenantA = await signupFinanceTenant("invoice-edit-a");
     const tenantB = await signupFinanceTenant("invoice-edit-b");
