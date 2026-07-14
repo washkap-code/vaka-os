@@ -58,6 +58,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 | OPS-012 | Backup manifest contract foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-013 | Backup manifest registry and recording API | Implemented; focused/browser verification passed; full suite environment-blocked |
 | OPS-014 | Backup job adapter foundation | Implemented; focused/browser verification passed; full suite environment-blocked |
+| OPS-016 | Controlled restore-drill evidence and review | Approved; implementation in progress (OPS-015 remains provider-gated) |
 
 ## Standards
 
