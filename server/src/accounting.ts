@@ -152,8 +152,9 @@ export const ZW_DEFAULT_COA: CoARow[] = [
   { code: "2000", name: "Accounts Payable", type: "LIABILITY", systemKey: "AP" },
   { code: "2050", name: "Goods Received Not Invoiced", type: "LIABILITY", systemKey: "GRNI" },
   { code: "2100", name: "VAT Output (Payable to ZIMRA)", type: "LIABILITY", systemKey: "VAT_OUTPUT" },
-  { code: "2200", name: "PAYE Payable", type: "LIABILITY" },
-  { code: "2210", name: "NSSA Payable", type: "LIABILITY" },
+  { code: "2200", name: "PAYE Payable", type: "LIABILITY", systemKey: "PAYE_PAYABLE" },
+  { code: "2210", name: "NSSA Payable", type: "LIABILITY", systemKey: "NSSA_PAYABLE" },
+  { code: "2220", name: "Net Wages Payable", type: "LIABILITY", systemKey: "NET_WAGES_PAYABLE" },
   { code: "2300", name: "Income Tax / QPD Provision", type: "LIABILITY" },
   { code: "2400", name: "Loans Payable", type: "LIABILITY" },
   // Equity
@@ -166,7 +167,7 @@ export const ZW_DEFAULT_COA: CoARow[] = [
   { code: "4900", name: "Exchange Gain/(Loss)", type: "INCOME", systemKey: "FX_GAIN_LOSS" },
   // Expenses
   { code: "5000", name: "Cost of Goods Sold", type: "EXPENSE", systemKey: "COGS" },
-  { code: "6000", name: "Salaries & Wages", type: "EXPENSE" },
+  { code: "6000", name: "Salaries & Wages", type: "EXPENSE", systemKey: "WAGES_EXPENSE" },
   { code: "6100", name: "Rent", type: "EXPENSE" },
   { code: "6200", name: "Utilities & Connectivity", type: "EXPENSE" },
   { code: "6300", name: "Transport & Fuel", type: "EXPENSE" },

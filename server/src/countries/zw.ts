@@ -31,4 +31,56 @@ export const ZIMBABWE: CountryPack = {
     { key: "qpd", label: "Quarterly Payment Dates (Income Tax)", cadence: "quarterly", authority: "ZIMRA" },
     { key: "annual-return", label: "Company Annual Return", cadence: "annual", authority: "Registrar of Companies" },
   ],
+  // -------------------------------------------------------------------------
+  // P2-009 payroll — TECHNICAL PREVIEW. Figures transcribed 2026-07-15 from
+  // public summaries of the 2026 ZIMRA PAYE tables and NSSA POBS notices.
+  // A qualified Zimbabwean accountant must verify every value (and the
+  // NSSA-deductible-before-PAYE assumption) before this status is flipped to
+  // APPROVED. The ZWG NSSA ceiling is gazetted quarterly and is intentionally
+  // NOT configured: ZWG payroll fails closed until a verified value is added.
+  // -------------------------------------------------------------------------
+  payroll: {
+    payeTables: [
+      {
+        currency: "USD",
+        effectiveFrom: "2026-01-01",
+        effectiveTo: null,
+        bands: [
+          { upToMonthly: 100, percent: 0 },
+          { upToMonthly: 300, percent: 20 },
+          { upToMonthly: 3000, percent: 25 },
+          { upToMonthly: null, percent: 40 },
+        ],
+        taxLevyPercent: 3, // AIDS levy on the PAYE amount
+      },
+      {
+        currency: "ZWG",
+        effectiveFrom: "2026-01-01",
+        effectiveTo: null,
+        bands: [
+          { upToMonthly: 2800, percent: 0 },
+          { upToMonthly: 8400, percent: 20 },
+          { upToMonthly: 84000, percent: 25 },
+          { upToMonthly: null, percent: 40 },
+        ],
+        taxLevyPercent: 3,
+      },
+    ],
+    socialSecurity: [
+      {
+        effectiveFrom: "2026-01-01",
+        effectiveTo: null,
+        employeePercent: 4.5,
+        employerPercent: 4.5,
+        // USD ceiling only; ZWG payroll is refused until its gazetted ceiling
+        // is verified and added here.
+        monthlyCeilings: [{ currency: "USD", amount: 700 }],
+        employeeContributionTaxDeductible: true,
+      },
+    ],
+    verification: {
+      status: "TECHNICAL_PREVIEW",
+      note: "Technical preview — PAYE bands, AIDS levy, NSSA rates/ceilings and the NSSA tax-deductibility treatment require verification by a qualified Zimbabwean accountant before statutory use.",
+    },
+  },
 };

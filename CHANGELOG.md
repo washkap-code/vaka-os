@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Added
+
+- **P2-009 — Zimbabwe payroll (technical preview, accountant gate active).**
+  Employee register, monthly payroll runs and immutable payslips with a full
+  per-payslip calculation trace. PAYE bands, the 3% AIDS levy and NSSA POBS
+  rates/ceilings are effective-dated country-pack configuration (`zw.ts`) —
+  nothing statutory is hard-coded in the engine, and the ZWG NSSA ceiling is
+  deliberately unconfigured so ZWG payroll fails closed until verified.
+  Posting a run creates one balanced journal through `postJournal`
+  (Dr Salaries & Wages; Cr PAYE Payable, NSSA Payable, Net Wages Payable), so
+  period close, tenant isolation and append-only history apply automatically;
+  corrections are full offsetting reversals that free the month for a re-run.
+  New `payroll.read/manage/post` permissions (posting is segregable from
+  preparation) backfilled to Owner/Admin/Accountant in migration
+  `0035_payroll_foundation.sql`. Every payroll API response and screen carries
+  the TECHNICAL_PREVIEW verification note: figures must not be relied on for
+  statutory filing until a qualified Zimbabwean accountant approves the tables
+  and the NSSA-deductibility treatment. Web: new Payroll workspace behind
+  `payroll.read`.
+
 ### Fixed
 
 - **Financial reports are now the tenant's own branded documents.** VAT technical

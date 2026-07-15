@@ -79,4 +79,61 @@ export interface CountryPack {
   statutoryIdentifiers: StatutoryIdentifier[];
   /** Recurring compliance obligations for the compliance calendar. */
   compliance: ComplianceObligation[];
+  /** Payroll statutory configuration (P2-009). Absent = payroll unavailable for this market. */
+  payroll?: PayrollConfig;
+}
+
+// ---------------------------------------------------------------------------
+// Payroll configuration (Mission P2-009). Declarative, effective-dated data —
+// the payroll engine contains no country-specific rates. Everything here is a
+// technical preview until `verification.status` is APPROVED by a qualified
+// local practitioner.
+// ---------------------------------------------------------------------------
+
+/**
+ * One progressive PAYE band. `upToMonthly` is the inclusive upper bound of
+ * cumulative monthly earnings the band covers (null = unbounded top band).
+ * Bands are ordered ascending and tax the excess over the previous bound.
+ */
+export interface PayeBand {
+  upToMonthly: number | null;
+  percent: number;
+}
+
+/** An effective-dated monthly PAYE table for one payment currency. */
+export interface PayeTable {
+  currency: CurrencyCode;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  bands: PayeBand[];
+  /** Levy charged as a percentage of the PAYE amount (Zimbabwe AIDS levy: 3). */
+  taxLevyPercent: number;
+}
+
+/** Effective-dated social-security rule (Zimbabwe NSSA POBS). */
+export interface SocialSecurityRule {
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  employeePercent: number;
+  employerPercent: number;
+  /**
+   * Monthly insurable-earnings ceiling per currency. A currency with no entry
+   * is NOT payroll-capable under this rule (fail closed) — e.g. the ZWG
+   * ceiling is gazetted quarterly and stays unconfigured until verified.
+   */
+  monthlyCeilings: { currency: CurrencyCode; amount: number }[];
+  /** Whether the employee contribution is deducted before PAYE. */
+  employeeContributionTaxDeductible: boolean;
+}
+
+export type PayrollVerificationStatus = "TECHNICAL_PREVIEW" | "APPROVED";
+
+export interface PayrollConfig {
+  payeTables: PayeTable[];
+  socialSecurity: SocialSecurityRule[];
+  verification: {
+    status: PayrollVerificationStatus;
+    /** Shown verbatim on every payroll API response and screen. */
+    note: string;
+  };
 }

@@ -34,6 +34,11 @@ import {
   reopenAccountingPeriod,
 } from "./accounting-periods.js";
 import {
+  createEmployee, createPayrollRun, deleteDraftRun, employeeInputSchema, employeeUpdateSchema,
+  getPayrollRun, listEmployees, listPayrollRuns, payrollConfigView, payslipAdjustmentSchema,
+  postPayrollRun, reversePayrollRun, reverseReasonSchema, updateDraftPayslip, updateEmployee,
+} from "./payroll.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1806,6 +1811,53 @@ api.post("/accounting/periods/:id/reopen",
       periodId: uuidRouteParam(req, "id"), reason: body.reason,
     });
   }));
+
+// ---------------------------------------------------------------------------
+// P2-009: payroll (TECHNICAL PREVIEW — accountant gate). Employee register has
+// no ledger effect; posting a run creates one balanced journal through
+// postJournal. Posted runs are immutable; corrections are full reversals.
+// `payroll.post` is separate from `payroll.manage` so preparation and posting
+// can be segregated in custom roles.
+// ---------------------------------------------------------------------------
+api.get("/payroll/config", requirePermission("payroll.read"), wrap(async (req) =>
+  payrollConfigView(tenantId(req))));
+
+api.get("/payroll/employees", requirePermission("payroll.read"), wrap(async (req) =>
+  listEmployees(tenantId(req))));
+api.post("/payroll/employees", requirePermission("payroll.manage"), wrap(async (req) => {
+  const input = employeeInputSchema.parse(req.body);
+  return createEmployee(tenantId(req), req.auth!.userId, input);
+}));
+api.patch("/payroll/employees/:id", requirePermission("payroll.manage"), wrap(async (req) => {
+  const input = employeeUpdateSchema.parse(req.body);
+  return updateEmployee(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), input);
+}));
+
+api.get("/payroll/runs", requirePermission("payroll.read"), wrap(async (req) =>
+  listPayrollRuns(tenantId(req))));
+api.get("/payroll/runs/:id", requirePermission("payroll.read"), wrap(async (req) =>
+  getPayrollRun(tenantId(req), uuidRouteParam(req, "id"))));
+api.post("/payroll/runs", requirePermission("payroll.manage"), wrap(async (req) => {
+  const body = z.object({ month: periodMonthSchema }).parse(req.body);
+  return createPayrollRun(tenantId(req), req.auth!.userId, body.month);
+}));
+api.patch("/payroll/runs/:id/payslips/:payslipId", requirePermission("payroll.manage"), wrap(async (req) => {
+  const body = payslipAdjustmentSchema.parse(req.body);
+  return updateDraftPayslip(
+    tenantId(req), req.auth!.userId,
+    uuidRouteParam(req, "id"), uuidRouteParam(req, "payslipId"), body.allowances,
+  );
+}));
+api.delete("/payroll/runs/:id", requirePermission("payroll.manage"), wrap(async (req) => {
+  await deleteDraftRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"));
+  return { deleted: true };
+}));
+api.post("/payroll/runs/:id/post", requirePermission("payroll.post"), wrap(async (req) =>
+  postPayrollRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"))));
+api.post("/payroll/runs/:id/reverse", requirePermission("payroll.post"), wrap(async (req) => {
+  const body = z.object({ reason: reverseReasonSchema }).parse(req.body);
+  return reversePayrollRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), body.reason);
+}));
 
 api.get("/journal", requirePermission("accounting.read"), wrap(async (req) => {
   const rows = await db.execute(sql`

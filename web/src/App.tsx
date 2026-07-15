@@ -25,6 +25,8 @@ import { isLightBrandColour, warehouseSettingsAccess } from "./settings/warehous
 const PlatformAdminGuide = lazy(() => import("./platform-admin-guide").then((module) => ({ default: module.PlatformAdminGuide })));
 const ProcurementWorkspace = lazy(() => import("./procurement/procurement-workspace")
   .then((module) => ({ default: module.ProcurementWorkspace })));
+const PayrollWorkspace = lazy(() => import("./payroll/payroll-workspace")
+  .then((module) => ({ default: module.PayrollWorkspace })));
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -1322,6 +1324,9 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
         </Suspense>}
         {page === "reports" && <Reports ccy={t.baseCurrency}
           canClosePeriods={me.permissions.includes("accounting.post")} isTenantOwner={me.isTenantOwner} />}
+        {page === "payroll" && <Suspense fallback={<div className="panel">{appEnglish.payroll.title}…</div>}>
+          <PayrollWorkspace readonly={suspended} permissions={me.permissions} baseCurrency={t.baseCurrency} />
+        </Suspense>}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter
           readonly={suspended}
