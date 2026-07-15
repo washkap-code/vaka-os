@@ -301,5 +301,19 @@
     ],
     "lastReviewed": "2026-07-15",
     "notes": "The Ministry of Justice source describes the department's company, deeds, and intellectual-property registration functions."
+  },
+  {
+    "id": "liquor-licensing-board",
+    "name": "Liquor Licensing Board",
+    "category": "government_organisation",
+    "parentId": "ministry-local-government-public-works",
+    "website": "https://llb.pfms.gov.zw/Home/LandingPage",
+    "verified": true,
+    "sources": [
+      "https://www.mlg.gov.zw/?post_type=service",
+      "https://llb.pfms.gov.zw/Home/LandingPage"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The Ministry of Local Government identifies the Board as the body responsible for liquor licensing under the Liquor Act."
   }
 ]

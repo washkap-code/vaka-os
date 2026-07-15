@@ -1,0 +1,408 @@
+[
+  {
+    "id": "dcip-company-incorporation",
+    "name": "Company and Business Entity Incorporation",
+    "category": "licence_type",
+    "issuingAuthorityId": "dcip-zimbabwe",
+    "appliesTo": [
+      "Formal business organisations seeking registration in Zimbabwe"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "ONCE",
+    "typicalProcessingTime": null,
+    "officialFormUrl": null,
+    "verified": true,
+    "sources": [
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Entity forms and filing requirements differ; confirm the current route and document list with DCIP before filing."
+  },
+  {
+    "id": "zimra-taxpayer-registration-obligation",
+    "name": "ZIMRA Taxpayer Registration",
+    "category": "licence_type",
+    "issuingAuthorityId": "zimra",
+    "appliesTo": [
+      "Individuals, companies, partnerships and cooperatives starting a business"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Income-tax legislation administered by ZIMRA",
+    "renewalFrequency": "ONCE",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://mytaxselfservice.zimra.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Successful registration results in a Taxpayer Identification Number. Tax types and attachments depend on the taxpayer's circumstances."
+  },
+  {
+    "id": "zimra-vat-registration-obligation",
+    "name": "ZIMRA Value Added Tax Registration",
+    "category": "licence_type",
+    "issuingAuthorityId": "zimra",
+    "appliesTo": [
+      "Persons trading in taxable supplies who meet the current compulsory VAT registration rules"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Value-added-tax legislation administered by ZIMRA",
+    "renewalFrequency": "ONCE",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://mytaxselfservice.zimra.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The turnover threshold is intentionally omitted because it can change; confirm the current compulsory or voluntary registration rules with ZIMRA."
+  },
+  {
+    "id": "zimra-paye-registration-obligation",
+    "name": "ZIMRA PAYE Employer Registration",
+    "category": "licence_type",
+    "issuingAuthorityId": "zimra",
+    "appliesTo": [
+      "Businesses that become employers"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Income-tax legislation administered by ZIMRA",
+    "renewalFrequency": "ONCE",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://mytaxselfservice.zimra.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Registration is distinct from the ongoing deduction, remittance and annual employee-return obligations."
+  },
+  {
+    "id": "nssa-employer-registration-obligation",
+    "name": "NSSA Employer Registration",
+    "category": "licence_type",
+    "issuingAuthorityId": "nssa",
+    "appliesTo": [
+      "Employers of labour and their employees"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "National Social Security Authority Act [Chapter 17:04] and applicable schemes",
+    "renewalFrequency": "ONCE",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf",
+      "https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Scheme coverage, employee registration and contribution treatment must be confirmed with NSSA for the employer's workforce."
+  },
+  {
+    "id": "praz-supplier-registration-obligation",
+    "name": "PRAZ Bidder and Contractor Registration",
+    "category": "licence_type",
+    "issuingAuthorityId": "praz",
+    "appliesTo": [
+      "Suppliers, bidders and contractors seeking eligibility for public procurement"
+    ],
+    "requiredDocuments": [
+      "Memorandum and articles of association or other constitutive document",
+      "Certificate of incorporation",
+      "List of directors",
+      "Head-office and local physical-address particulars",
+      "Zimbabwean and foreign shareholding particulars"
+    ],
+    "statutoryBasis": "Public Procurement and Disposal of Public Assets Act and Public Procurement and Disposal of Public Assets (General) Regulations, 2018",
+    "renewalFrequency": "ANNUAL",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://egp.praz.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Registration is category-specific. Fees are deliberately omitted and must be checked on the current eGP portal."
+  },
+  {
+    "id": "harare-business-licence",
+    "name": "Harare Business Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "harare-city-council",
+    "appliesTo": [
+      "Retail and wholesale shops",
+      "Food premises",
+      "Businesses listed for a Harare municipal licence"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Shop Licence Act [Chapter 14:17] and Harare (Licensed Premises) By-laws",
+    "renewalFrequency": "ANNUAL",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.hararecity.co.zw/resources/download/51",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/51",
+      "https://www.hararecity.co.zw/news/read/city-reduces-business-licence-fees"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Licence class and municipal-health requirements vary by activity; consult the current council checklist and notices."
+  },
+  {
+    "id": "harare-health-registration",
+    "name": "Harare Health Registration of Business Premises",
+    "category": "licence_type",
+    "issuingAuthorityId": "harare-city-council",
+    "appliesTo": [
+      "Business premises listed on Harare's Health Registration application form"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Urban Councils Act [Chapter 29:15] and Harare Health Registration of Premises By-laws",
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.hararecity.co.zw/resources/download/50",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/50"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official form supports new, renewal and change-of-ownership applications but does not establish a renewal cadence; confirm it with City Health."
+  },
+  {
+    "id": "bulawayo-shop-licence",
+    "name": "Bulawayo Shop Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "bulawayo-city-council",
+    "appliesTo": [
+      "Retail and wholesale activity conducted from a shop, store or other fixed business premises"
+    ],
+    "requiredDocuments": [
+      "Current ZIMRA tax clearance certificate",
+      "Approved trading-permit application for a new applicant",
+      "Valid trading permit and enabling certificate for a full shop licence",
+      "Original prior-year shop licence for a renewal"
+    ],
+    "statutoryBasis": "Shop Licences Act [Chapter 14:17]",
+    "renewalFrequency": "ANNUAL",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.citybyo.co.zw/Downloads/GetForm?fileShortName=FORM_TRADING_PERMIT%282%29.pdf",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/AZServices/Licensing",
+      "https://www.citybyo.co.zw/Health/Inspectorate",
+      "https://www.citybyo.co.zw/Downloads/GetForm?fileShortName=FORM_TRADING_PERMIT%282%29.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "A temporary trading permit and a full shop licence are distinct stages; confirm which approval is required before trading."
+  },
+  {
+    "id": "bulawayo-premises-registration-certificate",
+    "name": "Bulawayo Registration Certificate for Business Premises",
+    "category": "licence_type",
+    "issuingAuthorityId": "bulawayo-city-council",
+    "appliesTo": [
+      "Food premises",
+      "Hairdressers",
+      "Hotels, boarding houses and lodging houses",
+      "Laundries and dry cleaners",
+      "Other premises listed by the Bulawayo Health Inspectorate"
+    ],
+    "requiredDocuments": [
+      "Town-planning approval where the proposed activity requires it",
+      "Approved building plan"
+    ],
+    "statutoryBasis": "Public Health Act [Chapter 15:09], Food and Food Standards Act [Chapter 15:04], and applicable Bulawayo public-health and registration-of-premises by-laws",
+    "renewalFrequency": "ANNUAL",
+    "typicalProcessingTime": null,
+    "officialFormUrl": null,
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Applicability and premises standards vary by activity; the council directs applicants to Environmental Health for premises-specific advice."
+  },
+  {
+    "id": "zimbabwe-liquor-licence",
+    "name": "Zimbabwe Liquor Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "liquor-licensing-board",
+    "appliesTo": [
+      "Businesses applying for a liquor licence in Zimbabwe"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": "Liquor Act [Chapter 14:12]",
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://llb.pfms.gov.zw/Home/LandingPage",
+    "verified": true,
+    "sources": [
+      "https://www.mlg.gov.zw/?post_type=service",
+      "https://llb.pfms.gov.zw/Home/LandingPage"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "This is a national overview. Confirm the correct licence class, supporting documents, expiry and renewal rule with the Liquor Licensing Board."
+  },
+  {
+    "id": "ema-esia-certificate",
+    "name": "Environmental and Social Impact Assessment Certificate",
+    "category": "licence_type",
+    "issuingAuthorityId": "ema",
+    "appliesTo": [
+      "Projects in EMA-listed sectors that may have negative environmental effects"
+    ],
+    "requiredDocuments": [
+      "Prospectus covering the project, location, baseline environment, anticipated impacts, mitigation measures, project cost, terms of reference and legal framework"
+    ],
+    "statutoryBasis": "Environmental Management Act and applicable statutory instruments",
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": "EMA states 60 working days for ESIA review and at least one month for renewal processing.",
+    "officialFormUrl": null,
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Applicability is project-specific. The certificate is multi-year, with renewal conditions published by EMA rather than an annual cadence."
+  },
+  {
+    "id": "ema-effluent-licence",
+    "name": "Effluent Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "ema",
+    "appliesTo": [
+      "Enterprises discharging effluent",
+      "Industrial and mining operations discharging effluent"
+    ],
+    "requiredDocuments": [
+      "Certificate of incorporation",
+      "Company profile",
+      "Identification document for the company manager or director",
+      "Current tax clearance",
+      "Local-council endorsement when disposing into a council reticulation system"
+    ],
+    "statutoryBasis": "Environmental Management Act and applicable statutory instruments",
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/",
+      "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "EMA publishes different requirements for enterprise and industrial or mining effluent licensing, including inspections and, for industrial or mining operations, laboratory tests."
+  },
+  {
+    "id": "zera-electricity-generation-licence",
+    "name": "Electricity Generation Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "zera",
+    "appliesTo": [
+      "Electricity-generation activities requiring a ZERA licence"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.zera.co.zw/electricity-application-forms-regulations/",
+    "verified": true,
+    "sources": [
+      "https://www.zera.co.zw/our-mandate/",
+      "https://www.zera.co.zw/electricity-application-forms-regulations/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Confirm the applicable electricity licence class, term and current application requirements with ZERA."
+  },
+  {
+    "id": "zera-petroleum-retail-licence",
+    "name": "Petroleum Retail Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "zera",
+    "appliesTo": [
+      "Petroleum retail activities requiring a ZERA licence"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.zera.co.zw/petroleum-application-forms-regulations/",
+    "verified": true,
+    "sources": [
+      "https://www.zera.co.zw/petroleum-overview/",
+      "https://www.zera.co.zw/petroleum-application-forms-regulations/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Confirm the applicable petroleum activity, licence term and current requirements with ZERA."
+  },
+  {
+    "id": "zera-lpg-retail-licence",
+    "name": "Liquefied Petroleum Gas Retail Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "zera",
+    "appliesTo": [
+      "Liquefied-petroleum-gas retail activities requiring a ZERA licence"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://www.zera.co.zw/lpg-application-forms-regulations/",
+    "verified": true,
+    "sources": [
+      "https://www.zera.co.zw/lpg-overview/",
+      "https://www.zera.co.zw/lpg-application-forms-regulations/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Confirm the applicable LPG activity, licence term and current requirements with ZERA."
+  },
+  {
+    "id": "potraz-unified-telecommunications-services-licence",
+    "name": "Unified Telecommunications Services Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "potraz",
+    "appliesTo": [
+      "Telecommunications services within the published POTRAZ unified licence category"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": null,
+    "verified": true,
+    "sources": [
+      "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "POTRAZ publishes multiple communications licence categories; confirm the correct category, term and current application route before applying."
+  },
+  {
+    "id": "mcaz-premises-licence",
+    "name": "Medicines Premises Licence",
+    "category": "licence_type",
+    "issuingAuthorityId": "mcaz",
+    "appliesTo": [
+      "Medicines premises and business types subject to MCAZ licensing"
+    ],
+    "requiredDocuments": [],
+    "statutoryBasis": null,
+    "renewalFrequency": "OTHER",
+    "typicalProcessingTime": null,
+    "officialFormUrl": "https://portal.mcaz.co.zw/sdm_downloads/lef-92-rev-7_april-2025-template-requirements-for-application-of-a-premises-licence/",
+    "verified": true,
+    "sources": [
+      "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/",
+      "https://portal.mcaz.co.zw/sdm_downloads/lef-92-rev-7_april-2025-template-requirements-for-application-of-a-premises-licence/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "MCAZ licensing distinguishes premises and business types; use the current official form and guidance."
+  }
+]

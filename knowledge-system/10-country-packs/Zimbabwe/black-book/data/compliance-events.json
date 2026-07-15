@@ -1,0 +1,308 @@
+[
+  {
+    "id": "dcip-company-incorporation-event",
+    "name": "Complete company or business entity incorporation",
+    "category": "compliance_event",
+    "licenceTypeId": "dcip-company-incorporation",
+    "authorityId": "dcip-zimbabwe",
+    "cadence": "ONCE",
+    "dueRule": "Submit the relevant incorporation or business-entity registration through DCIP as a one-time formation event; confirm the current filing route and entity-specific requirements.",
+    "verified": true,
+    "sources": [
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "dcip-company-annual-return",
+    "name": "File company annual return",
+    "category": "compliance_event",
+    "licenceTypeId": "dcip-company-incorporation",
+    "authorityId": "dcip-zimbabwe",
+    "cadence": "ANNUAL",
+    "dueRule": "File the prescribed annual return for each applicable reporting year on the date required by DCIP; confirm the current deadline directly with the department.",
+    "verified": false,
+    "sources": [
+      "https://www.justice.gov.zw/?service=business-consulting",
+      "https://www.justice.gov.zw/wp-content/uploads/2025/07/CLIENT-SERVICE-CHARTER_removed.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-taxpayer-registration-event",
+    "name": "Register as a ZIMRA taxpayer",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-taxpayer-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "ONCE",
+    "dueRule": "Register through TaRMS within 30 days after starting the business, as stated in ZIMRA's current new-trader guidance.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra",
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-vat-registration-trigger",
+    "name": "Register for VAT when liable",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-vat-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "OTHER",
+    "dueRule": "Apply for VAT registration when the business meets the current compulsory registration rules; confirm the current turnover threshold and any voluntary-registration route with ZIMRA.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-vat-return-monthly",
+    "name": "Submit monthly VAT return and payment",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-vat-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "MONTHLY",
+    "dueRule": "For an operator assigned a monthly VAT tax period, submit the return and payment by the 25th of the month following the end of that tax period.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-vat-return-two-monthly",
+    "name": "Submit two-month VAT return and payment",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-vat-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "OTHER",
+    "dueRule": "For an operator assigned a two-month VAT tax period, submit the return and payment by the 25th of the month following the end of that tax period.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-paye-employer-registration-event",
+    "name": "Register as an employer for PAYE",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-paye-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "ONCE",
+    "dueRule": "Apply to ZIMRA for employer registration within 14 days of becoming an employer.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-paye-monthly-remittance",
+    "name": "Remit monthly PAYE",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-paye-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "MONTHLY",
+    "dueRule": "Remit PAYE within 10 days after the end of the month in which the amount was withheld.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimra-paye-itf16-annual-return",
+    "name": "Submit annual PAYE ITF 16 return",
+    "category": "compliance_event",
+    "licenceTypeId": "zimra-paye-registration-obligation",
+    "authorityId": "zimra",
+    "cadence": "ANNUAL",
+    "dueRule": "Submit the ITF 16 employee earnings, deductions, credits and PAYE return within 30 days after the end of the year.",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "nssa-employer-registration-event",
+    "name": "Register employer and employees with NSSA",
+    "category": "compliance_event",
+    "licenceTypeId": "nssa-employer-registration-obligation",
+    "authorityId": "nssa",
+    "cadence": "ONCE",
+    "dueRule": "Register the employer and covered employees when becoming an employer of labour; confirm the current scheme-specific registration timing with NSSA.",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf",
+      "https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "nssa-pobs-monthly-remittance",
+    "name": "Remit monthly NSSA POBS contributions",
+    "category": "compliance_event",
+    "licenceTypeId": "nssa-employer-registration-obligation",
+    "authorityId": "nssa",
+    "cadence": "MONTHLY",
+    "dueRule": "Remit Pensions and Other Benefits Scheme contributions by the 10th day of the month following the month in which the contribution is due.",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf",
+      "https://www.nssa.org.zw/wp-content/uploads/2024/06/SI-2021-169-National-Social-Security-Authority-Pensions-and-Other-Benefits-Scheme-Rates-of-Benefits-Amendment-Notice-2021-No.-28.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "praz-supplier-registration-renewal",
+    "name": "Renew PRAZ supplier registration",
+    "category": "compliance_event",
+    "licenceTypeId": "praz-supplier-registration-obligation",
+    "authorityId": "praz",
+    "cadence": "ANNUAL",
+    "dueRule": "Register or renew for each calendar year; an approved category registration remains on the list only up to 31 December and is subject to annual renewal.",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "harare-business-licence-renewal",
+    "name": "Renew Harare business licence",
+    "category": "compliance_event",
+    "licenceTypeId": "harare-business-licence",
+    "authorityId": "harare-city-council",
+    "cadence": "ANNUAL",
+    "dueRule": "Renew for each council licensing year under the current Harare process; confirm the applicable cut-off date and licence class with the council.",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/51",
+      "https://www.hararecity.co.zw/news/read/city-reduces-business-licence-fees"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "harare-health-registration-review",
+    "name": "Apply for or update Harare health registration",
+    "category": "compliance_event",
+    "licenceTypeId": "harare-health-registration",
+    "authorityId": "harare-city-council",
+    "cadence": "OTHER",
+    "dueRule": "Submit a new, renewal or change-of-ownership application when that trigger applies; confirm the renewal schedule with City Health because the official form does not state one.",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/50"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "bulawayo-shop-licence-renewal",
+    "name": "Renew Bulawayo shop licence",
+    "category": "compliance_event",
+    "licenceTypeId": "bulawayo-shop-licence",
+    "authorityId": "bulawayo-city-council",
+    "cadence": "ANNUAL",
+    "dueRule": "Renew the shop licence for the coming calendar year before 31 December or before the current licence expires.",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/AZServices/Licensing",
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "bulawayo-premises-registration-renewal",
+    "name": "Renew Bulawayo premises registration certificate",
+    "category": "compliance_event",
+    "licenceTypeId": "bulawayo-premises-registration-certificate",
+    "authorityId": "bulawayo-city-council",
+    "cadence": "ANNUAL",
+    "dueRule": "Renew annually; the registration certificate is valid up to 31 December of the current year.",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimbabwe-liquor-licence-application-or-renewal",
+    "name": "Apply for or renew Zimbabwe liquor licence",
+    "category": "compliance_event",
+    "licenceTypeId": "zimbabwe-liquor-licence",
+    "authorityId": "liquor-licensing-board",
+    "cadence": "OTHER",
+    "dueRule": "Submit a new application or renewal through the Liquor Licensing Board; use the current licence expiry and Board instructions because no universal renewal date is recorded here.",
+    "verified": true,
+    "sources": [
+      "https://www.mlg.gov.zw/?post_type=service",
+      "https://llb.pfms.gov.zw/Home/LandingPage"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema-esia-before-project-implementation",
+    "name": "Obtain ESIA certificate before project implementation",
+    "category": "compliance_event",
+    "licenceTypeId": "ema-esia-certificate",
+    "authorityId": "ema",
+    "cadence": "ONCE",
+    "dueRule": "For a project in an EMA-listed category with potential negative environmental effects, obtain the ESIA certificate before implementing the project.",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema-esia-quarterly-progress-report",
+    "name": "Submit ESIA progress report",
+    "category": "compliance_event",
+    "licenceTypeId": "ema-esia-certificate",
+    "authorityId": "ema",
+    "cadence": "QUARTERLY",
+    "dueRule": "Submit project progress reports to EMA quarterly while the ESIA certificate conditions require them.",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema-esia-certificate-renewal",
+    "name": "Renew ESIA certificate when project commencement is incomplete",
+    "category": "compliance_event",
+    "licenceTypeId": "ema-esia-certificate",
+    "authorityId": "ema",
+    "cadence": "OTHER",
+    "dueRule": "Where the project has not commenced within the certificate period, apply for renewal six months before the two-year certificate expires.",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema-effluent-quarterly-waste-report",
+    "name": "Submit industrial or mining effluent waste report",
+    "category": "compliance_event",
+    "licenceTypeId": "ema-effluent-licence",
+    "authorityId": "ema",
+    "cadence": "QUARTERLY",
+    "dueRule": "Industrial and mining effluent licence holders must submit waste-management reports to EMA quarterly.",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]
