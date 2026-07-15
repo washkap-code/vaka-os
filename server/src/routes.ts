@@ -55,6 +55,12 @@ import {
   listDocuments, listFolders, resolveVersionId, setDocumentStatus, versionQuerySchema,
 } from "./document-workspace.js";
 import {
+  getEntry as getBlackbookEntry, importDataset as importBlackbookDataset,
+  importRequestSchema as blackbookImportRequestSchema,
+  listEntries as listBlackbookEntries, listEntriesQuerySchema as listBlackbookEntriesQuerySchema,
+  listImportRuns as listBlackbookImportRuns,
+} from "./blackbook.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1918,6 +1924,25 @@ api.get("/documents/:id", requireFeature("documents.workspace"),
     getDocument(tenantId(req), uuidRouteParam(req, "id"))));
 
 // ---------------------------------------------------------------------------
+// PB-001: Black Book registry — tenant reads of governed platform content.
+// Ships dark behind `blackbook.directory`; fails closed with FEATURE_DISABLED.
+// Reads are open to any authenticated tenant member (reference data), and
+// every detail response carries sources + review date (directory, not advice).
+// ---------------------------------------------------------------------------
+api.get("/blackbook/entries", requireFeature("blackbook.directory"), wrap(async (req) =>
+  listBlackbookEntries(listBlackbookEntriesQuerySchema.parse({
+    category: req.query.category as string | undefined,
+    q: req.query.q as string | undefined,
+    country: (req.query.country as string | undefined) ?? "ZW",
+  }))));
+api.get("/blackbook/entries/:key", requireFeature("blackbook.directory"), wrap(async (req) => {
+  const key = z.string().trim().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).parse(routeParam(req, "key"));
+  const country = z.string().trim().regex(/^[A-Z]{2}$/).default("ZW")
+    .parse((req.query.country as string | undefined) ?? "ZW");
+  return getBlackbookEntry(country, key);
+}));
+
+// ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra
 // permission, second-person rule) for purchase orders and payroll runs.
 // Configuration is an Owner/Admin settings action and audited.
@@ -2470,6 +2495,26 @@ api.put("/platform/tenants/:id/features/:key",
       actorUserId: req.auth!.userId,
     });
   }));
+
+// ---------------------------------------------------------------------------
+// PB-001: Black Book registry governance — the ONLY write path for registry
+// content. Imports are all-or-nothing (a failed validation leaves the
+// registry unchanged), versioned per entry, recorded per run with the dataset
+// revision, and audited to platform_audit_logs. Step-up required.
+// ---------------------------------------------------------------------------
+api.post("/platform/blackbook/import",
+  requirePlatformPermission("platform.settings.manage"), requireStepUp as any, wrap(async (req) => {
+    const body = blackbookImportRequestSchema.parse(req.body);
+    return importBlackbookDataset({
+      actorUserId: req.auth!.userId,
+      countryCode: body.countryCode,
+      datasetRevision: body.datasetRevision,
+      dataset: body.dataset as Record<string, unknown>,
+    });
+  }));
+api.get("/platform/blackbook/import-runs",
+  requirePlatformPermission("platform.operations.read"), wrap(async (req) =>
+    listBlackbookImportRuns((req.query.country as string | undefined) || undefined)));
 
 api.post("/platform/billing/run", requirePlatformPermission("platform.billing.run"), wrap(async (req) => {
   const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();

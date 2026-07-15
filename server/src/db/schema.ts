@@ -1592,3 +1592,68 @@ export const workspaceDocumentVersions = pgTable("workspace_document_versions", 
   check("workspace_document_versions_version_check", sql`${t.version} >= 1`),
   check("workspace_document_versions_size_check", sql`${t.byteSize} > 0 AND ${t.byteSize} <= 1500000`),
 ]);
+
+// ---------------------------------------------------------------------------
+// PB-001 — Black Book registry (versioned, governed platform content).
+// GLOBAL reference data owned by platform staff — deliberately NO tenant_id.
+// Tenant reads are gated by the `blackbook.directory` feature flag; the only
+// write path is the platform import (step-up protected, audited to
+// platform_audit_logs). Version rows are immutable history; a failed import
+// rolls back atomically and leaves the registry unchanged.
+// ---------------------------------------------------------------------------
+export const blackbookImportRuns = pgTable("blackbook_import_runs", {
+  id: id(),
+  countryCode: text("country_code").notNull(),
+  datasetRevision: text("dataset_revision").notNull(),
+  importedBy: uuid("imported_by").notNull().references(() => users.id),
+  recordCount: integer("record_count").notNull(),
+  createdCount: integer("created_count").notNull(),
+  updatedCount: integer("updated_count").notNull(),
+  unchangedCount: integer("unchanged_count").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  index("blackbook_import_runs_country").on(t.countryCode, t.createdAt),
+  check("blackbook_import_runs_revision_check", sql`length(trim(${t.datasetRevision})) BETWEEN 1 AND 200`),
+  check("blackbook_import_runs_counts_check", sql`${t.recordCount} >= 0 AND ${t.createdCount} >= 0 AND ${t.updatedCount} >= 0 AND ${t.unchangedCount} >= 0`),
+]);
+
+export const blackbookEntries = pgTable("blackbook_entries", {
+  id: id(),
+  countryCode: text("country_code").notNull(),
+  entryKey: text("entry_key").notNull(),
+  category: text("category").notNull(),
+  name: text("name").notNull(),
+  payload: jsonb("payload").notNull(),
+  verified: boolean("verified").notNull(),
+  sources: jsonb("sources").notNull(),
+  lastReviewed: date("last_reviewed").notNull(),
+  status: text("status").default("ACTIVE").notNull(),
+  currentVersion: integer("current_version").default(1).notNull(),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("blackbook_entries_country_key").on(t.countryCode, t.entryKey),
+  index("blackbook_entries_country_category").on(t.countryCode, t.category, t.status),
+  check("blackbook_entries_category_check", sql`${t.category} IN
+    ('government_organisation', 'regulator', 'local_authority', 'utility',
+     'tender_portal', 'business_association', 'licence_type', 'compliance_event', 'service')`),
+  check("blackbook_entries_status_check", sql`${t.status} IN ('ACTIVE', 'RETIRED')`),
+  check("blackbook_entries_version_check", sql`${t.currentVersion} >= 1`),
+  check("blackbook_entries_key_check", sql`${t.entryKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+]);
+
+export const blackbookEntryVersions = pgTable("blackbook_entry_versions", {
+  id: id(),
+  entryId: uuid("entry_id").notNull().references(() => blackbookEntries.id),
+  version: integer("version").notNull(),
+  payload: jsonb("payload").notNull(),
+  verified: boolean("verified").notNull(),
+  sources: jsonb("sources").notNull(),
+  lastReviewed: date("last_reviewed").notNull(),
+  importRunId: uuid("import_run_id").notNull().references(() => blackbookImportRuns.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("blackbook_entry_versions_entry_version").on(t.entryId, t.version),
+  index("blackbook_entry_versions_run").on(t.importRunId),
+  check("blackbook_entry_versions_version_check", sql`${t.version} >= 1`),
+]);
