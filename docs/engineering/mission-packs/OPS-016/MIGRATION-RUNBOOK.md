@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Apply `server/drizzle/0026_restore_drill_evidence.sql` before deploying routes
+Apply `server/drizzle/0032_restore_drill_evidence.sql` before deploying routes
 or control-centre queries that use restore evidence. The migration is additive
 and installs append-only triggers for both drill and review records.
 
@@ -33,7 +33,7 @@ incompatible manually created table.
 
 ## Apply and verify
 
-1. Apply `0026_restore_drill_evidence.sql` through the approved migration role.
+1. Apply `0032_restore_drill_evidence.sql` through the approved migration role.
 2. Rerun it in staging to prove idempotency.
 3. Run runtime-schema readiness and the focused OPS-016 suite.
 4. Verify constraints, triggers and empty initial state:

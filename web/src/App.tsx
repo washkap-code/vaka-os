@@ -596,6 +596,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
   const [selectedTenant, setSelectedTenant] = useState<PlatformTenant | null>(null);
   const [tenantAudit, setTenantAudit] = useState<PlatformAuditEvent[] | null>(null);
   const [msg, setMsg] = useState("");
+  const restoreReviewStepUp = useStepUp();
   const [billingMessage, setBillingMessage] = useState("");
   const [billingResult, setBillingResult] = useState<BillingRunResult | null>(null);
   const [billingRunAt, setBillingRunAt] = useState<string | null>(null);
@@ -691,9 +692,10 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
     if (!restoreReview) return;
     setBusy(true); setMsg("");
     try {
-      await api(`/platform/restore-drills/${restoreReview.drill.id}/review`, {
-        method: "POST", body: { decision: restoreReview.decision, reason: restoreReview.reason },
-      });
+      // P9-011: restore-drill evidence decisions require fresh reauthentication.
+      await restoreReviewStepUp.run((headers) => api(`/platform/restore-drills/${restoreReview.drill.id}/review`, {
+        method: "POST", body: { decision: restoreReview.decision, reason: restoreReview.reason }, headers,
+      }));
       setRestoreReview(null); setMsg(copy.restoreReviewRecorded); await load();
     } catch (error: unknown) { setMsg(error instanceof Error ? error.message : copy.unexpectedError); }
     setBusy(false);
@@ -737,6 +739,7 @@ function PlatformAdmin({ me, onLogout, onRefresh }: { me: Me; onLogout: () => vo
         skipToContent: copy.skipToContent,
         workspaceGroup: copy.workspaceGroup, administrationGroup: copy.administrationGroup, supportGroup: copy.supportGroup }}
       onNavigate={setTab} onLogout={onLogout}>
+        {restoreReviewStepUp.dialog}
         <div className="platform-admin-page-heading">
           <div><span>{copy.controlCentre}</span><h1>{currentAdminPage?.label}</h1><p>{currentAdminPage?.description}</p></div>
           {tab === "overview" && can("platform.billing.run") && <button className="btn accent" disabled={busy} onClick={runBilling}>{busy ? copy.running : copy.runBilling}</button>}

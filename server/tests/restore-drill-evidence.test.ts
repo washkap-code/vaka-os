@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
+import bcrypt from "bcryptjs";
 import { and, eq } from "drizzle-orm";
 import { createApp } from "../src/app.js";
 import { issueAuthenticatedSession, signupTenant } from "../src/auth.js";
@@ -11,6 +12,14 @@ import {
 const app = createApp();
 const unique = () => `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
 const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
+const PRINCIPAL_PASSWORD = "Restore-Principal-Test-2026!";
+
+async function principalStepUp(token: string) {
+  const res = await request(app).post("/api/v1/auth/step-up").set(auth(token))
+    .send({ currentPassword: PRINCIPAL_PASSWORD });
+  expect(res.status).toBe(200);
+  return { "X-Vaka-Step-Up": res.body.proof as string };
+}
 
 let principalId = "";
 let principalToken = "";
@@ -23,8 +32,13 @@ beforeAll(async () => {
     .where(eq(schema.users.platformRoleKey, "PRINCIPAL_ADMIN"));
   if (!principal) throw new Error("Seeded principal administrator is required");
   principalId = principal.id;
-  await db.update(schema.users).set({ status: "active", mustChangePassword: false })
-    .where(eq(schema.users.id, principal.id));
+  // P9-011: the review route requires a fresh step-up proof, so the principal
+  // needs a known password in this suite.
+  await db.update(schema.users).set({
+    status: "active",
+    mustChangePassword: false,
+    passwordHash: await bcrypt.hash(PRINCIPAL_PASSWORD, 4),
+  }).where(eq(schema.users.id, principal.id));
   principalToken = (await issueAuthenticatedSession(principal.id)).token;
 
   const suffix = unique();
@@ -122,15 +136,21 @@ describe("OPS-016 restore drill evidence", () => {
     expect((await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
       .set(auth(operatorToken)).send({ decision: "ACCEPTED", reason: "Operator cannot approve their own evidence." })).status).toBe(403);
 
-    const accepted = await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
+    // P9-011: a principal without a fresh step-up proof is refused outright.
+    expect((await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
       .set(auth(principalToken)).send({
+        decision: "ACCEPTED", reason: "No fresh reauthentication was presented.",
+      })).status).toBe(428);
+    const stepUp = await principalStepUp(principalToken);
+    const accepted = await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
+      .set(auth(principalToken)).set(stepUp).send({
         decision: "ACCEPTED",
         reason: "Independent review confirms every recorded recovery control passed.",
       });
     expect(accepted.status).toBe(200);
     expect(accepted.body.decision).toBe("ACCEPTED");
     const duplicate = await request(app).post(`/api/v1/platform/restore-drills/${recorded.body.id}/review`)
-      .set(auth(principalToken)).send({ decision: "REJECTED", reason: "A second decision must never replace evidence." });
+      .set(auth(principalToken)).set(stepUp).send({ decision: "REJECTED", reason: "A second decision must never replace evidence." });
     expect(duplicate.status).toBe(409);
 
     const controlCenter = await request(app).get("/api/v1/platform/control-center").set(auth(principalToken));

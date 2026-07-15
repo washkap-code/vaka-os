@@ -2130,8 +2130,10 @@ api.get("/platform/restore-drills", requirePlatformPermission("platform.backups.
   listRestoreDrills()));
 api.post("/platform/restore-drills", requirePlatformPermission("platform.backups.write"), wrap(async (req) =>
   recordRestoreDrill(req.auth!.userId, req.body)));
+// P9-011 follow-up: Principal acceptance/rejection of restore-drill evidence
+// requires a fresh step-up proof (permission check runs first, independently).
 api.post("/platform/restore-drills/:id/review",
-  requirePlatformPermission("platform.security.manage"), wrap(async (req) =>
+  requirePlatformPermission("platform.security.manage"), requireStepUp as any, wrap(async (req) =>
     reviewRestoreDrill(req.auth!.userId, routeParam(req, "id"), req.body)));
 api.post("/platform/referral-codes", requirePlatformPermission("platform.referrals.manage"), wrap(async (req) => {
   const body = z.object({
