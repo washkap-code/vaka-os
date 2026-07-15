@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (late session: Codex parallel lane P9-006 + P9-005 reviewed and merged to main; main is ahead of origin by 6 — PUSH via GitHub Desktop)
+**Updated:** 2026-07-15 (late session 2: PD-001 documents workspace built, verified and merged to main. ⚠️ PUSH GATE: migration 0039 is NOT yet applied to production — apply it via the Supabase SQL editor or a VAKA-scoped Supabase MCP BEFORE pushing main. The Supabase MCP in this Cowork session was scoped to a different org (BioCheck) and could not reach `vaka-platform`.)
 
 > **Protocol:** this file is read at the START of every session and updated as the
 > FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
@@ -24,8 +24,10 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0038_task_automation.sql`.
-**All migrations through 0038 are applied and verified in production**
+Highest migration on `main`: `0039_document_workspace.sql`.
+**Migrations through 0038 are applied and verified in production.
+0039 is NOT yet applied — it must be hand-applied (idempotent) BEFORE the
+code on `main` is pushed.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -40,8 +42,9 @@ rules — defaults unchanged everywhere).
 | 0036_tenant_feature_flags | FLAG-001 | ✅ 2026-07-15 |
 | 0037_approval_policies | PW-002 | ✅ 2026-07-15 |
 | 0038_task_automation | PW-003 | ✅ 2026-07-15 |
+| 0039_document_workspace | PD-001 | ⚠️ PENDING — apply BEFORE pushing main |
 
-New migrations continue from **0039**. **Migration numbers are reserved by
+New migrations continue from **0040**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
 
 ## Shipped and live on `main` (this working period)
@@ -168,9 +171,37 @@ the admin password hash between reruns on the same scratch db.
    enable `workflow.centre` for a tenant via the platform features endpoint.
    Mission pack: `docs/engineering/mission-packs/PW-004/`.
    **The PW programme (Wave 1 workflow slice) is complete: PW-001→004.**
-   **Next Part II missions (Wave 1): PD-001 documents workspace, PN-001
-   business profile, PB-001 Black Book registry — each behind its catalogue
-   flag.**
+   **PD-001 is DONE (2026-07-15):** documents workspace — folders (partial
+   unique indexes per level), classified documents, immutable version rows
+   (capture-storage envelope: PNG/JPEG/PDF ≤1.5 MB, SHA-256 checksums),
+   archive/restore, all writes audited. Content reads flow through the
+   P1-007 kernel document service via the new `workspace-doc` kind. Routes
+   behind `requireFeature("documents.workspace")` + new
+   `documents.read/manage` permissions (role backfill for
+   Owner/Admin/Accountant in 0039). Web Documents page + flag-gated nav.
+   Verified in scratch Postgres: document-workspace 9/9; regression
+   critical/document-adapter/capture-documents/feature-flags/
+   task-automation/auth-resolution/tenant-isolation/settings/
+   journal-balancing/journal-immutability 44/44; both typechecks, web build
+   and nav-model 16/16 clean. ⚠️ Migration 0039 NOT yet in production —
+   this session's Supabase MCP was scoped to the wrong org (BioCheck).
+   Apply `server/drizzle/0039_document_workspace.sql` (idempotent) via the
+   Supabase SQL editor or a VAKA-scoped MCP, verify the three tables exist
+   empty and roles gained documents.*, THEN push main. To pilot: enable
+   `documents.workspace` per tenant via the platform features endpoint.
+   Mission pack: `docs/engineering/mission-packs/PD-001/`.
+   **HOUSEKEEPING (2026-07-15):** removed 9 macOS "copy" duplicate artifacts
+   accidentally committed in 68472b2 (old twins of approvals.ts, tasks.ts,
+   migrations 0037/0038, approval-policies tests, PW-002 README) — commit
+   `42bc4b4`. Watch for Finder-created " 2"/" 3" files before committing.
+   **CODEX LANE (2026-07-15):** PB-000 (Black Book Zimbabwe seed dataset,
+   data+docs only, branch `codex/pb-000-blackbook-dataset`) dispatched;
+   PB-000B (licences + compliance calendar dataset) prompt already drafted
+   and queued. Review scope on merge: knowledge-system/black-book + mission
+   packs only.
+   **Next Part II missions (Wave 1): PN-001 business profile, PB-001 Black
+   Book registry (imports the PB-000 dataset) — each behind its catalogue
+   flag. PD-002 (approvals/retention, attach-to-object) follows PD-001.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
