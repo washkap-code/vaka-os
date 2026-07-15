@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { revealCaptureDataUrl, protectCaptureDataUrl } from "./capture-storage.js";
 import { renderInvoicePdf, type InvoiceSnapshotDocument } from "./invoice-documents.js";
+import { loadFinanceReportSnapshotPdf } from "./finance-report-snapshots.js";
 import { db, schema } from "./lib.js";
 import { InvalidDocumentError } from "./platform/documents/errors.js";
 import type { DocumentStore } from "./platform/documents/interfaces.js";
@@ -12,6 +13,7 @@ import type {
 export const DOCUMENT_KINDS = {
   CAPTURE: "capture",
   INVOICE_PDF: "invoice-pdf",
+  FINANCE_REPORT_PDF: "finance-report-pdf",
 } as const;
 
 type ApplicationDocumentKind = typeof DOCUMENT_KINDS[keyof typeof DOCUMENT_KINDS];
@@ -21,6 +23,7 @@ const qualifiedId = (kind: ApplicationDocumentKind, id: string): DocumentId => `
 
 export const captureDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.CAPTURE, id);
 export const invoicePdfDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.INVOICE_PDF, id);
+export const financeReportPdfDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.FINANCE_REPORT_PDF, id);
 
 export function rawDocumentId(id: DocumentId, expectedKind: ApplicationDocumentKind): string {
   const prefix = `${expectedKind}:`;
@@ -121,6 +124,25 @@ export class PostgresDocumentStore implements DocumentStore {
           createdAt: snapshot.createdAt,
         },
         bytes,
+      };
+    }
+    if (parsed.kind === DOCUMENT_KINDS.FINANCE_REPORT_PDF) {
+      const snapshot = await loadFinanceReportSnapshotPdf(context.tenantId, parsed.rawId);
+      if (!snapshot) return null;
+      return {
+        descriptor: {
+          id,
+          tenantId: context.tenantId,
+          kind: DOCUMENT_KINDS.FINANCE_REPORT_PDF,
+          classification: snapshot.descriptor.reportType,
+          version: snapshot.descriptor.pdfTemplateVersion,
+          fileName: snapshot.descriptor.fileName,
+          mediaType: snapshot.descriptor.mediaType,
+          byteSize: snapshot.descriptor.byteSize,
+          checksum: snapshot.descriptor.checksum,
+          createdAt: snapshot.descriptor.createdAt,
+        },
+        bytes: snapshot.bytes,
       };
     }
 

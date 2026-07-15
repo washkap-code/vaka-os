@@ -676,6 +676,34 @@ export const invoiceDocumentSnapshots = pgTable("invoice_document_snapshots", {
   index("invoice_document_snapshot_tenant").on(t.tenantId, t.createdAt),
 ]);
 
+// Immutable canonical inputs and integrity evidence for one generated finance
+// report PDF. Reports are rerendered only from this captured source.
+export const financeReportSnapshots = pgTable("finance_report_snapshots", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  reportType: text("report_type").notNull(),
+  reportVersion: text("report_version").notNull(),
+  pdfTemplateVersion: text("pdf_template_version").notNull(),
+  brandingVersion: text("branding_version").notNull(),
+  parameters: jsonb("parameters").$type<Record<string, string>>().notNull(),
+  reportDocument: jsonb("report_document").$type<Record<string, unknown>>().notNull(),
+  brandingDocument: jsonb("branding_document").$type<Record<string, unknown>>().notNull(),
+  fileName: text("file_name").notNull(),
+  mediaType: text("media_type").default("application/pdf").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  checksum: text("checksum").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  idempotencyFingerprint: text("idempotency_fingerprint").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("finance_report_snapshot_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+  index("finance_report_snapshot_tenant_time").on(t.tenantId, t.createdAt),
+  check("finance_report_snapshot_type_check", sql`${t.reportType} IN ('VAT', 'STATUTORY')`),
+  check("finance_report_snapshot_media_check", sql`${t.mediaType} = 'application/pdf'`),
+  check("finance_report_snapshot_byte_size_check", sql`${t.byteSize} > 0 AND ${t.byteSize} <= 10000000`),
+]);
+
 // Opaque, revocable links for sharing one issued invoice document outside the
 // authenticated workspace. Only a SHA-256 hash of the bearer token is stored.
 export const invoiceShareLinks = pgTable("invoice_share_links", {
