@@ -53,6 +53,8 @@ import {
   addDocumentVersion, addVersionSchema, createDocument, createDocumentSchema,
   createFolder, documentStatusFilterSchema, folderSchema, getDocument,
   listDocuments, listFolders, resolveVersionId, setDocumentStatus, versionQuerySchema,
+  approvalDecisionSchema, approvalRequestSchema, decideApproval, listApprovals,
+  requestApproval, retentionSchema, setRetention,
 } from "./document-workspace.js";
 import {
   getEntry as getBlackbookEntry, importDataset as importBlackbookDataset,
@@ -1938,6 +1940,27 @@ api.post("/documents/:id/restore", requireFeature("documents.workspace"),
 api.get("/documents/:id", requireFeature("documents.workspace"),
   requirePermission("documents.read"), wrap(async (req) =>
     getDocument(tenantId(req), uuidRouteParam(req, "id"))));
+
+// PD-002: approvals (second-person rule) + retention.
+api.get("/documents/approvals/list", requireFeature("documents.workspace"),
+  requirePermission("documents.read"), wrap(async (req) =>
+    listApprovals(tenantId(req),
+      z.enum(["PENDING", "APPROVED", "REJECTED"]).optional()
+        .parse(req.query.status as string | undefined))));
+api.post("/documents/:id/approvals", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    requestApproval(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      approvalRequestSchema.parse(req.body ?? {}).note)));
+api.post("/documents/approvals/:approvalId/decide", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) => {
+    const body = approvalDecisionSchema.parse(req.body);
+    return decideApproval(tenantId(req), req.auth!.userId,
+      uuidRouteParam(req, "approvalId"), body.decision, body.note);
+  }));
+api.put("/documents/:id/retention", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    setRetention(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      retentionSchema.parse(req.body).retentionUntil)));
 
 // ---------------------------------------------------------------------------
 // PB-001: Black Book registry — tenant reads of governed platform content.

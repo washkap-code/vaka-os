@@ -225,6 +225,7 @@ export async function setDocumentStatus(
     if (!document) throw notFound("Document not found");
     if (document.status === status) throw conflict(status === "ARCHIVED"
       ? "Document is already archived" : "Document is already active");
+    if (status === "ARCHIVED") assertNotUnderRetention(document); // PD-002
     const [updated] = await tx.update(schema.workspaceDocuments).set({
       status, updatedAt: new Date(),
     }).where(eq(schema.workspaceDocuments.id, documentId)).returning();
@@ -253,3 +254,96 @@ export async function resolveVersionId(
 
 export const documentStatusFilterSchema = z.enum(["ACTIVE", "ARCHIVED", "ALL"]);
 export const versionQuerySchema = z.coerce.number().int().min(1).max(100_000).optional();
+
+// ---------------------------------------------------------------------------
+// PD-002 — approvals (second-person rule) + retention.
+// ---------------------------------------------------------------------------
+export const retentionSchema = z.object({
+  retentionUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+});
+export const approvalRequestSchema = z.object({ note: z.string().trim().max(500).optional() });
+export const approvalDecisionSchema = z.object({
+  decision: z.enum(["APPROVED", "REJECTED"]),
+  note: z.string().trim().max(500).optional(),
+});
+
+export async function setRetention(
+  tenantId: string, userId: string, documentId: string, retentionUntil: string | null,
+) {
+  return db.transaction(async (tx) => {
+    const [document] = await tx.select().from(schema.workspaceDocuments).where(and(
+      eq(schema.workspaceDocuments.id, documentId),
+      eq(schema.workspaceDocuments.tenantId, tenantId),
+    )).for("update");
+    if (!document) throw notFound("Document not found");
+    const [updated] = await tx.update(schema.workspaceDocuments).set({
+      retentionUntil, updatedAt: new Date(),
+    }).where(eq(schema.workspaceDocuments.id, documentId)).returning();
+    await audit(tx, tenantId, userId, "document.retention_set", "workspace_document",
+      documentId, { retentionUntil, previous: document.retentionUntil });
+    return updated;
+  });
+}
+
+/** Archive guard: a document under retention cannot be archived. */
+export function assertNotUnderRetention(document: { retentionUntil: string | null }) {
+  if (document.retentionUntil && document.retentionUntil > new Date().toISOString().slice(0, 10)) {
+    throw conflict(`Document is under retention until ${document.retentionUntil} and cannot be archived`);
+  }
+}
+
+export async function requestApproval(
+  tenantId: string, userId: string, documentId: string, note?: string,
+) {
+  return db.transaction(async (tx) => {
+    const [document] = await tx.select().from(schema.workspaceDocuments).where(and(
+      eq(schema.workspaceDocuments.id, documentId),
+      eq(schema.workspaceDocuments.tenantId, tenantId),
+    )).for("update");
+    if (!document) throw notFound("Document not found");
+    if (document.status !== "ACTIVE") throw conflict("Archived documents cannot be sent for approval");
+    const [approval] = await tx.insert(schema.documentApprovals).values({
+      tenantId, documentId, version: document.currentVersion,
+      note: note ?? null, requestedBy: userId,
+    }).returning().catch((error: unknown) => {
+      const code = (error as { code?: string }).code
+        ?? (error as { cause?: { code?: string } }).cause?.code;
+      if (code === "23505") throw conflict("This document already has a pending approval");
+      throw error;
+    });
+    await audit(tx, tenantId, userId, "document.approval_requested", "workspace_document",
+      documentId, { approvalId: approval.id, version: document.currentVersion });
+    return approval;
+  });
+}
+
+export async function decideApproval(
+  tenantId: string, userId: string, approvalId: string,
+  decision: "APPROVED" | "REJECTED", note?: string,
+) {
+  return db.transaction(async (tx) => {
+    const [approval] = await tx.select().from(schema.documentApprovals).where(and(
+      eq(schema.documentApprovals.id, approvalId),
+      eq(schema.documentApprovals.tenantId, tenantId),
+    )).for("update");
+    if (!approval) throw notFound("Approval request not found");
+    if (approval.status !== "PENDING") throw conflict("Approval has already been decided");
+    if (approval.requestedBy === userId) {
+      throw conflict("The requester cannot decide their own approval (second-person rule)");
+    }
+    const [updated] = await tx.update(schema.documentApprovals).set({
+      status: decision, decidedBy: userId, decisionNote: note ?? null, decidedAt: new Date(),
+    }).where(eq(schema.documentApprovals.id, approvalId)).returning();
+    await audit(tx, tenantId, userId,
+      decision === "APPROVED" ? "document.approved" : "document.approval_rejected",
+      "workspace_document", approval.documentId, { approvalId, version: approval.version });
+    return updated;
+  });
+}
+
+export async function listApprovals(tenantId: string, status?: "PENDING" | "APPROVED" | "REJECTED") {
+  const conditions = [eq(schema.documentApprovals.tenantId, tenantId)];
+  if (status) conditions.push(eq(schema.documentApprovals.status, status));
+  return db.select().from(schema.documentApprovals).where(and(...conditions))
+    .orderBy(desc(schema.documentApprovals.createdAt)).limit(200);
+}

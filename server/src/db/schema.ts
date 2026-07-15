@@ -1561,6 +1561,7 @@ export const workspaceDocuments = pgTable("workspace_documents", {
   classification: text("classification").notNull(),
   status: text("status").default("ACTIVE").notNull(),
   currentVersion: integer("current_version").default(1).notNull(),
+  retentionUntil: date("retention_until"),
   createdBy: uuid("created_by").notNull().references(() => users.id),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -1640,6 +1641,28 @@ export const blackbookEntries = pgTable("blackbook_entries", {
   check("blackbook_entries_status_check", sql`${t.status} IN ('ACTIVE', 'RETIRED')`),
   check("blackbook_entries_version_check", sql`${t.currentVersion} >= 1`),
   check("blackbook_entries_key_check", sql`${t.entryKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+]);
+
+// PD-002 — document approvals (second-person rule enforced by DB CHECK).
+export const documentApprovals = pgTable("document_approvals", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  documentId: uuid("document_id").notNull().references(() => workspaceDocuments.id),
+  version: integer("version").notNull(),
+  note: text("note"),
+  status: text("status").default("PENDING").notNull(),
+  requestedBy: uuid("requested_by").notNull().references(() => users.id),
+  decidedBy: uuid("decided_by").references(() => users.id),
+  decisionNote: text("decision_note"),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("document_approvals_one_pending").on(t.documentId).where(sql`${t.status} = 'PENDING'`),
+  index("document_approvals_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  check("document_approvals_status_check", sql`${t.status} IN ('PENDING', 'APPROVED', 'REJECTED')`),
+  check("document_approvals_version_check", sql`${t.version} >= 1`),
+  check("document_approvals_sod_check", sql`${t.decidedBy} IS NULL OR ${t.decidedBy} <> ${t.requestedBy}`),
+  check("document_approvals_decided_check", sql`(${t.status} = 'PENDING' AND ${t.decidedBy} IS NULL AND ${t.decidedAt} IS NULL) OR (${t.status} <> 'PENDING' AND ${t.decidedBy} IS NOT NULL AND ${t.decidedAt} IS NOT NULL)`),
 ]);
 
 // ---------------------------------------------------------------------------
