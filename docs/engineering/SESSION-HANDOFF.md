@@ -52,9 +52,26 @@ rules — defaults unchanged everywhere).
 | 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
 | 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply BEFORE pushing main |
 | 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply BEFORE pushing main |
+| 0044_document_approvals | PD-002 | ⚠️ PENDING — apply BEFORE pushing main |
 
-New migrations continue from **0044**. **Migration numbers are reserved by
+New migrations continue from **0045**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
+   **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
+   still pending. Safe because every new surface is flag-gated and fails
+   closed before touching its tables — but 0042, 0043 and 0044 MUST be
+   applied (in order, all idempotent) BEFORE any of migration.hub,
+   network.directory-enquiries or documents.workspace-approvals is enabled
+   for any tenant, and ideally before the next push.**
+   **PD-002 is DONE (2026-07-15, session 3):** document approvals with the
+   second-person rule enforced in service AND by DB CHECK (decider ≠
+   requester; one PENDING per document via partial unique index; decided
+   approvals immutable), pinned to the document's current version;
+   retention_until with an archive guard wired into the PD-001 archive
+   path; all audited. Verified: document-approvals 4/4; regression
+   document-workspace + critical 21/21; typecheck clean. Mission pack:
+   `docs/engineering/mission-packs/PD-002/`. Codex lane: PB-002B merged
+   (16 gaps closed, 1 evidence-backed verified flip, gate open);
+   PB-002C reviewer-handoff prompt issued; IND-000 queued.
    **PN-003 is DONE (2026-07-15, session 3):** consent-first directory
    enquiries behind `network.directory`. Opt-in via `acceptEnquiries` read
    from the FROZEN published snapshot (consent follows publish semantics);
