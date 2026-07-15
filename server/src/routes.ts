@@ -30,6 +30,10 @@ import { createDraftInvoice, issueInvoice, recordPayment, updateDraftInvoice, vo
 import { adjustStock, recordOpeningStock } from "./inventory.js";
 import { ensureBankLedgerAccount, postJournal } from "./accounting.js";
 import {
+  closeAccountingPeriod, listAccountingPeriods, periodMonthSchema, periodReasonSchema,
+  reopenAccountingPeriod,
+} from "./accounting-periods.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1779,6 +1783,29 @@ api.post("/expenses", requirePermission("accounting.post"), wrap(async (req) => 
 api.get("/expenses", requirePermission("accounting.read"), wrap(async (req) =>
   db.select().from(schema.expenses).where(eq(schema.expenses.tenantId, tenantId(req)))
     .orderBy(desc(schema.expenses.date)).limit(200)));
+
+// ---------------------------------------------------------------------------
+// P2-005: financial period close. Closing locks a month against every journal
+// posting; corrections are offsetting entries in an open period. Reopening is
+// restricted to the accountable Owner and fully audited.
+// ---------------------------------------------------------------------------
+api.get("/accounting/periods", requirePermission("accounting.read"), wrap(async (req) =>
+  listAccountingPeriods(tenantId(req))));
+api.post("/accounting/periods/close", requirePermission("accounting.post"), wrap(async (req) => {
+  const body = z.object({ month: periodMonthSchema, reason: periodReasonSchema }).parse(req.body);
+  return closeAccountingPeriod({
+    tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    month: body.month, reason: body.reason,
+  });
+}));
+api.post("/accounting/periods/:id/reopen",
+  requirePermission("accounting.post"), requireTenantOwner as any, wrap(async (req) => {
+    const body = z.object({ reason: periodReasonSchema }).parse(req.body);
+    return reopenAccountingPeriod({
+      tenantId: tenantId(req), actorUserId: req.auth!.userId,
+      periodId: uuidRouteParam(req, "id"), reason: body.reason,
+    });
+  }));
 
 api.get("/journal", requirePermission("accounting.read"), wrap(async (req) => {
   const rows = await db.execute(sql`
