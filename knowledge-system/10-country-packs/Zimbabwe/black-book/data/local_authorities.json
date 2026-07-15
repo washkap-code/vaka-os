@@ -61,5 +61,990 @@
       "https://masvingocity.org.zw/about-us/"
     ],
     "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "kadoma-city-council",
+    "name": "Kadoma City Council",
+    "category": "local_authority",
+    "city": "Kadoma",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a city council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "kwekwe-city-council",
+    "name": "Kwekwe City Council",
+    "category": "local_authority",
+    "city": "Kwekwe",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a city council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "victoria-falls-city-council",
+    "name": "Victoria Falls City Council",
+    "category": "local_authority",
+    "city": "Victoria Falls",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a city council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "beitbridge-municipality",
+    "name": "Beitbridge Municipality",
+    "category": "local_authority",
+    "city": "Beitbridge",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "bindura-municipality",
+    "name": "Bindura Municipality",
+    "category": "local_authority",
+    "city": "Bindura",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chegutu-municipality",
+    "name": "Chegutu Municipality",
+    "category": "local_authority",
+    "city": "Chegutu",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chinhoyi-municipality",
+    "name": "Chinhoyi Municipality",
+    "category": "local_authority",
+    "city": "Chinhoyi",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chitungwiza-municipality",
+    "name": "Chitungwiza Municipality",
+    "category": "local_authority",
+    "city": "Chitungwiza",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gwanda-municipality",
+    "name": "Gwanda Municipality",
+    "category": "local_authority",
+    "city": "Gwanda",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "kariba-municipality",
+    "name": "Kariba Municipality",
+    "category": "local_authority",
+    "city": "Kariba",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "marondera-municipality",
+    "name": "Marondera Municipality",
+    "category": "local_authority",
+    "city": "Marondera",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "redcliff-municipality",
+    "name": "Redcliff Municipality",
+    "category": "local_authority",
+    "city": "Redcliff",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a municipal council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chipinge-town-council",
+    "name": "Chipinge Town Council",
+    "category": "local_authority",
+    "city": "Chipinge",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chiredzi-town-council",
+    "name": "Chiredzi Town Council",
+    "category": "local_authority",
+    "city": "Chiredzi",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gokwe-town-council",
+    "name": "Gokwe Town Council",
+    "category": "local_authority",
+    "city": "Gokwe",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "karoi-town-council",
+    "name": "Karoi Town Council",
+    "category": "local_authority",
+    "city": "Karoi",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mvurwi-town-council",
+    "name": "Mvurwi Town Council",
+    "category": "local_authority",
+    "city": "Mvurwi",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "norton-town-council",
+    "name": "Norton Town Council",
+    "category": "local_authority",
+    "city": "Norton",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "plumtree-town-council",
+    "name": "Plumtree Town Council",
+    "category": "local_authority",
+    "city": "Plumtree",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "rusape-town-council",
+    "name": "Rusape Town Council",
+    "category": "local_authority",
+    "city": "Rusape",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "shurugwi-town-council",
+    "name": "Shurugwi Town Council",
+    "category": "local_authority",
+    "city": "Shurugwi",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "zvishavane-town-council",
+    "name": "Zvishavane Town Council",
+    "category": "local_authority",
+    "city": "Zvishavane",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a town council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chirundu-local-board",
+    "name": "Chirundu Local Board",
+    "category": "local_authority",
+    "city": "Chirundu",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a local board in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "epworth-local-board",
+    "name": "Epworth Local Board",
+    "category": "local_authority",
+    "city": "Epworth",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a local board in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "hwange-local-board",
+    "name": "Hwange Local Board",
+    "category": "local_authority",
+    "city": "Hwange",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a local board in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "lupane-local-board",
+    "name": "Lupane Local Board",
+    "category": "local_authority",
+    "city": "Lupane",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a local board in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "ruwa-local-board",
+    "name": "Ruwa Local Board",
+    "category": "local_authority",
+    "city": "Ruwa",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a local board in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "beitbridge-rural-district-council",
+    "name": "Beitbridge Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "bikita-rural-district-council",
+    "name": "Bikita Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "bindura-rural-district-council",
+    "name": "Bindura Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "binga-rural-district-council",
+    "name": "Binga Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "bubi-rural-district-council",
+    "name": "Bubi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "buhera-rural-district-council",
+    "name": "Buhera Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "bulilima-rural-district-council",
+    "name": "Bulilima Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chaminuka-rural-district-council",
+    "name": "Chaminuka Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chegutu-rural-district-council",
+    "name": "Chegutu Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chikomba-rural-district-council",
+    "name": "Chikomba Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chimanimani-rural-district-council",
+    "name": "Chimanimani Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chipinge-rural-district-council",
+    "name": "Chipinge Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chiredzi-rural-district-council",
+    "name": "Chiredzi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chirumanzu-rural-district-council",
+    "name": "Chirumanzu Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf",
+      "https://www.auditorgeneral.gov.zw/phocadownload/AG%20%20REPORT%202022%20ON%20LOCAL%20AUTHORITIES.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's local-authorities reports. The 2024 annexure spelling variant is reconciled to \"Chirumanzu\" using the report index and the Auditor-General's 2022 report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "chivi-rural-district-council",
+    "name": "Chivi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gokwe-north-rural-district-council",
+    "name": "Gokwe North Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gokwe-south-rural-district-council",
+    "name": "Gokwe South Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "goromonzi-rural-district-council",
+    "name": "Goromonzi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "guruve-rural-district-council",
+    "name": "Guruve Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gutu-rural-district-council",
+    "name": "Gutu Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "gwanda-rural-district-council",
+    "name": "Gwanda Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "hurungwe-rural-district-council",
+    "name": "Hurungwe Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "hwange-rural-district-council",
+    "name": "Hwange Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "hwedza-rural-district-council",
+    "name": "Hwedza Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "insiza-rural-district-council",
+    "name": "Insiza Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "kusile-rural-district-council",
+    "name": "Kusile Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "makonde-rural-district-council",
+    "name": "Makonde Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "makoni-rural-district-council",
+    "name": "Makoni Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mangwe-rural-district-council",
+    "name": "Mangwe Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "manyame-rural-district-council",
+    "name": "Manyame Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "marondera-rural-district-council",
+    "name": "Marondera Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "masvingo-rural-district-council",
+    "name": "Masvingo Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "matobo-rural-district-council",
+    "name": "Matobo Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mazowe-rural-district-council",
+    "name": "Mazowe Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mberengwa-rural-district-council",
+    "name": "Mberengwa Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mbire-rural-district-council",
+    "name": "Mbire Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mhondoro-ngezi-rural-district-council",
+    "name": "Mhondoro-Ngezi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mudzi-rural-district-council",
+    "name": "Mudzi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "murewa-rural-district-council",
+    "name": "Murewa Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mutare-rural-district-council",
+    "name": "Mutare Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mutasa-rural-district-council",
+    "name": "Mutasa Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mutoko-rural-district-council",
+    "name": "Mutoko Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "muzarabani-rural-district-council",
+    "name": "Muzarabani Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "mwenezi-rural-district-council",
+    "name": "Mwenezi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "nkayi-rural-district-council",
+    "name": "Nkayi Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "nyaminyami-rural-district-council",
+    "name": "Nyaminyami Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "nyanga-rural-district-council",
+    "name": "Nyanga Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "pfura-rural-district-council",
+    "name": "Pfura Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "runde-rural-district-council",
+    "name": "Runde Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "rushinga-rural-district-council",
+    "name": "Rushinga Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "sanyati-rural-district-council",
+    "name": "Sanyati Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "tongogara-rural-district-council",
+    "name": "Tongogara Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "tsholotsho-rural-district-council",
+    "name": "Tsholotsho Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "umguza-rural-district-council",
+    "name": "Umguza Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "uzumba-maramba-pfungwe-zvataida-rural-district-council",
+    "name": "Uzumba Maramba Pfungwe (Zvataida) Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "umzingwane-rural-district-council",
+    "name": "Umzingwane Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "vungu-rural-district-council",
+    "name": "Vungu Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "zaka-rural-district-council",
+    "name": "Zaka Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "zibagwe-rural-district-council",
+    "name": "Zibagwe Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
+  },
+  {
+    "id": "zvimba-rural-district-council",
+    "name": "Zvimba Rural District Council",
+    "category": "local_authority",
+    "verified": true,
+    "sources": [
+      "https://auditorgeneral.gov.zw/wp-content/uploads/2025/09/LOCAL-AUTHORITIES-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Listed as a rural district council in the Auditor-General's 2024 local-authorities report; no council website or contact details are asserted here."
   }
 ]
