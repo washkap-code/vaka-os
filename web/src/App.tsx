@@ -1320,7 +1320,8 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
           <ProcurementWorkspace readonly={suspended} permissions={me.permissions}
             currentUserId={me.userId} baseCurrency={t.baseCurrency} />
         </Suspense>}
-        {page === "reports" && <Reports ccy={t.baseCurrency} />}
+        {page === "reports" && <Reports ccy={t.baseCurrency}
+          canClosePeriods={me.permissions.includes("accounting.post")} isTenantOwner={me.isTenantOwner} />}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter
           readonly={suspended}
@@ -4081,12 +4082,14 @@ function Products({ readonly, canWrite, baseCcy, searchTarget, onSearchTargetCon
 // ---------------------------------------------------------------------------
 // Reports
 // ---------------------------------------------------------------------------
-function Reports({ ccy }: { ccy: string }) {
+function Reports({ ccy, canClosePeriods, isTenantOwner }: {
+  ccy: string; canClosePeriods: boolean; isTenantOwner: boolean;
+}) {
   const today = new Date();
   const localDate = (value: Date) => new Date(value.getTime() - value.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
   const defaultTo = localDate(today);
   const defaultFrom = localDate(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "inventory" | "vat" | "statutory">("pl");
+  const [tab, setTab] = useState<"pl" | "bs" | "ar" | "journal" | "inventory" | "vat" | "statutory" | "periods">("pl");
   const [pl] = useLoad(() => api("/reports/profit-loss"), [tab]);
   const [bs] = useLoad(() => api("/reports/balance-sheet"), [tab]);
   const [ar] = useLoad(() => api("/reports/aged-receivables"), [tab]);
@@ -4100,7 +4103,7 @@ function Reports({ ccy }: { ccy: string }) {
   const reportsCopy = appEnglish.reports;
   const copy = reportsCopy.vat;
   const statutoryCopy = reportsCopy.statutory;
-  const reportTabs = ["pl", "bs", "ar", "journal", "inventory", "vat", "statutory"] as const;
+  const reportTabs = ["pl", "bs", "ar", "journal", "inventory", "vat", "statutory", "periods"] as const;
   const reportTabLabels = {
     pl: reportsCopy.tabs.pl,
     bs: reportsCopy.tabs.bs,
@@ -4109,6 +4112,7 @@ function Reports({ ccy }: { ccy: string }) {
     inventory: reportsCopy.inventory.tab,
     vat: copy.tab,
     statutory: statutoryCopy.tab,
+    periods: reportsCopy.periods.tab,
   };
   const [statutoryPeriod, setStatutoryPeriod] = useState({ from: defaultFrom, to: defaultTo, asAt: defaultTo });
   const [statutoryApplied, setStatutoryApplied] = useState(statutoryPeriod);
@@ -4340,6 +4344,88 @@ function Reports({ ccy }: { ccy: string }) {
         <div className={`banner ${statutory.agedPayables.requiresReconciliation ? "warn" : ""}`}>{statutoryCopy.apCoverage} {statutoryCopy.unallocated.replace("{amount}", fmt(statutory.agedPayables.unallocatedBalance, statutory.currency))}</div>
       </>}
     </div>}
+    {tab === "periods" && <div className="panel" role="tabpanel" id="report-panel-periods" aria-labelledby="report-tab-periods" tabIndex={0}>
+      <PeriodClosePanel canClose={canClosePeriods} isTenantOwner={isTenantOwner} />
+    </div>}
+  </>);
+}
+
+// P2-005: financial period close. Closing a month locks every posting dated
+// inside it; corrections are offsetting entries in an open period.
+function PeriodClosePanel({ canClose, isTenantOwner }: { canClose: boolean; isTenantOwner: boolean }) {
+  const copy = appEnglish.reports.periods;
+  const [loadedPeriods, reload] = useLoad(() => api("/accounting/periods"));
+  const periods = (loadedPeriods ?? []) as {
+    id: string; periodMonth: string; status: "CLOSED" | "OPEN";
+    closedAt: string; closedReason: string; reopenedAt: string | null; reopenedReason: string | null;
+  }[];
+  const previousMonth = () => {
+    const now = new Date();
+    const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}`;
+  };
+  const [month, setMonth] = useState(previousMonth);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"status" | "error">("status");
+  const monthLabel = (value: string) => value.slice(0, 7);
+
+  const close = async () => {
+    setBusy(true); setMessage("");
+    try {
+      await api("/accounting/periods/close", { method: "POST", body: { month, reason } });
+      setMessage(copy.closed); setMessageTone("status"); setReason(""); reload();
+    } catch (error: any) { setMessage(error.message || copy.unexpectedError); setMessageTone("error"); }
+    finally { setBusy(false); }
+  };
+  const reopen = async (periodId: string) => {
+    const reopenReason = window.prompt(copy.reopenPrompt);
+    if (!reopenReason) return;
+    setBusy(true); setMessage("");
+    try {
+      await api(`/accounting/periods/${periodId}/reopen`, { method: "POST", body: { reason: reopenReason } });
+      setMessage(copy.reopened); setMessageTone("status"); reload();
+    } catch (error: any) { setMessage(error.message || copy.unexpectedError); setMessageTone("error"); }
+    finally { setBusy(false); }
+  };
+
+  return (<>
+    <div className="panel-heading"><div><h2>{copy.title}</h2><div className="sub">{copy.help}</div></div></div>
+    {canClose && <form className="row" onSubmit={(event) => { event.preventDefault(); void close(); }}>
+      <div className="field">
+        <label htmlFor="period-close-month">{copy.closeMonth}</label>
+        <input id="period-close-month" type="month" value={month} disabled={busy}
+          onChange={(event) => setMonth(event.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="period-close-reason">{copy.closeReason}</label>
+        <input id="period-close-reason" value={reason} disabled={busy}
+          aria-describedby="period-close-reason-hint"
+          onChange={(event) => setReason(event.target.value)} />
+        <small className="field-help" id="period-close-reason-hint">{copy.closeReasonHint}</small>
+      </div>
+      <button type="submit" className="btn accent" disabled={busy || !month || reason.trim().length < 3}>{copy.closeAction}</button>
+    </form>}
+    {message && <div className={`banner ${messageTone === "error" ? "warn" : ""}`} role={messageTone === "error" ? "alert" : "status"}>{message}</div>}
+    <div className="table-scroll" role="region" aria-label={copy.tableLabel} tabIndex={0}>
+      <table>
+        <thead><tr><th>{copy.month}</th><th>{copy.status}</th><th>{copy.closedBy}</th><th>{copy.reason}</th><th>{copy.reopenedBy}</th><th></th></tr></thead>
+        <tbody>
+          {periods.map((period) => <tr key={period.id}>
+            <td><strong>{monthLabel(period.periodMonth)}</strong></td>
+            <td><span className={`pill ${period.status === "CLOSED" ? "PAID" : "DRAFT"}`}>{period.status}</span></td>
+            <td>{new Date(period.closedAt).toLocaleDateString()}</td>
+            <td>{period.status === "CLOSED" ? period.closedReason : period.reopenedReason}</td>
+            <td>{period.reopenedAt ? new Date(period.reopenedAt).toLocaleDateString() : "—"}</td>
+            <td>{period.status === "CLOSED" && (isTenantOwner
+              ? <button className="btn ghost sm" disabled={busy} onClick={() => void reopen(period.id)}>{copy.reopenAction}</button>
+              : <small className="sub">{copy.ownerOnlyReopen}</small>)}</td>
+          </tr>)}
+          {!periods.length && <tr><td colSpan={6}>{copy.empty}</td></tr>}
+        </tbody>
+      </table>
+    </div>
   </>);
 }
 

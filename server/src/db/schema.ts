@@ -782,6 +782,32 @@ export const payments = pgTable("payments", {
   createdAt: createdAt(),
 }, (t) => [uniqueIndex("payments_tenant_idempotency").on(t.tenantId, t.idempotencyKey)]);
 
+// P2-005: closed financial periods. A CLOSED row locks its month against any
+// journal posting (enforced in postJournal and by a DB trigger); corrections
+// are posted as offsetting entries in an open period. Reopening is audited
+// and restricted to the accountable Owner.
+export const accountingPeriods = pgTable("accounting_periods", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  periodMonth: date("period_month").notNull(),
+  status: text("status").default("CLOSED").notNull(),
+  closedBy: uuid("closed_by").notNull().references(() => users.id),
+  closedAt: timestamp("closed_at", { withTimezone: true }).defaultNow().notNull(),
+  closedReason: text("closed_reason").notNull(),
+  reopenedBy: uuid("reopened_by").references(() => users.id),
+  reopenedAt: timestamp("reopened_at", { withTimezone: true }),
+  reopenedReason: text("reopened_reason"),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("accounting_periods_tenant_month").on(t.tenantId, t.periodMonth),
+  check("accounting_periods_status_check", sql`${t.status} IN ('CLOSED', 'OPEN')`),
+  check("accounting_periods_month_check", sql`${t.periodMonth} = date_trunc('month', ${t.periodMonth})::date`),
+  check("accounting_periods_reopen_state_check", sql`
+    (${t.status} = 'CLOSED' AND ${t.reopenedAt} IS NULL AND ${t.reopenedBy} IS NULL AND ${t.reopenedReason} IS NULL)
+    OR (${t.status} = 'OPEN' AND ${t.reopenedAt} IS NOT NULL AND ${t.reopenedBy} IS NOT NULL AND ${t.reopenedReason} IS NOT NULL)
+  `),
+]);
+
 export const journalEntries = pgTable("journal_entries", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),

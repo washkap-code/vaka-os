@@ -75,6 +75,9 @@ const required = [
   ["finance_report_snapshots", "branding_document"],
   ["finance_report_snapshots", "checksum"],
   ["finance_report_snapshots", "idempotency_key"],
+  ["accounting_periods", "tenant_id"],
+  ["accounting_periods", "period_month"],
+  ["accounting_periods", "status"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

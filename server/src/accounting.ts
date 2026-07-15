@@ -6,6 +6,7 @@
 // ============================================================================
 import { and, eq, isNull } from "drizzle-orm";
 import { DB, schema, badRequest, toCents, fromCents } from "./lib.js";
+import { assertPeriodOpen } from "./accounting-periods.js";
 
 export interface JournalLineInput {
   accountId: string;
@@ -24,6 +25,10 @@ export async function postJournal(
     lines: JournalLineInput[];
   },
 ): Promise<string> {
+  // P2-005: no financial effect may post into a closed period (corrections
+  // are offsetting entries dated in an open period). A DB trigger enforces
+  // the same rule beneath this boundary.
+  await assertPeriodOpen(tx, opts.tenantId, opts.date);
   if (opts.lines.length < 2) throw badRequest("Journal entry needs at least 2 lines");
   const accountIds = [...new Set(opts.lines.map((line) => line.accountId))];
   const accounts = await tx.select({
