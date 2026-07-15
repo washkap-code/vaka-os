@@ -46,6 +46,10 @@ import {
   listApprovalPolicies, removeApprovalPolicy, setApprovalPolicy,
 } from "./approval-policies.js";
 import {
+  automationRuleKeySchema, closeTaskSchema, createManualTask, closeTask,
+  listAutomationRules, listTasks, manualTaskSchema, setAutomationRule,
+} from "./tasks.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1821,6 +1825,31 @@ api.post("/accounting/periods/:id/reopen",
       periodId: uuidRouteParam(req, "id"), reason: body.reason,
     });
   }));
+
+// ---------------------------------------------------------------------------
+// PW-003: tenant task centre + opt-in event automation. Tasks are
+// operational work items (never financial writes); every close is audited.
+// ---------------------------------------------------------------------------
+api.get("/tasks", wrap(async (req) => {
+  const status = z.enum(["OPEN", "DONE", "DISMISSED", "ALL"]).optional()
+    .parse(req.query.status as string | undefined) ?? "OPEN";
+  return listTasks(tenantId(req), status);
+}));
+api.post("/tasks", wrap(async (req) => {
+  const input = manualTaskSchema.parse(req.body);
+  return createManualTask(tenantId(req), req.auth!.userId, input);
+}));
+api.post("/tasks/:id/close", wrap(async (req) => {
+  const body = closeTaskSchema.parse(req.body);
+  return closeTask(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), body.outcome);
+}));
+api.get("/settings/automation-rules", requirePermission("settings.manage"), wrap(async (req) =>
+  listAutomationRules(tenantId(req))));
+api.put("/settings/automation-rules/:key", requirePermission("settings.manage"), wrap(async (req) => {
+  const key = automationRuleKeySchema.parse(routeParam(req, "key"));
+  const body = z.object({ enabled: z.boolean() }).parse(req.body);
+  return setAutomationRule(tenantId(req), req.auth!.userId, key, body.enabled);
+}));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra

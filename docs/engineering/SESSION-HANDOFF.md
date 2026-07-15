@@ -24,10 +24,11 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0037_approval_policies.sql`.
-**All migrations through 0037 are applied and verified in production**
-(0036 and 0037 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
-verified: both tables exist and are empty = flags all OFF, no policies).
+Highest migration on `main`: `0038_task_automation.sql`.
+**All migrations through 0038 are applied and verified in production**
+(0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
+verified: all new tables exist and are empty = flags OFF, no policies, no
+rules — defaults unchanged everywhere).
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -38,8 +39,10 @@ verified: both tables exist and are empty = flags all OFF, no policies).
 | 0035_payroll_foundation | P2-009 | ✅ 2026-07-15 |
 | 0036_tenant_feature_flags | FLAG-001 | ✅ 2026-07-15 |
 | 0037_approval_policies | PW-002 | ✅ 2026-07-15 |
+| 0038_task_automation | PW-003 | ✅ 2026-07-15 |
 
-New migrations continue from **0038**.
+New migrations continue from **0039**. **Migration numbers are reserved by
+this (Cowork) session — parallel Codex work must NOT create migrations.**
 
 ## Shipped and live on `main` (this working period)
 
@@ -130,9 +133,21 @@ the admin password hash between reruns on the same scratch db.
    to production (empty = defaults unchanged). Verified: approval-policies
    8/8; procurement-lifecycle/payroll/workflow-approvals/critical 41/41.
    Mission pack: `docs/engineering/mission-packs/PW-002/`.
-   **Next Part II missions (Wave 1): PW-003 event automation rules + PW-004
-   task centre, PD-001 documents workspace, PN-001 business profile, PB-001
-   Black Book registry — each behind its catalogue flag.**
+   **PW-003 is DONE (2026-07-15):** tenant task centre (`tenant_tasks`) +
+   opt-in event automation from a closed rule catalogue
+   (`automation_rules`; procurement-approval-task, supplier-bill-review-task)
+   with open-task dedupe per subject; audited task close and rule toggles;
+   migration 0038 applied to production. Verified: task-automation 6/6;
+   procurement/supplier-bills/critical/events 20/20. Mission pack:
+   `docs/engineering/mission-packs/PW-003/`.
+   **PARALLEL CODEX LANE (2026-07-15):** Codex was given P9-006 (CI security
+   scanning + SBOM) and P9-005 (incident response + forensic queries) on
+   branch `codex/p9-006-ci-security`, restricted to `.github/**` and
+   `docs/engineering/**` docs — no server/web/migration files. Review and
+   merge that branch before starting overlapping work.
+   **Next Part II missions (Wave 1): PW-004 task centre surface (workbench
+   widget + nav), PD-001 documents workspace, PN-001 business profile,
+   PB-001 Black Book registry — each behind its catalogue flag.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant

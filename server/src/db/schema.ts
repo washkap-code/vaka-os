@@ -1336,6 +1336,54 @@ export const dunningEvents = pgTable("dunning_events", {
 });
 
 // ---------------------------------------------------------------------------
+// PW-003 — Tenant task centre + event automation. Tasks are operational
+// work items (never financial writes); automation rules are an opt-in,
+// code-catalogued mapping from domain events to task creation. No rule row =
+// disabled. A partial unique index prevents duplicate OPEN automation tasks
+// for the same subject.
+// ---------------------------------------------------------------------------
+export const tenantTasks = pgTable("tenant_tasks", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  title: text("title").notNull(),
+  detail: text("detail"),
+  status: text("status").default("OPEN").notNull(),
+  sourceType: text("source_type").notNull(), // automation | manual
+  sourceKey: text("source_key"), // automation rule key
+  subjectType: text("subject_type"),
+  subjectId: uuid("subject_id"),
+  assignedTo: uuid("assigned_to").references(() => users.id),
+  createdBy: uuid("created_by").references(() => users.id), // null = system
+  closedBy: uuid("closed_by").references(() => users.id),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("tenant_tasks_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  uniqueIndex("tenant_tasks_open_automation_dedupe")
+    .on(t.tenantId, t.sourceKey, t.subjectId)
+    .where(sql`${t.status} = 'OPEN' AND ${t.sourceKey} IS NOT NULL AND ${t.subjectId} IS NOT NULL`),
+  check("tenant_tasks_status_check", sql`${t.status} IN ('OPEN', 'DONE', 'DISMISSED')`),
+  check("tenant_tasks_source_check", sql`${t.sourceType} IN ('automation', 'manual')`),
+  check("tenant_tasks_closed_state_check", sql`
+    (${t.status} = 'OPEN' AND ${t.closedAt} IS NULL AND ${t.closedBy} IS NULL)
+    OR (${t.status} IN ('DONE', 'DISMISSED') AND ${t.closedAt} IS NOT NULL AND ${t.closedBy} IS NOT NULL)
+  `),
+]);
+
+export const automationRules = pgTable("automation_rules", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  ruleKey: text("rule_key").notNull(),
+  enabled: boolean("enabled").default(false).notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("automation_rules_tenant_key").on(t.tenantId, t.ruleKey),
+]);
+
+// ---------------------------------------------------------------------------
 // PW-002 — Tenant-configurable approval policies. One optional row per
 // (tenant, subject type); no row = no additional rule (behaviour unchanged
 // until a tenant opts in). Evaluated by the kernel ApprovalService.
