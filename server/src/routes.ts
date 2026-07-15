@@ -39,7 +39,7 @@ import {
   postPayrollRun, reversePayrollRun, reverseReasonSchema, updateDraftPayslip, updateEmployee,
 } from "./payroll.js";
 import {
-  enabledFeaturesFor, featureNoteSchema, listTenantFeatures, setTenantFeature,
+  enabledFeaturesFor, featureNoteSchema, listTenantFeatures, requireFeature, setTenantFeature,
 } from "./feature-flags.js";
 import {
   approvalPolicyInputSchema, approvalPolicySubjectSchema,
@@ -1827,29 +1827,34 @@ api.post("/accounting/periods/:id/reopen",
   }));
 
 // ---------------------------------------------------------------------------
-// PW-003: tenant task centre + opt-in event automation. Tasks are
+// PW-003/004: tenant task centre + opt-in event automation. Tasks are
 // operational work items (never financial writes); every close is audited.
+// The whole surface ships dark behind the `workflow.centre` feature flag
+// (FLAG-002 build-dark rule) — fail closed with FEATURE_DISABLED until a
+// platform admin enables it per tenant.
 // ---------------------------------------------------------------------------
-api.get("/tasks", wrap(async (req) => {
+api.get("/tasks", requireFeature("workflow.centre"), wrap(async (req) => {
   const status = z.enum(["OPEN", "DONE", "DISMISSED", "ALL"]).optional()
     .parse(req.query.status as string | undefined) ?? "OPEN";
   return listTasks(tenantId(req), status);
 }));
-api.post("/tasks", wrap(async (req) => {
+api.post("/tasks", requireFeature("workflow.centre"), wrap(async (req) => {
   const input = manualTaskSchema.parse(req.body);
   return createManualTask(tenantId(req), req.auth!.userId, input);
 }));
-api.post("/tasks/:id/close", wrap(async (req) => {
+api.post("/tasks/:id/close", requireFeature("workflow.centre"), wrap(async (req) => {
   const body = closeTaskSchema.parse(req.body);
   return closeTask(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), body.outcome);
 }));
-api.get("/settings/automation-rules", requirePermission("settings.manage"), wrap(async (req) =>
-  listAutomationRules(tenantId(req))));
-api.put("/settings/automation-rules/:key", requirePermission("settings.manage"), wrap(async (req) => {
-  const key = automationRuleKeySchema.parse(routeParam(req, "key"));
-  const body = z.object({ enabled: z.boolean() }).parse(req.body);
-  return setAutomationRule(tenantId(req), req.auth!.userId, key, body.enabled);
-}));
+api.get("/settings/automation-rules", requireFeature("workflow.centre"),
+  requirePermission("settings.manage"), wrap(async (req) =>
+    listAutomationRules(tenantId(req))));
+api.put("/settings/automation-rules/:key", requireFeature("workflow.centre"),
+  requirePermission("settings.manage"), wrap(async (req) => {
+    const key = automationRuleKeySchema.parse(routeParam(req, "key"));
+    const body = z.object({ enabled: z.boolean() }).parse(req.body);
+    return setAutomationRule(tenantId(req), req.auth!.userId, key, body.enabled);
+  }));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra

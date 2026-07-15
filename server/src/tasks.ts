@@ -12,6 +12,13 @@ import { z } from "zod";
 import { audit, badRequest, conflict, db, notFound, schema } from "./lib.js";
 import type { EventBusContract } from "./platform/events/interfaces.js";
 import { DOMAIN_EVENTS, type DomainEventPayloads } from "./platform/events/registry.js";
+import { postgresFeatureFlagStore } from "./feature-flags-store.js";
+
+/** PW-004: automation is silent unless the tenant's workflow.centre flag is ON. */
+async function workflowCentreEnabled(tenantId: string): Promise<boolean> {
+  const rows = await postgresFeatureFlagStore.list(tenantId);
+  return rows.some((row) => row.featureKey === "workflow.centre" && row.enabled);
+}
 
 // ---------------------------------------------------------------------------
 // Automation rule catalogue (closed; unknown keys rejected / ignored)
@@ -150,6 +157,7 @@ export function subscribeTaskAutomation(bus: EventBusContract) {
     DOMAIN_EVENTS.PROCUREMENT_APPROVAL_REQUESTED,
     async (event) => {
       if (!event.tenantId) return;
+      if (!(await workflowCentreEnabled(event.tenantId))) return;
       if (!(await ruleEnabled(event.tenantId, "procurement-approval-task"))) return;
       const kindLabel = event.payload.kind === "purchase_order" ? "purchase order" : "purchase requisition";
       await createAutomationTask({
@@ -167,6 +175,7 @@ export function subscribeTaskAutomation(bus: EventBusContract) {
     DOMAIN_EVENTS.SUPPLIER_BILL_POSTED,
     async (event) => {
       if (!event.tenantId) return;
+      if (!(await workflowCentreEnabled(event.tenantId))) return;
       if (!(await ruleEnabled(event.tenantId, "supplier-bill-review-task"))) return;
       await createAutomationTask({
         tenantId: event.tenantId,
