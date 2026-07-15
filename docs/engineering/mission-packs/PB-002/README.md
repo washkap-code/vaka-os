@@ -75,8 +75,13 @@ telecommunications, medicines or local-authority regulation.
 - READY records still require source-by-source human review.
 - PARTIAL records must close their evidence gaps or be explicitly excluded.
 - The BLOCKED DCIP annual-return event cannot be published or drive reminders.
+- A field may be upgraded to verified only when a newly found, resolving
+  official source is cited in that field and in the guide's aggregate sources;
+  reviewer approval alone cannot upgrade evidence.
 - Dataset-level approval must reference the exact commit, reviewer
   qualifications, scope, evidence bundle, exceptions, decision date and expiry.
+- The gate closes only when the signed human-review pack is returned and
+  recorded in `docs/engineering/mission-packs/PB-002/`.
 - Compliance guides remain outside the PB-001 importer until their content gate
   closes and an importer extension is deliberately versioned.
 - No content is imported, published or enabled by this mission.
@@ -94,6 +99,8 @@ Included:
 Excluded:
 
 - claiming or fabricating professional approval;
+- declaring PB-002 certified before the signed pack is recorded in the PB-002
+  mission directory;
 - editing any existing data record, source register, schema contract or gap
   status;
 - filling guide fields, fees, deadlines, contacts or statutory interpretations

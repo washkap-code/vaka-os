@@ -89,6 +89,21 @@ the intended publication scope close. It may be excluded from a dataset-level
 approval with an explicit exception. A `BLOCKED` record cannot be published or
 drive notifications.
 
+### Field-upgrade rule
+
+A compliance-guide evidence field may move from `unverified` to `verified`
+only in a separately reviewed content revision that:
+
+1. cites a newly found, currently resolving official authority source in the
+   field's own `sources` array;
+2. adds that same URL to the compliance guide's aggregate `sources` array;
+3. records only the value directly supported by that source; and
+4. passes every evidence-field invariant in `schema.md`.
+
+A reviewer signature, search index, third-party summary, historical custom or
+verbal assurance cannot by itself upgrade a field. If the official source is
+not resolving, the field remains `unverified` with an empty value.
+
 ## Required review sequence
 
 1. Freeze the dataset commit and regenerate the certification register.
@@ -120,6 +135,11 @@ The top-level `approval.status` may be:
 `APPROVED_WITH_EXCEPTIONS` must fail closed: excluded records must not be
 imported, searched, displayed or used for reminders. An exception cannot make
 an unsupported fee, deadline or legal statement publishable.
+
+The PB-002 gate closes only after the signed human-review pack is returned and
+recorded under `docs/engineering/mission-packs/PB-002/`, and its scoped
+decisions reconcile with the certification register. Until that repository
+evidence exists, the top-level gate and approval status remain `PENDING`.
 
 ## Gates that remain open
 

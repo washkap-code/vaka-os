@@ -7,6 +7,9 @@ e1100766ba21f4b1950b93420ad5b5aefeaa16c2
 
 **Status:** REVIEW PACK COMPLETE; PROFESSIONAL CONTENT GATE OPEN
 
+This status is not certification. The PB-002 gate remains pending until the
+human reviewers' signed pack is returned and recorded in this directory.
+
 ## Files created
 
 | File | Purpose |
@@ -46,6 +49,11 @@ record is dcip-company-annual-return.
 PB-002 is not professionally approved. No qualified human reviewer identity,
 qualification, scoped decision, evidence bundle or approval expiry was supplied
 or fabricated.
+
+No existing evidence field was upgraded. Any future upgrade requires a newly
+found, resolving official source to be cited in the field itself and in the
+guide's aggregate sources; a signed review without that source cannot promote
+the field.
 
 The gate cannot close until:
 
