@@ -24,8 +24,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0039_document_workspace.sql`.
-**Migrations through 0039 are applied and verified in production.**
+Highest migration on `main`: `0040_blackbook_registry.sql`.
+**Migrations through 0040 are applied and verified in production.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -41,8 +41,9 @@ rules — defaults unchanged everywhere).
 | 0037_approval_policies | PW-002 | ✅ 2026-07-15 |
 | 0038_task_automation | PW-003 | ✅ 2026-07-15 |
 | 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
+| 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
 
-New migrations continue from **0040**. **Migration numbers are reserved by
+New migrations continue from **0041**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
 
 ## Shipped and live on `main` (this working period)
@@ -208,17 +209,38 @@ the admin password hash between reruns on the same scratch db.
    `/private/tmp/vaka-pb-000-blackbook-dataset` shows prunable from the
    sandbox but exists on the host — prune from the host when Codex is done.
    **Next Codex mission: PB-000C (licence/permit compliance guides, data +
-   docs only — the PB-004 content). Prompt drafted in session 3; branch
-   `codex/pb-000c-compliance-guides` from main (which now contains
-   `f51e3aa`). PB-001 (registry, needs a migration) stays in the Cowork
-   lane per the no-Codex-migrations rule.**
+   docs only — the PB-004 content). Prompt issued in session 3; branch
+   `codex/pb-000c-compliance-guides` from local main. Codex must NOT touch
+   server/ or drizzle/ — PB-001 was built in parallel in the Cowork lane.**
+   **PB-001 is DONE (2026-07-15, session 3):** Black Book registry —
+   `blackbook_entries` (unique per country+key, kebab-case/category/status
+   checks) + immutable `blackbook_entry_versions` + `blackbook_import_runs`
+   (migration 0040, applied to production, tables empty = nothing changes).
+   Global platform content, deliberately no tenant_id. Only write path:
+   `POST /platform/blackbook/import` (platform.settings.manage + step-up,
+   audited `platform_blackbook.imported` to platform_audit_logs);
+   all-or-nothing imports implementing schema.md validation checks 1–8 + 10
+   (per-category field whitelists, global ID uniqueness, reference
+   resolution with authority-category rules, HTTPS sources, ISO dates,
+   cadence enums); failed import leaves the registry unchanged. Tenant
+   reads `GET /blackbook/entries[/:key]` behind `blackbook.directory`
+   (fail-closed), detail responses carry sources + lastReviewed + a
+   not-professional-advice notice. Verified in scratch Postgres: blackbook
+   27/27 (incl. importing the real 113-record seed with zero errors);
+   regression feature-flags/task-automation 14/14, critical 12/12, finance
+   tenant-isolation/journal-balancing/journal-immutability 7/7,
+   auth-resolution/platform-runtime 12/12; server typecheck clean. No web
+   changes (PB-003 delivers UI). To seed production: platform staff POSTs
+   the dataset to the import endpoint after the code deploys, then enable
+   `blackbook.directory` per pilot tenant. Mission pack:
+   `docs/engineering/mission-packs/PB-001/`.
    **HOUSEKEEPING (session 3):** removed 4 more untracked Finder " 2" copy
    artifacts (twins of the PD-001 files, verified byte-identical before
    deletion). Also cleared a stale `.git/HEAD.lock` + tmp object left by a
    sandbox-mount unlink failure during the merge.
-   **Next Part II missions (Wave 1): PN-001 business profile, PB-001 Black
-   Book registry (imports the PB-000 dataset) — each behind its catalogue
-   flag. PD-002 (approvals/retention, attach-to-object) follows PD-001.**
+   **Next Part II missions (Wave 1): PN-001 business profile (Cowork lane),
+   PB-003 directory UI + search (after PB-002 content certification), PD-002
+   (approvals/retention, attach-to-object). Codex lane: PB-000C in flight.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
