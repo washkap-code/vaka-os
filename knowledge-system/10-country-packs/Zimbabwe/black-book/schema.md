@@ -18,6 +18,7 @@ Each file in `data/` is a JSON array containing exactly one category:
 - `business_associations.json`
 - `licence-types.json`
 - `compliance-events.json`
+- `compliance-guides.json`
 - `services.json`
 
 PB-000B renames the original `licence_types.json` file to
@@ -38,6 +39,7 @@ The `category` value must be one of:
 | `business_association` | A membership body, chamber, confederation, or union representing businesses or employers. |
 | `licence_type` | A licence, permit, registration, or regulatory certificate a business may need. |
 | `compliance_event` | A one-time, periodic, or trigger-based obligation administered by a Black Book authority. |
+| `compliance_guide` | A field-level-evidenced application guide for one licence type. |
 | `service` | A discrete service, registration, application, lookup, or transaction offered by another directory entity. |
 
 ## Record fields
@@ -46,7 +48,7 @@ The `category` value must be one of:
 | --- | --- | --- | --- |
 | `id` | string | Yes | Globally unique, stable, lowercase kebab-case identifier. Do not recycle an ID for another entity. |
 | `name` | string | Yes | Official or source-supported public name. |
-| `category` | enum string | Yes | One of the nine entity types above and consistent with the containing file. |
+| `category` | enum string | Yes | One of the ten entity types above and consistent with the containing file. |
 | `parentId` | string | No | ID of a related parent, issuing authority, operator, or service owner in this dataset. Omit when the relationship is uncertain. |
 | `website` | string | No | Canonical HTTPS website or service page. |
 | `phones` | string array | No | Published organisational phone numbers copied from an official source. Do not infer or reformat uncertain numbers. |
@@ -107,6 +109,57 @@ translate it into a reviewed jurisdiction rule with effective dates, owner,
 evidence requirements, exception handling, and source-version history before
 the product computes deadlines.
 
+## Compliance guide fields
+
+Records in `compliance-guides.json` are source-backed research inputs, not
+legal or regulatory advice. There must be exactly one guide for every record
+in `licence-types.json`. A guide may be partially verified: each material field
+carries its own evidence status so an unknown fee or turnaround does not
+invalidate a separately corroborated eligibility rule.
+
+| Field | Type | Required | Rules |
+| --- | --- | --- | --- |
+| `id` | string | Yes | Globally unique, stable, lowercase kebab-case identifier. |
+| `name` | string | Yes | Human-readable guide name derived from the referenced licence type. |
+| `category` | literal string | Yes | Must be `compliance_guide`. |
+| `licenceTypeId` | string | Yes | Existing record in `licence-types.json`; each licence type must be referenced exactly once. |
+| `authorityId` | string | Yes | Must equal the referenced licence type's `issuingAuthorityId` and resolve to an existing PB-000 authority. |
+| `whoNeedsIt` | evidence field of string | Yes | Source-supported description of affected businesses, activities, projects, or persons. |
+| `applicationRequirements.documents` | evidence field of string array | Yes | Documents explicitly required by an official source. Do not infer missing attachments. |
+| `applicationRequirements.prerequisites` | evidence field of string array | Yes | Prior approvals, registrations, premises conditions, accounts, or other prerequisites explicitly stated by an official source. |
+| `officialFees` | evidence field of fee array | Yes | Official application, issue, renewal, or related regulatory fees. Each fee item contains `description`, `amount`, `currency`, and `taxTreatment`; use a string amount where a formula or range is published. Do not convert currencies. |
+| `processingTime` | evidence field of string or null | Yes | Authority-published application or review duration in its stated context. A correction window, meeting frequency, or target from a stale source is not a processing time. |
+| `renewalCycle` | evidence field of string or null | Yes | Authority-published validity or renewal rule. Do not infer a cycle from the existence of a renewal form. |
+| `officialLinks` | evidence field of link array | Yes | Current authority form, portal, guidance, checklist, or fee-schedule links. Each item contains `label`, `url`, and `kind`, where `kind` is `FORM`, `PORTAL`, `GUIDANCE`, `CHECKLIST`, or `FEE_SCHEDULE`. |
+| `steps` | evidence field of step array | Yes | Authority-supported application sequence. Each item contains an integer `order` beginning at 1 and an `action`; preserve conditional steps in the action text. |
+| `sources` | string array | Yes | Deduplicated union of all field-level official HTTPS sources used by the guide. |
+| `lastReviewed` | string | Yes | ISO 8601 calendar date (`YYYY-MM-DD`) for the source review. |
+| `notes` | string or null | Yes | Overall scope or professional-review warning. Do not place unsupported requirements, amounts, or deadlines here. |
+
+An evidence field has this shape:
+
+```json
+{
+  "status": "verified",
+  "value": "Source-supported value",
+  "sources": [
+    "https://authority.example/official-page"
+  ],
+  "note": null
+}
+```
+
+The `status` value is either `verified` or `unverified`. A verified field must
+have a non-empty value and at least one official HTTPS URL that directly
+supports it. An unverified field must use `null` for a scalar or `[]` for a
+list, must have an empty `sources` array, and must explain the evidence gap in
+`note`. The literal `unverified` status is a control state, not permission to
+store an unsupported value.
+
+PB-000C verification counts cover exactly eight evidence fields per guide:
+`whoNeedsIt`, `documents`, `prerequisites`, `officialFees`, `processingTime`,
+`renewalCycle`, `officialLinks`, and `steps`.
+
 ## Verification semantics
 
 `verified: true` means that the entry's identity and the facts recorded in that entry were corroborated against an official source on `lastReviewed`. It does not mean that every service requirement, fee, form, processing time, office hour, or contact channel has been independently guaranteed.
@@ -129,6 +182,9 @@ Verification must be downgraded to `false` when:
 - Every compliance event's `authorityId` must resolve to a government
   organisation, regulator, or local authority record.
 - Every supplied `licenceTypeId` must resolve to a licence type record.
+- Every compliance guide's `licenceTypeId` and `authorityId` must resolve, and
+  its `authorityId` must match the licence type's `issuingAuthorityId`.
+- Every licence type must have exactly one compliance guide.
 - Omit a relationship instead of guessing it.
 
 ## Example
@@ -164,6 +220,8 @@ Before importing a revision, PB-001 should reject the full batch when any of the
 7. Every licence renewal frequency and compliance cadence is in the allowed enum.
 8. Every licence record contains arrays for `appliesTo` and `requiredDocuments`.
 9. A verified compliance event does not contain a deadline or cadence unsupported by its current official sources.
-10. No unknown field is silently accepted; schema changes require review and versioned migration.
+10. Every compliance-guide evidence field follows its status, value, source, and note invariants.
+11. Compliance-guide steps are sequential and all official link URLs are also represented in field or aggregate sources.
+12. No unknown field is silently accepted; schema changes require review and versioned migration.
 
 Importers should preserve source URLs and review dates, record the dataset revision, and make changes auditable. A failed import must leave the existing registry unchanged.
