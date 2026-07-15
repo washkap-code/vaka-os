@@ -39,6 +39,9 @@ import {
   postPayrollRun, reversePayrollRun, reverseReasonSchema, updateDraftPayslip, updateEmployee,
 } from "./payroll.js";
 import {
+  enabledFeaturesFor, featureNoteSchema, listTenantFeatures, setTenantFeature,
+} from "./feature-flags.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -330,6 +333,8 @@ api.get("/me", wrap(async (req) => {
   return {
     ...req.auth,
     user: { ...currentUser, ...staffProfile },
+    // FLAG-002: enabled feature keys drive nav/page gating in the web shell.
+    features: await enabledFeaturesFor(req.auth!.tenantId),
     tenant: t ? {
       id: t.id, companyName: t.companyName, subdomain: t.subdomain, status: t.status,
       baseCurrency: t.baseCurrency, trialEndsAt: t.trialEndsAt,
@@ -2330,6 +2335,25 @@ api.get("/platform/tenants", requirePlatformPermission("platform.tenants.read"),
     ORDER BY t.created_at DESC`);
   return (rows as any).rows;
 }));
+// ---------------------------------------------------------------------------
+// FLAG-001: per-tenant feature flags (build-dark model). Reads need tenant
+// visibility; toggles need settings authority plus a fresh step-up proof and
+// a mandatory note, and are audited on the target tenant.
+// ---------------------------------------------------------------------------
+api.get("/platform/tenants/:id/features", requirePlatformPermission("platform.tenants.read"), wrap(async (req) =>
+  listTenantFeatures(z.string().uuid().parse(routeParam(req, "id")))));
+api.put("/platform/tenants/:id/features/:key",
+  requirePlatformPermission("platform.settings.manage"), requireStepUp as any, wrap(async (req) => {
+    const body = z.object({ enabled: z.boolean(), note: featureNoteSchema }).parse(req.body);
+    return setTenantFeature({
+      tenantId: z.string().uuid().parse(routeParam(req, "id")),
+      key: routeParam(req, "key"),
+      enabled: body.enabled,
+      note: body.note,
+      actorUserId: req.auth!.userId,
+    });
+  }));
+
 api.post("/platform/billing/run", requirePlatformPermission("platform.billing.run"), wrap(async (req) => {
   const asOf = req.body?.asOf ? new Date(req.body.asOf) : new Date();
   return runBillingCycle(asOf);

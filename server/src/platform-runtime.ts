@@ -46,6 +46,9 @@ import {
   ProcurementApprovalNotifier, subscribeProcurementApprovalNotifications,
   type ProcurementApprovalNotifierContract,
 } from "./procurement-notifications.js";
+import { FeatureFlagService } from "./platform/features/service.js";
+import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
+import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -76,6 +79,9 @@ export const METADATA_SERVICE: ServiceToken<MetadataService> =
 export const DOCUMENT_SERVICE: ServiceToken<DocumentServiceContract> =
   createServiceToken("platform.documents.service");
 
+export const FEATURE_FLAG_SERVICE: ServiceToken<FeatureFlagService> =
+  createServiceToken("platform.features.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -96,6 +102,9 @@ export interface PlatformKernelOptions {
   lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
   documentStore?: DocumentStore;
   procurementApprovalNotifier?: ProcurementApprovalNotifierContract;
+  /** Override the feature-flag store/audit (tests). Defaults to Postgres + audit_logs. */
+  featureFlagStore?: FeatureFlagStore;
+  featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
 }
 
 function configuredEmailTransport(): EmailTransport {
@@ -133,6 +142,13 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   const countryPacks = options.countryPacks ?? DEFAULT_COUNTRY_PACKS;
   kernel.container.registerFactory(LOCALISATION_SERVICE, () =>
     new LocalisationService(countryPacks),
+  );
+
+  kernel.container.registerFactory(FEATURE_FLAG_SERVICE, () =>
+    new FeatureFlagService(
+      options.featureFlagStore ?? postgresFeatureFlagStore,
+      options.featureFlagAuditRecorder ?? recordFeatureFlagAudit,
+    ),
   );
 
   kernel.container.registerFactory(NOTIFICATION_SERVICE, () => {

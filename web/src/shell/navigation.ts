@@ -18,6 +18,8 @@ export type WorkspaceNavigationItem = {
   key: WorkspacePage;
   permission?: string;
   ownerOnly?: boolean;
+  /** FLAG-002: page is hidden unless this tenant feature flag is enabled. */
+  feature?: string;
 };
 
 export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
@@ -40,10 +42,14 @@ export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
 export function visibleWorkspaceNavigation(
   permissions: readonly string[],
   isTenantOwner: boolean,
+  features: readonly string[] = [],
 ): WorkspaceNavigationItem[] {
   const granted = new Set(permissions);
+  const enabled = new Set(features);
   return workspaceNavigation.filter((item) =>
-    (!item.permission || granted.has(item.permission)) && (!item.ownerOnly || isTenantOwner));
+    (!item.permission || granted.has(item.permission))
+    && (!item.ownerOnly || isTenantOwner)
+    && (!item.feature || enabled.has(item.feature)));
 }
 
 export function resolveWorkspacePage(

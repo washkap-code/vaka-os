@@ -1336,6 +1336,25 @@ export const dunningEvents = pgTable("dunning_events", {
 });
 
 // ---------------------------------------------------------------------------
+// FLAG-001 — Tenant feature flags (build-dark model, Master Build Plan §15).
+// A missing row means OFF. Keys are validated against the closed
+// FEATURE_CATALOGUE in code; toggles are platform-admin actions and audited.
+// ---------------------------------------------------------------------------
+export const tenantFeatureFlags = pgTable("tenant_feature_flags", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  featureKey: text("feature_key").notNull(),
+  enabled: boolean("enabled").default(false).notNull(),
+  note: text("note"),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("tenant_feature_flags_tenant_key").on(t.tenantId, t.featureKey),
+  index("tenant_feature_flags_tenant").on(t.tenantId),
+]);
+
+// ---------------------------------------------------------------------------
 // P2-009 — Payroll (technical preview until accountant sign-off).
 // Employee register has no ledger effect; payroll_runs post one balanced
 // journal through postJournal; payslips are immutable snapshots with a
