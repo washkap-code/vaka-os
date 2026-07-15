@@ -14,6 +14,7 @@ export const DOCUMENT_KINDS = {
   CAPTURE: "capture",
   INVOICE_PDF: "invoice-pdf",
   FINANCE_REPORT_PDF: "finance-report-pdf",
+  WORKSPACE_DOC: "workspace-doc", // PD-001: id addresses a workspace_document_versions row
 } as const;
 
 type ApplicationDocumentKind = typeof DOCUMENT_KINDS[keyof typeof DOCUMENT_KINDS];
@@ -24,6 +25,7 @@ const qualifiedId = (kind: ApplicationDocumentKind, id: string): DocumentId => `
 export const captureDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.CAPTURE, id);
 export const invoicePdfDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.INVOICE_PDF, id);
 export const financeReportPdfDocumentId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.FINANCE_REPORT_PDF, id);
+export const workspaceDocumentVersionId = (id: string): DocumentId => qualifiedId(DOCUMENT_KINDS.WORKSPACE_DOC, id);
 
 export function rawDocumentId(id: DocumentId, expectedKind: ApplicationDocumentKind): string {
   const prefix = `${expectedKind}:`;
@@ -143,6 +145,39 @@ export class PostgresDocumentStore implements DocumentStore {
           createdAt: snapshot.descriptor.createdAt,
         },
         bytes: snapshot.bytes,
+      };
+    }
+
+    if (parsed.kind === DOCUMENT_KINDS.WORKSPACE_DOC) {
+      const [row] = await db.select({
+        version: schema.workspaceDocumentVersions,
+        classification: schema.workspaceDocuments.classification,
+      }).from(schema.workspaceDocumentVersions)
+        .innerJoin(schema.workspaceDocuments,
+          eq(schema.workspaceDocumentVersions.documentId, schema.workspaceDocuments.id))
+        .where(and(
+          eq(schema.workspaceDocumentVersions.id, parsed.rawId),
+          eq(schema.workspaceDocumentVersions.tenantId, context.tenantId),
+          eq(schema.workspaceDocuments.tenantId, context.tenantId),
+        ));
+      if (!row) return null;
+      const bytes = captureBytes(row.version.dataUrl, row.version.mediaType);
+      if (bytes.byteLength !== row.version.byteSize) throw new InvalidDocumentError("Stored document byteSize does not match payload");
+      if (checksum(bytes) !== row.version.checksum) throw new InvalidDocumentError("Stored document checksum does not match payload");
+      return {
+        descriptor: {
+          id,
+          tenantId: context.tenantId,
+          kind: DOCUMENT_KINDS.WORKSPACE_DOC,
+          classification: row.classification,
+          version: String(row.version.version),
+          fileName: row.version.fileName,
+          mediaType: row.version.mediaType,
+          byteSize: row.version.byteSize,
+          checksum: row.version.checksum,
+          createdAt: row.version.createdAt,
+        },
+        bytes,
       };
     }
 

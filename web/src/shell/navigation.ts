@@ -9,6 +9,7 @@ export type WorkspacePage =
   | "reports"
   | "payroll"
   | "tasks"
+  | "documents"
   | "imports"
   | "usersActivity"
   | "billing"
@@ -34,6 +35,7 @@ export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
   { key: "reports", permission: "reports.read" },
   { key: "payroll", permission: "payroll.read" },
   { key: "tasks", feature: "workflow.centre" },
+  { key: "documents", permission: "documents.read", feature: "documents.workspace" },
   { key: "imports", permission: "imports.create" },
   { key: "usersActivity", ownerOnly: true },
   { key: "billing" },

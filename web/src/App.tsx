@@ -29,6 +29,8 @@ const PayrollWorkspace = lazy(() => import("./payroll/payroll-workspace")
   .then((module) => ({ default: module.PayrollWorkspace })));
 const TasksWorkspace = lazy(() => import("./tasks/tasks-workspace")
   .then((module) => ({ default: module.TasksWorkspace })));
+const DocumentsWorkspace = lazy(() => import("./documents/documents-workspace")
+  .then((module) => ({ default: module.DocumentsWorkspace })));
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -1333,6 +1335,10 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
         </Suspense>}
         {page === "tasks" && <Suspense fallback={<div className="panel">{appEnglish.tasks.title}…</div>}>
           <TasksWorkspace readonly={suspended} />
+        </Suspense>}
+        {page === "documents" && <Suspense fallback={<div className="panel">{appEnglish.documents.title}…</div>}>
+          <DocumentsWorkspace readonly={suspended}
+            canManage={me.permissions.includes("documents.manage")} />
         </Suspense>}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter

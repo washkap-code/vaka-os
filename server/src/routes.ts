@@ -50,6 +50,11 @@ import {
   listAutomationRules, listTasks, manualTaskSchema, setAutomationRule,
 } from "./tasks.js";
 import {
+  addDocumentVersion, addVersionSchema, createDocument, createDocumentSchema,
+  createFolder, documentStatusFilterSchema, folderSchema, getDocument,
+  listDocuments, listFolders, resolveVersionId, setDocumentStatus, versionQuerySchema,
+} from "./document-workspace.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -92,7 +97,7 @@ import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
 import {
   DOCUMENT_KINDS, captureDocumentId, documentDataUrl, financeReportPdfDocumentId,
-  invoicePdfDocumentId, rawDocumentId,
+  invoicePdfDocumentId, rawDocumentId, workspaceDocumentVersionId,
 } from "./documents.js";
 import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
@@ -1855,6 +1860,62 @@ api.put("/settings/automation-rules/:key", requireFeature("workflow.centre"),
     const body = z.object({ enabled: z.boolean() }).parse(req.body);
     return setAutomationRule(tenantId(req), req.auth!.userId, key, body.enabled);
   }));
+
+// ---------------------------------------------------------------------------
+// PD-001: documents workspace — folders, versioned uploads, classification.
+// Binary reads go through the kernel document service (`workspace-doc` kind);
+// uploads share the capture envelope (PNG/JPEG/PDF, ≤1.5 MB, protected at
+// rest). The whole surface ships dark behind `documents.workspace` and fails
+// closed with FEATURE_DISABLED until a platform admin enables it per tenant.
+// Fixed paths are registered before "/documents/:id" so they never shadow.
+// ---------------------------------------------------------------------------
+api.get("/documents/folders", requireFeature("documents.workspace"),
+  requirePermission("documents.read"), wrap(async (req) =>
+    listFolders(tenantId(req))));
+api.post("/documents/folders", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    createFolder(tenantId(req), req.auth!.userId, folderSchema.parse(req.body))));
+api.get("/documents", requireFeature("documents.workspace"),
+  requirePermission("documents.read"), wrap(async (req) => {
+    const status = documentStatusFilterSchema.optional()
+      .parse(req.query.status as string | undefined) ?? "ACTIVE";
+    const folderId = z.string().uuid().optional()
+      .parse(req.query.folderId as string | undefined);
+    return listDocuments(tenantId(req), { folderId, status });
+  }));
+api.post("/documents", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    createDocument(tenantId(req), req.auth!.userId, createDocumentSchema.parse(req.body))));
+api.post("/documents/:id/versions", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    addDocumentVersion(tenantId(req), req.auth!.userId,
+      uuidRouteParam(req, "id"), addVersionSchema.parse(req.body))));
+api.get("/documents/:id/content", requireFeature("documents.workspace"),
+  requirePermission("documents.read"), wrap(async (req, res) => {
+    const tid = tenantId(req);
+    const version = versionQuerySchema.parse(req.query.version as string | undefined);
+    const versionId = await resolveVersionId(tid, uuidRouteParam(req, "id"), version);
+    const document = await platformKernel().container.get(DOCUMENT_SERVICE).get(
+      workspaceDocumentVersionId(versionId), { tenantId: tid, actorUserId: req.auth!.userId });
+    if (!document) throw notFound("Document version not found");
+    res.setHeader("Cache-Control", "no-store");
+    return {
+      fileName: document.descriptor.fileName,
+      mediaType: document.descriptor.mediaType,
+      byteSize: document.descriptor.byteSize,
+      version: Number(document.descriptor.version),
+      dataUrl: documentDataUrl(document),
+    };
+  }));
+api.post("/documents/:id/archive", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    setDocumentStatus(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), "ARCHIVED")));
+api.post("/documents/:id/restore", requireFeature("documents.workspace"),
+  requirePermission("documents.manage"), wrap(async (req) =>
+    setDocumentStatus(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), "ACTIVE")));
+api.get("/documents/:id", requireFeature("documents.workspace"),
+  requirePermission("documents.read"), wrap(async (req) =>
+    getDocument(tenantId(req), uuidRouteParam(req, "id"))));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra
