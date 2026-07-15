@@ -28,8 +28,12 @@ const uniq = `bb${Date.now().toString(36)}`;
 const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD;
 const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
 
-// Isolated synthetic country so tests never collide with real ZW content.
-const COUNTRY = "ZZ";
+// Isolated synthetic country so tests never collide with real ZW content or
+// with earlier runs against the same scratch database (letters from time).
+const COUNTRY = (() => {
+  const n = Date.now();
+  return String.fromCharCode(65 + (n % 26)) + String.fromCharCode(65 + (Math.floor(n / 26) % 26));
+})();
 
 function miniDataset(): BlackbookDataset {
   return {

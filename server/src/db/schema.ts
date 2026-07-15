@@ -1642,6 +1642,41 @@ export const blackbookEntries = pgTable("blackbook_entries", {
   check("blackbook_entries_key_check", sql`${t.entryKey} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
 ]);
 
+// ---------------------------------------------------------------------------
+// PN-001 — Opt-in public business profile from the canonical Company (tenant).
+// Owner-controlled; nothing public by default. Publishing freezes an explicit
+// snapshot; the directory (PN-002) reads ONLY published snapshots.
+// ---------------------------------------------------------------------------
+export const businessProfiles = pgTable("business_profiles", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  displayName: text("display_name").notNull(),
+  tagline: text("tagline"),
+  description: text("description"),
+  categories: jsonb("categories").default([]).notNull(),
+  city: text("city"),
+  countryCode: text("country_code").default("ZW").notNull(),
+  website: text("website"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  showContact: boolean("show_contact").default(false).notNull(),
+  status: text("status").default("DRAFT").notNull(),
+  publishedSnapshot: jsonb("published_snapshot"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  publishedBy: uuid("published_by").references(() => users.id),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("business_profiles_tenant").on(t.tenantId),
+  index("business_profiles_status_country").on(t.status, t.countryCode),
+  check("business_profiles_status_check", sql`${t.status} IN ('DRAFT', 'PUBLISHED', 'UNPUBLISHED')`),
+  check("business_profiles_name_check", sql`length(trim(${t.displayName})) BETWEEN 1 AND 120`),
+  check("business_profiles_tagline_check", sql`${t.tagline} IS NULL OR length(${t.tagline}) <= 140`),
+  check("business_profiles_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 2000`),
+  check("business_profiles_snapshot_check", sql`(${t.status} = 'PUBLISHED' AND ${t.publishedSnapshot} IS NOT NULL AND ${t.publishedAt} IS NOT NULL) OR (${t.status} <> 'PUBLISHED' AND ${t.publishedSnapshot} IS NULL)`),
+]);
+
 export const blackbookEntryVersions = pgTable("blackbook_entry_versions", {
   id: id(),
   entryId: uuid("entry_id").notNull().references(() => blackbookEntries.id),

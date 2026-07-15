@@ -61,6 +61,9 @@ import {
   listImportRuns as listBlackbookImportRuns,
 } from "./blackbook.js";
 import {
+  getMyProfile, profileInputSchema, publishProfile, saveProfile, unpublishProfile,
+} from "./business-profile.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1941,6 +1944,25 @@ api.get("/blackbook/entries/:key", requireFeature("blackbook.directory"), wrap(a
     .parse((req.query.country as string | undefined) ?? "ZW");
   return getBlackbookEntry(country, key);
 }));
+
+// ---------------------------------------------------------------------------
+// PN-001: opt-in public business profile. Nothing public by default; edits
+// stay private; only the tenant OWNER can publish (freezes the snapshot the
+// PN-002 directory will read) or unpublish (removes it immediately). Ships
+// dark behind `network.directory` and fails closed.
+// ---------------------------------------------------------------------------
+api.get("/network/profile", requireFeature("network.directory"),
+  requirePermission("settings.manage"), wrap(async (req) =>
+    getMyProfile(tenantId(req))));
+api.put("/network/profile", requireFeature("network.directory"),
+  requirePermission("settings.manage"), wrap(async (req) =>
+    saveProfile(tenantId(req), req.auth!.userId, profileInputSchema.parse(req.body))));
+api.post("/network/profile/publish", requireFeature("network.directory"),
+  requireTenantOwner as any, wrap(async (req) =>
+    publishProfile(tenantId(req), req.auth!.userId)));
+api.post("/network/profile/unpublish", requireFeature("network.directory"),
+  requireTenantOwner as any, wrap(async (req) =>
+    unpublishProfile(tenantId(req), req.auth!.userId)));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra
