@@ -4,6 +4,17 @@
 
 ### Added
 
+- **FLAG-001/002 — Tenant feature flags (build-dark model).** Foundation for
+  building the entire Part II platform now and going live later: a closed
+  feature catalogue (Network, Black Book, Mail hub, Documents, Workflow,
+  Migration, Verify, Store, Intelligence, Capital, Developer API), a kernel
+  `FeatureFlagService` backed by `tenant_feature_flags` (migration 0036,
+  missing row = OFF), fail-closed `requireFeature` middleware
+  (`FEATURE_DISABLED`), enabled keys on `/me`, feature-aware navigation
+  gating, and step-up-protected, audited platform-admin toggle endpoints with
+  a mandatory note. Unknown keys are rejected on write and disabled on read.
+  No user-visible behaviour changes until a flag is enabled per tenant.
+
 - **P2-009 — Zimbabwe payroll (technical preview, accountant gate active).**
   Employee register, monthly payroll runs and immutable payslips with a full
   per-payslip calculation trace. PAYE bands, the 3% AIDS levy and NSSA POBS

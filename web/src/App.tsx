@@ -38,6 +38,8 @@ const PayrollWorkspace = lazy(() => import("./payroll/payroll-workspace")
 type Me = {
   userId: string; permissions: string[]; accessLevel: string; mustChangePassword: boolean;
   isTenantOwner: boolean; sessionId: string | null;
+  /** FLAG-002: enabled tenant feature keys (build-dark gating). */
+  features?: string[];
   platformRoleKey: string | null; platformRoleName: string | null; platformPermissions: string[];
   assuranceLevel: "aal1" | "aal2";
   user: {
@@ -1291,7 +1293,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
   const [arrears] = useLoad(() => api("/billing/arrears-status"));
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
-  const visibleNav = useMemo(() => visibleWorkspaceNavigation(me.permissions, me.isTenantOwner),
+  const visibleNav = useMemo(() => visibleWorkspaceNavigation(me.permissions, me.isTenantOwner, me.features ?? []),
     [me.permissions, me.isTenantOwner]);
   const page = resolveWorkspacePage(requestedPage, visibleNav);
   const selectSearchTarget = useCallback((target: WorkspaceSearchTarget) => {

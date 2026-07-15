@@ -24,11 +24,10 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0035_payroll_foundation.sql`.
-**All migrations through 0035 are applied and verified in production**
-(0035 applied via Supabase MCP `apply_migration` on 2026-07-15 after the push;
-verified: three payroll tables exist, all 3 seeded roles backfilled with
-`payroll.read/manage/post`).
+Highest migration on `main`: `0036_tenant_feature_flags.sql`.
+**All migrations through 0036 are applied and verified in production**
+(0036 applied via Supabase MCP on 2026-07-15 BEFORE the code push; verified:
+`tenant_feature_flags` exists and is empty = all features OFF).
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -37,8 +36,9 @@ verified: three payroll tables exist, all 3 seeded roles backfilled with
 | 0033_finance_report_snapshots | P7-002 | ✅ 2026-07-15 |
 | 0034_accounting_period_close | P2-005 | ✅ 2026-07-15 |
 | 0035_payroll_foundation | P2-009 | ✅ 2026-07-15 |
+| 0036_tenant_feature_flags | FLAG-001 | ✅ 2026-07-15 |
 
-New migrations continue from **0036**.
+New migrations continue from **0037**.
 
 ## Shipped and live on `main` (this working period)
 
@@ -106,8 +106,18 @@ the admin password hash between reruns on the same scratch db.
    map is `knowledge-system/13-roadmaps/MASTER-BUILD-PLAN.md` **Part II**
    (§15–§18): build-dark model, full mission catalogues for
    PW/PD/PN/PB/P7+/PM/PV/PS/P8+/PC/PX/PMOB/PI18N/PL, and build waves.
-   **First Part II mission: FLAG-001 (tenant feature-flag service)** — nothing
-   else in Part II starts before it. Part I launch work still wins conflicts.
+   Part I launch work still wins conflicts.
+   **FLAG-001/002 are DONE (2026-07-15):** kernel FeatureFlagService,
+   `tenant_feature_flags` (0036, applied to production), fail-closed
+   `requireFeature` middleware, `/me.features`, feature-aware nav gating,
+   step-up-protected audited admin toggles
+   (`GET/PUT /platform/tenants/:id/features[/:key]`). Verified in scratch
+   Postgres: feature-flags 8/8; regression platform-runtime/auth-resolution/
+   payroll 33/33, critical + finance tenant-isolation 15/15; both typechecks
+   and web build clean. Mission pack: `docs/engineering/mission-packs/FLAG-001/`.
+   **Next Part II missions (Wave 1): PW-001 workflow extraction, PD-001
+   documents workspace, PN-001 business profile, PB-001 Black Book registry —
+   each behind its catalogue flag.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
