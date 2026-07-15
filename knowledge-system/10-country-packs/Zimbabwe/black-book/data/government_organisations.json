@@ -307,11 +307,13 @@
     "name": "Liquor Licensing Board",
     "category": "government_organisation",
     "parentId": "ministry-local-government-public-works",
-    "website": "https://llb.pfms.gov.zw/Home/LandingPage",
+    "website": "https://eregulations.zidainvest.com/objective/111?l=en",
     "verified": true,
     "sources": [
+      "https://eregulations.zidainvest.com/objective/111?l=en",
+      "https://eregulations.zidainvest.com/procedure/112?l=en",
       "https://www.mlg.gov.zw/?post_type=service",
-      "https://llb.pfms.gov.zw/Home/LandingPage"
+      "https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"
     ],
     "lastReviewed": "2026-07-15",
     "notes": "The Ministry of Local Government identifies the Board as the body responsible for liquor licensing under the Liquor Act."

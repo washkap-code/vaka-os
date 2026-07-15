@@ -242,11 +242,13 @@
     "statutoryBasis": "Liquor Act [Chapter 14:12]",
     "renewalFrequency": "OTHER",
     "typicalProcessingTime": null,
-    "officialFormUrl": "https://llb.pfms.gov.zw/Home/LandingPage",
+    "officialFormUrl": "https://eregulations.zidainvest.com/procedure/112?l=en",
     "verified": true,
     "sources": [
+      "https://eregulations.zidainvest.com/objective/111?l=en",
+      "https://eregulations.zidainvest.com/procedure/112?l=en",
       "https://www.mlg.gov.zw/?post_type=service",
-      "https://llb.pfms.gov.zw/Home/LandingPage"
+      "https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"
     ],
     "lastReviewed": "2026-07-15",
     "notes": "This is a national overview. Confirm the correct licence class, supporting documents, expiry and renewal rule with the Liquor Licensing Board."
