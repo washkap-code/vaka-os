@@ -1,0 +1,154 @@
+[
+  {
+    "id": "dcip-company-registration",
+    "name": "Company and Business Entity Registration",
+    "category": "service",
+    "parentId": "dcip-zimbabwe",
+    "website": "https://www.justice.gov.zw/?service=business-consulting",
+    "verified": true,
+    "sources": [
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "DCIP registers and protects formal business organisations; confirm the current filing channel and requirements with the department."
+  },
+  {
+    "id": "zimra-taxpayer-registration",
+    "name": "Taxpayer Registration",
+    "category": "service",
+    "parentId": "zimra",
+    "website": "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "ZIMRA directs new taxpayers to its TaRMS Self-Service Portal and issues a TIN after successful registration."
+  },
+  {
+    "id": "nssa-employer-registration",
+    "name": "Employer Registration",
+    "category": "service",
+    "parentId": "nssa",
+    "website": "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "praz-bidder-registration",
+    "name": "Bidder and Contractor Registration",
+    "category": "service",
+    "parentId": "praz",
+    "website": "https://egp.praz.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "egp-electronic-tendering",
+    "name": "Electronic Public Tendering",
+    "category": "service",
+    "parentId": "praz",
+    "website": "https://egp.praz.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The eGP system supports procurement planning, notices, e-bidding, evaluation, awards, challenges, and contract management."
+  },
+  {
+    "id": "zetdc-electricity-connection",
+    "name": "Electricity Connection Application",
+    "category": "service",
+    "parentId": "zetdc",
+    "website": "https://www.zetdc.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zetdc.co.zw/",
+      "https://www.zetdc.co.zw/wp-content/uploads/2023/10/Commercial-Guidelines-August-2022-1.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zinwa-water-connection",
+    "name": "Water Connection Application",
+    "category": "service",
+    "parentId": "zinwa",
+    "website": "https://zinwa.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://zinwa.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "telone-service-application",
+    "name": "Telecommunications Service Application",
+    "category": "service",
+    "parentId": "telone",
+    "website": "https://getservice.telone.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://getservice.telone.co.zw/",
+      "https://www.telone.co.zw/Home/AboutCorporate"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "harare-business-licensing",
+    "name": "Business Licensing",
+    "category": "service",
+    "parentId": "harare-city-council",
+    "website": "https://www.hararecity.co.zw/resources/of/business-licensing",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "mcaz-register-search",
+    "name": "Medicines, Persons and Premises Register Search",
+    "category": "service",
+    "parentId": "mcaz",
+    "website": "https://onlineservices.mcaz.co.zw/onlineregister/",
+    "verified": true,
+    "sources": [
+      "https://onlineservices.mcaz.co.zw/onlineregister/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official portal describes registers for medicines, licensed persons and premises, inspections, and GMP manufacturers."
+  },
+  {
+    "id": "potraz-licensing-information",
+    "name": "Postal and Telecommunications Licensing Information",
+    "category": "service",
+    "parentId": "potraz",
+    "website": "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf",
+    "verified": true,
+    "sources": [
+      "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema-environmental-assessment-review",
+    "name": "Environmental and Social Impact Assessment Review",
+    "category": "service",
+    "parentId": "ema",
+    "website": "https://ema.co.zw/eia/",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]

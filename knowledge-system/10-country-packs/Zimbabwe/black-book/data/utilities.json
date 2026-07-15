@@ -1,0 +1,77 @@
+[
+  {
+    "id": "zetdc",
+    "name": "Zimbabwe Electricity Transmission and Distribution Company",
+    "category": "utility",
+    "website": "https://www.zetdc.co.zw/",
+    "services": [
+      "zetdc-electricity-connection"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.zetdc.co.zw/?page_id=4765"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zinwa",
+    "name": "Zimbabwe National Water Authority",
+    "category": "utility",
+    "website": "https://zinwa.co.zw/",
+    "services": [
+      "zinwa-water-connection"
+    ],
+    "verified": true,
+    "sources": [
+      "https://zinwa.co.zw/about-us/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "telone",
+    "name": "TelOne",
+    "category": "utility",
+    "website": "https://www.telone.co.zw/",
+    "services": [
+      "telone-service-application"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.telone.co.zw/Home/AboutCorporate"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "netone",
+    "name": "NetOne Cellular",
+    "category": "utility",
+    "website": "https://www.netone.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.netone.co.zw/about"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimpost",
+    "name": "Zimbabwe Posts",
+    "category": "utility",
+    "website": "https://www.zimpost.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zimpost.co.zw/about"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "powertel",
+    "name": "Powertel Communications",
+    "category": "utility",
+    "website": "https://www.powertel.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.powertel.co.zw/about-us/"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]

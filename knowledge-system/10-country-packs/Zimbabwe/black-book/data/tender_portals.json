@@ -1,0 +1,56 @@
+[
+  {
+    "id": "zimbabwe-egp",
+    "name": "Zimbabwe Electronic Government Procurement System",
+    "category": "tender_portal",
+    "parentId": "praz",
+    "website": "https://egp.praz.org.zw/",
+    "services": [
+      "egp-electronic-tendering",
+      "praz-bidder-registration"
+    ],
+    "verified": true,
+    "sources": [
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "bulawayo-procurement-portal",
+    "name": "Bulawayo City Council Procurement Portal",
+    "category": "tender_portal",
+    "parentId": "bulawayo-city-council",
+    "website": "https://www.citybyo.co.zw/About/Procurement",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/About/Procurement"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Publishes council tenders, requests for quotations, award-stage notices, and awards."
+  },
+  {
+    "id": "mutare-tender-notices",
+    "name": "City of Mutare Tender Notices",
+    "category": "tender_portal",
+    "parentId": "mutare-city-council",
+    "website": "https://mutarecity.org/tenders/",
+    "verified": true,
+    "sources": [
+      "https://mutarecity.org/tenders/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zetdc-procurement-notices",
+    "name": "ZETDC Procurement Notices",
+    "category": "tender_portal",
+    "parentId": "zetdc",
+    "website": "https://www.zetdc.co.zw/?page_id=4774",
+    "verified": true,
+    "sources": [
+      "https://www.zetdc.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The ZETDC site provides public procurement navigation for RFQs and domestic, international, and framework-agreement tenders."
+  }
+]
