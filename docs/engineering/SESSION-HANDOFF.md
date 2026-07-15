@@ -24,8 +24,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0040_blackbook_registry.sql`.
-**Migrations through 0040 are applied and verified in production.**
+Highest migration on `main`: `0041_business_profiles.sql`.
+**Migrations through 0041 are applied and verified in production.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -42,8 +42,9 @@ rules — defaults unchanged everywhere).
 | 0038_task_automation | PW-003 | ✅ 2026-07-15 |
 | 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
 | 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
+| 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
 
-New migrations continue from **0041**. **Migration numbers are reserved by
+New migrations continue from **0042**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
 
 ## Shipped and live on `main` (this working period)
@@ -238,9 +239,41 @@ the admin password hash between reruns on the same scratch db.
    artifacts (twins of the PD-001 files, verified byte-identical before
    deletion). Also cleared a stale `.git/HEAD.lock` + tmp object left by a
    sandbox-mount unlink failure during the merge.
-   **Next Part II missions (Wave 1): PN-001 business profile (Cowork lane),
-   PB-003 directory UI + search (after PB-002 content certification), PD-002
-   (approvals/retention, attach-to-object). Codex lane: PB-000C in flight.**
+   **PN-001 is DONE (2026-07-15, session 3):** opt-in public business
+   profile from the canonical Company — `business_profiles` (migration 0041,
+   applied to production, table empty = nothing changes; DB CHECK forbids a
+   snapshot on non-PUBLISHED rows). Privacy model: nothing public by
+   default; edits never leak; OWNER-only publish freezes an explicit
+   snapshot (contact details only when showContact=true) that the future
+   PN-002 directory reads exclusively; unpublish removes it immediately.
+   Routes behind `network.directory` (fail-closed): GET/PUT
+   /network/profile (settings.manage, audited), POST
+   /network/profile/publish|unpublish (tenant owner, audited). Verified in
+   scratch Postgres: business-profile 10/10 (incl. snapshot-freeze and
+   contact-exclusion proofs); regression critical+settings 16/16, blackbook
+   27/27, feature-flags 8/8 (admin suites per-file with the documented seed
+   reset). Server typecheck clean. No web changes (PN-002 delivers UI).
+   Mission pack: `docs/engineering/mission-packs/PN-001/`.
+   **CODEX LANE — PB-000C is DONE and MERGED (2026-07-15):** Zimbabwe
+   licence compliance guides (branch `codex/pb-000c-compliance-guides`,
+   commit `4e191a9`, merged `0f98043`). Scope audit clean: 4 files, all in
+   black-book/** + mission-packs/PB-000C/**. 18 guides — one per licence
+   type, 0 unresolved references, field-level evidence model
+   (status verified/unverified per field; 95 verified, 49 unverified with
+   explanatory notes and empty values — nothing guessed), lastReviewed
+   2026-07-15 throughout. NOTE: `compliance_guide` is deliberately NOT in
+   the PB-001 registry import whitelist — guides stay out of the registry
+   until PB-002 certification resolves the 49 evidence gaps and the
+   importer is deliberately extended (schema.md check 10).
+   **PUSH STATUS: owner pushed main through PB-001 (`0636361`) on
+   2026-07-15 — deployed via Vercel; first CI security-gate run should be
+   checked in the Actions tab. Unpushed: PN-001 + PB-000C merge + this
+   handoff. 0041 is already applied, so main is SAFE TO PUSH.**
+   **Next Part II missions (Wave 1): PN-002 business directory (privacy
+   review gate) now unblocked by PN-001; PB-003 directory UI + search
+   (after PB-002 content certification); PD-002 approvals/retention.
+   Codex lane: next data/docs mission at owner's discretion (e.g. PB-006
+   tender-portal curation dataset or industry-pack knowledge content).**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
