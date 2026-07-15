@@ -50,6 +50,7 @@ import { ApprovalService } from "./platform/workflow/approvals.js";
 import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
+import { subscribeTaskAutomation } from "./tasks.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -214,6 +215,8 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     kernel.container.get(EVENT_BUS),
     options.procurementApprovalNotifier ?? new ProcurementApprovalNotifier(kernel.container.get(NOTIFICATION_SERVICE)),
   );
+  // PW-003: opt-in task automation (no rule row = disabled; never financial).
+  subscribeTaskAutomation(kernel.container.get(EVENT_BUS));
 
   return kernel;
 }

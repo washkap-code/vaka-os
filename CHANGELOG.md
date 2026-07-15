@@ -4,6 +4,15 @@
 
 ### Added
 
+- **PW-003 — Task centre + opt-in event automation.** One tenant-scoped
+  operational task list (`GET/POST /tasks`, audited close with DONE/DISMISSED)
+  fed manually and by automation rules from a closed catalogue
+  (purchase-approval requested, supplier bill posted). Rules are per-tenant
+  opt-in (`automation_rules`, no row = OFF) under audited `settings.manage`
+  endpoints; a partial unique index guarantees one OPEN automation task per
+  subject even when events re-fire. Tasks never write to financial tables.
+  Migration 0038 ships empty — no behaviour change until a tenant opts in.
+
 - **PW-002 — Configurable approval policies.** Owners/Admins can require, per
   subject type (purchase orders, payroll runs), an amount threshold in the
   tenant base currency plus an extra permission and/or a second person
