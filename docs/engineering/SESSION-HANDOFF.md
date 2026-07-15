@@ -24,8 +24,13 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0041_business_profiles.sql`.
-**Migrations through 0041 are applied and verified in production.**
+Highest migration on `main`: `0042_migration_hub.sql`.
+**Migrations through 0041 are applied and verified in production.
+⚠️ PUSH GATE: 0042 is NOT yet applied — the Supabase MCP in this session
+lost its VAKA scope (back on BioCheck) mid-session. Apply
+`server/drizzle/0042_migration_hub.sql` (idempotent) via the Supabase SQL
+editor or a VAKA-scoped MCP, verify the three migration tables exist empty,
+THEN push main.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -43,9 +48,39 @@ rules — defaults unchanged everywhere).
 | 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
 | 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
 | 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
+| 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply BEFORE pushing main |
 
-New migrations continue from **0042**. **Migration numbers are reserved by
+New migrations continue from **0043**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
+   **PM-001 + PM-002 are DONE (2026-07-15, session 3):** Migration Hub
+   behind `migration.hub` (fail-closed). PM-001: `migration_projects` +
+   `migration_steps` (STAGED/COMMITTED/ROLLED_BACK/DISCARDED) generalise the
+   existing import framework into stage → validate → commit → reconcile →
+   rollback/discard; contacts/products/opening-stock wired to the existing
+   importers unchanged; rollback = guarded hard delete for contacts/products
+   (409 if referenced), explicitly unsupported for opening stock v1;
+   discard cancels a staged batch permanently; close blocked while STAGED.
+   PM-002: opening trial balance resolved against the chart by code —
+   commit needs asOfDate, refuses invalid rows and unbalanced TBs to the
+   cent, posts ONE journal via postJournal; rollback posts the reversal
+   journal (append-only); AR/AP open-item memo registers
+   (`migration_open_items`) with contact matching; reconciliation report
+   recomputes posted totals from journal_lines; owner-audited accountant
+   sign-off on the project (the "P (accountant)" gate applies per real
+   migration). Verified in scratch Postgres: migration-hub 12/12
+   (incl. unbalanced-TB-leaves-ledger-unchanged and reversal-nets-to-zero
+   proofs); regression critical/contact-imports 13/13, finance
+   journal-balancing/immutability/tenant-isolation + product-imports 8/8,
+   feature-flags/opening-stock-imports 9/9; typecheck clean. NOTE:
+   drizzle-kit push does not update CHECK constraints on scratch reruns —
+   the DISCARDED status needed a manual ALTER in scratch (production gets
+   it via 0042 directly). Mission packs:
+   `docs/engineering/mission-packs/PM-001/` and `PM-002/`.
+   **CODEX LANE: PB-000F (source register/58 domains, evidence gaps,
+   review policy) and PB-002 prep (certification register: 231 READY /
+   24 PARTIAL / 1 BLOCKED, 256 human decisions PENDING — Codex correctly
+   refused to fabricate approval) both reviewed and MERGED. PB-002B
+   (evidence-gap closure sweep) prompt issued.**
 
 ## Shipped and live on `main` (this working period)
 
