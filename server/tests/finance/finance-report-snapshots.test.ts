@@ -146,7 +146,7 @@ describe("P7-002 immutable finance report snapshots", () => {
     const pdf = await request(app).get(`/api/v1/reports/snapshots/${created.body.id}/pdf`).set(tenant.auth);
     expect(pdf.status).toBe(200);
     expect(digest(pdf.body)).toBe(created.body.checksum);
-    expect(pdf.body.toString("latin1")).toContain("Management accounts and statutory report pack");
+    expect(pdf.body.toString("latin1")).toContain("Statutory Report Pack");
   });
 
   it("fails closed when stored snapshot integrity evidence does not match", async () => {
