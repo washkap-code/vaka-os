@@ -265,15 +265,29 @@ the admin password hash between reruns on the same scratch db.
    the PB-001 registry import whitelist — guides stay out of the registry
    until PB-002 certification resolves the 49 evidence gaps and the
    importer is deliberately extended (schema.md check 10).
-   **PUSH STATUS: owner pushed main through PB-001 (`0636361`) on
-   2026-07-15 — deployed via Vercel; first CI security-gate run should be
-   checked in the Actions tab. Unpushed: PN-001 + PB-000C merge + this
-   handoff. 0041 is already applied, so main is SAFE TO PUSH.**
-   **Next Part II missions (Wave 1): PN-002 business directory (privacy
-   review gate) now unblocked by PN-001; PB-003 directory UI + search
-   (after PB-002 content certification); PD-002 approvals/retention.
-   Codex lane: next data/docs mission at owner's discretion (e.g. PB-006
-   tender-portal curation dataset or industry-pack knowledge content).**
+   **PUSH STATUS: owner pushed main twice on 2026-07-15 (latest through
+   `8ba4108` — PN-001 + PB-000C live). Check the Actions tab for the CI
+   security-gate runs. PN-002 (`22d21ef`, no migration) is safe to push.**
+   **PN-002 is BUILT (2026-07-15, session 3) — ⚠️ privacy-review gate OPEN
+   before tenant enablement:** business directory over PUBLISHED snapshots
+   only. `GET /network/directory[?category|city|q|country]` +
+   `GET /network/directory/:id` behind `network.directory`; projections are
+   snapshot-only with opaque profile ids (never tenantId/status/draft
+   columns); PN-001's DB CHECK makes unpublished ⇒ invisible a database
+   invariant. No migration. Verified: business-profile 14/14 (incl.
+   stale-draft-never-leaks and unpublish-vanishes proofs); regression
+   critical/settings/finance tenant-isolation 19/19; typecheck clean.
+   Before enabling the flag for a real tenant, complete the privacy review
+   (consent wording, snapshot field set, contact opt-in UX, takedown) and
+   record it in `docs/engineering/mission-packs/PN-002/`.
+   **Codex lane: PB-000D (directory breadth expansion — councils,
+   provincial offices, courts, central hospitals, ZRP provincial HQs;
+   data + docs only) prompt issued in session 3, branch
+   `codex/pb-000d-directory-expansion` from local main.**
+   **Next Part II missions (Wave 1): PN-003 directory enquiries → CRM
+   leads; PD-002 approvals/retention; PB-003 directory UI + search (after
+   PB-002 content certification). Web UI for PN-001/002 surfaces can ride
+   with PN-003.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
