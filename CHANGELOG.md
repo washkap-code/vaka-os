@@ -4,6 +4,14 @@
 
 ### Added
 
+- **PW-004 — Task centre surface (first build-dark consumer).** The task
+  centre is now a product surface governed end-to-end by the
+  `workflow.centre` tenant flag: the tasks and automation-rules APIs fail
+  closed with `FEATURE_DISABLED`, the automation subscriber is silent when
+  the flag is off, and a "Tasks" page (Open/Done/Dismissed, manual creation,
+  audited close) appears in navigation only for enabled tenants. No tenant
+  sees anything until a platform admin flips the flag.
+
 - **PW-003 — Task centre + opt-in event automation.** One tenant-scoped
   operational task list (`GET/POST /tasks`, audited close with DONE/DISMISSED)
   fed manually and by automation rules from a closed catalogue

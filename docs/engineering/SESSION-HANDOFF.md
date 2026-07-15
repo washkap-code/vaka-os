@@ -145,9 +145,18 @@ the admin password hash between reruns on the same scratch db.
    branch `codex/p9-006-ci-security`, restricted to `.github/**` and
    `docs/engineering/**` docs — no server/web/migration files. Review and
    merge that branch before starting overlapping work.
-   **Next Part II missions (Wave 1): PW-004 task centre surface (workbench
-   widget + nav), PD-001 documents workspace, PN-001 business profile,
-   PB-001 Black Book registry — each behind its catalogue flag.**
+   **PW-004 is DONE (2026-07-15):** task centre is the first fully
+   flag-governed surface — `/tasks*` and automation-rule settings behind
+   `requireFeature("workflow.centre")`, subscriber checks the flag, web
+   "Tasks" page + nav visible only with the flag. No migration. Verified:
+   task-automation + feature-flags 14/14 (after the documented scratch-db
+   admin credential reset); web typecheck/build/nav-model green. To pilot:
+   enable `workflow.centre` for a tenant via the platform features endpoint.
+   Mission pack: `docs/engineering/mission-packs/PW-004/`.
+   **The PW programme (Wave 1 workflow slice) is complete: PW-001→004.**
+   **Next Part II missions (Wave 1): PD-001 documents workspace, PN-001
+   business profile, PB-001 Black Book registry — each behind its catalogue
+   flag.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant

@@ -1,0 +1,82 @@
+name: VAKA security gates and SBOM
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit-and-typecheck:
+    name: ${{ matrix.workspace }} dependency audit and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [server, web]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install ${{ matrix.workspace }} dependencies
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci --workspaces=false --ignore-scripts
+
+      - name: Audit ${{ matrix.workspace }} dependencies
+        working-directory: ${{ matrix.workspace }}
+        run: npm audit --workspaces=false --audit-level=high
+
+      - name: Type-check ${{ matrix.workspace }}
+        working-directory: ${{ matrix.workspace }}
+        run: npm run typecheck
+
+  secret-scan:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  sbom:
+    name: CycloneDX software bill of materials
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Generate and upload CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: vaka-source-sbom.cdx.json
+          artifact-name: vaka-source-sbom-${{ github.sha }}.cdx.json
+          upload-artifact: true
+          upload-artifact-retention: 30

@@ -24,6 +24,15 @@ let B: TestTenant;
 beforeAll(async () => {
   A = await signupFinanceTenant(`${runId}-a`);
   B = await signupFinanceTenant(`${runId}-b`);
+  // PW-004: the entire task surface ships dark behind workflow.centre.
+  // Prove fail-closed first, then enable for both tenants for the suite.
+  const dark = await request(app).get("/api/v1/tasks").set(A.auth);
+  expect(dark.status).toBe(403);
+  expect(dark.body.error).toBe("FEATURE_DISABLED");
+  await db.insert(schema.tenantFeatureFlags).values([
+    { tenantId: A.tenantId, featureKey: "workflow.centre", enabled: true, note: "test enable" },
+    { tenantId: B.tenantId, featureKey: "workflow.centre", enabled: true, note: "test enable" },
+  ]);
 });
 
 describe("manual tasks", () => {
