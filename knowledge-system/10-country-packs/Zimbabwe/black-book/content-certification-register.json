@@ -1,6 +1,6 @@
 {
   "schemaVersion": "PB-002-v1",
-  "datasetBaseCommit": "e1100766ba21f4b1950b93420ad5b5aefeaa16c2",
+  "datasetBaseCommit": "66890f916b1c8bdf83edb683943cc096ed68e029",
   "generatedOn": "2026-07-15",
   "gateStatus": "PENDING_HUMAN_REVIEW",
   "programmeGateIds": [
@@ -15,9 +15,9 @@
   "summary": {
     "totalRecords": 256,
     "evidenceStatus": {
-      "READY": 231,
-      "PARTIAL": 24,
-      "BLOCKED": 1
+      "READY": 238,
+      "PARTIAL": 18,
+      "BLOCKED": 0
     },
     "reviewTracks": {
       "DIRECTORY": 199,
@@ -199,14 +199,13 @@
       "category": "compliance_event",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
+        "eregulations.zidainvest.com",
         "www.justice.gov.zw"
       ],
       "sourceRisks": [],
-      "evidenceGapIds": [
-        "CE-001"
-      ],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "BLOCKED",
+      "evidenceStatus": "READY",
       "reviewTrack": "COMPLIANCE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -412,20 +411,13 @@
       "category": "compliance_event",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
-        "llb.pfms.gov.zw",
+        "eregulations.zidainvest.com",
         "www.mlg.gov.zw"
       ],
-      "sourceRisks": [
-        {
-          "domain": "llb.pfms.gov.zw",
-          "status": "UNAVAILABLE"
-        }
-      ],
-      "evidenceGapIds": [
-        "DOM-006"
-      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "COMPLIANCE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -617,16 +609,15 @@
       "category": "compliance_guide",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
+        "eregulations.zidainvest.com",
         "www.justice.gov.zw"
       ],
       "sourceRisks": [],
       "evidenceGapIds": [
         "CG-001",
         "CG-002",
-        "CG-003",
         "CG-004",
-        "CG-005",
-        "CG-006"
+        "CG-005"
       ],
       "coverageGapIds": [],
       "evidenceStatus": "PARTIAL",
@@ -649,8 +640,7 @@
       "sourceRisks": [],
       "evidenceGapIds": [
         "CG-037",
-        "CG-038",
-        "CG-039"
+        "CG-038"
       ],
       "coverageGapIds": [],
       "evidenceStatus": "PARTIAL",
@@ -754,13 +744,13 @@
       "category": "compliance_guide",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
-        "selfservice.nssa.org.zw"
+        "selfservice.nssa.org.zw",
+        "www.nssa.org.zw"
       ],
       "sourceRisks": [],
       "evidenceGapIds": [
         "CG-020",
         "CG-021",
-        "CG-022",
         "CG-023"
       ],
       "coverageGapIds": [],
@@ -825,12 +815,9 @@
         "www.zera.co.zw"
       ],
       "sourceRisks": [],
-      "evidenceGapIds": [
-        "CG-040",
-        "CG-041"
-      ],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "REGULATORY_GUIDE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -847,12 +834,9 @@
         "www.zera.co.zw"
       ],
       "sourceRisks": [],
-      "evidenceGapIds": [
-        "CG-043",
-        "CG-044"
-      ],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "REGULATORY_GUIDE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -869,11 +853,9 @@
         "www.zera.co.zw"
       ],
       "sourceRisks": [],
-      "evidenceGapIds": [
-        "CG-042"
-      ],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "REGULATORY_GUIDE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -918,8 +900,6 @@
       "evidenceGapIds": [
         "CG-014",
         "CG-015",
-        "CG-016",
-        "CG-017",
         "CG-018",
         "CG-019"
       ],
@@ -944,7 +924,6 @@
       "sourceRisks": [],
       "evidenceGapIds": [
         "CG-007",
-        "CG-008",
         "CG-009",
         "CG-010"
       ],
@@ -968,8 +947,6 @@
       ],
       "sourceRisks": [],
       "evidenceGapIds": [
-        "CG-011",
-        "CG-012",
         "CG-013"
       ],
       "coverageGapIds": [],
@@ -1217,20 +1194,13 @@
       "category": "government_organisation",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
-        "llb.pfms.gov.zw",
+        "eregulations.zidainvest.com",
         "www.mlg.gov.zw"
       ],
-      "sourceRisks": [
-        {
-          "domain": "llb.pfms.gov.zw",
-          "status": "UNAVAILABLE"
-        }
-      ],
-      "evidenceGapIds": [
-        "DOM-006"
-      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "DIRECTORY",
       "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
       "humanReviewStatus": "PENDING",
@@ -2579,20 +2549,13 @@
       "category": "licence_type",
       "recordLastReviewed": "2026-07-15",
       "sourceDomains": [
-        "llb.pfms.gov.zw",
+        "eregulations.zidainvest.com",
         "www.mlg.gov.zw"
       ],
-      "sourceRisks": [
-        {
-          "domain": "llb.pfms.gov.zw",
-          "status": "UNAVAILABLE"
-        }
-      ],
-      "evidenceGapIds": [
-        "DOM-006"
-      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
       "coverageGapIds": [],
-      "evidenceStatus": "PARTIAL",
+      "evidenceStatus": "READY",
       "reviewTrack": "COMPLIANCE",
       "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
       "humanReviewStatus": "PENDING",

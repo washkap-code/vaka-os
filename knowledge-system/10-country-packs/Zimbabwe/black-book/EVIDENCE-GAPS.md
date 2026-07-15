@@ -6,9 +6,11 @@
 
 ## Purpose and counting rule
 
-This register consolidates unresolved evidence from PB-000 through PB-000E.
+This register consolidates unresolved evidence from PB-000 through PB-002B.
 It is a publication-control input, not permission to fill a record with an
-estimate. Existing data records and frozen schema contracts remain unchanged.
+estimate. Frozen schema contracts remain unchanged. PB-002B closed controls
+only where a newly found, resolving official HTTPS source was added to the
+affected record or guide field.
 
 A **gap control** is one actionable evidence question. The 49 unverified
 compliance-guide fields are counted individually. Council contacts are one
@@ -16,17 +18,59 @@ grouped coverage control affecting all 92 councils; the table records the
 underlying affected counts. Cross-cutting publication gates are counted
 separately because they require different owners and closing evidence.
 
-| Gap class | Controls | Affected items |
-| --- | ---: | ---: |
-| Compliance-guide field evidence | 49 | 49 fields across 18 guides |
-| Compliance-event evidence | 1 | 1 event |
-| Source-domain certification | 6 | 5 provisional domains and 1 unavailable domain |
-| Missing ZRP headquarters | 3 | 3 provinces |
-| Council contact coverage | 1 | 92 councils |
-| Cross-cutting certification and publication gates | 7 | Dataset-wide or named cohorts |
-| **Total** | **67** | — |
+| Gap class | Baseline controls | Closed in PB-002B | Open controls | Affected open items |
+| --- | ---: | ---: | ---: | --- |
+| Compliance-guide field evidence | 49 | 14 | 35 | 35 fields across 13 guides |
+| Compliance-event evidence | 1 | 1 | 0 | None |
+| Source-domain certification | 6 | 1 | 5 | 5 provisional provincial domains |
+| Missing ZRP headquarters | 3 | 0 | 3 | 3 provinces |
+| Council contact coverage | 1 | 0 | 1 | 92 councils |
+| Cross-cutting certification and publication gates | 7 | 0 | 7 | Dataset-wide or named cohorts |
+| **Total** | **67** | **16** | **51** | — |
 
-## Compliance-guide field gaps
+## PB-002B controls closed
+
+These controls are retained for audit history but are no longer referenced as
+open gaps by `content-certification-register.json`.
+
+| Gap | Record or field | Newly resolving official evidence | Closure |
+| --- | --- | --- | --- |
+| CG-003 | `dcip-company-incorporation.officialFees` | `https://eregulations.zidainvest.com/media/SI%202023-095%20Companies%20and%20Other%20Business%20Entities%20%28Fees%29%20%28Amendment%29%20Regulations%2C%202023%20%28No.%202%29.pdf` | S.I. 95 of 2023 publishes the company-name-search and private-company-registration fees. |
+| CG-006 | `dcip-company-incorporation.steps` | `https://eregulations.zidainvest.com/procedure/146?l=en` | The official ZIDA procedure gives the ordered name-search, reservation, registration and document-issue sequence. |
+| CG-008 | `zimra-taxpayer-registration-obligation.officialFees` | `https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance` | ZIMRA states that tax registration is free. |
+| CG-011 | `zimra-vat-registration-obligation.officialFees` | Same ZIMRA fee FAQ as CG-008. | ZIMRA's no-fee statement covers tax registration, including VAT registration. |
+| CG-012 | `zimra-vat-registration-obligation.processingTime` | `https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter` | ZIMRA publishes a one-working-day VAT-registration service standard after requirements are met. |
+| CG-016 | `zimra-paye-registration-obligation.officialFees` | Same ZIMRA fee FAQ as CG-008. | ZIMRA's no-fee statement covers tax registration, including PAYE registration. |
+| CG-017 | `zimra-paye-registration-obligation.processingTime` | Same ZIMRA client charter as CG-012. | ZIMRA publishes a one-working-day PAYE-registration service standard after requirements are met. |
+| CG-022 | `nssa-employer-registration-obligation.processingTime` | `https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf` | NSSA's service-delivery standard states three days after complete and accurate documents; freshness remains a reviewer check. |
+| CG-039 | `ema-effluent-licence.renewalCycle` | `https://ema.co.zw/faq/` | EMA states that waste, air and effluent licences last one calendar year and expire on 31 December. |
+| CG-040 | `zera-electricity-generation-licence.processingTime` | `https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/electricity_act.pdf` | The Electricity Act sets a six-month ceiling from a supported application to notice of decision, subject to applicant-agreed extension. |
+| CG-041 | `zera-electricity-generation-licence.renewalCycle` | Same Electricity Act as CG-040. | The Act sets a ZERA-determined term up to 30 years and permits renewal before expiry. |
+| CG-042 | `zera-petroleum-retail-licence.processingTime` | `https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Guidelines-and-Regulations/Energy-Regulatory-ACT-2011-1323.pdf` | The Energy Regulatory Authority Act sets a six-month ceiling for a complete application, subject to applicant-agreed extension. |
+| CG-043 | `zera-lpg-retail-licence.processingTime` | Same Energy Regulatory Authority Act as CG-042. | The statutory complete-application ceiling applies to the energy-licensing decision. |
+| CG-044 | `zera-lpg-retail-licence.renewalCycle` | `https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/SI_57_of_2014_LPG.pdf` | The LPG regulations set a term not exceeding two calendar years and provide for renewal. |
+| CE-001 | `dcip-company-annual-return` | `https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf` | The official regulation requires a private-company annual return no later than 21 days after the incorporation anniversary. |
+| DOM-006 | `liquor-licensing-board` and two dependent compliance records | `https://eregulations.zidainvest.com/objective/111?l=en` and `https://eregulations.zidainvest.com/procedure/112?l=en` | The official ZIDA portal now provides a resolving government-endorsed Liquor Licensing Board procedure, replacing the unavailable active portal reference. |
+
+## PB-002B unresolved attempt log
+
+The following official URLs were checked on 2026-07-15. The named controls
+remain open because the pages did not supply the exact closing evidence.
+
+| Open controls | URLs attempted | Result |
+| --- | --- | --- |
+| CG-001, CG-002, CG-004, CG-005 | `https://eregulations.zidainvest.com/procedure/146?l=en`; `https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf`; `https://www.justice.gov.zw/wp-content/uploads/2025/07/CLIENT-SERVICE-CHARTER_removed.pdf`; `https://www.dcip.gov.zw/` | The procedure and regulation do not provide one complete current checklist, entity-wide prerequisite set, current end-to-end service time or an explicit incorporation-validity rule. The Ministry charter returned 404 and the DCIP host did not provide a resolving alternative. |
+| CG-007, CG-009, CG-010, CG-013, CG-014, CG-015, CG-018, CG-019 | `https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter`; `https://www.zimra.co.zw/domestic-taxes/vat/vat-registration`; `https://www.zimra.co.zw/news/2335%3Atax-obligations-of-employers-in-zimbabwe` | The charter closes only VAT and PAYE processing. The remaining pages do not provide the missing universal taxpayer checklist, general TIN timing, registration-renewal rules, or complete PAYE application checklist, prerequisites and ordered steps. |
+| CG-020, CG-021, CG-023 | `https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf`; `https://eregulations.zidainvest.com/procedure/9?l=en` | The NSSA standard closes processing time only; neither source supplies a complete current attachment list, explicit no-fee statement or renewal rule. |
+| CG-024, CG-025, CG-026, CG-027, CG-028 | `https://www.hararecity.co.zw/news/read/city-reduces-business-licence-fees`; `https://hararecity.co.zw/resources/download/393`; `https://eregulations.zidainvest.com/procedure/45?l=en`; `https://eregulations.zidainvest.com/procedure/46?l=en` | The Harare material is proposed or class-dependent and does not establish final class fees, end-to-end processing times or the health-registration renewal cadence. |
+| CG-029, CG-030, CG-031, CG-032 | `https://www.citybyo.co.zw/Downloads/GetAgenda?fileShortName=FULL_COUNCIL_AGENDA_PART_II_%283.12.2025%29.pdf`; `https://www.citybyo.co.zw/Downloads/GetAgenda?fileShortName=FULL_COUNCIL_AGENDA_%284.3.2026%29.pdf`; `https://eregulations.zidainvest.com/procedure/113?l=en`; `https://eregulations.zidainvest.com/procedure/117?l=en` | The council agenda records reductions but not a complete effective class-and-currency schedule. The procedure pages do not provide a reliable end-to-end duration or the missing premises-inspection amount. |
+| CG-033, CG-034, CG-035, CG-036 | `https://eregulations.zidainvest.com/objective/111?l=en`; `https://eregulations.zidainvest.com/procedure/112?l=en` | The source closes the unavailable-domain risk and identifies a four-step process, but it does not expose the exact current class fees, determination time, class-specific term, or complete ordered steps required to close these four field controls. |
+| CG-037, CG-038 | `https://ema.co.zw/faq/`; `https://ema.co.zw/wp-content/uploads/2026/03/EMA-ACT.pdf`; `https://eregulations.zidainvest.com/procedure/19?l=en` | The sources confirm a prescribed fee and parts of the decision process, but not the current amount or a complete end-to-end processing commitment. |
+| CG-045, CG-046, CG-047, CG-048 | `https://www.potraz.gov.zw/wp-content/uploads/2015/04/STATUTORY_INSTRUMENT_11A_of_2001-Licensing_Registration_and_Certification.pdf`; `https://www.potraz.gov.zw/wp-content/uploads/2022/01/Unified-Telecommunications-Service-Licence.pdf`; `https://www.potraz.gov.zw/wp-content/uploads/2025/06/Licence-Application-General-Guidelines.pdf` | The material does not supply a current unified-licence checklist, complete prerequisites, application turnaround or ordered filing sequence. |
+| CG-049 | `https://portal.mcaz.co.zw/?download_id=942&sdm_process_download=1`; `https://www.mcaz.co.zw/licensing-and-enforcement/licensing/` | The new download URL did not resolve reliably during direct review, and the stable page still does not state an end-to-end premises-licence determination time. No promotion was made. |
+| DOM-001 through DOM-005 | `https://www.opcmashcentral.gov.zw/`; `https://www.opcmasheast.gov.zw/`; `https://www.opcmasvingo.gov.zw/`; `https://www.opcmatsouth.gov.zw/`; `https://www.opcmidlands.gov.zw/` | The provisional portals publish these canonical-looking hostnames in page text or email addresses, but direct attempts did not produce resolving official pages. All five domain controls remain open. |
+
+## Open compliance-guide field gaps after PB-002B
 
 Every row below corresponds to an evidence field whose current
 `status` is `unverified`, whose value is empty, and whose field-level
@@ -36,26 +80,18 @@ Every row below corresponds to an evidence field whose current
 | --- | --- | --- | --- | --- | --- | --- |
 | CG-001 | `dcip-company-incorporation` | `documents` | A complete, current application-document checklist | No current DCIP document checklist was available from a resolving official source on the review date. | Current authority-issued form, checklist or application pack listing required attachments. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
 | CG-002 | `dcip-company-incorporation` | `prerequisites` | A complete, current prerequisite set | The reviewed official service page does not publish entity-specific prerequisites. | Current authority checklist, regulations or guidance stating all prerequisites. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
-| CG-003 | `dcip-company-incorporation` | `officialFees` | A current effective fee schedule or explicit no-fee statement | No current official DCIP fee schedule was available from a resolving source on the review date. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
 | CG-004 | `dcip-company-incorporation` | `processingTime` | A current end-to-end processing-time commitment | No current authority-published processing time was available from a resolving source. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
 | CG-005 | `dcip-company-incorporation` | `renewalCycle` | A current validity period or renewal rule | The reviewed official page does not state a renewal rule for the incorporation itself. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
-| CG-006 | `dcip-company-incorporation` | `steps` | A current ordered application procedure | The reviewed official page establishes DCIP's registration function but does not publish a current application sequence. | Current authority-owned procedure, form instructions or checklist giving the ordered sequence. | Deeds, Companies and Intellectual Property (`dcip-zimbabwe`) |
 | CG-007 | `zimra-taxpayer-registration-obligation` | `documents` | A complete, current application-document checklist | ZIMRA instructs applicants to attach supporting documents but the reviewed page does not publish one complete document list for every taxpayer type. | Current authority-issued form, checklist or application pack listing required attachments. | Zimbabwe Revenue Authority (`zimra`) |
-| CG-008 | `zimra-taxpayer-registration-obligation` | `officialFees` | A current effective fee schedule or explicit no-fee statement | The reviewed official registration guidance does not state a registration fee. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-009 | `zimra-taxpayer-registration-obligation` | `processingTime` | A current end-to-end processing-time commitment | The reviewed official registration guidance does not state an approval time. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-010 | `zimra-taxpayer-registration-obligation` | `renewalCycle` | A current validity period or renewal rule | The sources describe registration and issue of a TIN but do not publish a periodic renewal cycle. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Zimbabwe Revenue Authority (`zimra`) |
-| CG-011 | `zimra-vat-registration-obligation` | `officialFees` | A current effective fee schedule or explicit no-fee statement | The reviewed official VAT-registration guidance does not state a registration fee. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Zimbabwe Revenue Authority (`zimra`) |
-| CG-012 | `zimra-vat-registration-obligation` | `processingTime` | A current end-to-end processing-time commitment | The reviewed official VAT-registration guidance does not state an approval time. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-013 | `zimra-vat-registration-obligation` | `renewalCycle` | A current validity period or renewal rule | The reviewed sources do not publish a periodic renewal rule for VAT registration. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-014 | `zimra-paye-registration-obligation` | `documents` | A complete, current application-document checklist | No PAYE-specific attachment checklist was located in the reviewed official guidance. | Current authority-issued form, checklist or application pack listing required attachments. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-015 | `zimra-paye-registration-obligation` | `prerequisites` | A complete, current prerequisite set | The reviewed official page establishes the employer obligation but does not state a complete prerequisite set for the application. | Current authority checklist, regulations or guidance stating all prerequisites. | Zimbabwe Revenue Authority (`zimra`) |
-| CG-016 | `zimra-paye-registration-obligation` | `officialFees` | A current effective fee schedule or explicit no-fee statement | The reviewed official guidance does not state a PAYE-registration fee. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Zimbabwe Revenue Authority (`zimra`) |
-| CG-017 | `zimra-paye-registration-obligation` | `processingTime` | A current end-to-end processing-time commitment | The reviewed official guidance does not state an approval time. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-018 | `zimra-paye-registration-obligation` | `renewalCycle` | A current validity period or renewal rule | The source does not publish a periodic renewal rule for PAYE employer registration. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-019 | `zimra-paye-registration-obligation` | `steps` | A current ordered application procedure | No PAYE-specific online application sequence was located in the reviewed official guidance. | Current authority-owned procedure, form instructions or checklist giving the ordered sequence. | Zimbabwe Revenue Authority (`zimra`) |
 | CG-020 | `nssa-employer-registration-obligation` | `documents` | A complete, current application-document checklist | The self-service flow includes a company-documents upload but the reviewed official pages do not expose one complete document list. | Current authority-issued form, checklist or application pack listing required attachments. | National Social Security Authority (`nssa`) |
 | CG-021 | `nssa-employer-registration-obligation` | `officialFees` | A current effective fee schedule or explicit no-fee statement | No employer-registration fee was stated in the reviewed official guide or registration flow. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | National Social Security Authority (`nssa`) |
-| CG-022 | `nssa-employer-registration-obligation` | `processingTime` | A current end-to-end processing-time commitment | No approval time was stated in the reviewed official sources. | Current authority service charter or process page stating the end-to-end determination time and conditions. | National Social Security Authority (`nssa`) |
 | CG-023 | `nssa-employer-registration-obligation` | `renewalCycle` | A current validity period or renewal rule | The sources describe employer registration and change notifications but do not publish a periodic renewal cycle. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | National Social Security Authority (`nssa`) |
 | CG-024 | `harare-business-licence` | `officialFees` | A current effective fee schedule or explicit no-fee statement | A final current fee for the applicant's licence class was not verified; the reviewed 2026 tariff document was presented as proposed budget tariffs. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Harare City Council (`harare-city-council`) |
 | CG-025 | `harare-business-licence` | `processingTime` | A current end-to-end processing-time commitment | No current council-published end-to-end processing time was located. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Harare City Council (`harare-city-council`) |
@@ -72,23 +108,15 @@ Every row below corresponds to an evidence field whose current
 | CG-036 | `zimbabwe-liquor-licence` | `steps` | A current ordered application procedure | The official page publishes eligibility and document requirements but not an authoritative ordered application sequence. | Current authority-owned procedure, form instructions or checklist giving the ordered sequence. | Liquor Licensing Board (`liquor-licensing-board`) |
 | CG-037 | `ema-effluent-licence` | `officialFees` | A current effective fee schedule or explicit no-fee statement | No current fee amount was stated on the reviewed official page or form. | Effective gazette, approved tariff, fee schedule or an explicit authority statement that no fee applies. | Environmental Management Agency (`ema`) |
 | CG-038 | `ema-effluent-licence` | `processingTime` | A current end-to-end processing-time commitment | No authority-published end-to-end processing duration was located. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Environmental Management Agency (`ema`) |
-| CG-039 | `ema-effluent-licence` | `renewalCycle` | A current validity period or renewal rule | The reviewed official sources do not publish the licence term or renewal cadence. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Environmental Management Agency (`ema`) |
-| CG-040 | `zera-electricity-generation-licence` | `processingTime` | A current end-to-end processing-time commitment | The reviewed current ZERA application form and guidelines do not state an end-to-end determination time. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Energy Regulatory Authority (`zera`) |
-| CG-041 | `zera-electricity-generation-licence` | `renewalCycle` | A current validity period or renewal rule | The guidelines publish renewal fees but do not state one general licence term or renewal interval for every generation licence. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Zimbabwe Energy Regulatory Authority (`zera`) |
-| CG-042 | `zera-petroleum-retail-licence` | `processingTime` | A current end-to-end processing-time commitment | No current end-to-end processing duration was stated in the reviewed official sources. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Energy Regulatory Authority (`zera`) |
-| CG-043 | `zera-lpg-retail-licence` | `processingTime` | A current end-to-end processing-time commitment | No current end-to-end processing duration was stated in the reviewed official sources. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Zimbabwe Energy Regulatory Authority (`zera`) |
-| CG-044 | `zera-lpg-retail-licence` | `renewalCycle` | A current validity period or renewal rule | A renewal form exists, but the reviewed general sources do not establish one licence term for all LPG retail licences. | Current statute, regulations, licence conditions or authority guidance stating validity and renewal timing. | Zimbabwe Energy Regulatory Authority (`zera`) |
 | CG-045 | `potraz-unified-telecommunications-services-licence` | `documents` | A complete, current application-document checklist | No current unified-licence application checklist was located in the reviewed official sources. | Current authority-issued form, checklist or application pack listing required attachments. | Postal and Telecommunications Regulatory Authority of Zimbabwe (`potraz`) |
 | CG-046 | `potraz-unified-telecommunications-services-licence` | `prerequisites` | A complete, current prerequisite set | The official category guidance describes licence scope but does not publish a complete prerequisite set for an application. | Current authority checklist, regulations or guidance stating all prerequisites. | Postal and Telecommunications Regulatory Authority of Zimbabwe (`potraz`) |
 | CG-047 | `potraz-unified-telecommunications-services-licence` | `processingTime` | A current end-to-end processing-time commitment | No authority-published application turnaround was located in the reviewed official sources. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Postal and Telecommunications Regulatory Authority of Zimbabwe (`potraz`) |
 | CG-048 | `potraz-unified-telecommunications-services-licence` | `steps` | A current ordered application procedure | The reviewed official documents do not provide a current ordered filing sequence for the unified licence. | Current authority-owned procedure, form instructions or checklist giving the ordered sequence. | Postal and Telecommunications Regulatory Authority of Zimbabwe (`potraz`) |
 | CG-049 | `mcaz-premises-licence` | `processingTime` | A current end-to-end processing-time commitment | MCAZ publishes a 60-day window to resolve outstanding application issues, but that is not an end-to-end determination time. | Current authority service charter or process page stating the end-to-end determination time and conditions. | Medicines Control Authority of Zimbabwe (`mcaz`) |
 
-## Compliance-event gap
+## Open compliance-event gaps
 
-| Gap | Record | What's missing | Why it remains open | Evidence that closes it | Likely evidence holder |
-| --- | --- | --- | --- | --- | --- |
-| CE-001 | `dcip-company-annual-return` | A current official basis for the annual-return obligation, cadence and any filing deadline. | The indexed DCIP Client Service Charter identifies annual returns, but the official document URL was unavailable during review; the event therefore remains `verified: false` and states no exact date. | A resolving DCIP or Ministry page, current service charter, official portal instruction, statute or regulation that expressly states the obligation and current due rule. | Department of Deeds, Companies and Intellectual Property and the Ministry of Justice, Legal and Parliamentary Affairs. |
+None. CE-001 closed in PB-002B and remains in the closure-history table above.
 
 ## Source-domain certification gaps
 
@@ -99,7 +127,6 @@ Every row below corresponds to an evidence field whose current
 | DOM-003 | `www.testdomain13.gov.zw` — `opc-masvingo-provincial-affairs-office` | Canonical provincial-office hostname. | The cited official content uses a disclosed provisional test-domain. | An official OPC directory, resolving canonical provincial portal, or an official redirect that identifies the same office. | OPC ICT/public-information function and Masvingo provincial office. |
 | DOM-004 | `www.testdomain10.gov.zw` — `opc-matabeleland-south-provincial-affairs-office` | Canonical provincial-office hostname. | The cited official content uses a disclosed provisional test-domain. | An official OPC directory, resolving canonical provincial portal, or an official redirect that identifies the same office. | OPC ICT/public-information function and Matabeleland South provincial office. |
 | DOM-005 | `testdomain25.gov.zw` — `opc-midlands-provincial-affairs-office` | Canonical provincial-office hostname. | The cited official content uses a disclosed provisional test-domain. | An official OPC directory, resolving canonical provincial portal, or an official redirect that identifies the same office. | OPC ICT/public-information function and Midlands provincial office. |
-| DOM-006 | `llb.pfms.gov.zw` — `liquor-licensing-board` | A resolving current Liquor Licensing Board portal or official replacement. | PB-000C recorded the official portal as unavailable; it remains historical review evidence rather than a safe source for new claims. | Restored portal availability, an official redirect, or a current Ministry of Local Government page that explicitly replaces the portal and publishes the relevant Board information. | Liquor Licensing Board, Ministry of Local Government and government PFMS portal owner. |
 
 ## Missing ZRP provincial-headquarters evidence
 
@@ -129,8 +156,12 @@ Every row below corresponds to an evidence field whose current
 
 ## Closure rule
 
-A gap closes only when the identified evidence is captured from an official
-source, reviewed by the accountable owner, and linked to the exact affected
-record or field. Closing a grouped control requires evidence for every item in
-its stated coverage. Search snippets, commercial intermediaries, inferred
-email domains and undated screenshots do not close a gap.
+An evidence control closes mechanically only when the identified evidence is
+captured from a resolving official HTTPS source and linked to the exact
+affected record or field. Closing a grouped control requires evidence for
+every item in its stated coverage. Search snippets, commercial intermediaries,
+inferred email domains and undated screenshots do not close a gap.
+
+Evidence closure is not professional certification. Every human decision in
+the certification register remains `PENDING`, and the PB-002 gate remains open
+until the qualified reviewers return and record the signed review pack.

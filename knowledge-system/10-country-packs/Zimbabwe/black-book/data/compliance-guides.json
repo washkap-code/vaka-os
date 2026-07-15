@@ -26,10 +26,13 @@
       }
     },
     "officialFees": {
-      "status": "unverified",
-      "value": [],
-      "sources": [],
-      "note": "No current official DCIP fee schedule was available from a resolving source on the review date."
+      "status": "verified",
+      "value": [
+        {"description": "Company-name search", "amount": "5", "currency": "USD", "taxTreatment": "Not stated in the cited regulation"},
+        {"description": "Private-company registration", "amount": "40", "currency": "USD", "taxTreatment": "Not stated in the cited regulation"}
+      ],
+      "sources": ["https://eregulations.zidainvest.com/media/SI%202023-095%20Companies%20and%20Other%20Business%20Entities%20%28Fees%29%20%28Amendment%29%20Regulations%2C%202023%20%28No.%202%29.pdf"],
+      "note": "No current official DCIP fee schedule was available from a resolving source during PB-000C. PB-002B located S.I. 95 of 2023 on the official ZIDA eRegulations portal; fees are entity-specific and must be rechecked for later amendments before payment."
     },
     "processingTime": {
       "status": "unverified",
@@ -56,12 +59,21 @@
       "note": null
     },
     "steps": {
-      "status": "unverified",
-      "value": [],
-      "sources": [],
-      "note": "The reviewed official page establishes DCIP's registration function but does not publish a current application sequence."
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Apply for a company-name search."},
+        {"order": 2, "action": "Obtain the reserved company name."},
+        {"order": 3, "action": "Apply for company registration using the reserved name."},
+        {"order": 4, "action": "Obtain the company-registration documents after approval."}
+      ],
+      "sources": ["https://eregulations.zidainvest.com/procedure/146?l=en"],
+      "note": "The reviewed Ministry service page establishes DCIP's registration function but does not publish a current application sequence. PB-002B added the ordered company-registration sequence published by the official ZIDA eRegulations portal."
     },
-    "sources": ["https://www.justice.gov.zw/?service=business-consulting"],
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202023-095%20Companies%20and%20Other%20Business%20Entities%20%28Fees%29%20%28Amendment%29%20Regulations%2C%202023%20%28No.%202%29.pdf",
+      "https://eregulations.zidainvest.com/procedure/146?l=en",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
     "lastReviewed": "2026-07-15",
     "notes": "Select the legal-entity form with DCIP and obtain the current checklist before filing."
   },
@@ -98,10 +110,12 @@
       }
     },
     "officialFees": {
-      "status": "unverified",
-      "value": [],
-      "sources": [],
-      "note": "The reviewed official registration guidance does not state a registration fee."
+      "status": "verified",
+      "value": [
+        {"description": "Tax registration", "amount": "0", "currency": "Not applicable", "taxTreatment": "Not applicable"}
+      ],
+      "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance"],
+      "note": "The previously reviewed registration guidance did not state a registration fee. PB-002B located ZIMRA's explicit statement that tax registration is free of charge."
     },
     "processingTime": {
       "status": "unverified",
@@ -149,6 +163,7 @@
     },
     "sources": [
       "https://mytaxselfservice.zimra.co.zw/",
+      "https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance",
       "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration",
       "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
     ],
@@ -191,16 +206,18 @@
       }
     },
     "officialFees": {
-      "status": "unverified",
-      "value": [],
-      "sources": [],
-      "note": "The reviewed official VAT-registration guidance does not state a registration fee."
+      "status": "verified",
+      "value": [
+        {"description": "VAT registration", "amount": "0", "currency": "Not applicable", "taxTreatment": "Not applicable"}
+      ],
+      "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance"],
+      "note": "The previously reviewed VAT-registration guidance did not state a registration fee. PB-002B located ZIMRA's explicit statement that tax registration is free of charge."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "The reviewed official VAT-registration guidance does not state an approval time."
+      "status": "verified",
+      "value": "Within one working day after the taxpayer meets ZIMRA's VAT-registration requirements.",
+      "sources": ["https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter"],
+      "note": "The previously reviewed VAT-registration guidance did not state an approval time. PB-002B located the one-working-day service standard in ZIMRA's client charter."
     },
     "renewalCycle": {
       "status": "unverified",
@@ -235,7 +252,9 @@
     "sources": [
       "https://mytaxselfservice.zimra.co.zw/",
       "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
-      "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"
+      "https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance",
+      "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat",
+      "https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter"
     ],
     "lastReviewed": "2026-07-15",
     "notes": "No turnover threshold is reproduced; confirm the current compulsory and voluntary rules with ZIMRA."
@@ -267,16 +286,18 @@
       }
     },
     "officialFees": {
-      "status": "unverified",
-      "value": [],
-      "sources": [],
-      "note": "The reviewed official guidance does not state a PAYE-registration fee."
+      "status": "verified",
+      "value": [
+        {"description": "PAYE registration", "amount": "0", "currency": "Not applicable", "taxTreatment": "Not applicable"}
+      ],
+      "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance"],
+      "note": "The previously reviewed PAYE guidance did not state a registration fee. PB-002B located ZIMRA's explicit statement that tax registration is free of charge."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "The reviewed official guidance does not state an approval time."
+      "status": "verified",
+      "value": "Within one working day after the taxpayer meets ZIMRA's PAYE-registration requirements.",
+      "sources": ["https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter"],
+      "note": "The previously reviewed PAYE guidance did not state an approval time. PB-002B located the one-working-day service standard in ZIMRA's client charter."
     },
     "renewalCycle": {
       "status": "unverified",
@@ -304,7 +325,9 @@
     },
     "sources": [
       "https://mytaxselfservice.zimra.co.zw/",
-      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+      "https://www.zimra.co.zw/11-zimra/about-us/1712-client-charter",
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1933-how-much-is-charged-by-zimra-to-register-for-tax-and-get-a-tax-clearance"
     ],
     "lastReviewed": "2026-07-15",
     "notes": "PAYE registration is separate from ongoing deduction, remittance and employee-return obligations."
@@ -349,10 +372,10 @@
       "note": "No employer-registration fee was stated in the reviewed official guide or registration flow."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "No approval time was stated in the reviewed official sources."
+      "status": "verified",
+      "value": "Within three days after NSSA receives complete and accurate employer-registration documents.",
+      "sources": ["https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf"],
+      "note": "No approval time was stated in the PB-000C sources. PB-002B located NSSA's 2023 service-delivery standard; confirm at review that the three-day standard remains current before customer-facing reliance."
     },
     "renewalCycle": {
       "status": "unverified",
@@ -391,7 +414,8 @@
     "sources": [
       "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
       "https://selfservice.nssa.org.zw/RegisterEmployer/SupportingDocuments",
-      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf",
+      "https://www.nssa.org.zw/wp-content/uploads/2023/10/Reviewed-NSSA-STRATEGIC-PLAN-2023.pdf"
     ],
     "lastReviewed": "2026-07-15",
     "notes": "Confirm scheme coverage and the live portal's attachment list for the employer's circumstances."
@@ -1056,10 +1080,10 @@
       "note": "No authority-published end-to-end processing duration was located."
     },
     "renewalCycle": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "The reviewed official sources do not publish the licence term or renewal cadence."
+      "status": "verified",
+      "value": "Valid for one calendar year and expiring on 31 December; renewal is required for continued licensed discharge activity.",
+      "sources": ["https://ema.co.zw/faq/"],
+      "note": "The previously reviewed official sources did not publish the licence term or renewal cadence. PB-002B located EMA's one-calendar-year validity and 31 December expiry statement."
     },
     "officialLinks": {
       "status": "verified",
@@ -1090,6 +1114,7 @@
     },
     "sources": [
       "https://acumatica.ema.co.zw/",
+      "https://ema.co.zw/faq/",
       "https://ema.co.zw/water-and-effluent/",
       "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx"
     ],
@@ -1151,16 +1176,16 @@
       "note": "Renewable commercial licence fees vary by technology and capacity; consult the current ZERA table and subsequent amendments before payment."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "The reviewed current ZERA application form and guidelines do not state an end-to-end determination time."
+      "status": "verified",
+      "value": "No more than six months from ZERA's receipt of the application and all supporting documents to notice of its decision or proposed decision, unless the applicant consents to an extension.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/electricity_act.pdf"],
+      "note": "The previously reviewed ZERA form and guidelines did not state an end-to-end determination time. PB-002B located the statutory six-month ceiling and extension condition in the Electricity Act."
     },
     "renewalCycle": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "The guidelines publish renewal fees but do not state one general licence term or renewal interval for every generation licence."
+      "status": "verified",
+      "value": "ZERA determines the licence term, subject to a maximum of 30 years; the holder may apply for renewal before expiry.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/electricity_act.pdf"],
+      "note": "The previously reviewed guidelines publish renewal fees but do not state one general licence term for every generation licence. PB-002B located the statutory maximum term and renewal route in the Electricity Act."
     },
     "officialLinks": {
       "status": "verified",
@@ -1194,6 +1219,7 @@
     "sources": [
       "https://www.zera.co.zw/electricity-application-forms-regulations/",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Applications/Generation-Licence-Application-Form.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/electricity_act.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/New-Electricity-Licencing-Checklist-2024.pdf"
     ],
@@ -1250,10 +1276,10 @@
       "note": "Confirm the site's classification and any subsequent fee amendment with ZERA before payment."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "No current end-to-end processing duration was stated in the reviewed official sources."
+      "status": "verified",
+      "value": "No more than six months from ZERA's receipt of the complete application and supporting documents to its final decision, unless the applicant consents to an extension.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Guidelines-and-Regulations/Energy-Regulatory-ACT-2011-1323.pdf"],
+      "note": "No end-to-end processing duration was stated in the previously reviewed petroleum sources. PB-002B located the statutory six-month ceiling and extension condition in the Energy Regulatory Authority Act."
     },
     "renewalCycle": {
       "status": "verified",
@@ -1292,6 +1318,7 @@
     "sources": [
       "https://www.zera.co.zw/petroleum-application-forms-regulations/",
       "https://www.zera.co.zw/petroleum-overview/",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Guidelines-and-Regulations/Energy-Regulatory-ACT-2011-1323.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Renewal-Applications/Petroleum_Retail_Renewal_form.pdf"
@@ -1349,16 +1376,16 @@
       "note": "Confirm any subsequent statutory amendment with ZERA before payment."
     },
     "processingTime": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "No current end-to-end processing duration was stated in the reviewed official sources."
+      "status": "verified",
+      "value": "No more than six months from ZERA's receipt of the complete application and supporting documents to its final decision, unless the applicant consents to an extension.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Guidelines-and-Regulations/Energy-Regulatory-ACT-2011-1323.pdf"],
+      "note": "No end-to-end processing duration was stated in the previously reviewed LPG sources. PB-002B located the statutory six-month ceiling and extension condition in the Energy Regulatory Authority Act."
     },
     "renewalCycle": {
-      "status": "unverified",
-      "value": null,
-      "sources": [],
-      "note": "A renewal form exists, but the reviewed general sources do not establish one licence term for all LPG retail licences."
+      "status": "verified",
+      "value": "An LPG licence is valid for a period not exceeding two calendar years and may be renewed under the regulations.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/SI_57_of_2014_LPG.pdf"],
+      "note": "A renewal form existed in the previously reviewed sources, but those sources did not establish the term. PB-002B located the maximum two-calendar-year term in the LPG regulations."
     },
     "officialLinks": {
       "status": "verified",
@@ -1395,7 +1422,9 @@
     "sources": [
       "https://www.zera.co.zw/lpg-application-forms-regulations/",
       "https://www.zera.co.zw/lpg-overview/",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/SI_57_of_2014_LPG.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Guidelines-and-Regulations/Energy-Regulatory-ACT-2011-1323.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Renewals/LPG_Retail_Renewal_form_Dec_18.pdf",
       "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf"

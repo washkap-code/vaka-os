@@ -20,9 +20,10 @@
     "licenceTypeId": "dcip-company-incorporation",
     "authorityId": "dcip-zimbabwe",
     "cadence": "ANNUAL",
-    "dueRule": "File the prescribed annual return for each applicable reporting year on the date required by DCIP; confirm the current deadline directly with the department.",
-    "verified": false,
+    "dueRule": "For a private company, submit the annual return no later than 21 days after the anniversary of incorporation, together with the prescribed fee.",
+    "verified": true,
     "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
       "https://www.justice.gov.zw/?service=business-consulting",
       "https://www.justice.gov.zw/wp-content/uploads/2025/07/CLIENT-SERVICE-CHARTER_removed.pdf"
     ],
@@ -244,8 +245,9 @@
     "dueRule": "Submit a new application or renewal through the Liquor Licensing Board; use the current licence expiry and Board instructions because no universal renewal date is recorded here.",
     "verified": true,
     "sources": [
+      "https://eregulations.zidainvest.com/objective/111?l=en",
       "https://www.mlg.gov.zw/?post_type=service",
-      "https://llb.pfms.gov.zw/Home/LandingPage"
+      "https://eregulations.zidainvest.com/procedure/112?l=en"
     ],
     "lastReviewed": "2026-07-15"
   },

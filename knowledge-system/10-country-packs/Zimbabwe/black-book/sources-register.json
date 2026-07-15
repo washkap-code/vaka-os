@@ -170,6 +170,21 @@
     "status": "RESOLVING"
   },
   {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "Zimbabwe Investment and Development Agency",
+    "publisherType": "government",
+    "authorityIds": [
+      "dcip-zimbabwe",
+      "liquor-licensing-board"
+    ],
+    "recordCount": 5,
+    "reliabilityNote": "Official Government of Zimbabwe eRegulations portal managed by ZIDA. Reliable for the exact statutes and government-endorsed procedures cited; check amendment and procedure dates before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
     "id": "source-getservice-telone-co-zw",
     "domain": "getservice.telone.co.zw",
     "publisher": "TelOne",
@@ -246,21 +261,6 @@
     "reviewCadence": "ANNUAL",
     "lastChecked": "2026-07-15",
     "status": "RESOLVING"
-  },
-  {
-    "id": "source-llb-pfms-gov-zw",
-    "domain": "llb.pfms.gov.zw",
-    "publisher": "Liquor Licensing Board",
-    "publisherType": "government",
-    "authorityIds": [
-      "liquor-licensing-board",
-      "ministry-local-government-public-works"
-    ],
-    "recordCount": 3,
-    "reliabilityNote": "Official Liquor Licensing Board portal cited by the dataset but recorded as unavailable; retain as review evidence until it resolves or an official replacement is found.",
-    "reviewCadence": "MONTHLY",
-    "lastChecked": "2026-07-15",
-    "status": "UNAVAILABLE"
   },
   {
     "id": "source-masvingocity-org-zw",
@@ -508,7 +508,7 @@
       "ministry-justice-legal-parliamentary-affairs"
     ],
     "recordCount": 6,
-    "reliabilityNote": "Official ministry source. The domain supports DCIP records, but the annual-return charter evidence remains unresolved at page level.",
+    "reliabilityNote": "Official ministry source supporting DCIP records. The indexed client-charter PDF remains unavailable at page level; PB-002B instead supported the annual-return rule with a resolving official statutory instrument on ZIDA eRegulations.",
     "reviewCadence": "QUARTERLY",
     "lastChecked": "2026-07-15",
     "status": "RESOLVING"
@@ -599,7 +599,7 @@
     "authorityIds": [
       "nssa"
     ],
-    "recordCount": 4,
+    "recordCount": 5,
     "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
     "reviewCadence": "QUARTERLY",
     "lastChecked": "2026-07-15",
