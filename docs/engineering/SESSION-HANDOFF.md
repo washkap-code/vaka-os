@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ⚠️ PUSH GATE unchanged: migration 0039 is NOT yet applied to production — apply it via the Supabase SQL editor or a VAKA-scoped Supabase MCP BEFORE pushing main. The Supabase MCP in this Cowork session was scoped to a different org (BioCheck) and could not reach `vaka-platform`.)
+**Updated:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
 > **Protocol:** this file is read at the START of every session and updated as the
 > FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
@@ -25,9 +25,7 @@ this repository.
 ## Migration ledger (production truth)
 
 Highest migration on `main`: `0039_document_workspace.sql`.
-**Migrations through 0038 are applied and verified in production.
-0039 is NOT yet applied — it must be hand-applied (idempotent) BEFORE the
-code on `main` is pushed.**
+**Migrations through 0039 are applied and verified in production.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -42,7 +40,7 @@ rules — defaults unchanged everywhere).
 | 0036_tenant_feature_flags | FLAG-001 | ✅ 2026-07-15 |
 | 0037_approval_policies | PW-002 | ✅ 2026-07-15 |
 | 0038_task_automation | PW-003 | ✅ 2026-07-15 |
-| 0039_document_workspace | PD-001 | ⚠️ PENDING — apply BEFORE pushing main |
+| 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
 
 New migrations continue from **0040**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
