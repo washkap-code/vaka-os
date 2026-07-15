@@ -1,6 +1,10 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (after the P9 security cluster, branch consolidation and P2-005 shipped)
+**Updated:** 2026-07-15 (after the P9 security cluster, branch consolidation and P2-005 shipped; handoff protocol codified in AGENTS.md)
+
+> **Protocol:** this file is read at the START of every session and updated as the
+> FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
+> See "Session Handoff Protocol" in `AGENTS.md`.
 **Purpose:** boot a fresh Fable/Cowork session with zero lost context. Paste the
 kickoff prompt at the bottom into the new session; everything it needs is in
 this repository.
