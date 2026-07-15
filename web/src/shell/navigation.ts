@@ -7,6 +7,7 @@ export type WorkspacePage =
   | "products"
   | "pos"
   | "reports"
+  | "payroll"
   | "imports"
   | "usersActivity"
   | "billing"
@@ -28,6 +29,7 @@ export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
   { key: "products", permission: "inventory.read" },
   { key: "pos", permission: "procurement.read" },
   { key: "reports", permission: "reports.read" },
+  { key: "payroll", permission: "payroll.read" },
   { key: "imports", permission: "imports.create" },
   { key: "usersActivity", ownerOnly: true },
   { key: "billing" },

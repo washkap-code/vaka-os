@@ -597,7 +597,7 @@ export const accounts = pgTable("accounts", {
   type: accountType("type").notNull(),
   parentId: uuid("parent_id"),
   isSystem: boolean("is_system").default(false).notNull(),
-  systemKey: text("system_key"), // AR | SALES | VAT_OUTPUT | VAT_INPUT | INVENTORY | COGS | BANK | AP | GRNI | OPENING_EQUITY
+  systemKey: text("system_key"), // AR | SALES | VAT_OUTPUT | VAT_INPUT | INVENTORY | COGS | BANK | AP | GRNI | OPENING_EQUITY | WAGES_EXPENSE | PAYE_PAYABLE | NSSA_PAYABLE | NET_WAGES_PAYABLE
   isActive: boolean("is_active").default(true).notNull(),
 }, (t) => [
   uniqueIndex("accounts_tenant_code").on(t.tenantId, t.code),
@@ -1334,3 +1334,107 @@ export const dunningEvents = pgTable("dunning_events", {
   attemptNumber: integer("attempt_number").notNull(),
   sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// ---------------------------------------------------------------------------
+// P2-009 — Payroll (technical preview until accountant sign-off).
+// Employee register has no ledger effect; payroll_runs post one balanced
+// journal through postJournal; payslips are immutable snapshots with a
+// calculation trace. Corrections are reversal-only (REVERSED status frees the
+// month for a corrected run).
+// ---------------------------------------------------------------------------
+
+export const employees = pgTable("employees", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  employeeNumber: text("employee_number").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  nationalId: text("national_id"),
+  nssaNumber: text("nssa_number"),
+  email: text("email"),
+  phone: text("phone"),
+  currency: currency("currency").notNull(),
+  basicSalary: money("basic_salary").notNull(), // monthly
+  status: text("status").default("ACTIVE").notNull(),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("employees_tenant_number").on(t.tenantId, t.employeeNumber),
+  index("employees_tenant_status").on(t.tenantId, t.status),
+  check("employees_status_check", sql`${t.status} IN ('ACTIVE', 'ENDED')`),
+  check("employees_basic_salary_check", sql`${t.basicSalary} >= 0`),
+]);
+
+export const payrollRuns = pgTable("payroll_runs", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  periodMonth: date("period_month").notNull(), // first day of month (UTC)
+  currency: currency("currency").notNull(),
+  status: text("status").default("DRAFT").notNull(),
+  employeeCount: integer("employee_count").default(0).notNull(),
+  grossTotal: money("gross_total").default("0").notNull(),
+  payeTotal: money("paye_total").default("0").notNull(),
+  taxLevyTotal: money("tax_levy_total").default("0").notNull(), // AIDS levy
+  ssEmployeeTotal: money("ss_employee_total").default("0").notNull(), // NSSA employee
+  ssEmployerTotal: money("ss_employer_total").default("0").notNull(), // NSSA employer
+  netTotal: money("net_total").default("0").notNull(),
+  verificationStatus: text("verification_status").notNull(), // pack status snapshot
+  verificationNote: text("verification_note").notNull(),
+  journalEntryId: uuid("journal_entry_id").references(() => journalEntries.id),
+  reversalJournalEntryId: uuid("reversal_journal_entry_id").references(() => journalEntries.id),
+  createdBy: uuid("created_by").references(() => users.id),
+  postedBy: uuid("posted_by").references(() => users.id),
+  postedAt: timestamp("posted_at", { withTimezone: true }),
+  reversedBy: uuid("reversed_by").references(() => users.id),
+  reversedAt: timestamp("reversed_at", { withTimezone: true }),
+  reversedReason: text("reversed_reason"),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  // One live (draft or posted) run per tenant × month × currency; a REVERSED
+  // run frees the slot for a corrected re-run.
+  uniqueIndex("payroll_runs_tenant_month_currency_live")
+    .on(t.tenantId, t.periodMonth, t.currency)
+    .where(sql`${t.status} IN ('DRAFT', 'POSTED')`),
+  index("payroll_runs_tenant_status").on(t.tenantId, t.status),
+  check("payroll_runs_status_check", sql`${t.status} IN ('DRAFT', 'POSTED', 'REVERSED')`),
+  check("payroll_runs_month_check", sql`${t.periodMonth} = date_trunc('month', ${t.periodMonth})::date`),
+  check("payroll_runs_posted_state_check", sql`
+    (${t.status} = 'DRAFT' AND ${t.journalEntryId} IS NULL)
+    OR (${t.status} = 'POSTED' AND ${t.journalEntryId} IS NOT NULL AND ${t.reversalJournalEntryId} IS NULL)
+    OR (${t.status} = 'REVERSED' AND ${t.journalEntryId} IS NOT NULL AND ${t.reversalJournalEntryId} IS NOT NULL)
+  `),
+]);
+
+export const payslips = pgTable("payslips", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  payrollRunId: uuid("payroll_run_id").notNull().references(() => payrollRuns.id),
+  employeeId: uuid("employee_id").notNull().references(() => employees.id),
+  // Snapshots — a payslip must stay explainable even if the employee changes.
+  employeeNumber: text("employee_number").notNull(),
+  employeeName: text("employee_name").notNull(),
+  currency: currency("currency").notNull(),
+  basicSalary: money("basic_salary").notNull(),
+  allowances: money("allowances").default("0").notNull(), // taxable, per-run adjustment
+  grossPay: money("gross_pay").notNull(),
+  ssEmployee: money("ss_employee").notNull(),
+  ssEmployer: money("ss_employer").notNull(),
+  taxablePay: money("taxable_pay").notNull(),
+  paye: money("paye").notNull(),
+  taxLevy: money("tax_levy").notNull(),
+  netPay: money("net_pay").notNull(),
+  calculationTrace: jsonb("calculation_trace").notNull(),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("payslips_run_employee").on(t.payrollRunId, t.employeeId),
+  index("payslips_tenant_employee").on(t.tenantId, t.employeeId),
+  check("payslips_amounts_check", sql`
+    ${t.grossPay} >= 0 AND ${t.ssEmployee} >= 0 AND ${t.ssEmployer} >= 0
+    AND ${t.taxablePay} >= 0 AND ${t.paye} >= 0 AND ${t.taxLevy} >= 0 AND ${t.netPay} >= 0
+  `),
+]);
