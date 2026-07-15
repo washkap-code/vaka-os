@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (evening session: P2-009 Zimbabwe payroll technical preview built, verified and merged to main; migration 0035 NOT yet applied to production)
+**Updated:** 2026-07-15 (late session: Codex parallel lane P9-006 + P9-005 reviewed and merged to main; main is ahead of origin by 6 — PUSH via GitHub Desktop)
 
 > **Protocol:** this file is read at the START of every session and updated as the
 > FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
@@ -140,11 +140,25 @@ the admin password hash between reruns on the same scratch db.
    migration 0038 applied to production. Verified: task-automation 6/6;
    procurement/supplier-bills/critical/events 20/20. Mission pack:
    `docs/engineering/mission-packs/PW-003/`.
-   **PARALLEL CODEX LANE (2026-07-15):** Codex was given P9-006 (CI security
-   scanning + SBOM) and P9-005 (incident response + forensic queries) on
-   branch `codex/p9-006-ci-security`, restricted to `.github/**` and
-   `docs/engineering/**` docs — no server/web/migration files. Review and
-   merge that branch before starting overlapping work.
+   **P9-006 + P9-005 are DONE (2026-07-15):** Codex branch
+   `codex/p9-006-ci-security` reviewed and merged to main (`8513676`).
+   Scope verified: exactly the 8 authorised files (`.github/**` +
+   `docs/engineering/**`), no server/web/migration changes. New CI on PRs and
+   `main` pushes: per-workspace `npm audit --audit-level=high`, server+web
+   typecheck, Gitleaks full-history secret scan, CodeQL JS/TS analysis,
+   CycloneDX SBOM with 30-day artifact retention. Docs:
+   `docs/engineering/INCIDENT-RESPONSE.md` and `FORENSIC-QUERIES.md` (8
+   read-only SELECT blocks, validated as mutation-free). NOT yet verified:
+   actual GitHub-hosted runs — check the Actions tab after the next push;
+   Gitleaks may need an org licence (`GITLEAKS_LICENSE` secret) if the repo
+   sits in a GitHub organisation. Coordination note: merge `30e87f1` (PW-004)
+   had accidentally picked up the then-uncommitted workflows + P9-006 README,
+   so those were already byte-identical on main; the P9-005 docs and
+   completion reports arrived via this merge. Codex's worktree at
+   `/private/tmp/vaka-p9-006-ci-security` shows as prunable from the sandbox
+   but exists on the host — prune only from the host once Codex is finished
+   with it. Stray `CHANGELOG 2.md` (macOS copy artifact, identical to
+   `CHANGELOG.md`) deleted.
    **PW-004 is DONE (2026-07-15):** task centre is the first fully
    flag-governed surface — `/tasks*` and automation-rule settings behind
    `requireFeature("workflow.centre")`, subscriber checks the flag, web
