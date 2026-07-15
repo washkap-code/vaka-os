@@ -1,7 +1,7 @@
 # P9-006 — CI security scanning and software bill of materials
 
-**Status:** Approved for implementation  
-**Priority:** P0 production hardening  
+**Status:** Approved for implementation
+**Priority:** P0 production hardening
 **Authority:** VAKA Constitution; VAKA Coding Standards; repository `AGENTS.md`
 
 ## Outcome
