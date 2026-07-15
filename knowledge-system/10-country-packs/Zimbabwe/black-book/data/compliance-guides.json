@@ -1,0 +1,1597 @@
+[
+  {
+    "id": "guide-dcip-company-incorporation",
+    "name": "Company and Business Entity Incorporation Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "dcip-company-incorporation",
+    "authorityId": "dcip-zimbabwe",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Formal business organisations seeking registration and legal recognition in Zimbabwe.",
+      "sources": ["https://www.justice.gov.zw/?service=business-consulting"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "No current DCIP document checklist was available from a resolving official source on the review date."
+      },
+      "prerequisites": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "The reviewed official service page does not publish entity-specific prerequisites."
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "No current official DCIP fee schedule was available from a resolving source on the review date."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current authority-published processing time was available from a resolving source."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed official page does not state a renewal rule for the incorporation itself."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {
+          "label": "DCIP service overview",
+          "url": "https://www.justice.gov.zw/?service=business-consulting",
+          "kind": "GUIDANCE"
+        }
+      ],
+      "sources": ["https://www.justice.gov.zw/?service=business-consulting"],
+      "note": null
+    },
+    "steps": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The reviewed official page establishes DCIP's registration function but does not publish a current application sequence."
+    },
+    "sources": ["https://www.justice.gov.zw/?service=business-consulting"],
+    "lastReviewed": "2026-07-15",
+    "notes": "Select the legal-entity form with DCIP and obtain the current checklist before filing."
+  },
+  {
+    "id": "guide-zimra-taxpayer-registration-obligation",
+    "name": "ZIMRA Taxpayer Registration Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zimra-taxpayer-registration-obligation",
+    "authorityId": "zimra",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Persons carrying on trade or business in Zimbabwe, including individuals and organisations registering through TaRMS.",
+      "sources": [
+        "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration",
+        "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+      ],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "ZIMRA instructs applicants to attach supporting documents but the reviewed page does not publish one complete document list for every taxpayer type."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "An email address and mobile number for TaRMS account activation and verification",
+          "The applicant's taxpayer type and identifying particulars"
+        ],
+        "sources": ["https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The reviewed official registration guidance does not state a registration fee."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed official registration guidance does not state an approval time."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The sources describe registration and issue of a TIN but do not publish a periodic renewal cycle."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {
+          "label": "TaRMS self-service portal",
+          "url": "https://mytaxselfservice.zimra.co.zw/",
+          "kind": "PORTAL"
+        },
+        {
+          "label": "ZIMRA taxpayer-registration guidance",
+          "url": "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration",
+          "kind": "GUIDANCE"
+        }
+      ],
+      "sources": [
+        "https://mytaxselfservice.zimra.co.zw/",
+        "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Open TaRMS, choose Sign Up and create the user account."},
+        {"order": 2, "action": "Activate the account using the email sent by TaRMS, then sign in and complete the verification-code step."},
+        {"order": 3, "action": "Choose the applicable taxpayer route and complete the registration forms."},
+        {"order": 4, "action": "Attach the supporting documents requested for that taxpayer type and submit for ZIMRA approval."},
+        {"order": 5, "action": "After approval and TIN issue, sign in and complete the bank-account details requested by ZIMRA."}
+      ],
+      "sources": ["https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration"],
+      "note": null
+    },
+    "sources": [
+      "https://mytaxselfservice.zimra.co.zw/",
+      "https://www.zimra.co.zw/news/22-taxmans-corner/2346-taxpayer-registration",
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Attachments vary by taxpayer type; use the live TaRMS prompts and ZIMRA guidance."
+  },
+  {
+    "id": "guide-zimra-vat-registration-obligation",
+    "name": "ZIMRA Value Added Tax Registration Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zimra-vat-registration-obligation",
+    "authorityId": "zimra",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Persons making taxable supplies who meet the current compulsory registration rules, and qualifying persons applying for voluntary VAT registration.",
+      "sources": [
+        "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+        "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"
+      ],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Sales schedule for the preceding twelve months for a compulsory-registration application, or projected sales schedule for the following twelve months for a voluntary-registration application",
+          "Supporting attachments requested by TaRMS for the completed VAT application"
+        ],
+        "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"],
+        "note": "The official page identifies the sales schedule but does not enumerate every possible supporting attachment."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "An existing TaRMS taxpayer profile",
+          "A determination whether the application is compulsory or voluntary and whether supplies are local or exports"
+        ],
+        "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The reviewed official VAT-registration guidance does not state a registration fee."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed official VAT-registration guidance does not state an approval time."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed sources do not publish a periodic renewal rule for VAT registration."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "TaRMS self-service portal", "url": "https://mytaxselfservice.zimra.co.zw/", "kind": "PORTAL"},
+        {"label": "ZIMRA VAT-registration steps", "url": "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://mytaxselfservice.zimra.co.zw/",
+        "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Sign in to TaRMS and open Taxpayer Profile, Tax Type, then New Tax Type and VAT."},
+        {"order": 2, "action": "Select local or export supplies, the effective date, and compulsory or voluntary registration."},
+        {"order": 3, "action": "Complete the taxable-turnover, assets and other application fields."},
+        {"order": 4, "action": "Attach the applicable sales schedule and the supporting documents requested by TaRMS."},
+        {"order": 5, "action": "Submit the application and obtain the VAT certificate if ZIMRA approves it."}
+      ],
+      "sources": ["https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"],
+      "note": null
+    },
+    "sources": [
+      "https://mytaxselfservice.zimra.co.zw/",
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1951-how-does-one-register-for-vat"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "No turnover threshold is reproduced; confirm the current compulsory and voluntary rules with ZIMRA."
+  },
+  {
+    "id": "guide-zimra-paye-registration-obligation",
+    "name": "ZIMRA PAYE Employer Registration Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zimra-paye-registration-obligation",
+    "authorityId": "zimra",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "A business that becomes an employer and must register for PAYE with ZIMRA.",
+      "sources": ["https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "No PAYE-specific attachment checklist was located in the reviewed official guidance."
+      },
+      "prerequisites": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "The reviewed official page establishes the employer obligation but does not state a complete prerequisite set for the application."
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The reviewed official guidance does not state a PAYE-registration fee."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed official guidance does not state an approval time."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The source does not publish a periodic renewal rule for PAYE employer registration."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "TaRMS self-service portal", "url": "https://mytaxselfservice.zimra.co.zw/", "kind": "PORTAL"},
+        {"label": "ZIMRA new-business guidance", "url": "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://mytaxselfservice.zimra.co.zw/",
+        "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "No PAYE-specific online application sequence was located in the reviewed official guidance."
+    },
+    "sources": [
+      "https://mytaxselfservice.zimra.co.zw/",
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "PAYE registration is separate from ongoing deduction, remittance and employee-return obligations."
+  },
+  {
+    "id": "guide-nssa-employer-registration-obligation",
+    "name": "NSSA Employer Registration Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "nssa-employer-registration-obligation",
+    "authorityId": "nssa",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Employers of labour covered by NSSA's compulsory schemes.",
+      "sources": ["https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "The self-service flow includes a company-documents upload but the reviewed official pages do not expose one complete document list."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Main employer details, including legal and trade names, business activity, company type and industry code",
+          "Employment start information and workforce and wage-bill particulars",
+          "At least one director and one contact person in the online application"
+        ],
+        "sources": [
+          "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+          "https://selfservice.nssa.org.zw/RegisterEmployer/SupportingDocuments"
+        ],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "No employer-registration fee was stated in the reviewed official guide or registration flow."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No approval time was stated in the reviewed official sources."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The sources describe employer registration and change notifications but do not publish a periodic renewal cycle."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "NSSA employer-registration portal", "url": "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails", "kind": "PORTAL"},
+        {"label": "NSSA employer guide", "url": "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+        "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Open NSSA self-service and start the employer-registration flow."},
+        {"order": 2, "action": "Complete the main employer, employment and workforce details."},
+        {"order": 3, "action": "Add the required director and contact-person details."},
+        {"order": 4, "action": "Upload the company documents requested by the live portal and submit the application."},
+        {"order": 5, "action": "Use the NSSA employer identifiers issued after verification for subsequent employer and employee returns."}
+      ],
+      "sources": [
+        "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+        "https://selfservice.nssa.org.zw/RegisterEmployer/SupportingDocuments",
+        "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/RegisterEmployer/SupportingDocuments",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Confirm scheme coverage and the live portal's attachment list for the employer's circumstances."
+  },
+  {
+    "id": "guide-praz-supplier-registration-obligation",
+    "name": "PRAZ Bidder and Contractor Registration Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "praz-supplier-registration-obligation",
+    "authorityId": "praz",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Suppliers, bidders and contractors seeking eligibility to participate in Zimbabwe public procurement.",
+      "sources": ["https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Memorandum and articles of association or other constitutive document",
+          "Certificate of incorporation",
+          "List of directors",
+          "Head-office and local physical-address particulars",
+          "Zimbabwean and foreign shareholding particulars"
+        ],
+        "sources": ["https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "An eGP account and completed supplier business profile",
+          "Selection of the correct supplier category or categories"
+        ],
+        "sources": ["https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "Local micro enterprise annual category registration", "amount": "50", "currency": "USD", "taxTreatment": "Not stated on the cited portal"},
+        {"description": "Local small or medium enterprise annual category registration", "amount": "60", "currency": "USD", "taxTreatment": "Not stated on the cited portal"},
+        {"description": "Other local enterprise annual category registration", "amount": "75", "currency": "USD", "taxTreatment": "Not stated on the cited portal"},
+        {"description": "Foreign supplier annual category registration", "amount": "850", "currency": "USD", "taxTreatment": "Not stated on the cited portal"}
+      ],
+      "sources": ["https://egp.praz.org.zw/egp-"],
+      "note": "The official portal also displays local-currency equivalents that can change with the stated exchange rate; confirm the payable amount at checkout."
+    },
+    "processingTime": {
+      "status": "verified",
+      "value": "PRAZ states that it verifies payment and reviews the business profile within 48 hours at the relevant eGP review stage.",
+      "sources": ["https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/"],
+      "note": "This is the published review-stage timing, not a guarantee of end-to-end completion where corrections are required."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "Registration is annual and expires on 31 December of the registration year.",
+      "sources": ["https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Electronic Government Procurement portal", "url": "https://egp.praz.org.zw/egp-", "kind": "PORTAL"},
+        {"label": "PRAZ supplier-registration steps", "url": "https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/", "kind": "GUIDANCE"},
+        {"label": "PRAZ bidder-registration requirements", "url": "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://egp.praz.org.zw/egp-",
+        "https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/",
+        "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Create and activate an account on the eGP portal."},
+        {"order": 2, "action": "Sign in, open supplier registration and complete the business profile."},
+        {"order": 3, "action": "Upload the required company and ownership documents in PDF format."},
+        {"order": 4, "action": "Select the appropriate supplier category or categories and submit the registration."},
+        {"order": 5, "action": "Pay the applicable category fee through the portal and await PRAZ verification and review."},
+        {"order": 6, "action": "Resolve any returned profile issues, then download the certificate after approval."}
+      ],
+      "sources": ["https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/"],
+      "note": null
+    },
+    "sources": [
+      "https://egp.praz.org.zw/egp-",
+      "https://www.praz.org.zw/abridged-version-supplier-registration-stepsegpsystem/",
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Registration and fees are category-specific; recheck the live eGP portal before payment."
+  },
+  {
+    "id": "guide-harare-business-licence",
+    "name": "Harare Business Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "harare-business-licence",
+    "authorityId": "harare-city-council",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Retail, wholesale, food and other businesses falling within a licence class on Harare's business-licence application.",
+      "sources": [
+        "https://www.hararecity.co.zw/resources/of/business-licensing",
+        "https://www.hararecity.co.zw/resources/download/51"
+      ],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed Harare application for a shop licence, municipal licence or food-purveyors licence for the applicable class"
+        ],
+        "sources": ["https://www.hararecity.co.zw/resources/download/51"],
+        "note": "The form and the activity determine whether additional supporting material is requested."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Premises suitable for the proposed business use",
+          "Compliance with the sanitation, lighting, ventilation, surfaces, storage and waste controls applicable to the activity",
+          "Additional food-premises and food-handler health controls where food is handled"
+        ],
+        "sources": ["https://www.hararecity.co.zw/resources/download/40"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "A final current fee for the applicant's licence class was not verified; the reviewed 2026 tariff document was presented as proposed budget tariffs."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current council-published end-to-end processing time was located."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "The City of Harare describes business-licence fees as annual and provides a renewal route.",
+      "sources": [
+        "https://www.hararecity.co.zw/news/read/city-reduces-business-licence-fees",
+        "https://www.hararecity.co.zw/resources/download/51"
+      ],
+      "note": "Confirm the operative expiry date and renewal window for the licence class."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Harare business-licensing resources", "url": "https://www.hararecity.co.zw/resources/of/business-licensing", "kind": "GUIDANCE"},
+        {"label": "Business-licence application form", "url": "https://www.hararecity.co.zw/resources/download/51", "kind": "FORM"},
+        {"label": "Business-licensing checklist", "url": "https://www.hararecity.co.zw/resources/download/40", "kind": "CHECKLIST"}
+      ],
+      "sources": [
+        "https://www.hararecity.co.zw/resources/of/business-licensing",
+        "https://www.hararecity.co.zw/resources/download/51",
+        "https://www.hararecity.co.zw/resources/download/40"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Identify the correct shop, municipal or food-purveyors licence class for the activity."},
+        {"order": 2, "action": "Prepare the premises against the council checklist and obtain any activity-specific approvals."},
+        {"order": 3, "action": "Complete the council application form for the premises and person in control."},
+        {"order": 4, "action": "Submit the application for the applicable health inspection and council approval."},
+        {"order": 5, "action": "Pay the authority-confirmed fee and obtain the licence before relying on it for trading."}
+      ],
+      "sources": [
+        "https://www.hararecity.co.zw/resources/download/40",
+        "https://www.hararecity.co.zw/resources/download/51"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://www.hararecity.co.zw/news/read/city-reduces-business-licence-fees",
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/40",
+      "https://www.hararecity.co.zw/resources/download/51"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Licence class and premises requirements vary by activity; confirm the final tariff and inspection route with the council."
+  },
+  {
+    "id": "guide-harare-health-registration",
+    "name": "Harare Health Registration of Business Premises Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "harare-health-registration",
+    "authorityId": "harare-city-council",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Business premises falling within a class listed on Harare's health-registration application.",
+      "sources": ["https://www.hararecity.co.zw/resources/download/50"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": ["Completed Health Registration of Business Premises application form"],
+        "sources": ["https://www.hararecity.co.zw/resources/download/50"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Premises that meet the sanitation, structure, ventilation, storage and waste controls applicable to the activity",
+          "Identification of the applicant, trading name, premises and person in control"
+        ],
+        "sources": [
+          "https://www.hararecity.co.zw/resources/download/40",
+          "https://www.hararecity.co.zw/resources/download/50"
+        ],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "No final current health-registration fee for each premises class was verified."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current council-published processing duration was located."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The official form supports renewal but does not establish the renewal cadence."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Health-registration application", "url": "https://www.hararecity.co.zw/resources/download/50", "kind": "FORM"},
+        {"label": "Business-premises checklist", "url": "https://www.hararecity.co.zw/resources/download/40", "kind": "CHECKLIST"}
+      ],
+      "sources": [
+        "https://www.hararecity.co.zw/resources/download/40",
+        "https://www.hararecity.co.zw/resources/download/50"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Identify the premises class and whether the filing is new, renewal or change of ownership."},
+        {"order": 2, "action": "Prepare the premises against the council's applicable health and structural controls."},
+        {"order": 3, "action": "Complete and submit the health-registration form with the applicant, premises and person-in-control details."},
+        {"order": 4, "action": "Make the premises available for Environmental Health Officer assessment."},
+        {"order": 5, "action": "Address any official findings and obtain the City Health approval and registration."
+        }
+      ],
+      "sources": [
+        "https://www.hararecity.co.zw/resources/download/40",
+        "https://www.hararecity.co.zw/resources/download/50"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://www.hararecity.co.zw/resources/download/40",
+      "https://www.hararecity.co.zw/resources/download/50"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The form covers multiple premises classes; confirm the operative fee and renewal rule with City Health."
+  },
+  {
+    "id": "guide-bulawayo-shop-licence",
+    "name": "Bulawayo Shop Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "bulawayo-shop-licence",
+    "authorityId": "bulawayo-city-council",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Retail or wholesale businesses operating from a shop, store or other fixed premises in Bulawayo.",
+      "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed trading-permit application for a new applicant",
+          "Current ZIMRA tax-clearance certificate",
+          "Valid trading permit and enabling certificate for the full licence",
+          "Original prior-year shop licence for renewal"
+        ],
+        "sources": ["https://www.citybyo.co.zw/AZServices/Licensing"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "An Environmental Health Officer site inspection for the trading-permit stage",
+          "Council consideration and the enabling certificate required for the full shop licence"
+        ],
+        "sources": [
+          "https://www.citybyo.co.zw/Health/Inspectorate",
+          "https://citybyo.co.zw/Faq/ChamberSecretary"
+        ],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The council page displays fee ranges without a sufficiently clear current currency and class mapping for safe reuse."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "A council-meeting stage is published, but no complete application turnaround is stated."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "The shop licence is renewed annually.",
+      "sources": ["https://citybyo.co.zw/Faq/ChamberSecretary"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Bulawayo licensing service", "url": "https://www.citybyo.co.zw/AZServices/Licensing", "kind": "GUIDANCE"},
+        {"label": "Trading-permit application", "url": "https://www.citybyo.co.zw/Downloads/GetForm?fileShortName=FORM_TRADING_PERMIT%282%29.pdf", "kind": "FORM"},
+        {"label": "Shop-licensing process", "url": "https://citybyo.co.zw/Faq/ChamberSecretary", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://www.citybyo.co.zw/AZServices/Licensing",
+        "https://www.citybyo.co.zw/Downloads/GetForm?fileShortName=FORM_TRADING_PERMIT%282%29.pdf",
+        "https://citybyo.co.zw/Faq/ChamberSecretary"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Submit the trading-permit application for the proposed premises and activity."},
+        {"order": 2, "action": "Make the site available for Environmental Health inspection and resolve any findings."},
+        {"order": 3, "action": "Obtain the approved trading permit and submit the full shop-licence requirements."},
+        {"order": 4, "action": "Complete the council consideration, notice and enabling-certificate stages identified by the council."},
+        {"order": 5, "action": "Pay the authority-confirmed fee and collect the issued shop licence."}
+      ],
+      "sources": [
+        "https://www.citybyo.co.zw/Health/Inspectorate",
+        "https://citybyo.co.zw/Faq/ChamberSecretary"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://www.citybyo.co.zw/AZServices/Licensing",
+      "https://www.citybyo.co.zw/Downloads/GetForm?fileShortName=FORM_TRADING_PERMIT%282%29.pdf",
+      "https://www.citybyo.co.zw/Health/Inspectorate",
+      "https://citybyo.co.zw/Faq/ChamberSecretary"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The temporary trading permit and full shop licence are distinct stages; confirm current fees with the council."
+  },
+  {
+    "id": "guide-bulawayo-premises-registration-certificate",
+    "name": "Bulawayo Registration Certificate for Business Premises Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "bulawayo-premises-registration-certificate",
+    "authorityId": "bulawayo-city-council",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Registrable premises identified by the Bulawayo Health Inspectorate, including food premises, hairdressers, hotels, lodging premises, laundries and dry cleaners.",
+      "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Town-planning approval where required for the proposed use",
+          "Approved building plan"
+        ],
+        "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Payment of the council inspection fee confirmed by the authority",
+          "A satisfactory Environmental Health Officer inspection"
+        ],
+        "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The official page requires an inspection fee but does not publish the current amount."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No end-to-end processing duration is stated on the reviewed official page."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "The certificate is valid until 31 December and must be renewed annually.",
+      "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Bulawayo Health Inspectorate guidance", "url": "https://www.citybyo.co.zw/Health/Inspectorate", "kind": "GUIDANCE"},
+        {"label": "Procedure for licensing premises", "url": "https://www.citybyo.co.zw/Downloads/GetPublication?fileShortName=procedure-for-licencing-premises.pdf", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://www.citybyo.co.zw/Health/Inspectorate",
+        "https://www.citybyo.co.zw/Downloads/GetPublication?fileShortName=procedure-for-licencing-premises.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Confirm with Environmental Health that the premises and activity require registration."},
+        {"order": 2, "action": "Obtain town-planning approval where required and an approved building plan."},
+        {"order": 3, "action": "Pay the authority-confirmed inspection fee and arrange the Environmental Health inspection."},
+        {"order": 4, "action": "Resolve inspection findings and apply for the registration certificate after the premises passes."},
+        {"order": 5, "action": "Renew the certificate annually before its current term ends."
+        }
+      ],
+      "sources": ["https://www.citybyo.co.zw/Health/Inspectorate"],
+      "note": null
+    },
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate",
+      "https://www.citybyo.co.zw/Downloads/GetPublication?fileShortName=procedure-for-licencing-premises.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Premises standards vary by activity; obtain activity-specific direction from Environmental Health."
+  },
+  {
+    "id": "guide-zimbabwe-liquor-licence",
+    "name": "Zimbabwe Liquor Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zimbabwe-liquor-licence",
+    "authorityId": "liquor-licensing-board",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Applicants seeking authority to sell liquor under the licence classes administered under Zimbabwe's Liquor Act.",
+      "sources": ["https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Proof of payment of the applicable application fee",
+          "Premises plans approved by the Environmental Health Officer",
+          "Police report",
+          "Proof of citizenship for the applicant and proposed manager",
+          "Lease, title deed or other proof of the right to occupy the premises",
+          "Vetted fingerprints",
+          "Required notice in the Government Gazette and a local newspaper"
+        ],
+        "sources": ["https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Premises suitable for the proposed licence and consistent with applicable zoning",
+          "An applicant and proposed manager who meet the Board's suitability and character requirements",
+          "Selection of the correct liquor-licence class"
+        ],
+        "sources": ["https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The official service page requires payment but does not publish a current amount for each licence class."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current end-to-end processing time was verified on the reviewed official service page."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed service page does not establish the term or renewal cycle for each licence class."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Liquor Licensing Board service guidance", "url": "https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing", "kind": "GUIDANCE"}
+      ],
+      "sources": ["https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"],
+      "note": "The Board portal was unavailable during review, so it is not presented as a verified filing link."
+    },
+    "steps": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The official page publishes eligibility and document requirements but not an authoritative ordered application sequence."
+    },
+    "sources": ["https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"],
+    "lastReviewed": "2026-07-15",
+    "notes": "This is a national overview; confirm class-specific filing, notice, fee and renewal instructions with the Liquor Licensing Board."
+  },
+  {
+    "id": "guide-ema-esia-certificate",
+    "name": "Environmental and Social Impact Assessment Certificate Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "ema-esia-certificate",
+    "authorityId": "ema",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Developers of projects in EMA-listed sectors that may cause significant adverse environmental effects.",
+      "sources": ["https://ema.co.zw/eia/"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Project prospectus covering the project, location, baseline environment, anticipated impacts, mitigation measures, project cost, terms of reference and legal framework",
+          "Full ESIA report prepared by an EMA-registered consultant when EMA requires a full assessment",
+          "Six copies of the ESIA report for review when submitting the full report"
+        ],
+        "sources": ["https://ema.co.zw/eia/"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Screen the project against EMA's prescribed sectors before implementation",
+          "Use an EMA-registered consultant when a full ESIA is required"
+        ],
+        "sources": ["https://ema.co.zw/eia/"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "ESIA review fee, selected by EMA's published project-cost band", "amount": "0.8%, 1% or 1.2% of total project cost", "currency": "FORMULA", "taxTreatment": "Not stated on the cited page"},
+        {"description": "ESIA certificate renewal fee", "amount": "253.58", "currency": "USD equivalent payable in ZiG at the prevailing interbank rate", "taxTreatment": "Not stated on the cited page"}
+      ],
+      "sources": ["https://ema.co.zw/eia/"],
+      "note": "Confirm the project-cost band, payment currency and current amount with EMA before payment."
+    },
+    "processingTime": {
+      "status": "verified",
+      "value": "EMA states 60 working days for ESIA review and at least one month for renewal processing.",
+      "sources": ["https://ema.co.zw/eia/"],
+      "note": null
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "The certificate is valid for two years. If the project is not complete, renewal must be initiated six months before expiry; EMA states a one-year extension after renewal.",
+      "sources": ["https://ema.co.zw/eia/"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "EMA ESIA guidance and requirements", "url": "https://ema.co.zw/eia/", "kind": "GUIDANCE"},
+        {"label": "EMA online licensing portal", "url": "https://acumatica.ema.co.zw/", "kind": "PORTAL"}
+      ],
+      "sources": [
+        "https://ema.co.zw/eia/",
+        "https://acumatica.ema.co.zw/"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Screen the proposed project against EMA's listed sectors before implementation."},
+        {"order": 2, "action": "Prepare and submit the project prospectus with the required project, baseline, impact, mitigation, cost and legal-framework information."},
+        {"order": 3, "action": "If EMA requires a full ESIA, appoint a registered consultant and prepare the full report."},
+        {"order": 4, "action": "Submit the required report copies and pay the authority-confirmed review fee."},
+        {"order": 5, "action": "Do not implement the prescribed project before EMA issues the certificate."},
+        {"order": 6, "action": "Submit monitoring reports and start renewal six months before expiry if the project remains incomplete."}
+      ],
+      "sources": ["https://ema.co.zw/eia/"],
+      "note": null
+    },
+    "sources": [
+      "https://acumatica.ema.co.zw/",
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Applicability and the assessment depth are project-specific; obtain EMA confirmation before implementation."
+  },
+  {
+    "id": "guide-ema-effluent-licence",
+    "name": "Effluent Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "ema-effluent-licence",
+    "authorityId": "ema",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Enterprises, industrial operations and mining operations that discharge effluent.",
+      "sources": ["https://ema.co.zw/water-and-effluent/"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Certificate of incorporation",
+          "Company profile",
+          "Identification document for the company manager or director",
+          "Current tax-clearance certificate",
+          "Local-council endorsement where effluent is discharged into a council reticulation system",
+          "Completed EMA effluent application form"
+        ],
+        "sources": [
+          "https://ema.co.zw/water-and-effluent/",
+          "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx"
+        ],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "A site inspection by EMA",
+          "Laboratory test results for industrial and mining effluent applications",
+          "Council endorsement where the discharge enters a council system"
+        ],
+        "sources": ["https://ema.co.zw/water-and-effluent/"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "No current fee amount was stated on the reviewed official page or form."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No authority-published end-to-end processing duration was located."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed official sources do not publish the licence term or renewal cadence."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "EMA water and effluent guidance", "url": "https://ema.co.zw/water-and-effluent/", "kind": "GUIDANCE"},
+        {"label": "Effluent application form", "url": "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx", "kind": "FORM"},
+        {"label": "EMA online licensing portal", "url": "https://acumatica.ema.co.zw/", "kind": "PORTAL"}
+      ],
+      "sources": [
+        "https://acumatica.ema.co.zw/",
+        "https://ema.co.zw/water-and-effluent/",
+        "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Complete the EMA effluent application and assemble the company, identity and tax-clearance documents."},
+        {"order": 2, "action": "Obtain local-council endorsement if the discharge enters a council reticulation system."},
+        {"order": 3, "action": "Submit the application and make the site available for EMA inspection."},
+        {"order": 4, "action": "For industrial or mining effluent, obtain and submit the laboratory test information required by EMA."},
+        {"order": 5, "action": "Address EMA findings and obtain the licence before relying on it for discharge."
+        }
+      ],
+      "sources": ["https://ema.co.zw/water-and-effluent/"],
+      "note": null
+    },
+    "sources": [
+      "https://acumatica.ema.co.zw/",
+      "https://ema.co.zw/water-and-effluent/",
+      "https://ema.co.zw/wp-content/uploads/2026/02/ESWD-application-form.docx"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Requirements differ between enterprise and industrial or mining discharges; confirm classification with EMA."
+  },
+  {
+    "id": "guide-zera-electricity-generation-licence",
+    "name": "Electricity Generation Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zera-electricity-generation-licence",
+    "authorityId": "zera",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Electricity undertakings generating, transmitting, distributing or supplying electricity in excess of 100 kW; this guide covers generation applications.",
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed generation-licence application form",
+          "Business plan and company registration documents",
+          "Board profile and evidence of financing and technical capacity",
+          "Current tax-clearance certificate",
+          "Grid Impact Assessment, proposed power-purchase arrangements and applicable fuel-supply arrangements",
+          "Bankable feasibility study and project implementation schedule",
+          "Land-use permit, project-location maps and applicable water-extraction permit",
+          "EMA environmental-impact-assessment certificate",
+          "Proof of payment of the application fee"
+        ],
+        "sources": [
+          "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/New-Electricity-Licencing-Checklist-2024.pdf",
+          "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"
+        ],
+        "note": "The detailed requirement set depends on whether generation supplies the grid, own consumption or identified customers."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Determine the generation model and plant to be licensed",
+          "Obtain the applicable land, environmental and network studies and approvals",
+          "Demonstrate financing and technical capability for the project"
+        ],
+        "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "Generation-licence application fee", "amount": "20", "currency": "USD", "taxTreatment": "Excluding VAT"},
+        {"description": "Non-renewable commercial plant up to 10 MW", "amount": "No licence fee", "currency": "USD", "taxTreatment": "Excluding VAT"},
+        {"description": "Non-renewable commercial plant above 10 MW", "amount": "10,000 fixed plus 5,000 per 25 MW or part thereof", "currency": "USD", "taxTreatment": "Excluding VAT"},
+        {"description": "Renewal application and licence fees", "amount": "20 application plus 2,000 licence fee", "currency": "USD", "taxTreatment": "Excluding VAT"}
+      ],
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"],
+      "note": "Renewable commercial licence fees vary by technology and capacity; consult the current ZERA table and subsequent amendments before payment."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The reviewed current ZERA application form and guidelines do not state an end-to-end determination time."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "The guidelines publish renewal fees but do not state one general licence term or renewal interval for every generation licence."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Electricity application forms and regulations", "url": "https://www.zera.co.zw/electricity-application-forms-regulations/", "kind": "GUIDANCE"},
+        {"label": "Generation-licence application form", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Applications/Generation-Licence-Application-Form.pdf", "kind": "FORM"},
+        {"label": "Generation-licence checklist", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/New-Electricity-Licencing-Checklist-2024.pdf", "kind": "CHECKLIST"},
+        {"label": "Electricity licensing guidelines", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf", "kind": "GUIDANCE"}
+      ],
+      "sources": [
+        "https://www.zera.co.zw/electricity-application-forms-regulations/",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Applications/Generation-Licence-Application-Form.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/New-Electricity-Licencing-Checklist-2024.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Determine the plant and generation model, then download the current form and requirements."},
+        {"order": 2, "action": "Complete the project, corporate, technical, financial, network and environmental evidence applicable to the model."},
+        {"order": 3, "action": "Pay the authority-confirmed application fee and retain proof."},
+        {"order": 4, "action": "Email the completed form and all requirements to the ZERA electricity-licensing address stated in the current guidance."},
+        {"order": 5, "action": "Resolve any completeness or assessment issues raised by ZERA before the licence is determined."
+        }
+      ],
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf"],
+      "note": null
+    },
+    "sources": [
+      "https://www.zera.co.zw/electricity-application-forms-regulations/",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Applications/Generation-Licence-Application-Form.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/Electricity-Licencing-Guidelines-.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Electricity-Guidelines-and-Regulations/New-Electricity-Licencing-Checklist-2024.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Generation requirements and licence fees depend on plant type, capacity and supply model; revalidate current amendments with ZERA."
+  },
+  {
+    "id": "guide-zera-petroleum-retail-licence",
+    "name": "Petroleum Retail Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zera-petroleum-retail-licence",
+    "authorityId": "zera",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "A person or company operating a site-specific petroleum retail activity in Zimbabwe.",
+      "sources": [
+        "https://www.zera.co.zw/petroleum-overview/",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf"
+      ],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed site-specific petroleum retail application form",
+          "Local-authority permit or licence",
+          "Fire Brigade certificate",
+          "EMA Hazardous Substance Storage and Use Licence",
+          "Certified Certificate of Incorporation, CR14, CR6 and CR2 or share certificates",
+          "Certified title deeds or lease agreement for the retail site",
+          "Certified copy of the applicant's identity document"
+        ],
+        "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "A compliant retail site with local-authority, fire and EMA approvals",
+          "A separate application for each site"
+        ],
+        "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf"],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "Rural petroleum retail licence", "amount": "200", "currency": "USD", "taxTreatment": "Excluding VAT"},
+        {"description": "Urban petroleum retail licence", "amount": "500", "currency": "USD", "taxTreatment": "Excluding VAT"}
+      ],
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf"],
+      "note": "Confirm the site's classification and any subsequent fee amendment with ZERA before payment."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current end-to-end processing duration was stated in the reviewed official sources."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "ZERA states that petroleum licences are valid for one year and renewable after satisfactory compliance audits.",
+      "sources": ["https://www.zera.co.zw/petroleum-overview/"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "Petroleum forms and regulations", "url": "https://www.zera.co.zw/petroleum-application-forms-regulations/", "kind": "GUIDANCE"},
+        {"label": "New petroleum retail application", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf", "kind": "FORM"},
+        {"label": "Petroleum retail renewal form", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Renewal-Applications/Petroleum_Retail_Renewal_form.pdf", "kind": "FORM"},
+        {"label": "Petroleum licence fee regulations", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf", "kind": "FEE_SCHEDULE"}
+      ],
+      "sources": [
+        "https://www.zera.co.zw/petroleum-application-forms-regulations/",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Renewal-Applications/Petroleum_Retail_Renewal_form.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Obtain the local-authority, Fire Brigade and EMA approvals for the retail site."},
+        {"order": 2, "action": "Complete a separate petroleum retail application for the site."},
+        {"order": 3, "action": "Attach the certified company, identity, occupation-right and site-approval documents in the checklist."},
+        {"order": 4, "action": "Pay the authority-confirmed rural or urban fee and submit the complete application to ZERA."},
+        {"order": 5, "action": "Address ZERA assessment or inspection findings and obtain the licence before retailing."}
+      ],
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf"],
+      "note": null
+    },
+    "sources": [
+      "https://www.zera.co.zw/petroleum-application-forms-regulations/",
+      "https://www.zera.co.zw/petroleum-overview/",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/New-Petroleum-Applications/Petroleum_Retail_form_NEW_applicant.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Renewal-Applications/Petroleum_Retail_Renewal_form.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The application is site-specific; confirm site classification, audit readiness and current fees with ZERA."
+  },
+  {
+    "id": "guide-zera-lpg-retail-licence",
+    "name": "Liquefied Petroleum Gas Retail Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "zera-lpg-retail-licence",
+    "authorityId": "zera",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "A person or company carrying on LPG retail business in Zimbabwe.",
+      "sources": ["https://www.zera.co.zw/lpg-overview/"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed ER2 LPG retail application form",
+          "Certified applicant identity document",
+          "Certified CR14, CR6, CR2 and Certificate of Incorporation",
+          "Lease agreement or title deeds",
+          "EMA certificate",
+          "Fire Brigade certificate",
+          "Local-authority permit"
+        ],
+        "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf"],
+        "note": null
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Local-authority planning, fire and environmental approvals for the site",
+          "EMA assessment and certificate",
+          "A compliant LPG retail site and right to occupy it"
+        ],
+        "sources": [
+          "https://www.zera.co.zw/lpg-overview/",
+          "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf"
+        ],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "LPG retail licence", "amount": "200", "currency": "USD", "taxTreatment": "Excluding VAT"}
+      ],
+      "sources": ["https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf"],
+      "note": "Confirm any subsequent statutory amendment with ZERA before payment."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No current end-to-end processing duration was stated in the reviewed official sources."
+    },
+    "renewalCycle": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "A renewal form exists, but the reviewed general sources do not establish one licence term for all LPG retail licences."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "LPG forms and regulations", "url": "https://www.zera.co.zw/lpg-application-forms-regulations/", "kind": "GUIDANCE"},
+        {"label": "LPG retail application form", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf", "kind": "FORM"},
+        {"label": "LPG application flowchart", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf", "kind": "GUIDANCE"},
+        {"label": "LPG retail renewal form", "url": "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Renewals/LPG_Retail_Renewal_form_Dec_18.pdf", "kind": "FORM"}
+      ],
+      "sources": [
+        "https://www.zera.co.zw/lpg-application-forms-regulations/",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Renewals/LPG_Retail_Renewal_form_Dec_18.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Obtain local-authority planning, fire and environmental approvals for the LPG site."},
+        {"order": 2, "action": "Complete the EMA stage and obtain the required EMA certificate."},
+        {"order": 3, "action": "Complete the ZERA ER2 application for the retail site."},
+        {"order": 4, "action": "Attach the identity, company, occupation-right, EMA, fire and local-authority documents."},
+        {"order": 5, "action": "Pay the authority-confirmed fee, submit to ZERA and resolve any assessment findings before retailing."
+        }
+      ],
+      "sources": [
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf",
+        "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://www.zera.co.zw/lpg-application-forms-regulations/",
+      "https://www.zera.co.zw/lpg-overview/",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Guidelines-and-Regulations/LPG_licence_application_flowchart.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-New-Applications/LPG_Retail_licence_Application_form.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/LPG-Renewals/LPG_Retail_Renewal_form_Dec_18.pdf",
+      "https://www.zera.co.zw/wp-content/uploads/simple-file-list/Petroleum-Fees/S_I_-78-of-2024-Petroleum-Licence-Fees-Regulations-2024-Normal-Petroleum-Licence-Fees-1.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The licensing sequence has local-authority, EMA and ZERA gates; confirm the current term and fee before filing."
+  },
+  {
+    "id": "guide-potraz-unified-telecommunications-services-licence",
+    "name": "Unified Telecommunications Services Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "potraz-unified-telecommunications-services-licence",
+    "authorityId": "potraz",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Telecommunications operators seeking the umbrella unified licence covering the converged Network Facilities, Network Services and Application Services categories.",
+      "sources": ["https://www.potraz.gov.zw/wp-content/uploads/2025/06/Licence-Application-General-Guidelines.pdf"],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "No current unified-licence application checklist was located in the reviewed official sources."
+      },
+      "prerequisites": {
+        "status": "unverified",
+        "value": [],
+        "sources": [],
+        "note": "The official category guidance describes licence scope but does not publish a complete prerequisite set for an application."
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "Unified Telecommunications Services application fee", "amount": "800", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Unified Telecommunications Services initial or renewal fee", "amount": "2,100,000", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "USF plus annual licence fee", "amount": "3.5% of gross turnover plus VAT", "currency": "FORMULA", "taxTreatment": "VAT applies as stated"}
+      ],
+      "sources": ["https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf"],
+      "note": "Confirm the current category, fee schedule and payment instructions directly with POTRAZ before committing funds."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No authority-published application turnaround was located in the reviewed official sources."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "The published tenure for the Unified Telecommunications Services Licence is 20 years; POTRAZ lists an initial or renewal fee and separate annual charges.",
+      "sources": ["https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf"],
+      "note": null
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "POTRAZ converged-licence guidance", "url": "https://www.potraz.gov.zw/wp-content/uploads/2025/06/Licence-Application-General-Guidelines.pdf", "kind": "GUIDANCE"},
+        {"label": "POTRAZ licence categories and fees", "url": "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf", "kind": "FEE_SCHEDULE"}
+      ],
+      "sources": [
+        "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf",
+        "https://www.potraz.gov.zw/wp-content/uploads/2025/06/Licence-Application-General-Guidelines.pdf"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "unverified",
+      "value": [],
+      "sources": [],
+      "note": "The reviewed official documents do not provide a current ordered filing sequence for the unified licence."
+    },
+    "sources": [
+      "https://www.potraz.gov.zw/wp-content/uploads/2022/03/Licence-Categories-Including-Fees.pdf",
+      "https://www.potraz.gov.zw/wp-content/uploads/2025/06/Licence-Application-General-Guidelines.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "POTRAZ offers multiple converged subcategories; confirm whether the umbrella unified licence is the correct authorisation before applying."
+  },
+  {
+    "id": "guide-mcaz-premises-licence",
+    "name": "Medicines Premises Licence Guide",
+    "category": "compliance_guide",
+    "licenceTypeId": "mcaz-premises-licence",
+    "authorityId": "mcaz",
+    "whoNeedsIt": {
+      "status": "verified",
+      "value": "Premises used as pharmacies, dispensing medical or veterinary practices, manufacturers, clinics and other medicines premises subject to MCAZ licensing.",
+      "sources": [
+        "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/",
+        "https://portal.mcaz.co.zw/wp-content/uploads/2025/07/APPLICATION-FOR-ISSUE-OF-A-LICENCE-FOR-PREMISES.pdf"
+      ],
+      "note": null
+    },
+    "applicationRequirements": {
+      "documents": {
+        "status": "verified",
+        "value": [
+          "Completed premises-licence application form submitted in triplicate",
+          "Approved premises plans and floor-layout plan",
+          "Local-authority approval for use or change of use and Environmental Health approval",
+          "Proof of citizenship or ordinary residence for the individual applicant or the majority of company directors, unless exempted",
+          "Memorandum and articles of association and current company-director particulars where the applicant is a company",
+          "Affidavits or police clearances concerning relevant convictions for company directors",
+          "Applicable professional-council confirmation for the premises type",
+          "Proof of payment of the applicable application fee"
+        ],
+        "sources": [
+          "https://portal.mcaz.co.zw/?download_id=3634&sdm_process_download=1",
+          "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/"
+        ],
+        "note": "The exact checklist varies for pharmacies, manufacturers, dispensing practitioners and clinics."
+      },
+      "prerequisites": {
+        "status": "verified",
+        "value": [
+          "Premises approved for the intended use by the local authority",
+          "A qualifying supervisor and any professional-council approvals applicable to the premises type",
+          "Premises ready for MCAZ inspection against the applicable checklist"
+        ],
+        "sources": [
+          "https://portal.mcaz.co.zw/?download_id=3634&sdm_process_download=1",
+          "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/"
+        ],
+        "note": null
+      }
+    },
+    "officialFees": {
+      "status": "verified",
+      "value": [
+        {"description": "Pharmacy in the central business district of a city", "amount": "1,900", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Pharmacy in another urban location", "amount": "1,000", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Pharmacy under a rural district council", "amount": "600", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Dispensing medical practitioner or veterinary surgeon premises", "amount": "500", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Industrial clinic premises", "amount": "250", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"},
+        {"description": "Dispensary at a local-authority or public-health clinic", "amount": "50", "currency": "USD", "taxTreatment": "Not stated in the cited schedule"}
+      ],
+      "sources": ["https://portal.mcaz.co.zw/?download_id=2028&sdm_process_download=1"],
+      "note": "The cited fee schedule took effect on 1 September 2025; confirm the correct premises class and any later circular before payment."
+    },
+    "processingTime": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "MCAZ publishes a 60-day window to resolve outstanding application issues, but that is not an end-to-end determination time."
+    },
+    "renewalCycle": {
+      "status": "verified",
+      "value": "A premises licence is valid for 12 months and is renewed using the applicable MCAZ renewal route.",
+      "sources": [
+        "https://portal.mcaz.co.zw/?download_id=3634&sdm_process_download=1",
+        "https://www.mcaz.co.zw/online-services/"
+      ],
+      "note": "Commencement dates differ by premises category under the regulations."
+    },
+    "officialLinks": {
+      "status": "verified",
+      "value": [
+        {"label": "MCAZ licensing guidance", "url": "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/", "kind": "GUIDANCE"},
+        {"label": "Premises-licence application", "url": "https://portal.mcaz.co.zw/wp-content/uploads/2025/07/APPLICATION-FOR-ISSUE-OF-A-LICENCE-FOR-PREMISES.pdf", "kind": "FORM"},
+        {"label": "MCAZ online licensing services", "url": "https://www.mcaz.co.zw/online-services/", "kind": "PORTAL"},
+        {"label": "Current cited MCAZ fee schedule", "url": "https://portal.mcaz.co.zw/?download_id=2028&sdm_process_download=1", "kind": "FEE_SCHEDULE"}
+      ],
+      "sources": [
+        "https://portal.mcaz.co.zw/?download_id=2028&sdm_process_download=1",
+        "https://portal.mcaz.co.zw/wp-content/uploads/2025/07/APPLICATION-FOR-ISSUE-OF-A-LICENCE-FOR-PREMISES.pdf",
+        "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/",
+        "https://www.mcaz.co.zw/online-services/"
+      ],
+      "note": null
+    },
+    "steps": {
+      "status": "verified",
+      "value": [
+        {"order": 1, "action": "Identify the premises class and download its current application and inspection checklist."},
+        {"order": 2, "action": "Obtain local-authority use, plan and Environmental Health approvals and the applicable professional-council confirmations."},
+        {"order": 3, "action": "Complete the premises application and assemble the applicant, company, character, premises and payment evidence."},
+        {"order": 4, "action": "Submit the application through the current MCAZ route and make the premises available for inspection."},
+        {"order": 5, "action": "Resolve outstanding issues within the MCAZ-stated response window and obtain the licence before operating the regulated premises."
+        }
+      ],
+      "sources": [
+        "https://portal.mcaz.co.zw/?download_id=3634&sdm_process_download=1",
+        "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/"
+      ],
+      "note": null
+    },
+    "sources": [
+      "https://portal.mcaz.co.zw/?download_id=2028&sdm_process_download=1",
+      "https://portal.mcaz.co.zw/?download_id=3634&sdm_process_download=1",
+      "https://portal.mcaz.co.zw/wp-content/uploads/2025/07/APPLICATION-FOR-ISSUE-OF-A-LICENCE-FOR-PREMISES.pdf",
+      "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/",
+      "https://www.mcaz.co.zw/online-services/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "MCAZ requirements, inspection checklists and commencement dates vary by premises type; use the current class-specific material."
+  }
+]
