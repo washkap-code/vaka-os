@@ -115,9 +115,16 @@ the admin password hash between reruns on the same scratch db.
    Postgres: feature-flags 8/8; regression platform-runtime/auth-resolution/
    payroll 33/33, critical + finance tenant-isolation 15/15; both typechecks
    and web build clean. Mission pack: `docs/engineering/mission-packs/FLAG-001/`.
-   **Next Part II missions (Wave 1): PW-001 workflow extraction, PD-001
-   documents workspace, PN-001 business profile, PB-001 Black Book registry —
-   each behind its catalogue flag.**
+   **PW-001 is DONE (2026-07-15):** kernel `ApprovalService`
+   (`platform/workflow/approvals.ts`, token `APPROVAL_SERVICE`) owns approval
+   outcomes, SoD enforcement and audit action naming; procurement requisition
+   + PO approvals routed through it with byte-identical messages/behaviour
+   (workflow-approvals 5/5; procurement-lifecycle, critical, supplier-bills,
+   platform-runtime all green). No schema change. Mission pack:
+   `docs/engineering/mission-packs/PW-001/`.
+   **Next Part II missions (Wave 1): PW-002 configurable approval policies,
+   PD-001 documents workspace, PN-001 business profile, PB-001 Black Book
+   registry — each behind its catalogue flag.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant

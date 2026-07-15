@@ -9,6 +9,23 @@ import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 import { assertActiveSupplier } from "./suppliers.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import {
+  ApprovalPolicyViolationError, type ApprovalDecisionRequest, type ApprovalDecisionOutcome,
+} from "./platform/workflow/approvals.js";
+import { APPROVAL_SERVICE, platformKernel } from "./platform-runtime.js";
+
+/**
+ * PW-001: route every approval decision through the kernel ApprovalService,
+ * translating policy violations into the domain's 409 conflict responses.
+ */
+function decideApproval(request: ApprovalDecisionRequest): ApprovalDecisionOutcome {
+  try {
+    return platformKernel().container.get(APPROVAL_SERVICE).decide(request);
+  } catch (error) {
+    if (error instanceof ApprovalPolicyViolationError) throw conflict(error.message);
+    throw error;
+  }
+}
 
 const quantity = z.string().trim()
   .regex(/^\d{1,9}(\.\d{1,3})?$/, "Quantity must be positive with no more than 3 decimal places")
@@ -250,20 +267,28 @@ export async function decidePurchaseRequisition(opts: {
     )).for("update");
     if (!requisition) throw notFound("Purchase requisition not found");
     if (requisition.status !== "SUBMITTED") throw conflict("Only a submitted purchase requisition can be decided");
-    if (requisition.createdBy === opts.actorUserId) throw conflict("A requester cannot approve or reject their own purchase requisition");
-    const status = opts.input.decision === "APPROVE" ? "APPROVED" : "REJECTED";
+    // PW-001: decision semantics (SoD + outcome + audit action) come from the
+    // shared kernel ApprovalService; persistence stays in this transaction.
+    const outcome = decideApproval({
+      subjectType: "purchase_requisition",
+      decision: opts.input.decision,
+      actorUserId: opts.actorUserId,
+      segregation: [{
+        excludedUserId: requisition.createdBy,
+        message: "A requester cannot approve or reject their own purchase requisition",
+      }],
+    });
     const [updated] = await tx.update(schema.purchaseRequisitions).set({
-      status,
+      status: outcome.status,
       approvedBy: opts.actorUserId,
-      approvedAt: new Date(),
+      approvedAt: outcome.decidedAt,
       decisionReason: opts.input.reason,
     }).where(and(
       eq(schema.purchaseRequisitions.id, requisition.id),
       eq(schema.purchaseRequisitions.tenantId, opts.tenantId),
     )).returning();
-    await audit(tx, opts.tenantId, opts.actorUserId,
-      status === "APPROVED" ? "purchase_requisition.approved" : "purchase_requisition.rejected",
-      "purchase_requisition", requisition.id, { number: requisition.number, status });
+    await audit(tx, opts.tenantId, opts.actorUserId, outcome.auditAction,
+      "purchase_requisition", requisition.id, { number: requisition.number, status: outcome.status });
     return updated;
   });
 }
@@ -488,7 +513,10 @@ export async function approvePurchaseOrder(opts: {
     )).for("update");
     if (!po) throw notFound("Purchase order not found");
     if (po.status !== "DRAFT") throw conflict("Only a draft purchase order can be approved");
-    if (po.createdBy === opts.actorUserId) throw conflict("A purchase-order creator cannot approve their own purchase order");
+    const segregation = [{
+      excludedUserId: po.createdBy,
+      message: "A purchase-order creator cannot approve their own purchase order",
+    }];
     if (po.purchaseRequisitionId) {
       const [requisition] = await tx.select({ createdBy: schema.purchaseRequisitions.createdBy })
         .from(schema.purchaseRequisitions).where(and(
@@ -496,17 +524,27 @@ export async function approvePurchaseOrder(opts: {
           eq(schema.purchaseRequisitions.tenantId, opts.tenantId),
         ));
       if (!requisition) throw badRequest("Purchase-order requisition lineage is invalid");
-      if (requisition.createdBy === opts.actorUserId) throw conflict("A requisition requester cannot approve its purchase order");
+      segregation.push({
+        excludedUserId: requisition.createdBy,
+        message: "A requisition requester cannot approve its purchase order",
+      });
     }
+    // PW-001: shared kernel approval semantics; persistence stays here.
+    const outcome = decideApproval({
+      subjectType: "purchase_order",
+      decision: "APPROVE",
+      actorUserId: opts.actorUserId,
+      segregation,
+    });
     const number = await nextDocNumber(tx, opts.tenantId, "purchase_order", "PO");
     const [approved] = await tx.update(schema.purchaseOrders).set({
       number,
       status: "ORDERED",
       approvedBy: opts.actorUserId,
-      approvedAt: new Date(),
+      approvedAt: outcome.decidedAt,
       approvalReason: opts.reason,
     }).where(and(eq(schema.purchaseOrders.id, po.id), eq(schema.purchaseOrders.tenantId, opts.tenantId))).returning();
-    await audit(tx, opts.tenantId, opts.actorUserId, "purchase_order.approved", "purchase_order", po.id, {
+    await audit(tx, opts.tenantId, opts.actorUserId, outcome.auditAction, "purchase_order", po.id, {
       number,
       lineTotal: po.total,
       currency: po.currency,
