@@ -24,13 +24,15 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0042_migration_hub.sql`.
+Highest migration on `main`: `0043_directory_enquiries.sql`.
 **Migrations through 0041 are applied and verified in production.
-⚠️ PUSH GATE: 0042 is NOT yet applied — the Supabase MCP in this session
-lost its VAKA scope (back on BioCheck) mid-session. Apply
-`server/drizzle/0042_migration_hub.sql` (idempotent) via the Supabase SQL
-editor or a VAKA-scoped MCP, verify the three migration tables exist empty,
-THEN push main.**
+⚠️ PUSH GATE: 0042 AND 0043 are NOT yet applied — the Supabase MCP in this
+session lost its VAKA scope (back on BioCheck) mid-session. Apply
+`server/drizzle/0042_migration_hub.sql` then
+`server/drizzle/0043_directory_enquiries.sql` (both idempotent) via the
+Supabase SQL editor or a VAKA-scoped MCP, verify the four new tables exist
+empty and business_profiles gained accept_enquiries (default false), THEN
+push main.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -49,9 +51,21 @@ rules — defaults unchanged everywhere).
 | 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
 | 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
 | 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply BEFORE pushing main |
+| 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply BEFORE pushing main |
 
-New migrations continue from **0043**. **Migration numbers are reserved by
+New migrations continue from **0044**. **Migration numbers are reserved by
 this (Cowork) session — parallel Codex work must NOT create migrations.**
+   **PN-003 is DONE (2026-07-15, session 3):** consent-first directory
+   enquiries behind `network.directory`. Opt-in via `acceptEnquiries` read
+   from the FROZEN published snapshot (consent follows publish semantics);
+   self-enquiry blocked (DB CHECK); 10/day rolling rate limit per sender
+   tenant; enquiries land in a register (crm.read) and NOTHING enters the
+   CRM automatically — convert (creates one contact tagged directory-lead)
+   or dismiss are explicit crm.write actions; all four events audited.
+   Verified: business-profile 18/18; regression critical + migration-hub +
+   finance tenant-isolation 27/27; typecheck clean. Mission pack:
+   `docs/engineering/mission-packs/PN-003/`. Codex lane: PB-002B in
+   flight; IND-000 (industry pack knowledge seed) queued behind it.
    **PM-001 + PM-002 are DONE (2026-07-15, session 3):** Migration Hub
    behind `migration.hub` (fail-closed). PM-001: `migration_projects` +
    `migration_steps` (STAGED/COMMITTED/ROLLED_BACK/DISCARDED) generalise the
