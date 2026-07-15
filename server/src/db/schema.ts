@@ -1726,6 +1726,7 @@ export const businessProfiles = pgTable("business_profiles", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   showContact: boolean("show_contact").default(false).notNull(),
+  acceptEnquiries: boolean("accept_enquiries").default(false).notNull(),
   status: text("status").default("DRAFT").notNull(),
   publishedSnapshot: jsonb("published_snapshot"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
@@ -1741,6 +1742,28 @@ export const businessProfiles = pgTable("business_profiles", {
   check("business_profiles_tagline_check", sql`${t.tagline} IS NULL OR length(${t.tagline}) <= 140`),
   check("business_profiles_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 2000`),
   check("business_profiles_snapshot_check", sql`(${t.status} = 'PUBLISHED' AND ${t.publishedSnapshot} IS NOT NULL AND ${t.publishedAt} IS NOT NULL) OR (${t.status} <> 'PUBLISHED' AND ${t.publishedSnapshot} IS NULL)`),
+]);
+
+// PN-003 — consent-first directory enquiries (explicit conversion to CRM).
+export const directoryEnquiries = pgTable("directory_enquiries", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  profileId: uuid("profile_id").notNull().references(() => businessProfiles.id),
+  fromTenantId: uuid("from_tenant_id").notNull().references(() => tenants.id),
+  fromUserId: uuid("from_user_id").notNull().references(() => users.id),
+  senderBusiness: text("sender_business").notNull(),
+  replyEmail: text("reply_email"),
+  message: text("message").notNull(),
+  status: text("status").default("NEW").notNull(),
+  contactId: uuid("contact_id").references(() => contacts.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("directory_enquiries_recipient").on(t.tenantId, t.status, t.createdAt),
+  index("directory_enquiries_sender_day").on(t.fromTenantId, t.createdAt),
+  check("directory_enquiries_status_check", sql`${t.status} IN ('NEW', 'CONVERTED', 'DISMISSED')`),
+  check("directory_enquiries_message_check", sql`length(trim(${t.message})) BETWEEN 5 AND 2000`),
+  check("directory_enquiries_no_self_check", sql`${t.tenantId} <> ${t.fromTenantId}`),
 ]);
 
 export const blackbookEntryVersions = pgTable("blackbook_entry_versions", {

@@ -61,8 +61,9 @@ import {
   listImportRuns as listBlackbookImportRuns,
 } from "./blackbook.js";
 import {
-  directoryQuerySchema, getDirectoryProfile, getMyProfile, profileInputSchema,
-  publishProfile, saveProfile, searchDirectory, unpublishProfile,
+  directoryQuerySchema, enquirySchema, getDirectoryProfile, getMyProfile,
+  listEnquiries, profileInputSchema, publishProfile, resolveEnquiry, saveProfile,
+  searchDirectory, sendEnquiry, unpublishProfile,
 } from "./business-profile.js";
 import {
   closeProject as closeMigrationProject, commitStep as commitMigrationStep,
@@ -1991,6 +1992,31 @@ api.get("/network/directory", requireFeature("network.directory"), wrap(async (r
   }))));
 api.get("/network/directory/:id", requireFeature("network.directory"), wrap(async (req) =>
   getDirectoryProfile(uuidRouteParam(req, "id"))));
+
+// PN-003: consent-first enquiries; conversion to CRM is explicit + audited.
+api.post("/network/directory/:id/enquire", requireFeature("network.directory"),
+  wrap(async (req) => {
+    const body = enquirySchema.parse(req.body);
+    return sendEnquiry({
+      senderTenantId: tenantId(req), senderUserId: req.auth!.userId,
+      profileId: uuidRouteParam(req, "id"),
+      message: body.message, replyEmail: body.replyEmail,
+    });
+  }));
+api.get("/network/enquiries", requireFeature("network.directory"),
+  requirePermission("crm.read"), wrap(async (req) => listEnquiries(tenantId(req))));
+api.post("/network/enquiries/:id/convert", requireFeature("network.directory"),
+  requirePermission("crm.write"), wrap(async (req) =>
+    resolveEnquiry({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      enquiryId: uuidRouteParam(req, "id"), action: "convert",
+    })));
+api.post("/network/enquiries/:id/dismiss", requireFeature("network.directory"),
+  requirePermission("crm.write"), wrap(async (req) =>
+    resolveEnquiry({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      enquiryId: uuidRouteParam(req, "id"), action: "dismiss",
+    })));
 
 // ---------------------------------------------------------------------------
 // PM-001/PM-002: Migration Hub — project-grouped staged migrations over the

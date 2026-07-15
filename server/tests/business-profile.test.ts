@@ -193,6 +193,61 @@ describe("PN-002 directory (published snapshots only)", () => {
   });
 });
 
+describe("PN-003 enquiries (consent-first)", () => {
+  let profileId: string;
+  it("refuses enquiries while acceptEnquiries is false in the snapshot", async () => {
+    const dir = await request(app).get("/api/v1/network/directory").set(auth(B.token));
+    profileId = dir.body.find((e: any) => e.displayName?.includes("Kapiro")).id;
+    const res = await request(app)
+      .post(`/api/v1/network/directory/${profileId}/enquire`).set(auth(B.token))
+      .send({ message: "We would like a quote for structural steel." });
+    expect(res.status).toBe(409);
+  });
+  it("accepts enquiries after opt-in republish; blocks self-enquiry", async () => {
+    await request(app).put("/api/v1/network/profile").set(auth(A.token))
+      .send({ ...validProfile, displayName: "Kapiro Engineering (New Name)", showContact: true, acceptEnquiries: true });
+    await request(app).post("/api/v1/network/profile/publish").set(auth(A.token));
+    const self = await request(app)
+      .post(`/api/v1/network/directory/${profileId}/enquire`).set(auth(A.token))
+      .send({ message: "Enquiring at my own business." });
+    expect(self.status).toBe(400);
+    const res = await request(app)
+      .post(`/api/v1/network/directory/${profileId}/enquire`).set(auth(B.token))
+      .send({ message: "We would like a quote for structural steel.", replyEmail: "buyer@netb.test" });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("NEW");
+  });
+  it("recipient sees the enquiry and converts it into a CRM contact explicitly", async () => {
+    const list = await request(app).get("/api/v1/network/enquiries").set(auth(A.token));
+    expect(list.status).toBe(200);
+    const enquiry = list.body.find((e: any) => e.status === "NEW");
+    expect(enquiry.senderBusiness).toContain("Network Co b");
+    // Nothing entered CRM automatically:
+    const contactsBefore = await db.select().from(schema.contacts)
+      .where(eq(schema.contacts.tenantId, A.tenantId));
+    expect(contactsBefore.some((c) => c.name === enquiry.senderBusiness)).toBe(false);
+    const converted = await request(app)
+      .post(`/api/v1/network/enquiries/${enquiry.id}/convert`).set(auth(A.token));
+    expect(converted.status).toBe(200);
+    expect(converted.body.status).toBe("CONVERTED");
+    expect(converted.body.contactId).toBeTruthy();
+    const again = await request(app)
+      .post(`/api/v1/network/enquiries/${enquiry.id}/dismiss`).set(auth(A.token));
+    expect(again.status).toBe(409);
+  });
+  it("rate-limits the sender tenant", async () => {
+    let limited = false;
+    for (let i = 0; i < 12; i++) {
+      const res = await request(app)
+        .post(`/api/v1/network/directory/${profileId}/enquire`).set(auth(B.token))
+        .send({ message: `Follow-up enquiry number ${i} about steel sections.` });
+      if (res.status === 409) { limited = true; break; }
+      expect(res.status).toBe(200);
+    }
+    expect(limited).toBe(true);
+  });
+});
+
 describe("unpublish + tenant isolation", () => {
   it("unpublish removes the snapshot immediately", async () => {
     const res = await request(app).post("/api/v1/network/profile/unpublish").set(auth(A.token));
