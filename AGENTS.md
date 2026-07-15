@@ -20,6 +20,13 @@ Before changing product behavior or architecture, read:
 
 Repository instructions closer to a changed file may add constraints but must not silently override the VAKA Constitution.
 
+## Session Handoff Protocol (mandatory)
+
+1. **Start of every session:** read `docs/engineering/SESSION-HANDOFF.md` before any other work. It is the authoritative record of current state, migration ledger, shipped work, and stale branches.
+2. **End of every session:** update `docs/engineering/SESSION-HANDOFF.md` (date, shipped work, migration ledger, next steps, blockers, stale branches) and commit it as the **final commit** of the session. Commit message convention: `chore(handoff): session handoff YYYY-MM-DD`.
+3. A session is not complete until the handoff commit exists. If the handoff is stale relative to `git log`, the previous session ended abnormally — reconcile from git history before starting new work.
+4. The sandbox has no push credentials: commit locally via shell git; the user pushes via GitHub Desktop.
+
 ## How to work in this repository
 
 - Inspect the existing implementation before proposing or making changes.
