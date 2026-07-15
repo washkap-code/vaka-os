@@ -370,6 +370,17 @@ the admin password hash between reruns on the same scratch db.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
+## NEXT MISSION (session 4): PB-003 — Black Book directory UI + search
+
+Build the first web surface for a dark module: web Black Book page
+(browse/search entries via GET /blackbook/entries, detail view showing
+payload + sources + lastReviewed + the not-professional-advice notice),
+nav gated on the `blackbook.directory` flag (follow the PD-001/PW-004 nav
+pattern), universal search integration via P1-006. Server side exists
+(PB-001). Show verified badges honestly (source-verified ≠ certified —
+PB-002 gate still open). Web typecheck + vite build + nav-model tests.
+Before starting: clear the migration debt (apply 0042/0043/0044).
+
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
