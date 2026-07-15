@@ -1336,6 +1336,27 @@ export const dunningEvents = pgTable("dunning_events", {
 });
 
 // ---------------------------------------------------------------------------
+// PW-002 — Tenant-configurable approval policies. One optional row per
+// (tenant, subject type); no row = no additional rule (behaviour unchanged
+// until a tenant opts in). Evaluated by the kernel ApprovalService.
+// ---------------------------------------------------------------------------
+export const approvalPolicies = pgTable("approval_policies", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  subjectType: text("subject_type").notNull(),
+  thresholdAmount: money("threshold_amount").default("0").notNull(), // base currency; 0 = always
+  requiredPermission: text("required_permission"),
+  requireDistinctActor: boolean("require_distinct_actor").default(false).notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("approval_policies_tenant_subject").on(t.tenantId, t.subjectType),
+  check("approval_policies_subject_check", sql`${t.subjectType} IN ('purchase_order', 'payroll_run')`),
+  check("approval_policies_threshold_check", sql`${t.thresholdAmount} >= 0`),
+]);
+
+// ---------------------------------------------------------------------------
 // FLAG-001 — Tenant feature flags (build-dark model, Master Build Plan §15).
 // A missing row means OFF. Keys are validated against the closed
 // FEATURE_CATALOGUE in code; toggles are platform-admin actions and audited.

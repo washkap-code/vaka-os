@@ -13,6 +13,7 @@ import {
   ApprovalPolicyViolationError, type ApprovalDecisionRequest, type ApprovalDecisionOutcome,
 } from "./platform/workflow/approvals.js";
 import { APPROVAL_SERVICE, platformKernel } from "./platform-runtime.js";
+import { enforceApprovalPolicy } from "./approval-policies.js";
 
 /**
  * PW-001: route every approval decision through the kernel ApprovalService,
@@ -503,6 +504,8 @@ export async function awardRequestForQuote(opts: {
 export async function approvePurchaseOrder(opts: {
   tenantId: string;
   actorUserId: string;
+  /** PW-002: actor's permissions for tenant-configured approval policies. */
+  actorPermissions?: readonly string[];
   purchaseOrderId: string;
   reason: string;
 }) {
@@ -535,6 +538,15 @@ export async function approvePurchaseOrder(opts: {
       decision: "APPROVE",
       actorUserId: opts.actorUserId,
       segregation,
+    });
+    // PW-002: tenant-configured policy (threshold / permission / second
+    // person) evaluated on the base-currency amount. No policy = no change.
+    await enforceApprovalPolicy({
+      tx, tenantId: opts.tenantId, subjectType: "purchase_order",
+      amountCents: mulRate(toCents(po.total), po.rateToBase),
+      actorUserId: opts.actorUserId,
+      actorPermissions: opts.actorPermissions ?? [],
+      subjectCreatedBy: po.createdBy,
     });
     const number = await nextDocNumber(tx, opts.tenantId, "purchase_order", "PO");
     const [approved] = await tx.update(schema.purchaseOrders).set({

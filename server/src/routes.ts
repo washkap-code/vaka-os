@@ -42,6 +42,10 @@ import {
   enabledFeaturesFor, featureNoteSchema, listTenantFeatures, setTenantFeature,
 } from "./feature-flags.js";
 import {
+  approvalPolicyInputSchema, approvalPolicySubjectSchema,
+  listApprovalPolicies, removeApprovalPolicy, setApprovalPolicy,
+} from "./approval-policies.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1550,6 +1554,7 @@ api.get("/purchase-orders", requirePermission("procurement.read"), wrap(async (r
 api.post("/purchase-orders/:id/approve", requirePermission("procurement.approve"), wrap(async (req) =>
   approvePurchaseOrder({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
+    actorPermissions: req.auth!.permissions,
     purchaseOrderId: uuidRouteParam(req, "id"),
     reason: purchaseOrderApprovalSchema.parse(req.body).reason,
   })));
@@ -1818,6 +1823,23 @@ api.post("/accounting/periods/:id/reopen",
   }));
 
 // ---------------------------------------------------------------------------
+// PW-002: tenant-configurable approval policies (thresholds, extra
+// permission, second-person rule) for purchase orders and payroll runs.
+// Configuration is an Owner/Admin settings action and audited.
+// ---------------------------------------------------------------------------
+api.get("/settings/approval-policies", requirePermission("settings.manage"), wrap(async (req) =>
+  listApprovalPolicies(tenantId(req))));
+api.put("/settings/approval-policies/:subjectType", requirePermission("settings.manage"), wrap(async (req) => {
+  const subjectType = approvalPolicySubjectSchema.parse(routeParam(req, "subjectType"));
+  const input = approvalPolicyInputSchema.parse(req.body);
+  return setApprovalPolicy(tenantId(req), req.auth!.userId, subjectType, input);
+}));
+api.delete("/settings/approval-policies/:subjectType", requirePermission("settings.manage"), wrap(async (req) => {
+  const subjectType = approvalPolicySubjectSchema.parse(routeParam(req, "subjectType"));
+  return removeApprovalPolicy(tenantId(req), req.auth!.userId, subjectType);
+}));
+
+// ---------------------------------------------------------------------------
 // P2-009: payroll (TECHNICAL PREVIEW — accountant gate). Employee register has
 // no ledger effect; posting a run creates one balanced journal through
 // postJournal. Posted runs are immutable; corrections are full reversals.
@@ -1858,7 +1880,7 @@ api.delete("/payroll/runs/:id", requirePermission("payroll.manage"), wrap(async 
   return { deleted: true };
 }));
 api.post("/payroll/runs/:id/post", requirePermission("payroll.post"), wrap(async (req) =>
-  postPayrollRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"))));
+  postPayrollRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), req.auth!.permissions)));
 api.post("/payroll/runs/:id/reverse", requirePermission("payroll.post"), wrap(async (req) => {
   const body = z.object({ reason: reverseReasonSchema }).parse(req.body);
   return reversePayrollRun(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), body.reason);

@@ -21,6 +21,7 @@ import {
 import { postJournal } from "./accounting.js";
 import { periodMonthSchema } from "./accounting-periods.js";
 import { LOCALISATION_SERVICE, platformKernel } from "./platform-runtime.js";
+import { enforceApprovalPolicy } from "./approval-policies.js";
 import type {
   PayeTable, PayrollConfig, SocialSecurityRule,
 } from "./platform/localisation/types.js";
@@ -538,13 +539,27 @@ export async function deleteDraftRun(tenantId: string, userId: string, runId: st
   });
 }
 
-export async function postPayrollRun(tenantId: string, userId: string, runId: string) {
+export async function postPayrollRun(
+  tenantId: string, userId: string, runId: string,
+  /** PW-002: actor's permissions for tenant-configured approval policies. */
+  actorPermissions: readonly string[] = [],
+) {
   return db.transaction(async (tx) => {
     const [run] = await tx.select().from(schema.payrollRuns).where(and(
       eq(schema.payrollRuns.tenantId, tenantId), eq(schema.payrollRuns.id, runId),
     ));
     if (!run) throw notFound("Payroll run not found");
     if (run.status !== "DRAFT") throw conflict("Only draft payroll runs can be posted");
+
+    // PW-002: tenant-configured policy (threshold / permission / second
+    // person) on the run's gross amount. No policy = no change.
+    await enforceApprovalPolicy({
+      tx, tenantId, subjectType: "payroll_run",
+      amountCents: toCents(run.grossTotal),
+      actorUserId: userId,
+      actorPermissions,
+      subjectCreatedBy: run.createdBy,
+    });
 
     const accounts = await ensurePayrollAccounts(tx, tenantId);
     const gross = toCents(run.grossTotal);

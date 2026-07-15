@@ -44,33 +44,6 @@ export class ApprovalPolicyViolationError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// PW-002 — configurable approval policies. A policy is tenant configuration
-// (loaded by the domain inside its own transaction) evaluated here with pure
-// logic. No policy configured (null) means no additional rule — behaviour is
-// unchanged until a tenant opts in.
-// ---------------------------------------------------------------------------
-
-export interface ApprovalPolicyRule {
-  /** Rule applies to amounts at or above this many integer cents (0n = always). */
-  thresholdCents: bigint;
-  /** Extra permission the actor must hold when the rule applies. */
-  requiredPermission: string | null;
-  /** When the rule applies, the actor must differ from the subject's creator/preparer. */
-  requireDistinctActor: boolean;
-}
-
-export interface PolicyEvaluationRequest {
-  /** Human label used in violation messages, e.g. "purchase order", "payroll run". */
-  subjectLabel: string;
-  policy: ApprovalPolicyRule | null;
-  amountCents: bigint;
-  actorUserId: string;
-  actorPermissions: readonly string[];
-  /** Creator/preparer of the subject (null when unknown — distinct-actor rule then cannot pass silently and throws). */
-  subjectCreatedBy: string | null;
-}
-
 export class ApprovalService {
   /**
    * Validate segregation-of-duties and produce the canonical outcome.
@@ -89,33 +62,5 @@ export class ApprovalService {
       decidedAt: new Date(),
       auditAction: `${request.subjectType}.${status === "APPROVED" ? "approved" : "rejected"}`,
     };
-  }
-
-  /**
-   * PW-002: evaluate a tenant-configured policy. Fail closed: when the rule
-   * applies, every requirement must be satisfiable — an unknown creator with
-   * a distinct-actor rule is a violation, never a silent pass.
-   */
-  evaluatePolicy(request: PolicyEvaluationRequest): void {
-    const { policy } = request;
-    if (!policy) return;
-    if (request.amountCents < policy.thresholdCents) return;
-    if (policy.requiredPermission && !request.actorPermissions.includes(policy.requiredPermission)) {
-      throw new ApprovalPolicyViolationError(
-        `Approval policy: this ${request.subjectLabel} requires the '${policy.requiredPermission}' permission at this amount`,
-      );
-    }
-    if (policy.requireDistinctActor) {
-      if (!request.subjectCreatedBy) {
-        throw new ApprovalPolicyViolationError(
-          `Approval policy: this ${request.subjectLabel} requires a second person, but its preparer cannot be established`,
-        );
-      }
-      if (request.subjectCreatedBy === request.actorUserId) {
-        throw new ApprovalPolicyViolationError(
-          `Approval policy: a second person must approve this ${request.subjectLabel} at this amount`,
-        );
-      }
-    }
   }
 }
