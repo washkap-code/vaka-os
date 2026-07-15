@@ -14,7 +14,7 @@
 // Every publish/unpublish is audited. The whole surface ships dark behind
 // the `network.directory` feature flag and fails closed.
 // ============================================================================
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { audit, badRequest, conflict, db, notFound, schema } from "./lib.js";
 
@@ -148,6 +148,56 @@ export async function publishProfile(tenantId: string, userId: string) {
     });
     return updated;
   });
+}
+
+// ---------------------------------------------------------------------------
+// PN-002 — Business directory. Reads ONLY published snapshots. The queries
+// below never select draft columns for other tenants: the projection is the
+// snapshot JSON plus non-sensitive envelope fields, filtered to PUBLISHED.
+// Tenant identity in results is the profile id (opaque), not the tenant id.
+// ---------------------------------------------------------------------------
+export const directoryQuerySchema = z.object({
+  category: z.enum(BUSINESS_CATEGORIES).optional(),
+  city: z.string().trim().min(1).max(80).optional(),
+  q: z.string().trim().min(1).max(120).optional(),
+  country: z.string().trim().regex(/^[A-Z]{2}$/).default("ZW"),
+});
+
+export async function searchDirectory(query: z.infer<typeof directoryQuerySchema>) {
+  const p = schema.businessProfiles;
+  const conditions = [eq(p.status, "PUBLISHED"), eq(p.countryCode, query.country)];
+  if (query.category) {
+    conditions.push(sql`${p.publishedSnapshot}->'categories' @> ${JSON.stringify([query.category])}::jsonb`);
+  }
+  if (query.city) {
+    conditions.push(sql`lower(${p.publishedSnapshot}->>'city') = lower(${query.city})`);
+  }
+  if (query.q) {
+    const needle = `%${query.q.replace(/[%_\\]/g, "\\$&")}%`;
+    conditions.push(sql`(
+      ${p.publishedSnapshot}->>'displayName' ILIKE ${needle}
+      OR coalesce(${p.publishedSnapshot}->>'tagline', '') ILIKE ${needle}
+      OR coalesce(${p.publishedSnapshot}->>'description', '') ILIKE ${needle}
+    )`);
+  }
+  const rows = await db.select({
+    id: p.id,
+    snapshot: p.publishedSnapshot,
+    publishedAt: p.publishedAt,
+  }).from(p).where(and(...conditions))
+    .orderBy(sql`${p.publishedSnapshot}->>'displayName'`).limit(200);
+  return rows.map((row) => ({ id: row.id, publishedAt: row.publishedAt, ...(row.snapshot as object) }));
+}
+
+export async function getDirectoryProfile(profileId: string) {
+  const [row] = await db.select({
+    id: schema.businessProfiles.id,
+    status: schema.businessProfiles.status,
+    snapshot: schema.businessProfiles.publishedSnapshot,
+    publishedAt: schema.businessProfiles.publishedAt,
+  }).from(schema.businessProfiles).where(eq(schema.businessProfiles.id, profileId));
+  if (!row || row.status !== "PUBLISHED" || !row.snapshot) throw notFound("Business profile not found");
+  return { id: row.id, publishedAt: row.publishedAt, ...(row.snapshot as object) };
 }
 
 /** Owner-only. Immediately removes the public snapshot. */

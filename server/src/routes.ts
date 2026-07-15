@@ -61,7 +61,8 @@ import {
   listImportRuns as listBlackbookImportRuns,
 } from "./blackbook.js";
 import {
-  getMyProfile, profileInputSchema, publishProfile, saveProfile, unpublishProfile,
+  directoryQuerySchema, getDirectoryProfile, getMyProfile, profileInputSchema,
+  publishProfile, saveProfile, searchDirectory, unpublishProfile,
 } from "./business-profile.js";
 import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
@@ -1963,6 +1964,22 @@ api.post("/network/profile/publish", requireFeature("network.directory"),
 api.post("/network/profile/unpublish", requireFeature("network.directory"),
   requireTenantOwner as any, wrap(async (req) =>
     unpublishProfile(tenantId(req), req.auth!.userId)));
+
+// ---------------------------------------------------------------------------
+// PN-002: business directory. Serves ONLY published snapshots (never drafts,
+// never live tenant records); results expose the opaque profile id, not the
+// tenant id. Behind `network.directory`; the privacy-review gate governs
+// per-tenant flag enablement.
+// ---------------------------------------------------------------------------
+api.get("/network/directory", requireFeature("network.directory"), wrap(async (req) =>
+  searchDirectory(directoryQuerySchema.parse({
+    category: req.query.category as string | undefined,
+    city: req.query.city as string | undefined,
+    q: req.query.q as string | undefined,
+    country: (req.query.country as string | undefined) ?? "ZW",
+  }))));
+api.get("/network/directory/:id", requireFeature("network.directory"), wrap(async (req) =>
+  getDirectoryProfile(uuidRouteParam(req, "id"))));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra

@@ -152,6 +152,47 @@ describe("publish (owner-only, snapshot semantics)", () => {
   });
 });
 
+describe("PN-002 directory (published snapshots only)", () => {
+  it("shows tenant A's published profile to tenant B — snapshot fields only", async () => {
+    // A is currently PUBLISHED (republished above with showContact=true).
+    const res = await request(app).get("/api/v1/network/directory?country=ZW").set(auth(B.token));
+    expect(res.status).toBe(200);
+    const mine = res.body.find((e: any) => e.displayName === "Kapiro Engineering (New Name)");
+    expect(mine).toBeTruthy();
+    // Opaque envelope: profile id + snapshot only — never tenantId, never draft/status fields.
+    expect(mine.tenantId).toBeUndefined();
+    expect(mine.status).toBeUndefined();
+    expect(mine.showContact).toBeUndefined();
+    expect(mine.contactEmail).toBe("sales@kapiro.example.co.zw"); // opted in
+    const detail = await request(app).get(`/api/v1/network/directory/${mine.id}`).set(auth(B.token));
+    expect(detail.status).toBe(200);
+    expect(detail.body.tenantId).toBeUndefined();
+  });
+  it("filters by category, city and text", async () => {
+    const cat = await request(app)
+      .get("/api/v1/network/directory?category=manufacturing").set(auth(B.token));
+    expect(cat.status).toBe(200);
+    expect(cat.body.some((e: any) => e.displayName === "Kapiro Engineering (New Name)")).toBe(true);
+    const wrongCat = await request(app)
+      .get("/api/v1/network/directory?category=education").set(auth(B.token));
+    expect(wrongCat.body.some((e: any) => e.displayName?.includes("Kapiro"))).toBe(false);
+    const city = await request(app)
+      .get("/api/v1/network/directory?city=harare").set(auth(B.token));
+    expect(city.body.some((e: any) => e.displayName?.includes("Kapiro"))).toBe(true);
+    const text = await request(app)
+      .get("/api/v1/network/directory?q=steel%20fabrication").set(auth(B.token));
+    expect(text.body.some((e: any) => e.displayName?.includes("Kapiro"))).toBe(true);
+  });
+  it("stale drafts never leak: directory shows the frozen snapshot, not edits", async () => {
+    const edit = await request(app).put("/api/v1/network/profile").set(auth(A.token))
+      .send({ ...validProfile, displayName: "SECRET DRAFT NAME", showContact: true });
+    expect(edit.status).toBe(200);
+    const res = await request(app).get("/api/v1/network/directory").set(auth(B.token));
+    expect(JSON.stringify(res.body)).not.toContain("SECRET DRAFT NAME");
+    expect(res.body.some((e: any) => e.displayName === "Kapiro Engineering (New Name)")).toBe(true);
+  });
+});
+
 describe("unpublish + tenant isolation", () => {
   it("unpublish removes the snapshot immediately", async () => {
     const res = await request(app).post("/api/v1/network/profile/unpublish").set(auth(A.token));
@@ -166,5 +207,17 @@ describe("unpublish + tenant isolation", () => {
     expect(res.status).toBe(200);
     expect(res.body.exists).toBe(false);
     expect(res.body.draft.displayName).toContain("Network Co b");
+  });
+  it("unpublished profiles disappear from the directory immediately", async () => {
+    const res = await request(app).get("/api/v1/network/directory").set(auth(B.token));
+    expect(res.status).toBe(200);
+    expect(JSON.stringify(res.body)).not.toContain("Kapiro");
+    // Detail view of the now-unpublished profile 404s too.
+    const [row] = await db.select({ id: schema.businessProfiles.id })
+      .from(schema.businessProfiles)
+      .where(eq(schema.businessProfiles.tenantId, A.tenantId));
+    const detail = await request(app)
+      .get(`/api/v1/network/directory/${row.id}`).set(auth(B.token));
+    expect(detail.status).toBe(404);
   });
 });
