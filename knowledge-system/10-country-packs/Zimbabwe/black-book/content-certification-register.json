@@ -1,0 +1,5290 @@
+{
+  "schemaVersion": "PB-002-v1",
+  "datasetBaseCommit": "e1100766ba21f4b1950b93420ad5b5aefeaa16c2",
+  "generatedOn": "2026-07-15",
+  "gateStatus": "PENDING_HUMAN_REVIEW",
+  "programmeGateIds": [
+    "ZRP-001",
+    "ZRP-002",
+    "ZRP-003",
+    "XG-004",
+    "XG-005",
+    "XG-006",
+    "XG-007"
+  ],
+  "summary": {
+    "totalRecords": 256,
+    "evidenceStatus": {
+      "READY": 231,
+      "PARTIAL": 24,
+      "BLOCKED": 1
+    },
+    "reviewTracks": {
+      "DIRECTORY": 199,
+      "COMPLIANCE": 39,
+      "REGULATORY_GUIDE": 18
+    },
+    "humanReviewStatus": {
+      "PENDING": 256,
+      "APPROVED": 0,
+      "NEEDS_CHANGES": 0,
+      "REJECTED": 0
+    }
+  },
+  "approval": {
+    "status": "PENDING",
+    "reviewer": null,
+    "qualifications": null,
+    "scope": null,
+    "decisionDate": null,
+    "expiresAt": null,
+    "exceptions": [],
+    "evidenceReference": null
+  },
+  "records": [
+    {
+      "recordId": "cfu-zimbabwe",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "cfuzim.org"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "czi",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.czi.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "emcoz",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.emcoz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "smeaz",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.smeaz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zamfi",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zamfi.org"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zncc",
+      "category": "business_association",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zncc.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-premises-registration-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-shop-licence-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "dcip-company-annual-return",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CE-001"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "BLOCKED",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "dcip-company-incorporation-event",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-effluent-quarterly-waste-report",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-esia-before-project-implementation",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-esia-certificate-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-esia-quarterly-progress-report",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-business-licence-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-health-registration-review",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nssa-employer-registration-event",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw",
+        "www.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nssa-pobs-monthly-remittance",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw",
+        "www.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "praz-supplier-registration-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimbabwe-liquor-licence-application-or-renewal",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "llb.pfms.gov.zw",
+        "www.mlg.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "llb.pfms.gov.zw",
+          "status": "UNAVAILABLE"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-006"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-paye-employer-registration-event",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-paye-itf16-annual-return",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-paye-monthly-remittance",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-taxpayer-registration-event",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-vat-registration-trigger",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-vat-return-monthly",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-vat-return-two-monthly",
+      "category": "compliance_event",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-bulawayo-premises-registration-certificate",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-031",
+        "CG-032"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-bulawayo-shop-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "citybyo.co.zw",
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-029",
+        "CG-030"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-dcip-company-incorporation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-001",
+        "CG-002",
+        "CG-003",
+        "CG-004",
+        "CG-005",
+        "CG-006"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-ema-effluent-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "acumatica.ema.co.zw",
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-037",
+        "CG-038",
+        "CG-039"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-ema-esia-certificate",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "acumatica.ema.co.zw",
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-harare-business-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-024",
+        "CG-025"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-harare-health-registration",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-026",
+        "CG-027",
+        "CG-028"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-mcaz-premises-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "portal.mcaz.co.zw",
+        "www.mcaz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-049"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-nssa-employer-registration-obligation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-020",
+        "CG-021",
+        "CG-022",
+        "CG-023"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-potraz-unified-telecommunications-services-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.potraz.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-045",
+        "CG-046",
+        "CG-047",
+        "CG-048"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-praz-supplier-registration-obligation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "egp.praz.org.zw",
+        "www.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zera-electricity-generation-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-040",
+        "CG-041"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zera-lpg-retail-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-043",
+        "CG-044"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zera-petroleum-retail-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-042"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zimbabwe-liquor-licence",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mlg.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-033",
+        "CG-034",
+        "CG-035",
+        "CG-036"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zimra-paye-registration-obligation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-014",
+        "CG-015",
+        "CG-016",
+        "CG-017",
+        "CG-018",
+        "CG-019"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zimra-taxpayer-registration-obligation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-007",
+        "CG-008",
+        "CG-009",
+        "CG-010"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guide-zimra-vat-registration-obligation",
+      "category": "compliance_guide",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [
+        "CG-011",
+        "CG-012",
+        "CG-013"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "REGULATORY_GUIDE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-high-court-station",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chinhoyi-high-court-station",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chitungwiza-central-hospital",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "commercial-court-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "constitutional-court-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "dcip-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-high-court-station",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "high-court-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ingutsheni-central-hospital",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "judicial-service-commission-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "labour-court-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "liquor-licensing-board",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "llb.pfms.gov.zw",
+        "www.mlg.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "llb.pfms.gov.zw",
+          "status": "UNAVAILABLE"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-006"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "masvingo-high-court-station",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-defence",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-energy-power-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-environment-climate-wildlife",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-finance-investment-promotion",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-foreign-affairs-international-trade",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-health-child-care",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-higher-tertiary-education",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-home-affairs-cultural-heritage",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-ict-postal-courier-services",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-industry-commerce",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-information-publicity-broadcasting",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-justice-legal-parliamentary-affairs",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-lands-agriculture-fisheries",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-lands-rural-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-local-government-public-works",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-mines-mining-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-national-housing-social-amenities",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-primary-secondary-education",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-public-service-labour-social-welfare",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-skills-audit-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-sports-recreation-arts-culture",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-tourism-hospitality",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-transport-infrastructural-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-veterans-liberation-struggle",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-women-affairs-community-smes",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ministry-youth-empowerment-development",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mpilo-central-hospital",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutare-high-court-station",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "office-president-cabinet",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-bulawayo-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "opcbyometro.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-harare-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "harareprovince.co.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-manicaland-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.opcmanicaland.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-mashonaland-central-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.testdomain9.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "www.testdomain9.gov.zw",
+          "status": "PROVISIONAL"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-001"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-mashonaland-east-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.testdomain3.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "www.testdomain3.gov.zw",
+          "status": "PROVISIONAL"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-002"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-mashonaland-west-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mashwest.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-masvingo-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.testdomain13.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "www.testdomain13.gov.zw",
+          "status": "PROVISIONAL"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-003"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-matabeleland-north-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.opcmatnorth.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-matabeleland-south-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.testdomain10.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "www.testdomain10.gov.zw",
+          "status": "PROVISIONAL"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-004"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "opc-midlands-provincial-affairs-office",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "testdomain25.gov.zw",
+        "www.zimgeneva.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "testdomain25.gov.zw",
+          "status": "PROVISIONAL"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-005"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "parirenyatwa-group-hospitals",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "parliament-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.parlzim.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "sally-mugabe-central-hospital",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "supreme-court-zimbabwe",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "united-bulawayo-hospitals",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimbabwe-republic-police",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-harare-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-manicaland-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-mashonaland-central-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-mashonaland-east-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-mashonaland-west-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-masvingo-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-matabeleland-south-provincial-headquarters",
+      "category": "government_organisation",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-premises-registration-certificate",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-shop-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "dcip-company-incorporation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-effluent-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-esia-certificate",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-business-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-health-registration",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mcaz-premises-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "portal.mcaz.co.zw",
+        "www.mcaz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nssa-employer-registration-obligation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw",
+        "www.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "potraz-unified-telecommunications-services-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.potraz.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "praz-supplier-registration-obligation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "egp.praz.org.zw",
+        "www.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zera-electricity-generation-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zera-lpg-retail-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zera-petroleum-retail-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimbabwe-liquor-licence",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "llb.pfms.gov.zw",
+        "www.mlg.gov.zw"
+      ],
+      "sourceRisks": [
+        {
+          "domain": "llb.pfms.gov.zw",
+          "status": "UNAVAILABLE"
+        }
+      ],
+      "evidenceGapIds": [
+        "DOM-006"
+      ],
+      "coverageGapIds": [],
+      "evidenceStatus": "PARTIAL",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-paye-registration-obligation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-taxpayer-registration-obligation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-vat-registration-obligation",
+      "category": "licence_type",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mytaxselfservice.zimra.co.zw",
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "COMPLIANCE",
+      "requiredReviewerRole": "QUALIFIED_ZIMBABWE_COMPLIANCE_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "beitbridge-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "beitbridge-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bikita-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bindura-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bindura-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "binga-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bubi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "buhera-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulilima-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chaminuka-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chegutu-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chegutu-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chikomba-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chimanimani-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chinhoyi-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chipinge-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chipinge-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chiredzi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chiredzi-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chirumanzu-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw",
+        "www.auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chirundu-local-board",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chitungwiza-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "chivi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "epworth-local-board",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gokwe-north-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gokwe-south-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gokwe-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "goromonzi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "guruve-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gutu-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gwanda-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gwanda-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "gweru-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "gwerucity.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "hurungwe-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "hwange-local-board",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "hwange-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "hwedza-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "insiza-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "kadoma-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "kariba-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "karoi-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "kusile-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "kwekwe-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "lupane-local-board",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "makonde-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "makoni-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mangwe-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "manyame-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "marondera-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "marondera-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "masvingo-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "masvingocity.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "masvingo-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "matobo-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mazowe-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mberengwa-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mbire-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mhondoro-ngezi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mudzi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "murewa-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutare-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mutarecity.org"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutare-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutasa-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutoko-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "muzarabani-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mvurwi-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mwenezi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nkayi-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "norton-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nyaminyami-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nyanga-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "pfura-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "plumtree-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "redcliff-municipality",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "runde-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "rusape-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "rushinga-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ruwa-local-board",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "sanyati-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "shurugwi-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "tongogara-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "tsholotsho-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "umguza-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "umzingwane-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "uzumba-maramba-pfungwe-zvataida-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "victoria-falls-city-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "vungu-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zaka-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zibagwe-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zvimba-rural-district-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zvishavane-town-council",
+      "category": "local_authority",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "auditorgeneral.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "COUNCIL-001"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "competition-tariff-commission",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.competition.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ipec",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ipec.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mcaz",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mcaz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nssa",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw",
+        "www.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "potraz",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.potraz.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "praz",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "rbz",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.rbz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "seczim",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "seczim.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zera",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zera.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra",
+      "category": "regulator",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "dcip-company-registration",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.justice.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "egp-electronic-tendering",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "egp.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "ema-environmental-assessment-review",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "ema.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "harare-business-licensing",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.hararecity.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "jsc-court-contact-directory",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "jsc.org.zw",
+        "www.jsc.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-002"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mcaz-register-search",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "onlineservices.mcaz.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mohcc-central-hospital-directory",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.mohcc.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "nssa-employer-registration",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "selfservice.nssa.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "potraz-licensing-information",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.potraz.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "praz-bidder-registration",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "egp.praz.org.zw",
+        "www.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "telone-service-application",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "getservice.telone.co.zw",
+        "www.telone.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zetdc-electricity-connection",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zetdc.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimra-taxpayer-registration",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimra.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zinwa-water-connection",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zinwa.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zrp-general-lines-directory",
+      "category": "service",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zrp.gov.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [
+        "XG-003"
+      ],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "bulawayo-procurement-portal",
+      "category": "tender_portal",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.citybyo.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "mutare-tender-notices",
+      "category": "tender_portal",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "mutarecity.org"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zetdc-procurement-notices",
+      "category": "tender_portal",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zetdc.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimbabwe-egp",
+      "category": "tender_portal",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "egp.praz.org.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "netone",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.netone.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "powertel",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.powertel.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "telone",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.telone.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zetdc",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zetdc.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zimpost",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "www.zimpost.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    },
+    {
+      "recordId": "zinwa",
+      "category": "utility",
+      "recordLastReviewed": "2026-07-15",
+      "sourceDomains": [
+        "zinwa.co.zw"
+      ],
+      "sourceRisks": [],
+      "evidenceGapIds": [],
+      "coverageGapIds": [],
+      "evidenceStatus": "READY",
+      "reviewTrack": "DIRECTORY",
+      "requiredReviewerRole": "ZIMBABWE_CONTENT_REVIEWER",
+      "humanReviewStatus": "PENDING",
+      "reviewer": null,
+      "reviewedAt": null,
+      "approvalExpiresAt": null,
+      "decisionNote": null
+    }
+  ]
+}
