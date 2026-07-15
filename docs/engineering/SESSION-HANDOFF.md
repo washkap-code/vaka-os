@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (late session 2: PD-001 documents workspace built, verified and merged to main. ⚠️ PUSH GATE: migration 0039 is NOT yet applied to production — apply it via the Supabase SQL editor or a VAKA-scoped Supabase MCP BEFORE pushing main. The Supabase MCP in this Cowork session was scoped to a different org (BioCheck) and could not reach `vaka-platform`.)
+**Updated:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ⚠️ PUSH GATE unchanged: migration 0039 is NOT yet applied to production — apply it via the Supabase SQL editor or a VAKA-scoped Supabase MCP BEFORE pushing main. The Supabase MCP in this Cowork session was scoped to a different org (BioCheck) and could not reach `vaka-platform`.)
 
 > **Protocol:** this file is read at the START of every session and updated as the
 > FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
@@ -194,11 +194,30 @@ the admin password hash between reruns on the same scratch db.
    accidentally committed in 68472b2 (old twins of approvals.ts, tasks.ts,
    migrations 0037/0038, approval-policies tests, PW-002 README) — commit
    `42bc4b4`. Watch for Finder-created " 2"/" 3" files before committing.
-   **CODEX LANE (2026-07-15):** PB-000 (Black Book Zimbabwe seed dataset,
-   data+docs only, branch `codex/pb-000-blackbook-dataset`) dispatched;
-   PB-000B (licences + compliance calendar dataset) prompt already drafted
-   and queued. Review scope on merge: knowledge-system/black-book + mission
-   packs only.
+   **CODEX LANE — PB-000 + PB-000B are DONE and MERGED (2026-07-15):**
+   branch `codex/pb-000-blackbook-dataset` (2 commits, `27d0d02` + `f51e3aa`)
+   reviewed and merged to main (`607a024`). Scope audit: 14 files, +2,236
+   lines, ALL within `knowledge-system/.../Zimbabwe/black-book/**` and
+   `docs/engineering/mission-packs/PB-000*/` — no server/web/migration
+   files. Content validation (scripted): 9/9 JSON parse, 113 unique records,
+   0 duplicate IDs, 78 cross-references all resolved, every record has
+   official sources, all `lastReviewed` = 2026-07-15, exactly 1 unverified
+   record (`dcip-company-annual-return`, charter URL unavailable — declared,
+   not guessed). Liquor authority correctly recorded as the national Liquor
+   Licensing Board under Local Government. The PB-002 "P (content review)"
+   gate (fees/deadlines sign-off by a human reviewer) remains OPEN — the
+   dataset is merged but not yet content-certified. Codex's worktree at
+   `/private/tmp/vaka-pb-000-blackbook-dataset` shows prunable from the
+   sandbox but exists on the host — prune from the host when Codex is done.
+   **Next Codex mission: PB-000C (licence/permit compliance guides, data +
+   docs only — the PB-004 content). Prompt drafted in session 3; branch
+   `codex/pb-000c-compliance-guides` from main (which now contains
+   `f51e3aa`). PB-001 (registry, needs a migration) stays in the Cowork
+   lane per the no-Codex-migrations rule.**
+   **HOUSEKEEPING (session 3):** removed 4 more untracked Finder " 2" copy
+   artifacts (twins of the PD-001 files, verified byte-identical before
+   deletion). Also cleared a stale `.git/HEAD.lock` + tmp object left by a
+   sandbox-mount unlink failure during the merge.
    **Next Part II missions (Wave 1): PN-001 business profile, PB-001 Black
    Book registry (imports the PB-000 dataset) — each behind its catalogue
    flag. PD-002 (approvals/retention, attach-to-object) follows PD-001.**
