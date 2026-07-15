@@ -1,0 +1,980 @@
+[
+  {
+    "id": "source-acumatica-ema-co-zw",
+    "domain": "acumatica.ema.co.zw",
+    "publisher": "Environmental Management Agency",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "ema"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-auditorgeneral-gov-zw",
+    "domain": "auditorgeneral.gov.zw",
+    "publisher": "Office of the Auditor-General of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "beitbridge-municipality",
+      "beitbridge-rural-district-council",
+      "bikita-rural-district-council",
+      "bindura-municipality",
+      "bindura-rural-district-council",
+      "binga-rural-district-council",
+      "bubi-rural-district-council",
+      "buhera-rural-district-council",
+      "bulilima-rural-district-council",
+      "chaminuka-rural-district-council",
+      "chegutu-municipality",
+      "chegutu-rural-district-council",
+      "chikomba-rural-district-council",
+      "chimanimani-rural-district-council",
+      "chinhoyi-municipality",
+      "chipinge-rural-district-council",
+      "chipinge-town-council",
+      "chiredzi-rural-district-council",
+      "chiredzi-town-council",
+      "chirumanzu-rural-district-council",
+      "chirundu-local-board",
+      "chitungwiza-municipality",
+      "chivi-rural-district-council",
+      "epworth-local-board",
+      "gokwe-north-rural-district-council",
+      "gokwe-south-rural-district-council",
+      "gokwe-town-council",
+      "goromonzi-rural-district-council",
+      "guruve-rural-district-council",
+      "gutu-rural-district-council",
+      "gwanda-municipality",
+      "gwanda-rural-district-council",
+      "hurungwe-rural-district-council",
+      "hwange-local-board",
+      "hwange-rural-district-council",
+      "hwedza-rural-district-council",
+      "insiza-rural-district-council",
+      "kadoma-city-council",
+      "kariba-municipality",
+      "karoi-town-council",
+      "kusile-rural-district-council",
+      "kwekwe-city-council",
+      "lupane-local-board",
+      "makonde-rural-district-council",
+      "makoni-rural-district-council",
+      "mangwe-rural-district-council",
+      "manyame-rural-district-council",
+      "marondera-municipality",
+      "marondera-rural-district-council",
+      "masvingo-rural-district-council",
+      "matobo-rural-district-council",
+      "mazowe-rural-district-council",
+      "mberengwa-rural-district-council",
+      "mbire-rural-district-council",
+      "mhondoro-ngezi-rural-district-council",
+      "mudzi-rural-district-council",
+      "murewa-rural-district-council",
+      "mutare-rural-district-council",
+      "mutasa-rural-district-council",
+      "mutoko-rural-district-council",
+      "muzarabani-rural-district-council",
+      "mvurwi-town-council",
+      "mwenezi-rural-district-council",
+      "nkayi-rural-district-council",
+      "norton-town-council",
+      "nyaminyami-rural-district-council",
+      "nyanga-rural-district-council",
+      "pfura-rural-district-council",
+      "plumtree-town-council",
+      "redcliff-municipality",
+      "runde-rural-district-council",
+      "rusape-town-council",
+      "rushinga-rural-district-council",
+      "ruwa-local-board",
+      "sanyati-rural-district-council",
+      "shurugwi-town-council",
+      "tongogara-rural-district-council",
+      "tsholotsho-rural-district-council",
+      "umguza-rural-district-council",
+      "umzingwane-rural-district-council",
+      "uzumba-maramba-pfungwe-zvataida-rural-district-council",
+      "victoria-falls-city-council",
+      "vungu-rural-district-council",
+      "zaka-rural-district-council",
+      "zibagwe-rural-district-council",
+      "zvimba-rural-district-council",
+      "zvishavane-town-council"
+    ],
+    "recordCount": 87,
+    "reliabilityNote": "Official national audit source used for local-authority identity and classification; it does not certify individual council contacts.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-cfuzim-org",
+    "domain": "cfuzim.org",
+    "publisher": "Commercial Farmers' Union of Zimbabwe",
+    "publisherType": "association",
+    "authorityIds": [
+      "cfu-zimbabwe"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-citybyo-co-zw",
+    "domain": "citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "council",
+    "authorityIds": [
+      "bulawayo-city-council"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-egp-praz-org-zw",
+    "domain": "egp.praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "praz"
+    ],
+    "recordCount": 5,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-ema-co-zw",
+    "domain": "ema.co.zw",
+    "publisher": "Environmental Management Agency",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "ema"
+    ],
+    "recordCount": 10,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-getservice-telone-co-zw",
+    "domain": "getservice.telone.co.zw",
+    "publisher": "TelOne",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "telone"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-gwerucity-org-zw",
+    "domain": "gwerucity.org.zw",
+    "publisher": "City of Gweru",
+    "publisherType": "council",
+    "authorityIds": [
+      "gweru-city-council"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-harareprovince-co-zw",
+    "domain": "harareprovince.co.zw",
+    "publisher": "Office of the President and Cabinet — Harare Metropolitan Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-harare-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-ipec-co-zw",
+    "domain": "ipec.co.zw",
+    "publisher": "Insurance and Pensions Commission",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "ipec"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-jsc-org-zw",
+    "domain": "jsc.org.zw",
+    "publisher": "Judicial Service Commission of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "bulawayo-high-court-station",
+      "chinhoyi-high-court-station",
+      "commercial-court-zimbabwe",
+      "harare-high-court-station",
+      "high-court-zimbabwe",
+      "judicial-service-commission-zimbabwe",
+      "masvingo-high-court-station",
+      "mutare-high-court-station"
+    ],
+    "recordCount": 8,
+    "reliabilityNote": "Official judicial source. Entity and station identities are suitable evidence; known placeholder contact values were excluded.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-llb-pfms-gov-zw",
+    "domain": "llb.pfms.gov.zw",
+    "publisher": "Liquor Licensing Board",
+    "publisherType": "government",
+    "authorityIds": [
+      "liquor-licensing-board",
+      "ministry-local-government-public-works"
+    ],
+    "recordCount": 3,
+    "reliabilityNote": "Official Liquor Licensing Board portal cited by the dataset but recorded as unavailable; retain as review evidence until it resolves or an official replacement is found.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "UNAVAILABLE"
+  },
+  {
+    "id": "source-masvingocity-org-zw",
+    "domain": "masvingocity.org.zw",
+    "publisher": "City of Masvingo",
+    "publisherType": "council",
+    "authorityIds": [
+      "masvingo-city-council"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-mutarecity-org",
+    "domain": "mutarecity.org",
+    "publisher": "City of Mutare",
+    "publisherType": "council",
+    "authorityIds": [
+      "mutare-city-council"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-mytaxselfservice-zimra-co-zw",
+    "domain": "mytaxselfservice.zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "zimra"
+    ],
+    "recordCount": 6,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-onlineservices-mcaz-co-zw",
+    "domain": "onlineservices.mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "mcaz"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-opcbyometro-gov-zw",
+    "domain": "opcbyometro.gov.zw",
+    "publisher": "Office of the President and Cabinet — Bulawayo Metropolitan Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-bulawayo-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-portal-mcaz-co-zw",
+    "domain": "portal.mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "mcaz"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-seczim-co-zw",
+    "domain": "seczim.co.zw",
+    "publisher": "Securities and Exchange Commission of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "seczim"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "nssa"
+    ],
+    "recordCount": 6,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-testdomain25-gov-zw",
+    "domain": "testdomain25.gov.zw",
+    "publisher": "Office of the President and Cabinet — Midlands Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-midlands-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official .gov.zw content is cited, but the hostname is a disclosed provisional test-domain and requires canonical replacement before publication.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "PROVISIONAL"
+  },
+  {
+    "id": "source-www-auditorgeneral-gov-zw",
+    "domain": "www.auditorgeneral.gov.zw",
+    "publisher": "Office of the Auditor-General of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "chirumanzu-rural-district-council"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official national audit source used to resolve the Chirumanzu spelling variance; it does not certify individual council contacts.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-citybyo-co-zw",
+    "domain": "www.citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "council",
+    "authorityIds": [
+      "bulawayo-city-council"
+    ],
+    "recordCount": 8,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-competition-co-zw",
+    "domain": "www.competition.co.zw",
+    "publisher": "Competition and Tariff Commission",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "competition-tariff-commission"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-czi-co-zw",
+    "domain": "www.czi.co.zw",
+    "publisher": "Confederation of Zimbabwe Industries",
+    "publisherType": "association",
+    "authorityIds": [
+      "czi"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-emcoz-co-zw",
+    "domain": "www.emcoz.co.zw",
+    "publisher": "Employers Confederation of Zimbabwe",
+    "publisherType": "association",
+    "authorityIds": [
+      "emcoz"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-hararecity-co-zw",
+    "domain": "www.hararecity.co.zw",
+    "publisher": "City of Harare",
+    "publisherType": "council",
+    "authorityIds": [
+      "harare-city-council"
+    ],
+    "recordCount": 8,
+    "reliabilityNote": "Council-owned source. Reliable for the council and services explicitly published; contacts, tariffs and local rules require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-jsc-org-zw",
+    "domain": "www.jsc.org.zw",
+    "publisher": "Judicial Service Commission of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "bulawayo-high-court-station",
+      "chinhoyi-high-court-station",
+      "commercial-court-zimbabwe",
+      "constitutional-court-zimbabwe",
+      "harare-high-court-station",
+      "high-court-zimbabwe",
+      "judicial-service-commission-zimbabwe",
+      "labour-court-zimbabwe",
+      "masvingo-high-court-station",
+      "mutare-high-court-station",
+      "supreme-court-zimbabwe"
+    ],
+    "recordCount": 12,
+    "reliabilityNote": "Official judicial source. Entity and court identities are suitable evidence; known placeholder contact values were excluded.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-justice-gov-zw",
+    "domain": "www.justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs",
+    "publisherType": "government",
+    "authorityIds": [
+      "dcip-zimbabwe",
+      "ministry-justice-legal-parliamentary-affairs"
+    ],
+    "recordCount": 6,
+    "reliabilityNote": "Official ministry source. The domain supports DCIP records, but the annual-return charter evidence remains unresolved at page level.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-mashwest-gov-zw",
+    "domain": "www.mashwest.gov.zw",
+    "publisher": "Office of the President and Cabinet — Mashonaland West Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-mashonaland-west-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-mcaz-co-zw",
+    "domain": "www.mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "mcaz"
+    ],
+    "recordCount": 3,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-mlg-gov-zw",
+    "domain": "www.mlg.gov.zw",
+    "publisher": "Ministry of Local Government and Public Works",
+    "publisherType": "government",
+    "authorityIds": [
+      "liquor-licensing-board",
+      "ministry-local-government-public-works"
+    ],
+    "recordCount": 4,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-mohcc-gov-zw",
+    "domain": "www.mohcc.gov.zw",
+    "publisher": "Ministry of Health and Child Care",
+    "publisherType": "government",
+    "authorityIds": [
+      "chitungwiza-central-hospital",
+      "ingutsheni-central-hospital",
+      "ministry-health-child-care",
+      "mpilo-central-hospital",
+      "parirenyatwa-group-hospitals",
+      "sally-mugabe-central-hospital",
+      "united-bulawayo-hospitals"
+    ],
+    "recordCount": 7,
+    "reliabilityNote": "Official ministry directory supporting central-hospital identity; it does not establish every current hospital contact.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-netone-co-zw",
+    "domain": "www.netone.co.zw",
+    "publisher": "NetOne",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "netone"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-nssa-org-zw",
+    "domain": "www.nssa.org.zw",
+    "publisher": "National Social Security Authority",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "nssa"
+    ],
+    "recordCount": 4,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-opcmanicaland-gov-zw",
+    "domain": "www.opcmanicaland.gov.zw",
+    "publisher": "Office of the President and Cabinet — Manicaland Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-manicaland-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-opcmatnorth-gov-zw",
+    "domain": "www.opcmatnorth.gov.zw",
+    "publisher": "Office of the President and Cabinet — Matabeleland North Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-matabeleland-north-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-parlzim-gov-zw",
+    "domain": "www.parlzim.gov.zw",
+    "publisher": "Parliament of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "ministry-defence",
+      "ministry-energy-power-development",
+      "ministry-environment-climate-wildlife",
+      "ministry-finance-investment-promotion",
+      "ministry-foreign-affairs-international-trade",
+      "ministry-health-child-care",
+      "ministry-higher-tertiary-education",
+      "ministry-home-affairs-cultural-heritage",
+      "ministry-ict-postal-courier-services",
+      "ministry-industry-commerce",
+      "ministry-information-publicity-broadcasting",
+      "ministry-justice-legal-parliamentary-affairs",
+      "ministry-lands-agriculture-fisheries",
+      "ministry-lands-rural-development",
+      "ministry-local-government-public-works",
+      "ministry-mines-mining-development",
+      "ministry-national-housing-social-amenities",
+      "ministry-primary-secondary-education",
+      "ministry-public-service-labour-social-welfare",
+      "ministry-skills-audit-development",
+      "ministry-sports-recreation-arts-culture",
+      "ministry-tourism-hospitality",
+      "ministry-veterans-liberation-struggle",
+      "ministry-women-affairs-community-smes",
+      "ministry-youth-empowerment-development",
+      "parliament-zimbabwe"
+    ],
+    "recordCount": 26,
+    "reliabilityNote": "Official parliamentary portfolio source; re-check after cabinet, ministerial or portfolio changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-potraz-gov-zw",
+    "domain": "www.potraz.gov.zw",
+    "publisher": "Postal and Telecommunications Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "potraz"
+    ],
+    "recordCount": 4,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-powertel-co-zw",
+    "domain": "www.powertel.co.zw",
+    "publisher": "Powertel Communications",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "powertel"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-praz-org-zw",
+    "domain": "www.praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "praz"
+    ],
+    "recordCount": 5,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-rbz-co-zw",
+    "domain": "www.rbz.co.zw",
+    "publisher": "Reserve Bank of Zimbabwe",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "rbz"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-smeaz-org-zw",
+    "domain": "www.smeaz.org.zw",
+    "publisher": "SME Association of Zimbabwe",
+    "publisherType": "association",
+    "authorityIds": [
+      "smeaz"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-telone-co-zw",
+    "domain": "www.telone.co.zw",
+    "publisher": "TelOne",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "telone"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-testdomain10-gov-zw",
+    "domain": "www.testdomain10.gov.zw",
+    "publisher": "Office of the President and Cabinet — Matabeleland South Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-matabeleland-south-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official .gov.zw content is cited, but the hostname is a disclosed provisional test-domain and requires canonical replacement before publication.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "PROVISIONAL"
+  },
+  {
+    "id": "source-www-testdomain13-gov-zw",
+    "domain": "www.testdomain13.gov.zw",
+    "publisher": "Office of the President and Cabinet — Masvingo Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-masvingo-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official .gov.zw content is cited, but the hostname is a disclosed provisional test-domain and requires canonical replacement before publication.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "PROVISIONAL"
+  },
+  {
+    "id": "source-www-testdomain3-gov-zw",
+    "domain": "www.testdomain3.gov.zw",
+    "publisher": "Office of the President and Cabinet — Mashonaland East Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-mashonaland-east-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official .gov.zw content is cited, but the hostname is a disclosed provisional test-domain and requires canonical replacement before publication.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "PROVISIONAL"
+  },
+  {
+    "id": "source-www-testdomain9-gov-zw",
+    "domain": "www.testdomain9.gov.zw",
+    "publisher": "Office of the President and Cabinet — Mashonaland Central Province",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-mashonaland-central-provincial-affairs-office"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Official .gov.zw content is cited, but the hostname is a disclosed provisional test-domain and requires canonical replacement before publication.",
+    "reviewCadence": "MONTHLY",
+    "lastChecked": "2026-07-15",
+    "status": "PROVISIONAL"
+  },
+  {
+    "id": "source-www-zera-co-zw",
+    "domain": "www.zera.co.zw",
+    "publisher": "Zimbabwe Energy Regulatory Authority",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "zera"
+    ],
+    "recordCount": 7,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-zetdc-co-zw",
+    "domain": "www.zetdc.co.zw",
+    "publisher": "Zimbabwe Electricity Transmission and Distribution Company",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "zetdc"
+    ],
+    "recordCount": 3,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-zim-gov-zw",
+    "domain": "www.zim.gov.zw",
+    "publisher": "Government of Zimbabwe",
+    "publisherType": "government",
+    "authorityIds": [
+      "ministry-transport-infrastructural-development",
+      "office-president-cabinet"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Primary official government publisher. Reliable for identities and facts explicitly present; re-check after structural, gazette or cabinet changes.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-zimgeneva-gov-zw",
+    "domain": "www.zimgeneva.gov.zw",
+    "publisher": "Permanent Mission of Zimbabwe in Geneva",
+    "publisherType": "government",
+    "authorityIds": [
+      "office-president-cabinet",
+      "opc-bulawayo-provincial-affairs-office",
+      "opc-harare-provincial-affairs-office",
+      "opc-manicaland-provincial-affairs-office",
+      "opc-mashonaland-central-provincial-affairs-office",
+      "opc-mashonaland-east-provincial-affairs-office",
+      "opc-mashonaland-west-provincial-affairs-office",
+      "opc-masvingo-provincial-affairs-office",
+      "opc-matabeleland-north-provincial-affairs-office",
+      "opc-matabeleland-south-provincial-affairs-office",
+      "opc-midlands-provincial-affairs-office"
+    ],
+    "recordCount": 10,
+    "reliabilityNote": "Official government-functions document supporting provincial-office identity; re-check after administrative restructuring.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-zimpost-co-zw",
+    "domain": "www.zimpost.co.zw",
+    "publisher": "Zimpost",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "zimpost"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-www-zimra-co-zw",
+    "domain": "www.zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "authorityIds": [
+      "zimra"
+    ],
+    "recordCount": 15,
+    "reliabilityNote": "Primary regulator-owned source. Reliable for explicitly published regulatory facts; re-check before customer-facing compliance use.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-zamfi-org",
+    "domain": "zamfi.org",
+    "publisher": "Zimbabwe Association of Microfinance Institutions",
+    "publisherType": "association",
+    "authorityIds": [
+      "zamfi"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-zinwa-co-zw",
+    "domain": "zinwa.co.zw",
+    "publisher": "Zimbabwe National Water Authority",
+    "publisherType": "parastatal",
+    "authorityIds": [
+      "zinwa"
+    ],
+    "recordCount": 2,
+    "reliabilityNote": "Entity-owned parastatal source. Reliable for the entity and services explicitly published; operational details require current-page review.",
+    "reviewCadence": "QUARTERLY",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-zncc-co-zw",
+    "domain": "zncc.co.zw",
+    "publisher": "Zimbabwe National Chamber of Commerce",
+    "publisherType": "association",
+    "authorityIds": [
+      "zncc"
+    ],
+    "recordCount": 1,
+    "reliabilityNote": "Association-owned source. Reliable for association identity and published services; membership details require current-page review.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  },
+  {
+    "id": "source-zrp-gov-zw",
+    "domain": "zrp.gov.zw",
+    "publisher": "Zimbabwe Republic Police",
+    "publisherType": "government",
+    "authorityIds": [
+      "ministry-home-affairs-cultural-heritage",
+      "zimbabwe-republic-police",
+      "zrp-harare-provincial-headquarters",
+      "zrp-manicaland-provincial-headquarters",
+      "zrp-mashonaland-central-provincial-headquarters",
+      "zrp-mashonaland-east-provincial-headquarters",
+      "zrp-mashonaland-west-provincial-headquarters",
+      "zrp-masvingo-provincial-headquarters",
+      "zrp-matabeleland-south-provincial-headquarters"
+    ],
+    "recordCount": 9,
+    "reliabilityNote": "Official police source. Use only for headquarters identities or locations explicitly stated; province pages alone do not establish missing headquarters.",
+    "reviewCadence": "ANNUAL",
+    "lastChecked": "2026-07-15",
+    "status": "RESOLVING"
+  }
+]
