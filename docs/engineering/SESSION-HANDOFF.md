@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-15 (after the P9 security cluster, branch consolidation and P2-005 shipped; handoff protocol codified in AGENTS.md)
+**Updated:** 2026-07-15 (evening session: P2-009 Zimbabwe payroll technical preview built, verified and merged to main; migration 0035 NOT yet applied to production)
 
 > **Protocol:** this file is read at the START of every session and updated as the
 > FINAL commit of every session (`chore(handoff): session handoff YYYY-MM-DD`).
@@ -24,8 +24,12 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0034_accounting_period_close.sql`.
-**All migrations through 0034 are applied and verified in production**, including:
+Highest migration on `main`: `0035_payroll_foundation.sql`.
+**All migrations through 0034 are applied and verified in production.**
+**0035 is NOT yet applied to production** — hand-apply it via the Supabase MCP
+`apply_migration` BEFORE pushing main (it is additive + idempotent: three new
+tables + `payroll.*` role backfill; verified to apply cleanly over a live
+schema in the scratch environment).
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -33,8 +37,9 @@ Highest migration on `main`: `0034_accounting_period_close.sql`.
 | 0032_restore_drill_evidence | OPS-016 | ✅ 2026-07-15 |
 | 0033_finance_report_snapshots | P7-002 | ✅ 2026-07-15 |
 | 0034_accounting_period_close | P2-005 | ✅ 2026-07-15 |
+| 0035_payroll_foundation | P2-009 | ⬜ pending — apply before push |
 
-New migrations continue from **0035**.
+New migrations continue from **0036**.
 
 ## Shipped and live on `main` (this working period)
 
@@ -54,6 +59,26 @@ New migrations continue from **0035**.
 - **P2-005** financial period close (postJournal funnel + DB trigger; Owner-only
   audited reopen; Reports "Period close" tab; **accountant gate**).
 - **CO-006** Paynow was already live; verified in production. **P5-001** already merged.
+- **P2-009 Zimbabwe payroll — technical preview** (merged to main `c7face0`,
+  NOT yet pushed/deployed; migration 0035 pending production apply). Employee
+  register, monthly runs, immutable payslips with calculation traces. PAYE
+  bands / AIDS levy / NSSA are effective-dated config in
+  `server/src/countries/zw.ts`; ZWG NSSA ceiling deliberately unconfigured
+  (ZWG payroll fails closed). One balanced journal per posted run via
+  postJournal (Dr WAGES_EXPENSE; Cr PAYE_PAYABLE / NSSA_PAYABLE /
+  NET_WAGES_PAYABLE — accounts provisioned on demand); reversal-only
+  corrections free the month for a re-run. New `payroll.read/manage/post`
+  permissions (posting segregable from preparation). Web Payroll workspace
+  behind `payroll.read` with the TECHNICAL_PREVIEW banner. Mission pack:
+  `docs/engineering/mission-packs/P2-009-PAYROLL/`. **Accountant gate:** 2026
+  figures transcribed from public summaries on 2026-07-15 — a qualified
+  Zimbabwean accountant must verify the tables and the
+  NSSA-deductible-before-PAYE assumption, then the pack `verification.status`
+  flips to APPROVED. Verified in scratch Postgres: payroll 21/21;
+  regression: period-close/journal-balancing/journal-immutability/
+  tenant-isolation 13/13, critical 12/12,
+  localisation-runtime/vat-treatment/auth-resolution 12/12; server+web
+  typecheck clean; web vite build clean; nav model tests 16/16.
 
 ## Stale branches — do not merge
 
@@ -77,27 +102,31 @@ the admin password hash between reruns on the same scratch db.
 
 ## Remaining launch workstreams (in order)
 
-1. **P2-007 payroll** (PAYE + NSSA, effective-dated). Largest remaining build.
-   "Coming Soon" until a Zimbabwean accountant signs off. Note: the existing
-   `docs/engineering/mission-packs/P2-007/` is the *invoice detail* mission —
-   payroll needs a NEW mission id/pack (suggest P2-007-GA or P2-009-PAYROLL) to
-   avoid the P2-008 id-collision mistake.
-2. **DB-SEPARATION** — move VAKA to its own Supabase project
+1. **Deploy P2-009**: hand-apply `0035_payroll_foundation.sql` to production
+   via Supabase MCP, then push main via GitHub Desktop (auto-deploys Vercel).
+2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
+   to verify the 2026 PAYE/AIDS-levy/NSSA config in `zw.ts` (including the
+   NSSA-deductibility treatment and the missing ZWG ceiling); on approval flip
+   `verification.status` to APPROVED. Follow-on payroll missions when needed:
+   non-statutory deductions, ZIMRA P2 export, payslip PDFs, net-pay
+   settlement automation, ZWG runs.
+3. **DB-SEPARATION** — move VAKA to its own Supabase project
    (`docs/engineering/DATABASE-SEPARATION-PLAN.md`); needs a Vercel env change
    from the owner.
-3. Production hardening: `ALLOWED_ORIGINS`, backup/restore drill, live email
+4. Production hardening: `ALLOWED_ORIGINS`, backup/restore drill, live email
    provider, observability (P10-002).
-4. P7-003 secure report email delivery (mission pack exists, unbuilt).
-5. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
+5. P7-003 secure report email delivery (mission pack exists, unbuilt).
+6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
 > `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
 > it has the current state, constraints and verification pattern. Confirm main
-> is clean and matches origin, confirm the migration ledger (highest applied =
-> 0034, new ones start at 0035), then start the next workstream: [P2-007
-> payroll / DB separation / hardening — pick one]. Same discipline as always:
-> scoped diffs, scratch-Postgres verification, hand-apply idempotent DDL to
+> is clean and matches origin, confirm the migration ledger (0034 applied in
+> production, 0035 pending — apply it via Supabase MCP before any push; new
+> migrations start at 0036), then start the next workstream: [deploy P2-009 /
+> DB separation / hardening — pick one]. Same discipline as always: scoped
+> diffs, scratch-Postgres verification, hand-apply idempotent DDL to
 > production BEFORE pushing code, merge to main, push via GitHub Desktop,
 > report what was verified and the exact SQL applied.
