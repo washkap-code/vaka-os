@@ -179,6 +179,38 @@ const summaryOf = (result: object) =>
     ["string", "number", "boolean"].includes(typeof v) || v === null));
 
 // ---------------------------------------------------------------------------
+// Discard: a STAGED step that will never be committed (bad file, wrong data).
+// Nothing was written to live records, so this only retires the step and
+// cancels its staged batch so it can never be committed later.
+// ---------------------------------------------------------------------------
+export async function discardStep(opts: {
+  tenantId: string; userId: string; projectId: string; stepId: string;
+}) {
+  await requireProject(opts.tenantId, opts.projectId, true);
+  return db.transaction(async (tx) => {
+    const [step] = await tx.select().from(schema.migrationSteps).where(and(
+      eq(schema.migrationSteps.id, opts.stepId),
+      eq(schema.migrationSteps.tenantId, opts.tenantId),
+      eq(schema.migrationSteps.projectId, opts.projectId),
+    )).for("update");
+    if (!step) throw notFound("Migration step not found");
+    if (step.status !== "STAGED") throw conflict("Only staged steps can be discarded");
+    if (step.importBatchId) {
+      await tx.update(schema.importBatches).set({ status: "CANCELLED" }).where(and(
+        eq(schema.importBatches.id, step.importBatchId),
+        eq(schema.importBatches.status, "PREVIEW"),
+      ));
+    }
+    const [updated] = await tx.update(schema.migrationSteps).set({
+      status: "DISCARDED", updatedAt: new Date(),
+    }).where(eq(schema.migrationSteps.id, step.id)).returning();
+    await audit(tx, opts.tenantId, opts.userId, "migration_step.discarded", "migration_step",
+      step.id, { kind: step.kind });
+    return updated;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Rollback (owner-only at the route): safe inverses only, all-or-nothing.
 // ---------------------------------------------------------------------------
 export async function rollbackStep(opts: {

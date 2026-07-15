@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS "migration_steps" (
   "updated_at" timestamptz DEFAULT now() NOT NULL,
   CONSTRAINT "migration_steps_kind_check" CHECK ("kind" IN (
     'contacts', 'products', 'opening_stock', 'opening_trial_balance', 'open_invoices', 'open_bills')),
-  CONSTRAINT "migration_steps_status_check" CHECK ("status" IN ('STAGED', 'COMMITTED', 'ROLLED_BACK'))
+  CONSTRAINT "migration_steps_status_check" CHECK ("status" IN ('STAGED', 'COMMITTED', 'ROLLED_BACK', 'DISCARDED'))
 );
 
 CREATE INDEX IF NOT EXISTS "migration_steps_project"

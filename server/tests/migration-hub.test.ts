@@ -134,7 +134,7 @@ describe("opening trial balance (PM-002)", () => {
       .post(`/api/v1/migration/projects/${projectId}/steps/${preview.body.step.id}/commit`)
       .set(auth(A.token)).send({ asOfDate: "2026-01-01" });
     expect(commit.status).toBe(409);
-    expect(commit.body.error ?? commit.body.message ?? "").toMatch(/balance/i);
+    expect(JSON.stringify(commit.body)).toMatch(/balance/i);
     const after = await journalTotals(A.tenantId);
     expect(after.entries).toBe(before.entries);
   });
@@ -235,6 +235,21 @@ describe("governance", () => {
     await request(app)
       .post(`/api/v1/migration/projects/${projectId}/steps/${preview.body.step.id}/commit`)
       .set(auth(A.token)).send({});
+    // Discard every remaining staged step (the two deliberately-rejected TB
+    // stages above); a discarded step's batch can never be committed.
+    const project = await request(app)
+      .get(`/api/v1/migration/projects/${projectId}`).set(auth(A.token));
+    for (const step of project.body.steps.filter((s: any) => s.status === "STAGED")) {
+      const discarded = await request(app)
+        .post(`/api/v1/migration/projects/${projectId}/steps/${step.id}/discard`)
+        .set(auth(A.token));
+      expect(discarded.status).toBe(200);
+      expect(discarded.body.status).toBe("DISCARDED");
+      const recommit = await request(app)
+        .post(`/api/v1/migration/projects/${projectId}/steps/${step.id}/commit`)
+        .set(auth(A.token)).send({ asOfDate: "2026-01-01" });
+      expect(recommit.status).toBe(409);
+    }
     const closed = await request(app)
       .post(`/api/v1/migration/projects/${projectId}/close`).set(auth(A.token));
     expect(closed.status).toBe(200);

@@ -1683,7 +1683,7 @@ export const migrationSteps = pgTable("migration_steps", {
   index("migration_steps_tenant").on(t.tenantId),
   check("migration_steps_kind_check", sql`${t.kind} IN
     ('contacts', 'products', 'opening_stock', 'opening_trial_balance', 'open_invoices', 'open_bills')`),
-  check("migration_steps_status_check", sql`${t.status} IN ('STAGED', 'COMMITTED', 'ROLLED_BACK')`),
+  check("migration_steps_status_check", sql`${t.status} IN ('STAGED', 'COMMITTED', 'ROLLED_BACK', 'DISCARDED')`),
 ]);
 
 export const migrationOpenItems = pgTable("migration_open_items", {

@@ -67,6 +67,7 @@ import {
 import {
   closeProject as closeMigrationProject, commitStep as commitMigrationStep,
   commitStepSchema as migrationCommitSchema, createProject as createMigrationProject,
+  discardStep as discardMigrationStep,
   createProjectSchema as migrationProjectSchema, getProject as getMigrationProject,
   listProjects as listMigrationProjects, previewStep as previewMigrationStep,
   previewStepSchema as migrationPreviewSchema, rollbackStep as rollbackMigrationStep,
@@ -2023,6 +2024,12 @@ api.post("/migration/projects/:id/steps/:stepId/commit", requireFeature("migrati
       tenantId: tenantId(req), userId: req.auth!.userId,
       projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
       asOfDate: migrationCommitSchema.parse(req.body ?? {}).asOfDate,
+    })));
+api.post("/migration/projects/:id/steps/:stepId/discard", requireFeature("migration.hub"),
+  requirePermission("imports.approve"), wrap(async (req) =>
+    discardMigrationStep({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
     })));
 api.post("/migration/projects/:id/steps/:stepId/rollback", requireFeature("migration.hub"),
   requireTenantOwner as any, wrap(async (req) =>
