@@ -1526,3 +1526,69 @@ export const payslips = pgTable("payslips", {
     AND ${t.taxablePay} >= 0 AND ${t.paye} >= 0 AND ${t.taxLevy} >= 0 AND ${t.netPay} >= 0
   `),
 ]);
+
+// ---------------------------------------------------------------------------
+// PD-001 — Documents workspace (build-dark behind `documents.workspace`).
+// Folders organise documents; document rows carry classification and status;
+// binary content lives in immutable version rows (new upload = new version,
+// never an update) protected at rest with the capture-storage envelope.
+// Empty tables change nothing — the whole surface fails closed until a
+// platform admin enables the flag per tenant.
+// ---------------------------------------------------------------------------
+export const documentFolders = pgTable("document_folders", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  name: text("name").notNull(),
+  parentId: uuid("parent_id"),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({ columns: [t.parentId], foreignColumns: [t.id], name: "document_folders_parent_fk" }),
+  uniqueIndex("document_folders_root_name")
+    .on(t.tenantId, t.name).where(sql`${t.parentId} IS NULL`),
+  uniqueIndex("document_folders_child_name")
+    .on(t.tenantId, t.parentId, t.name).where(sql`${t.parentId} IS NOT NULL`),
+  index("document_folders_tenant").on(t.tenantId),
+  check("document_folders_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 120`),
+]);
+
+export const workspaceDocuments = pgTable("workspace_documents", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  folderId: uuid("folder_id").references(() => documentFolders.id),
+  title: text("title").notNull(),
+  classification: text("classification").notNull(),
+  status: text("status").default("ACTIVE").notNull(),
+  currentVersion: integer("current_version").default(1).notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("workspace_documents_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  index("workspace_documents_tenant_folder").on(t.tenantId, t.folderId),
+  check("workspace_documents_classification_check", sql`${t.classification} IN
+    ('POLICY', 'CONTRACT', 'CERTIFICATE', 'LICENCE', 'REPORT', 'CORRESPONDENCE', 'OTHER')`),
+  check("workspace_documents_status_check", sql`${t.status} IN ('ACTIVE', 'ARCHIVED')`),
+  check("workspace_documents_version_check", sql`${t.currentVersion} >= 1`),
+  check("workspace_documents_title_check", sql`length(trim(${t.title})) BETWEEN 1 AND 200`),
+]);
+
+export const workspaceDocumentVersions = pgTable("workspace_document_versions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  documentId: uuid("document_id").notNull().references(() => workspaceDocuments.id),
+  version: integer("version").notNull(),
+  fileName: text("file_name").notNull(),
+  mediaType: text("media_type").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  checksum: text("checksum").notNull(),
+  dataUrl: text("data_url").notNull(), // protected at rest (capture-storage envelope)
+  uploadedBy: uuid("uploaded_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("workspace_document_versions_doc_version").on(t.documentId, t.version),
+  index("workspace_document_versions_tenant_doc").on(t.tenantId, t.documentId),
+  check("workspace_document_versions_version_check", sql`${t.version} >= 1`),
+  check("workspace_document_versions_size_check", sql`${t.byteSize} > 0 AND ${t.byteSize} <= 1500000`),
+]);
