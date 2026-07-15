@@ -46,6 +46,7 @@ import {
   ProcurementApprovalNotifier, subscribeProcurementApprovalNotifications,
   type ProcurementApprovalNotifierContract,
 } from "./procurement-notifications.js";
+import { ApprovalService } from "./platform/workflow/approvals.js";
 import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
@@ -81,6 +82,9 @@ export const DOCUMENT_SERVICE: ServiceToken<DocumentServiceContract> =
 
 export const FEATURE_FLAG_SERVICE: ServiceToken<FeatureFlagService> =
   createServiceToken("platform.features.service");
+
+export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
+  createServiceToken("platform.workflow.approvals");
 
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
@@ -150,6 +154,8 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       options.featureFlagAuditRecorder ?? recordFeatureFlagAudit,
     ),
   );
+
+  kernel.container.registerFactory(APPROVAL_SERVICE, () => new ApprovalService());
 
   kernel.container.registerFactory(NOTIFICATION_SERVICE, () => {
     const persist = options.notificationWriter ?? persistNotification;

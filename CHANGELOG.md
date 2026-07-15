@@ -4,6 +4,14 @@
 
 ### Added
 
+- **PW-001 — One approval engine.** Approval decision semantics (APPROVE/
+  REJECT outcomes, decision timestamps, segregation-of-duties enforcement,
+  canonical `<subject>.approved|rejected` audit naming) extracted into the
+  kernel `ApprovalService` (`APPROVAL_SERVICE`). Procurement requisition
+  decisions and purchase-order approvals are the first consumers — identical
+  behaviour, responses and messages, proven by the existing lifecycle suite.
+  No schema change. PW-002 adds configurable policies on this seam.
+
 - **FLAG-001/002 — Tenant feature flags (build-dark model).** Foundation for
   building the entire Part II platform now and going live later: a closed
   feature catalogue (Network, Black Book, Mail hub, Documents, Workflow,
