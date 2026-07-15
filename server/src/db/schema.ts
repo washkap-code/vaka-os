@@ -1643,6 +1643,72 @@ export const blackbookEntries = pgTable("blackbook_entries", {
 ]);
 
 // ---------------------------------------------------------------------------
+// PM-001/PM-002 — Migration Hub: project-grouped staged migrations over the
+// existing import framework, with commit/rollback tracking, an opening
+// trial-balance journal step and an AR/AP open-item register the accountant
+// reconciles and signs off.
+// ---------------------------------------------------------------------------
+export const migrationProjects = pgTable("migration_projects", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  name: text("name").notNull(),
+  sourceSystem: text("source_system").notNull(),
+  status: text("status").default("OPEN").notNull(),
+  signOff: jsonb("sign_off"),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("migration_projects_tenant").on(t.tenantId, t.createdAt),
+  check("migration_projects_status_check", sql`${t.status} IN ('OPEN', 'CLOSED')`),
+  check("migration_projects_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 120`),
+  check("migration_projects_source_check", sql`length(trim(${t.sourceSystem})) BETWEEN 1 AND 120`),
+]);
+
+export const migrationSteps = pgTable("migration_steps", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  projectId: uuid("project_id").notNull().references(() => migrationProjects.id),
+  kind: text("kind").notNull(),
+  status: text("status").default("STAGED").notNull(),
+  importBatchId: uuid("import_batch_id").references(() => importBatches.id),
+  journalEntryId: uuid("journal_entry_id"),
+  reversalJournalEntryId: uuid("reversal_journal_entry_id"),
+  summary: jsonb("summary").default({}).notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("migration_steps_project").on(t.projectId, t.createdAt),
+  index("migration_steps_tenant").on(t.tenantId),
+  check("migration_steps_kind_check", sql`${t.kind} IN
+    ('contacts', 'products', 'opening_stock', 'opening_trial_balance', 'open_invoices', 'open_bills')`),
+  check("migration_steps_status_check", sql`${t.status} IN ('STAGED', 'COMMITTED', 'ROLLED_BACK')`),
+]);
+
+export const migrationOpenItems = pgTable("migration_open_items", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  projectId: uuid("project_id").notNull().references(() => migrationProjects.id),
+  stepId: uuid("step_id").notNull().references(() => migrationSteps.id),
+  side: text("side").notNull(),
+  contactName: text("contact_name").notNull(),
+  reference: text("reference").notNull(),
+  issueDate: date("issue_date"),
+  dueDate: date("due_date"),
+  currency: text("currency").notNull(),
+  amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+  balance: numeric("balance", { precision: 18, scale: 2 }).notNull(),
+  matchedContactId: uuid("matched_contact_id"),
+  createdAt: createdAt(),
+}, (t) => [
+  index("migration_open_items_project_side").on(t.projectId, t.side),
+  index("migration_open_items_tenant").on(t.tenantId),
+  check("migration_open_items_side_check", sql`${t.side} IN ('AR', 'AP')`),
+  check("migration_open_items_amount_check", sql`${t.amount} >= 0 AND ${t.balance} >= 0 AND ${t.balance} <= ${t.amount}`),
+]);
+
+// ---------------------------------------------------------------------------
 // PN-001 — Opt-in public business profile from the canonical Company (tenant).
 // Owner-controlled; nothing public by default. Publishing freezes an explicit
 // snapshot; the directory (PN-002) reads ONLY published snapshots.

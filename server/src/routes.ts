@@ -65,6 +65,16 @@ import {
   publishProfile, saveProfile, searchDirectory, unpublishProfile,
 } from "./business-profile.js";
 import {
+  closeProject as closeMigrationProject, commitStep as commitMigrationStep,
+  commitStepSchema as migrationCommitSchema, createProject as createMigrationProject,
+  createProjectSchema as migrationProjectSchema, getProject as getMigrationProject,
+  listProjects as listMigrationProjects, previewStep as previewMigrationStep,
+  previewStepSchema as migrationPreviewSchema, rollbackStep as rollbackMigrationStep,
+  signOffProject as signOffMigrationProject, signOffSchema as migrationSignOffSchema,
+  stepKindSchema as migrationStepKindSchema,
+} from "./migration-hub.js";
+import { projectReconciliation } from "./migration-accounting.js";
+import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
 } from "./reports.js";
@@ -1980,6 +1990,54 @@ api.get("/network/directory", requireFeature("network.directory"), wrap(async (r
   }))));
 api.get("/network/directory/:id", requireFeature("network.directory"), wrap(async (req) =>
   getDirectoryProfile(uuidRouteParam(req, "id"))));
+
+// ---------------------------------------------------------------------------
+// PM-001/PM-002: Migration Hub — project-grouped staged migrations over the
+// existing import framework. stage → validate → commit → reconcile →
+// rollback. Rollback and sign-off are OWNER actions; the reconciliation
+// report backs the PM-002 accountant gate. Dark behind `migration.hub`.
+// ---------------------------------------------------------------------------
+api.get("/migration/projects", requireFeature("migration.hub"),
+  requirePermission("imports.create"), wrap(async (req) =>
+    listMigrationProjects(tenantId(req))));
+api.post("/migration/projects", requireFeature("migration.hub"),
+  requirePermission("imports.create"), wrap(async (req) =>
+    createMigrationProject(tenantId(req), req.auth!.userId, migrationProjectSchema.parse(req.body))));
+api.get("/migration/projects/:id", requireFeature("migration.hub"),
+  requirePermission("imports.create"), wrap(async (req) =>
+    getMigrationProject(tenantId(req), uuidRouteParam(req, "id"))));
+api.get("/migration/projects/:id/reconciliation", requireFeature("migration.hub"),
+  requirePermission("imports.create"), wrap(async (req) =>
+    projectReconciliation(tenantId(req), uuidRouteParam(req, "id"))));
+api.post("/migration/projects/:id/steps/:kind/preview", requireFeature("migration.hub"),
+  requirePermission("imports.create"), wrap(async (req) =>
+    previewMigrationStep({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      projectId: uuidRouteParam(req, "id"),
+      kind: migrationStepKindSchema.parse(routeParam(req, "kind")),
+      csvText: migrationPreviewSchema.parse(req.body).csvText,
+    })));
+api.post("/migration/projects/:id/steps/:stepId/commit", requireFeature("migration.hub"),
+  requirePermission("imports.approve"), wrap(async (req) =>
+    commitMigrationStep({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
+      asOfDate: migrationCommitSchema.parse(req.body ?? {}).asOfDate,
+    })));
+api.post("/migration/projects/:id/steps/:stepId/rollback", requireFeature("migration.hub"),
+  requireTenantOwner as any, wrap(async (req) =>
+    rollbackMigrationStep({
+      tenantId: tenantId(req), userId: req.auth!.userId,
+      projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
+      reason: z.object({ reason: z.string().trim().min(5).max(500) }).parse(req.body).reason,
+    })));
+api.post("/migration/projects/:id/sign-off", requireFeature("migration.hub"),
+  requireTenantOwner as any, wrap(async (req) =>
+    signOffMigrationProject(tenantId(req), req.auth!.userId,
+      uuidRouteParam(req, "id"), migrationSignOffSchema.parse(req.body))));
+api.post("/migration/projects/:id/close", requireFeature("migration.hub"),
+  requireTenantOwner as any, wrap(async (req) =>
+    closeMigrationProject(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"))));
 
 // ---------------------------------------------------------------------------
 // PW-002: tenant-configurable approval policies (thresholds, extra

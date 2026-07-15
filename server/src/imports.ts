@@ -160,7 +160,7 @@ const bankHeaderAliases: Record<string, BankHeader> = {
   cheque_no: "reference",
 };
 
-function safeText(value: string, field: string, max: number): string | null {
+export function safeText(value: string, field: string, max: number): string | null {
   const clean = value.trim();
   if (!clean) return null;
   if (clean.length > max) throw new Error(`${field} exceeds ${max} characters`);
@@ -176,7 +176,7 @@ function parseBoolean(value: string, defaultValue: boolean): boolean {
   throw new Error(`Invalid boolean value: ${value}`);
 }
 
-function parseMoney(value: string, field: string): string {
+export function parseMoney(value: string, field: string): string {
   const clean = value.trim() || "0";
   if (!/^\d{1,12}(\.\d{1,2})?$/.test(clean)) {
     throw new Error(`${field} must be a non-negative amount with no more than 2 decimal places`);
@@ -273,7 +273,7 @@ function parseBankTransactionRow(
   return { bankAccountId, date, description, amount, reference, sourceKey };
 }
 
-function parseCsv(csvText: string): string[][] {
+export function parseCsv(csvText: string): string[][] {
   if (Buffer.byteLength(csvText, "utf8") > MAX_CSV_BYTES) {
     throw badRequest("CSV file exceeds the 1 MB limit");
   }
@@ -321,7 +321,7 @@ function parseCsv(csvText: string): string[][] {
   return rows;
 }
 
-function normalizeHeader(value: string): string {
+export function normalizeHeader(value: string): string {
   return value.trim().toLowerCase().replace(/[\s-]+/g, "_");
 }
 
