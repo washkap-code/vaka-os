@@ -74,6 +74,7 @@ describe("platform control centre", () => {
       auditEvents24h: 19,
       pastDueTenants: 2,
       suspendedTenants: 1,
+      acceptedRestoreDrills: 0,
     });
     const serialized = JSON.stringify(snapshot).toLowerCase();
     expect(serialized).not.toContain("passwordhash");
