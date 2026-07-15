@@ -25,11 +25,10 @@ this repository.
 ## Migration ledger (production truth)
 
 Highest migration on `main`: `0035_payroll_foundation.sql`.
-**All migrations through 0034 are applied and verified in production.**
-**0035 is NOT yet applied to production** — hand-apply it via the Supabase MCP
-`apply_migration` BEFORE pushing main (it is additive + idempotent: three new
-tables + `payroll.*` role backfill; verified to apply cleanly over a live
-schema in the scratch environment).
+**All migrations through 0035 are applied and verified in production**
+(0035 applied via Supabase MCP `apply_migration` on 2026-07-15 after the push;
+verified: three payroll tables exist, all 3 seeded roles backfilled with
+`payroll.read/manage/post`).
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -37,7 +36,7 @@ schema in the scratch environment).
 | 0032_restore_drill_evidence | OPS-016 | ✅ 2026-07-15 |
 | 0033_finance_report_snapshots | P7-002 | ✅ 2026-07-15 |
 | 0034_accounting_period_close | P2-005 | ✅ 2026-07-15 |
-| 0035_payroll_foundation | P2-009 | ⬜ pending — apply before push |
+| 0035_payroll_foundation | P2-009 | ✅ 2026-07-15 |
 
 New migrations continue from **0036**.
 
@@ -102,8 +101,8 @@ the admin password hash between reruns on the same scratch db.
 
 ## Remaining launch workstreams (in order)
 
-1. **Deploy P2-009**: hand-apply `0035_payroll_foundation.sql` to production
-   via Supabase MCP, then push main via GitHub Desktop (auto-deploys Vercel).
+1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
+   and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
    to verify the 2026 PAYE/AIDS-levy/NSSA config in `zw.ts` (including the
    NSSA-deductibility treatment and the missing ZWG ceiling); on approval flip
@@ -123,10 +122,10 @@ the admin password hash between reruns on the same scratch db.
 > You are my technical lead for VAKA OS. Read
 > `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
 > it has the current state, constraints and verification pattern. Confirm main
-> is clean and matches origin, confirm the migration ledger (0034 applied in
-> production, 0035 pending — apply it via Supabase MCP before any push; new
-> migrations start at 0036), then start the next workstream: [deploy P2-009 /
-> DB separation / hardening — pick one]. Same discipline as always: scoped
+> is clean and matches origin, confirm the migration ledger (all through 0035
+> applied in production; new migrations start at 0036), then start the next
+> workstream: [payroll accountant sign-off support / DB separation /
+> hardening — pick one]. Same discipline as always: scoped
 > diffs, scratch-Postgres verification, hand-apply idempotent DDL to
 > production BEFORE pushing code, merge to main, push via GitHub Desktop,
 > report what was verified and the exact SQL applied.
