@@ -4,6 +4,16 @@
 
 ### Added
 
+- **PW-002 — Configurable approval policies.** Owners/Admins can require, per
+  subject type (purchase orders, payroll runs), an amount threshold in the
+  tenant base currency plus an extra permission and/or a second person
+  (preparer ≠ approver). Policies are evaluated fail-closed by the kernel
+  ApprovalService inside the domain transaction; violations return the
+  standard 409 conflict. Payroll gains its first segregation-of-duties
+  control by policy. Configuration via audited
+  `GET/PUT/DELETE /settings/approval-policies…` (`settings.manage`).
+  Migration 0037 ships empty — no behaviour change until a tenant opts in.
+
 - **PW-001 — One approval engine.** Approval decision semantics (APPROVE/
   REJECT outcomes, decision timestamps, segregation-of-duties enforcement,
   canonical `<subject>.approved|rejected` audit naming) extracted into the

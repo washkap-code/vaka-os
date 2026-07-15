@@ -24,10 +24,10 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0036_tenant_feature_flags.sql`.
-**All migrations through 0036 are applied and verified in production**
-(0036 applied via Supabase MCP on 2026-07-15 BEFORE the code push; verified:
-`tenant_feature_flags` exists and is empty = all features OFF).
+Highest migration on `main`: `0037_approval_policies.sql`.
+**All migrations through 0037 are applied and verified in production**
+(0036 and 0037 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
+verified: both tables exist and are empty = flags all OFF, no policies).
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -37,8 +37,9 @@ Highest migration on `main`: `0036_tenant_feature_flags.sql`.
 | 0034_accounting_period_close | P2-005 | ✅ 2026-07-15 |
 | 0035_payroll_foundation | P2-009 | ✅ 2026-07-15 |
 | 0036_tenant_feature_flags | FLAG-001 | ✅ 2026-07-15 |
+| 0037_approval_policies | PW-002 | ✅ 2026-07-15 |
 
-New migrations continue from **0037**.
+New migrations continue from **0038**.
 
 ## Shipped and live on `main` (this working period)
 
@@ -122,9 +123,16 @@ the admin password hash between reruns on the same scratch db.
    (workflow-approvals 5/5; procurement-lifecycle, critical, supplier-bills,
    platform-runtime all green). No schema change. Mission pack:
    `docs/engineering/mission-packs/PW-001/`.
-   **Next Part II missions (Wave 1): PW-002 configurable approval policies,
-   PD-001 documents workspace, PN-001 business profile, PB-001 Black Book
-   registry — each behind its catalogue flag.**
+   **PW-002 is DONE (2026-07-15):** tenant-configurable approval policies
+   (threshold + required permission + second person) evaluated fail-closed by
+   the kernel ApprovalService; adopted by PO approval and payroll posting;
+   audited settings endpoints under `settings.manage`; migration 0037 applied
+   to production (empty = defaults unchanged). Verified: approval-policies
+   8/8; procurement-lifecycle/payroll/workflow-approvals/critical 41/41.
+   Mission pack: `docs/engineering/mission-packs/PW-002/`.
+   **Next Part II missions (Wave 1): PW-003 event automation rules + PW-004
+   task centre, PD-001 documents workspace, PN-001 business profile, PB-001
+   Black Book registry — each behind its catalogue flag.**
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
