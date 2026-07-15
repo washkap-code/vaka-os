@@ -150,5 +150,44 @@
       "https://ema.co.zw/eia/"
     ],
     "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "jsc-court-contact-directory",
+    "name": "Court Contact Directory",
+    "category": "service",
+    "parentId": "judicial-service-commission-zimbabwe",
+    "website": "https://www.jsc.org.zw/contacts/",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The public JSC directory lists court types and stations; known placeholder contact values are not copied into the Black Book."
+  },
+  {
+    "id": "mohcc-central-hospital-directory",
+    "name": "Central Hospital Directory",
+    "category": "service",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zrp-general-lines-directory",
+    "name": "Police General Lines and Provincial Contact Directory",
+    "category": "service",
+    "parentId": "zimbabwe-republic-police",
+    "website": "https://zrp.gov.zw/?page_id=7641",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?page_id=7641"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official page states that its directory was updated in June 2022; users should confirm current numbers before relying on them."
   }
 ]

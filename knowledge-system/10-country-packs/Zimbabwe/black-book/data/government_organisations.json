@@ -315,5 +315,526 @@
     ],
     "lastReviewed": "2026-07-15",
     "notes": "The Ministry of Local Government identifies the Board as the body responsible for liquor licensing under the Liquor Act."
+  },
+  {
+    "id": "opc-bulawayo-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Bulawayo Metropolitan",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://opcbyometro.gov.zw/",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://opcbyometro.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "opc-harare-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Harare Metropolitan",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://harareprovince.co.zw/",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://harareprovince.co.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "opc-manicaland-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Manicaland",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.opcmanicaland.gov.zw/",
+    "city": "Mutare",
+    "verified": true,
+    "sources": [
+      "https://www.opcmanicaland.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "opc-mashonaland-central-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Mashonaland Central",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.testdomain9.gov.zw/",
+    "city": "Bindura",
+    "verified": true,
+    "sources": [
+      "https://www.testdomain9.gov.zw/?page_id=1352",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official provincial portal currently uses a testdomain9.gov.zw hostname; confirm the canonical hostname before customer-facing publication."
+  },
+  {
+    "id": "opc-mashonaland-east-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Mashonaland East",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.testdomain3.gov.zw/",
+    "city": "Marondera",
+    "verified": true,
+    "sources": [
+      "https://www.testdomain3.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official provincial portal currently uses a testdomain3.gov.zw hostname; confirm the canonical hostname before customer-facing publication."
+  },
+  {
+    "id": "opc-mashonaland-west-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Mashonaland West",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.mashwest.gov.zw/",
+    "city": "Chinhoyi",
+    "verified": true,
+    "sources": [
+      "https://www.mashwest.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "opc-masvingo-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Masvingo",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.testdomain13.gov.zw/",
+    "city": "Masvingo",
+    "verified": true,
+    "sources": [
+      "https://www.testdomain13.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official provincial portal currently uses a testdomain13.gov.zw hostname and contains a stray Manicaland reference; only the Masvingo office identity and location are represented here."
+  },
+  {
+    "id": "opc-matabeleland-north-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Matabeleland North",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.opcmatnorth.gov.zw/",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.opcmatnorth.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official portal states that the provincial capital is Lupane but that the office is currently housed in Bulawayo."
+  },
+  {
+    "id": "opc-matabeleland-south-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Matabeleland South",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://www.testdomain10.gov.zw/",
+    "city": "Gwanda",
+    "verified": true,
+    "sources": [
+      "https://www.testdomain10.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official provincial portal currently uses a testdomain10.gov.zw hostname; confirm the canonical hostname before customer-facing publication."
+  },
+  {
+    "id": "opc-midlands-provincial-affairs-office",
+    "name": "Office of the Minister of State for Provincial Affairs and Devolution — Midlands",
+    "category": "government_organisation",
+    "parentId": "office-president-cabinet",
+    "website": "https://testdomain25.gov.zw/",
+    "city": "Gweru",
+    "verified": true,
+    "sources": [
+      "https://testdomain25.gov.zw/",
+      "https://www.zimgeneva.gov.zw/wp-content/uploads/2025/01/OFFICERS-OF-GOVERNMENT-AND-THEIR-FUNCTIONS.pdf"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official provincial portal currently uses a testdomain25.gov.zw hostname; confirm the canonical hostname before customer-facing publication."
+  },
+  {
+    "id": "judicial-service-commission-zimbabwe",
+    "name": "Judicial Service Commission of Zimbabwe",
+    "category": "government_organisation",
+    "website": "https://www.jsc.org.zw/",
+    "services": [
+      "jsc-court-contact-directory"
+    ],
+    "verified": true,
+    "sources": [
+      "https://jsc.org.zw/about/",
+      "https://www.jsc.org.zw/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The JSC is recorded without a ministry parent to preserve its status as an independent constitutional body."
+  },
+  {
+    "id": "constitutional-court-zimbabwe",
+    "name": "Constitutional Court of Zimbabwe",
+    "category": "government_organisation",
+    "parentId": "judicial-service-commission-zimbabwe",
+    "website": "https://www.jsc.org.zw/",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/",
+      "https://www.jsc.org.zw/contacts/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "supreme-court-zimbabwe",
+    "name": "Supreme Court of Zimbabwe",
+    "category": "government_organisation",
+    "parentId": "judicial-service-commission-zimbabwe",
+    "website": "https://www.jsc.org.zw/",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/",
+      "https://www.jsc.org.zw/contacts/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "high-court-zimbabwe",
+    "name": "High Court of Zimbabwe",
+    "category": "government_organisation",
+    "parentId": "judicial-service-commission-zimbabwe",
+    "website": "https://www.jsc.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/",
+      "https://www.jsc.org.zw/contacts/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "harare-high-court-station",
+    "name": "Harare High Court Station",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=2"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "bulawayo-high-court-station",
+    "name": "Bulawayo High Court Station",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=5"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "masvingo-high-court-station",
+    "name": "Masvingo High Court Station",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "city": "Masvingo",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=5"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "mutare-high-court-station",
+    "name": "Mutare High Court Station",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "city": "Mutare",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=4"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "chinhoyi-high-court-station",
+    "name": "Chinhoyi High Court Station",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "city": "Chinhoyi",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=5"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The JSC directory identifies the station, but its placeholder phone number and non-specific street address were deliberately omitted."
+  },
+  {
+    "id": "labour-court-zimbabwe",
+    "name": "Labour Court of Zimbabwe",
+    "category": "government_organisation",
+    "parentId": "judicial-service-commission-zimbabwe",
+    "website": "https://www.jsc.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/",
+      "https://www.jsc.org.zw/contacts/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "commercial-court-zimbabwe",
+    "name": "Commercial Court of Zimbabwe",
+    "category": "government_organisation",
+    "parentId": "high-court-zimbabwe",
+    "website": "https://www.jsc.org.zw/contacts/",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.jsc.org.zw/contacts/",
+      "https://jsc.org.zw:8222/contacts/?page=5"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Recorded as a High Court child entity to represent the Commercial Court division requested by the mission."
+  },
+  {
+    "id": "parirenyatwa-group-hospitals",
+    "name": "Parirenyatwa Group of Hospitals",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 242 702992"
+    ],
+    "emails": [
+      "publicrelations@parihosp.org"
+    ],
+    "physicalAddress": "P.O. Box CY 198, Causeway",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "sally-mugabe-central-hospital",
+    "name": "Sally Mugabe Central Hospital",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 242 621143",
+      "+263 242 667928"
+    ],
+    "emails": [
+      "ceosechch@gmail.com"
+    ],
+    "physicalAddress": "Lobengula Street, P.O. Box 14, Southerton",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "mpilo-central-hospital",
+    "name": "Mpilo Central Hospital",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 292 205078"
+    ],
+    "emails": [
+      "info@mpilo.org.zw"
+    ],
+    "physicalAddress": "P.O. Box 2096, Vera Road, Mzilikazi",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ingutsheni-central-hospital",
+    "name": "Ingutsheni Central Hospital",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 292 466463-5",
+      "+263 292 466896"
+    ],
+    "emails": [
+      "information@ingutshenihospital.org.zw"
+    ],
+    "physicalAddress": "P.O. Box 8363",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "chitungwiza-central-hospital",
+    "name": "Chitungwiza Central Hospital",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 2421 30917"
+    ],
+    "physicalAddress": "P.O. Box CZA 245, Zengeza",
+    "city": "Chitungwiza",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "united-bulawayo-hospitals",
+    "name": "United Bulawayo Hospitals",
+    "category": "government_organisation",
+    "parentId": "ministry-health-child-care",
+    "website": "https://www.mohcc.gov.zw/?page_id=7390",
+    "phones": [
+      "+263 292 238397"
+    ],
+    "emails": [
+      "info@ubh.org.zw"
+    ],
+    "physicalAddress": "P.O. Box 958",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zimbabwe-republic-police",
+    "name": "Zimbabwe Republic Police",
+    "category": "government_organisation",
+    "parentId": "ministry-home-affairs-cultural-heritage",
+    "website": "https://zrp.gov.zw/",
+    "services": [
+      "zrp-general-lines-directory"
+    ],
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/",
+      "https://zrp.gov.zw/?p=7185"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zrp-harare-provincial-headquarters",
+    "name": "ZRP Harare Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "physicalAddress": "Second Floor, Old Building, Harare Central Police Station, corner Inez Terrace and Kenneth Kaunda Avenue",
+    "city": "Harare",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7210"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zrp-masvingo-provincial-headquarters",
+    "name": "ZRP Masvingo Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "physicalAddress": "Corner Robertson Street and Josiah Tongogara Street",
+    "city": "Masvingo",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7234"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zrp-mashonaland-east-provincial-headquarters",
+    "name": "ZRP Mashonaland East Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "city": "Marondera",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7258"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official ZRP page identifies Marondera as the headquarters location but does not publish a street address."
+  },
+  {
+    "id": "zrp-mashonaland-central-provincial-headquarters",
+    "name": "ZRP Mashonaland Central Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7185"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official ZRP provinces page confirms the headquarters' existence but does not publish its city or street address; no location is inferred."
+  },
+  {
+    "id": "zrp-mashonaland-west-provincial-headquarters",
+    "name": "ZRP Mashonaland West Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "city": "Chinhoyi",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7185"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official ZRP provinces page identifies Chinhoyi as the headquarters location but does not publish a street address."
+  },
+  {
+    "id": "zrp-matabeleland-south-provincial-headquarters",
+    "name": "ZRP Matabeleland South Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "city": "Gwanda",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7185"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official ZRP provinces page identifies Gwanda as the headquarters location but does not publish a street address."
+  },
+  {
+    "id": "zrp-manicaland-provincial-headquarters",
+    "name": "ZRP Manicaland Provincial Headquarters",
+    "category": "government_organisation",
+    "parentId": "zimbabwe-republic-police",
+    "verified": true,
+    "sources": [
+      "https://zrp.gov.zw/?p=7302"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The official ZRP page confirms the headquarters' existence but does not publish its city or street address; no location is inferred."
   }
 ]
