@@ -1,0 +1,69 @@
+[
+  {
+    "id": "zncc",
+    "name": "Zimbabwe National Chamber of Commerce",
+    "category": "business_association",
+    "website": "https://zncc.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://zncc.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "czi",
+    "name": "Confederation of Zimbabwe Industries",
+    "category": "business_association",
+    "website": "https://www.czi.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.czi.co.zw/czi263/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "smeaz",
+    "name": "SME Association of Zimbabwe",
+    "category": "business_association",
+    "website": "https://www.smeaz.org.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.smeaz.org.zw/",
+      "https://www.smeaz.org.zw/index.php/component/content/article/113-introduction"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "emcoz",
+    "name": "Employers' Confederation of Zimbabwe",
+    "category": "business_association",
+    "website": "https://www.emcoz.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.emcoz.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zamfi",
+    "name": "Zimbabwe Association of Microfinance Institutions",
+    "category": "business_association",
+    "website": "https://zamfi.org/",
+    "verified": true,
+    "sources": [
+      "https://zamfi.org/about-zamfi/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "cfu-zimbabwe",
+    "name": "Commercial Farmers' Union of Zimbabwe",
+    "category": "business_association",
+    "website": "https://cfuzim.org/",
+    "verified": true,
+    "sources": [
+      "https://cfuzim.org/home-commercial-farmers-union/about-cfu/"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]

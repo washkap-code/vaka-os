@@ -1,0 +1,319 @@
+[
+  {
+    "id": "ministry-defence",
+    "name": "Ministry of Defence",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-finance-investment-promotion",
+    "name": "Ministry of Finance and Investment Promotion",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-energy-power-development",
+    "name": "Ministry of Energy and Power Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-women-affairs-community-smes",
+    "name": "Ministry of Women Affairs, Community, Small and Medium Enterprises Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-home-affairs-cultural-heritage",
+    "name": "Ministry of Home Affairs and Cultural Heritage",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-local-government-public-works",
+    "name": "Ministry of Local Government and Public Works",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-higher-tertiary-education",
+    "name": "Ministry of Higher and Tertiary Education",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-lands-agriculture-fisheries",
+    "name": "Ministry of Lands, Agriculture and Fisheries",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Name follows the current ministerial portfolio listing published by Parliament."
+  },
+  {
+    "id": "ministry-health-child-care",
+    "name": "Ministry of Health and Child Care",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-industry-commerce",
+    "name": "Ministry of Industry and Commerce",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-environment-climate-wildlife",
+    "name": "Ministry of Environment, Climate and Wildlife",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-public-service-labour-social-welfare",
+    "name": "Ministry of Public Service, Labour and Social Welfare",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-foreign-affairs-international-trade",
+    "name": "Ministry of Foreign Affairs and International Trade",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-tourism-hospitality",
+    "name": "Ministry of Tourism and Hospitality",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-veterans-liberation-struggle",
+    "name": "Ministry of Veterans of the Liberation Struggle",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-primary-secondary-education",
+    "name": "Ministry of Primary and Secondary Education",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-mines-mining-development",
+    "name": "Ministry of Mines and Mining Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-information-publicity-broadcasting",
+    "name": "Ministry of Information, Publicity and Broadcasting Services",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-national-housing-social-amenities",
+    "name": "Ministry of National Housing and Social Amenities",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-youth-empowerment-development",
+    "name": "Ministry of Youth Empowerment and Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-justice-legal-parliamentary-affairs",
+    "name": "Ministry of Justice, Legal and Parliamentary Affairs",
+    "category": "government_organisation",
+    "services": [
+      "dcip-company-registration"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-ict-postal-courier-services",
+    "name": "Ministry of Information Communication Technology, Postal and Courier Services",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-sports-recreation-arts-culture",
+    "name": "Ministry of Sports, Recreation, Arts and Culture",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-skills-audit-development",
+    "name": "Ministry of Skills Audit and Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ministry-lands-rural-development",
+    "name": "Ministry of Lands and Rural Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "Name follows the current ministerial portfolio listing published by Parliament."
+  },
+  {
+    "id": "ministry-transport-infrastructural-development",
+    "name": "Ministry of Transport and Infrastructural Development",
+    "category": "government_organisation",
+    "verified": true,
+    "sources": [
+      "https://www.zim.gov.zw/index.php/government-documents"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "office-president-cabinet",
+    "name": "Office of the President and Cabinet",
+    "category": "government_organisation",
+    "website": "https://www.zim.gov.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zim.gov.zw/index.php/government-documents"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "parliament-zimbabwe",
+    "name": "Parliament of Zimbabwe",
+    "category": "government_organisation",
+    "website": "https://www.parlzim.gov.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "dcip-zimbabwe",
+    "name": "Deeds, Companies and Intellectual Property",
+    "category": "government_organisation",
+    "parentId": "ministry-justice-legal-parliamentary-affairs",
+    "website": "https://www.justice.gov.zw/?service=business-consulting",
+    "services": [
+      "dcip-company-registration"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The Ministry of Justice source describes the department's company, deeds, and intellectual-property registration functions."
+  },
+  {
+    "id": "liquor-licensing-board",
+    "name": "Liquor Licensing Board",
+    "category": "government_organisation",
+    "parentId": "ministry-local-government-public-works",
+    "website": "https://llb.pfms.gov.zw/Home/LandingPage",
+    "verified": true,
+    "sources": [
+      "https://www.mlg.gov.zw/?post_type=service",
+      "https://llb.pfms.gov.zw/Home/LandingPage"
+    ],
+    "lastReviewed": "2026-07-15",
+    "notes": "The Ministry of Local Government identifies the Board as the body responsible for liquor licensing under the Liquor Act."
+  }
+]

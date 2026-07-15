@@ -1,0 +1,65 @@
+[
+  {
+    "id": "harare-city-council",
+    "name": "Harare City Council",
+    "category": "local_authority",
+    "website": "https://www.hararecity.co.zw/",
+    "city": "Harare",
+    "services": [
+      "harare-business-licensing"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "bulawayo-city-council",
+    "name": "Bulawayo City Council",
+    "category": "local_authority",
+    "website": "https://www.citybyo.co.zw/",
+    "city": "Bulawayo",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "mutare-city-council",
+    "name": "Mutare City Council",
+    "category": "local_authority",
+    "website": "https://mutarecity.org/",
+    "city": "Mutare",
+    "verified": true,
+    "sources": [
+      "https://mutarecity.org/about/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "gweru-city-council",
+    "name": "Gweru City Council",
+    "category": "local_authority",
+    "website": "https://gwerucity.org.zw/",
+    "city": "Gweru",
+    "verified": true,
+    "sources": [
+      "https://gwerucity.org.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "masvingo-city-council",
+    "name": "City of Masvingo",
+    "category": "local_authority",
+    "website": "https://masvingocity.org.zw/",
+    "city": "Masvingo",
+    "verified": true,
+    "sources": [
+      "https://masvingocity.org.zw/about-us/"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]

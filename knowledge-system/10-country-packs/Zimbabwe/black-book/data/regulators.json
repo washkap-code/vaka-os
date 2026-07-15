@@ -1,0 +1,144 @@
+[
+  {
+    "id": "zimra",
+    "name": "Zimbabwe Revenue Authority",
+    "category": "regulator",
+    "website": "https://www.zimra.co.zw/",
+    "services": [
+      "zimra-taxpayer-registration"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/about-us/mandate-vision-mission-values"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "rbz",
+    "name": "Reserve Bank of Zimbabwe",
+    "category": "regulator",
+    "website": "https://www.rbz.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.rbz.co.zw/index.php/about-us/about-us/functions"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "praz",
+    "name": "Procurement Regulatory Authority of Zimbabwe",
+    "category": "regulator",
+    "website": "https://www.praz.org.zw/",
+    "services": [
+      "praz-bidder-registration",
+      "egp-electronic-tendering"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "nssa",
+    "name": "National Social Security Authority",
+    "category": "regulator",
+    "website": "https://www.nssa.org.zw/",
+    "services": [
+      "nssa-employer-registration"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.nssa.org.zw/",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "zera",
+    "name": "Zimbabwe Energy Regulatory Authority",
+    "category": "regulator",
+    "website": "https://www.zera.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.zera.co.zw/our-mandate/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "potraz",
+    "name": "Postal and Telecommunications Regulatory Authority of Zimbabwe",
+    "category": "regulator",
+    "website": "https://www.potraz.gov.zw/",
+    "services": [
+      "potraz-licensing-information"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.potraz.gov.zw/",
+      "https://www.potraz.gov.zw/wp-content/uploads/2015/04/Frequently-Asked-Questions-FAQ.pdf"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ema",
+    "name": "Environmental Management Agency",
+    "category": "regulator",
+    "website": "https://ema.co.zw/",
+    "services": [
+      "ema-environmental-assessment-review"
+    ],
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/about-v-2/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "ipec",
+    "name": "Insurance and Pensions Commission",
+    "category": "regulator",
+    "website": "https://ipec.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://ipec.co.zw/mandate-core-functions/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "seczim",
+    "name": "Securities and Exchange Commission of Zimbabwe",
+    "category": "regulator",
+    "website": "https://seczim.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://seczim.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "competition-tariff-commission",
+    "name": "Competition and Tariff Commission",
+    "category": "regulator",
+    "website": "https://www.competition.co.zw/",
+    "verified": true,
+    "sources": [
+      "https://www.competition.co.zw/"
+    ],
+    "lastReviewed": "2026-07-15"
+  },
+  {
+    "id": "mcaz",
+    "name": "Medicines Control Authority of Zimbabwe",
+    "category": "regulator",
+    "website": "https://www.mcaz.co.zw/",
+    "services": [
+      "mcaz-register-search"
+    ],
+    "verified": true,
+    "sources": [
+      "https://www.mcaz.co.zw/who-we-are"
+    ],
+    "lastReviewed": "2026-07-15"
+  }
+]
