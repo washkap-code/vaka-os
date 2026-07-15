@@ -1,8 +1,8 @@
-# VAKA OS — Master Build Plan (to Zimbabwe-complete)
+# VAKA OS — Master Build Plan (to entire completion)
 
 **Status:** Authoritative execution catalogue
 **Owner:** VAKA Architecture Office
-**Last reviewed:** 2026-07-13
+**Last reviewed:** 2026-07-15 (Part II added: full post-launch build map; build-dark model)
 **Supersedes for sequencing:** none — complements `docs/04-execution/IMPLEMENTATION-ROADMAP.md` (stages) by turning each stage into concrete, reviewable **missions**.
 
 ## 0. How to read this document
@@ -176,19 +176,15 @@ AI never mutates ledgers, bypasses permissions, or acts without approval. Live A
 
 ---
 
-## 12. Post-launch programmes (catalogued, out of launch path)
+## 12. Post-launch programmes (summary — full mission catalogue in Part II, §15–§18)
 
-- **PN — Business Network:** directory, marketplace, advertising, referrals, trust score, business passport.
-- **PB — Black Book:** government/regulator/tender directory with AI navigation (ZIMRA, POTRAZ, RBZ, NSSA, PRAZ seeds).
-- **PS — Store:** subscriptions, modules, country packs, partner apps, billing.
-- **PV — Verify:** business/director/supplier verification, trust badges.
-- **PC — Capital:** finance/insurance marketplace introductions.
-- **PD — Documents:** contracts, versioning, e-signature, retention.
-- **PW — Workflow:** low-code approvals, forms, automation.
-- **PX — Developer Platform:** public APIs, SDKs, webhooks, marketplace.
-- **PL — Additional country packs:** South Africa, Zambia, Botswana, Namibia, Malawi, Mozambique, Kenya, Tanzania, Nigeria, Ghana (each additive via the P2-001 engine).
+- **PN — Business Network** · **PB — Black Book** · **PS — Store** · **PV — Verify**
+- **PC — Capital** · **PD — Documents** · **PW — Workflow** · **PX — Developer Platform**
+- **PM — Migration Hub** · **PMOB — Mobile** · **PI18N — Languages** · **PL — Country packs**
 
-Each becomes its own programme with the same mission discipline once Zimbabwe-complete ships.
+As of 2026-07-15 these are **no longer "after launch, start later"** — they are
+built immediately under the build-dark model (§15) and go live later, gate by
+gate. Part II below is their authoritative mission catalogue.
 
 ---
 
@@ -295,3 +291,194 @@ same mission discipline.
 Every schema-changing mission lists its exact additive production DDL in its
 `COMPLETION.md` under a "Production migration" heading for hand-apply; production
 must never take `drizzle-kit push`/`db:push` while co-located with GENFIN.
+
+---
+
+# PART II — Full-completion build map (authoritative from 2026-07-15)
+
+Decision: **everything below is built immediately; it goes live later.** The
+launch-critical path in Part I is unchanged and always takes priority when it
+conflicts with Part II work. Payroll (P2-009) is the proven template: build the
+real thing, verify it fully, ship it dark or gated, flip it live when its gate
+clears.
+
+## 15. The build-dark model (precondition for everything below)
+
+Every Part II mission ships **default-OFF behind a per-tenant feature flag**.
+The UI hides gated modules; gated APIs fail closed with `FEATURE_DISABLED`;
+flag changes are platform-admin actions and audited. Nothing dark is ever
+marketed as live (Constitution rule). Three gate types govern go-live:
+
+- **T-gate (technical):** full verification per quality gates — cleared at merge.
+- **P-gate (professional):** accountant / legal / content review — e.g. payroll tables, legal pages, Black Book content.
+- **O-gate (operational):** live provider or owner config — e.g. email/SMS/WhatsApp provider, OAuth apps, e-signature vendor.
+
+| ID | Outcome | Depends on |
+|---|---|---|
+| FLAG-001 | Tenant feature-flag service in the platform kernel: per-tenant + per-plan flags, default OFF, audited platform-admin toggles, `/me` exposes enabled flags | — |
+| FLAG-002 | Gating middleware (`requireFeature("…")`) + web nav/page gating driven by `/me` flags; payroll's accountant-gate banner generalised into a reusable "preview" treatment | FLAG-001 |
+
+**FLAG-001 is the first Part II mission — nothing else in Part II starts before it.**
+
+## 16. Programme catalogues
+
+### PW — Workflow (built early: many programmes depend on it)
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PW-001 | Extract the procurement approval chain into the kernel Workflow service (one approval engine, parity tests) | P1-001 | T |
+| PW-002 | Configurable approval policies (amount thresholds, role routing, segregation-of-duties checks) consumed by procurement + payroll posting | PW-001 | T |
+| PW-003 | Automation rules on the event bus (notify / create task on domain events) — no financial writes, ever | P1-005 | T |
+| PW-004 | Task centre: every approval/automation lands in one tenant task list (workbench widget) | PW-003 | T |
+
+### PD — Documents
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PD-001 | Document workspace: folders, upload, versioning, classification on the P1-007 document service | P1-007 | T |
+| PD-002 | Document approvals + retention policies (Workflow-powered), attach-to-any-canonical-object | PW-001, PD-001 | T |
+| PD-003 | E-signature integration behind a provider adapter | PD-002 | O (vendor) |
+
+### PN — Business Network
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PN-001 | Opt-in public business profile from the canonical Company (owner-controlled, nothing public by default) | FLAG-002 | T |
+| PN-002 | Business directory: search, categories, locations; tenant isolation between private data and public profile | PN-001 | T + P (privacy review) |
+| PN-003 | Directory enquiries → CRM leads (consent-first, audited, rate-limited) | PN-002, P3-001 | T |
+| PN-004 | Reviews & testimonials with moderation queue and evidence rules | PN-002 | T + P (content policy) |
+| PN-005 | Marketplace listings from canonical Products/services | PN-002, P5-001 | T |
+| PN-006 | Marketplace enquiry → quote → invoice handoff through existing CRM/finance funnels | PN-005, P3-004 | T |
+| PN-007 | Network referrals (extend the live referral engine across tenants) | PN-002 | T |
+| PN-008 | Advertising placements: sponsored listings/search, clearly labelled, billed via PS | PN-005, PS-002 | T + P (ad policy) |
+| PN-009 | Events & business groups | PN-002 | T |
+| PN-010 | Trust Score v1 — evidence-based, explainable, appealable; consumes PV verification + payment behaviour | PV-002, PN-004 | T + P (fairness review) |
+
+### PB — Black Book
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PB-001 | Government-organisation registry schema + content governance (versioned entries, sources, review dates, owners) | FLAG-002 | T |
+| PB-002 | Zimbabwe seed dataset: ZIMRA, NSSA, POTRAZ, RBZ, PRAZ, registrar, councils, courts, utilities — every entry sourced | PB-001 | P (content review) |
+| PB-003 | Black Book directory UI + universal search integration | PB-002, P1-006 | T |
+| PB-004 | Licence/permit knowledge: requirements, fees, processing times, official forms/links | PB-002 | P (content review) |
+| PB-005 | Compliance calendar: country-pack obligations (VAT, PAYE, NSSA, QPD, annual return) → tenant reminders via notifications | PB-002, P1-004 | T |
+| PB-006 | Tender hub (curated PRAZ + public tenders; manual curation first) | PB-003 | P (content ops) |
+| PB-007 | AI Black Book advisor — grounded strictly in PB content, cites entries, refuses beyond sources | PB-004, P8-002 | T + AI gate |
+
+### P7 (continued) — Mail & Communications, full hub
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| P7-005 | Live SMS + WhatsApp provider adapters behind the notification contract (consent registry enforced) | P1-004 | O (providers) + P (consent/policy) |
+| P7-006 | Mailbox connect v1: IMAP/SMTP + OAuth (Gmail/Microsoft 365), read-only sync into the communication timeline | P3-003 | O (OAuth apps) |
+| P7-007 | Send governed documents from the connected mailbox (invoices, statements) with delivery evidence | P7-006, P7-003 | T |
+| P7-008 | Shared mailboxes with assignment, internal notes and audit | P7-006 | T |
+| P7-009 | Campaign centre: consent-first bulk email with unsubscribe, suppression and per-campaign evidence | P7-007 | P (marketing/privacy law) |
+
+### PM — Migration Hub
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PM-001 | Generalise the imports framework into staged migrations: stage → validate → preview → commit → reconcile → rollback | existing imports | T |
+| PM-002 | Accounting migration pack: opening TB, customers/suppliers, open invoices/bills, with a reconciliation report the accountant can sign | PM-001, P2-005 | T + P (accountant) |
+| PM-003 | CRM + inventory + payroll migration packs | PM-002 | T |
+| PM-004 | AI-assisted field mapping — suggest-only, human confirms every mapping | PM-001, P8-002 | T + AI gate |
+
+### PV — Verify
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PV-001 | Verification evidence vault: submitted documents, checks, expiry, renewal (on PD-001) | PD-001 | T |
+| PV-002 | Business verification workflow: platform-staff review queue, badge issue/revoke, full audit | PV-001, PW-001 | T + P (verification policy) |
+| PV-003 | Verified badges surfaced in directory/marketplace with evidence-backed meaning | PV-002, PN-002 | T |
+
+### PS — Store & commercial platform
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PS-001 | Entitlements model: plans/modules map to feature flags (FLAG-001 becomes billable) | FLAG-001, CO-006 | T |
+| PS-002 | Module catalogue + self-service subscribe/unsubscribe via Paynow | PS-001 | T |
+| PS-003 | Usage metering + billing for consumables (SMS, AI, storage) | PS-001 | T |
+| PS-004 | Partner registry + revenue-share reporting | PS-002 | T + P (partner terms) |
+
+### P8 (continued) — Intelligence expansion
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| P8-005 | Agent registry in the kernel: purpose, tools, permissions, evidence and audit per agent | P8-002 | T |
+| P8-006 | VAKA CFO advisor: read-only finance Q&A with citations to journals/reports | P8-005, P2-006 | T + AI gate |
+| P8-007 | Business Health Score v1 — explainable dimensions (cash, compliance, receivables), never a black box | P8-006 | T + P (methodology review) |
+| P8-008 | Recommendation centre: actionable, dismissible, outcome-tracked | P8-007, PW-004 | T + AI gate |
+| P8-009 | Mail intelligence (summarise threads, draft replies — suggest-only) | P7-006, P8-005 | T + AI gate |
+
+### PC — Capital (last: needs Verify + Network + Intelligence)
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PC-001 | Funding-readiness report generated from the tenant's own verified financials (consent-first) | P8-007, P2-006 | T + P (accountant) |
+| PC-002 | Consented financial-pack sharing with lenders via secure expiring links (extends P7-003) | PC-001, P7-003 | T + P (legal) |
+| PC-003 | Finance/insurance partner introductions — VAKA facilitates, never acts as a regulated financial institution | PC-002, PS-004 | P (legal/regulatory) |
+
+### PX — Developer Platform
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PX-001 | Public API v1: OAuth client-credentials, scopes, rate limits — read-only endpoints first | P9-006 | T |
+| PX-002 | Signed, replayable webhooks on domain events | PX-001, P1-005 | T |
+| PX-003 | Governed write APIs + public API documentation portal | PX-001 | T + P (API terms) |
+| PX-004 | SDK + sandbox tenants + app certification checklist | PX-003 | T |
+
+### PMOB — Mobile
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PMOB-001 | PWA offline hardening: capture, stock counts, queued approvals with sync | P5-005 | T |
+| PMOB-002 | Native wrappers (iOS/Android): push notifications, biometric unlock | PMOB-001 | O (store accounts) |
+| PMOB-003 | Approvals-first mobile experience (approve invoice/PO/leave from notification) | PMOB-002, PW-004 | T |
+
+### PI18N — Languages
+
+| ID | Outcome | Depends on | Gate |
+|---|---|---|---|
+| PI18N-001 | Locale framework completion: every user-facing string keyed; language switcher; en-ZW baseline | P6 | T |
+| PI18N-002 | Reviewed Shona (sn-ZW) translation of core flows | PI18N-001 | P (qualified translator) |
+| PI18N-003 | Reviewed Ndebele (nd-ZW) translation of core flows | PI18N-001 | P (qualified translator) |
+
+### PL — Country packs (each additive via the P2-001 engine)
+
+Per country — one mission each for: currencies/VAT · payroll tables · banking
+formats · statutory identifiers/reports · Black Book seed · compliance
+calendar. Order: **ZA → ZM → BW → NA → MW → MZ → KE → TZ → NG → GH.**
+Every pack carries its own P-gate (local professional review) before go-live —
+the Zimbabwe payroll pattern, repeated.
+
+## 17. Build waves (execution order for Part II)
+
+```
+Wave 0  FLAG-001 → FLAG-002                        (build-dark enablers — first)
+        + Part I launch work continues in parallel and always wins conflicts
+Wave 1  PW-001 → PW-002 → PW-003/004 · PD-001/002 · PN-001→003 · PB-001→003
+Wave 2  PN-004→007 · PB-004→006 · P7-005→008 · PM-001/002 · PV-001→003
+Wave 3  PS-001→003 · P8-005→008 · PD-003 · PM-003/004 · PX-001/002 · PI18N-001
+Wave 4  PN-008→010 · PB-007 · P7-009 · PC-001→003 · PS-004 · PX-003/004
+        · PMOB-001→003 · P8-009 · PI18N-002/003
+Wave 5  PL country packs, one at a time, each fully gated
+```
+
+Rationale: Workflow and Documents are shared services many programmes consume
+(build once, early). Network and Black Book are the highest-value dark builds
+with the fewest external dependencies. Store entitlements arrive before
+anything needs billing. Capital is last by design — it needs Verify, Network,
+Intelligence and legal review beneath it.
+
+## 18. Definition of ENTIRE completion
+
+Every mission in §16 merged, verified and behind its flag; every P-gate and
+O-gate either cleared (feature live) or explicitly open with an owner and a
+review date; Zimbabwe fully live across all programmes; at least one
+additional country pack (ZA) live end-to-end proving the localisation engine;
+mobile apps published; public API v1 documented with at least one certified
+external integration. At that point VAKA OS is no longer a roadmap — it is the
+operating system for African business, and this file becomes a maintenance
+catalogue.

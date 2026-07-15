@@ -101,6 +101,13 @@ the admin password hash between reruns on the same scratch db.
 
 ## Remaining launch workstreams (in order)
 
+0. **NEW STRATEGY (2026-07-15):** the owner has approved building the entire
+   remaining platform NOW, going live later, gate by gate. The authoritative
+   map is `knowledge-system/13-roadmaps/MASTER-BUILD-PLAN.md` **Part II**
+   (§15–§18): build-dark model, full mission catalogues for
+   PW/PD/PN/PB/P7+/PM/PV/PS/P8+/PC/PX/PMOB/PI18N/PL, and build waves.
+   **First Part II mission: FLAG-001 (tenant feature-flag service)** — nothing
+   else in Part II starts before it. Part I launch work still wins conflicts.
 1. ~~Deploy P2-009~~ — DONE 2026-07-15: main pushed (auto-deployed to Vercel)
    and 0035 applied + verified in production.
 2. **Payroll accountant sign-off**: engage a qualified Zimbabwean accountant
