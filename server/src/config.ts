@@ -139,6 +139,14 @@ export interface PaynowProviderConfig {
   currency: "USD" | "ZWG";
 }
 
+export interface ErrorTrackingConfig {
+  dsn: string;
+  endpoint: string;
+  publicKey: string;
+  environment: RuntimeMode;
+  release: string;
+}
+
 /**
  * VAKA subscription collection remains disabled unless explicitly enabled and
  * the complete merchant configuration is present. Tenant settings must never
@@ -211,6 +219,41 @@ export function serverPort(env: RuntimeEnvironment = process.env): number {
     throw new Error("PORT must be an integer between 1 and 65535");
   }
   return port;
+}
+
+export function applicationVersion(env: RuntimeEnvironment = process.env): string {
+  const version = valueOf(env, "APP_VERSION")
+    ?? valueOf(env, "VERCEL_GIT_COMMIT_SHA")
+    ?? valueOf(env, "npm_package_version")
+    ?? "1.0.0";
+  if (!/^[A-Za-z0-9][A-Za-z0-9._+-]{0,99}$/.test(version)) {
+    throw new Error("APP_VERSION must be a release identifier of at most 100 characters");
+  }
+  return version;
+}
+
+/** Optional Sentry-compatible ingest configuration; absent means no-op. */
+export function errorTrackingConfig(
+  env: RuntimeEnvironment = process.env,
+): ErrorTrackingConfig | null {
+  const dsn = valueOf(env, "SENTRY_DSN");
+  if (!dsn) return null;
+  let parsed: URL;
+  try { parsed = new URL(dsn); } catch { throw new Error("SENTRY_DSN must be a valid URL"); }
+  if (parsed.protocol !== "https:") throw new Error("SENTRY_DSN must use HTTPS");
+  if (!parsed.username) throw new Error("SENTRY_DSN must include a public key");
+  if (parsed.password) throw new Error("SENTRY_DSN must not include a secret key");
+  const segments = parsed.pathname.split("/").filter(Boolean);
+  const projectId = segments.pop();
+  if (!projectId) throw new Error("SENTRY_DSN must include a project id");
+  const prefix = segments.length ? `/${segments.join("/")}` : "";
+  return {
+    dsn,
+    endpoint: `${parsed.protocol}//${parsed.host}${prefix}/api/${projectId}/envelope/`,
+    publicKey: decodeURIComponent(parsed.username),
+    environment: runtimeMode(env),
+    release: applicationVersion(env),
+  };
 }
 
 /** Absolute public origin used only to build revocable customer document links. */
@@ -327,6 +370,8 @@ export interface RuntimeConfig {
   publicAppUrl: string;
   emailDelivery: EmailDeliveryConfig;
   paynowProvider: PaynowProviderConfig | null;
+  errorTracking: ErrorTrackingConfig | null;
+  appVersion: string;
   port: number;
 }
 
@@ -355,6 +400,8 @@ export function runtimeConfig(env: RuntimeEnvironment = process.env): RuntimeCon
     publicAppUrl: read(() => publicAppUrl(env)),
     emailDelivery: read(() => emailDeliveryConfig(env)),
     paynowProvider: read(() => paynowProviderConfig(env)),
+    errorTracking: read(() => errorTrackingConfig(env)),
+    appVersion: read(() => applicationVersion(env)),
     port: read(() => serverPort(env)),
   };
 

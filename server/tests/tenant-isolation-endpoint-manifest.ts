@@ -21,6 +21,8 @@ export type EndpointCoverage = {
 // Express registrations and fails when an endpoint is added or removed.
 export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "GET", path: "/health", access: "public", vector: "public-contract", justification: "Operational liveness probe; returns no tenant data." },
+  { method: "GET", path: "/healthz", access: "public", vector: "public-contract", justification: "Dependency-free liveness probe; returns version and process uptime only." },
+  { method: "GET", path: "/readyz", access: "public", vector: "public-contract", justification: "Operational readiness probe; returns redacted check labels without tenant data or connection details." },
   { method: "POST", path: "/api/v1/auth/signup", access: "public", vector: "public-contract", justification: "Tenant bootstrap endpoint; no authenticated tenant exists yet." },
   { method: "POST", path: "/api/v1/auth/login", access: "public", vector: "public-contract", justification: "Credential exchange endpoint; rate-limited and intentionally unauthenticated." },
   { method: "POST", path: "/api/v1/auth/refresh", access: "public", vector: "public-contract", justification: "Refresh-token exchange endpoint; authenticates the rotating refresh token." },

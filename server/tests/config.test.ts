@@ -5,6 +5,7 @@ import {
   captureEncryptionSecret,
   databaseUrl,
   emailDeliveryConfig,
+  errorTrackingConfig,
   jwtSecret,
   mfaEnrollmentAvailable,
   mfaEncryptionSecret,
@@ -169,6 +170,25 @@ describe("runtime configuration", () => {
       port: 4000,
       emailDelivery: { mode: "smtp" },
       paynowProvider: null,
+      errorTracking: null,
+      appVersion: "1.0.0",
+    });
+  });
+
+  it("keeps error tracking optional and validates Sentry-compatible DSNs", () => {
+    expect(errorTrackingConfig({ NODE_ENV: "production" })).toBeNull();
+    expect(() => errorTrackingConfig({
+      NODE_ENV: "production", SENTRY_DSN: "http://public@sentry.example/42",
+    })).toThrow("must use HTTPS");
+    expect(errorTrackingConfig({
+      NODE_ENV: "production",
+      SENTRY_DSN: "https://public-key@sentry.example/42",
+      APP_VERSION: "release-2026.07.16",
+    })).toMatchObject({
+      endpoint: "https://sentry.example/api/42/envelope/",
+      publicKey: "public-key",
+      environment: "production",
+      release: "release-2026.07.16",
     });
   });
 

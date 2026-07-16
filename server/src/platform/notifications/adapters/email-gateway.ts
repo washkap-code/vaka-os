@@ -1,5 +1,6 @@
 import type { NotificationGateway, NotificationWriter } from "../interfaces.js";
 import type { NotificationRequest } from "../types.js";
+import { logEvent } from "../../../observability.js";
 
 export type EmailTransportMessage = Pick<
   NotificationRequest,
@@ -10,6 +11,7 @@ export type EmailTransport = (message: EmailTransportMessage) => Promise<{ provi
 export type EmailDeliveryLogEvent = "email.queued" | "email.retried" | "email.sent" | "email.failed";
 export type EmailDeliveryLogger = (event: EmailDeliveryLogEvent, fields: {
   messageId: string;
+  tenantId: string;
   recipient: string;
   template: string;
   correlationId: string;
@@ -27,7 +29,8 @@ export interface EmailGatewayOptions {
 }
 
 const defaultLog: EmailDeliveryLogger = (event, fields) => {
-  console.info(JSON.stringify({ event, ...fields }));
+  logEvent(event, { ...fields, requestId: fields.correlationId },
+    event === "email.failed" ? "error" : event === "email.retried" ? "warn" : "info");
 };
 
 function safeErrorCode(error: unknown): string {
@@ -64,6 +67,7 @@ export function emailGateway(
       };
       const logFields = {
         messageId: message.id,
+        tenantId: message.tenantId,
         recipient: message.recipient,
         template: message.template,
         correlationId: message.correlationId,

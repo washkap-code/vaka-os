@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { emailDeliveryConfig, type EmailDeliveryConfig } from "./config.js";
 import { renderEmailTemplate, type RenderedEmail } from "./email-templates.js";
 import type { EmailTransport, EmailTransportMessage } from "./platform/notifications/index.js";
+import { applicationLogger, type AppLogger } from "./observability.js";
 
 export interface CapturedEmail {
   message: EmailTransportMessage;
@@ -60,12 +61,13 @@ export function testEmailTransport(): InMemoryEmailTransport {
 
 export function createConsoleEmailTransport(
   config: Extract<EmailDeliveryConfig, { mode: "console" }>,
+  logger: AppLogger = applicationLogger,
 ): EmailTransport {
   return async (message) => {
     const rendered = renderEmailTemplate(message);
     // Full rendered content is intentionally debug-only and limited to the
     // non-production console transport. Info-level delivery logs never carry bodies.
-    console.debug(JSON.stringify({
+    logger.debugSensitive("email.console_rendered", {
       event: "email.console_rendered",
       messageId: message.id,
       correlationId: message.correlationId,
@@ -74,7 +76,7 @@ export function createConsoleEmailTransport(
       from: { address: config.fromAddress, name: config.fromName },
       replyTo: config.replyTo,
       ...rendered,
-    }));
+    });
     return { providerMessageId: `console:${message.id}` };
   };
 }
@@ -121,8 +123,9 @@ export function createSmtpEmailTransport(
 
 export function createConfiguredEmailTransport(
   config: EmailDeliveryConfig = emailDeliveryConfig(),
+  logger: AppLogger = applicationLogger,
 ): EmailTransport {
   if (config.mode === "memory") return processTestTransport;
-  if (config.mode === "console") return createConsoleEmailTransport(config);
+  if (config.mode === "console") return createConsoleEmailTransport(config, logger);
   return createSmtpEmailTransport(config);
 }

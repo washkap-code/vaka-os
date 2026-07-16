@@ -3,6 +3,7 @@ import { emailDeliveryConfig } from "../src/config.js";
 import {
   createConsoleEmailTransport, createInMemoryEmailTransport, createSmtpEmailTransport,
 } from "../src/email-transport.js";
+import { createLogger } from "../src/observability.js";
 
 const invitation = {
   id: "email-transport-1",
@@ -60,13 +61,16 @@ describe("LP-004 email transports", () => {
   });
 
   it("writes full rendered content only through the non-production debug transport", async () => {
-    const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+    const lines: string[] = [];
+    const logger = createLogger({
+      environment: "development",
+      sink: (line) => { lines.push(line); },
+    });
     const config = emailDeliveryConfig({ NODE_ENV: "development" });
     if (config.mode !== "console") throw new Error("Expected console configuration");
-    await createConsoleEmailTransport(config)(invitation);
-    expect(debug).toHaveBeenCalledOnce();
-    expect(String(debug.mock.calls[0][0])).toContain("email.console_rendered");
-    expect(String(debug.mock.calls[0][0])).toContain("Temporary-Password-2026");
-    debug.mockRestore();
+    await createConsoleEmailTransport(config, logger)(invitation);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain("email.console_rendered");
+    expect(lines[0]).toContain("Temporary-Password-2026");
   });
 });

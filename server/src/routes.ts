@@ -158,6 +158,7 @@ import {
   warehouseCreateSchema, warehouseUpdateSchema,
 } from "./warehouse-settings.js";
 import { getSupplierAnalytics, supplierAnalyticsQuerySchema } from "./supplier-analytics.js";
+import { logEvent } from "./observability.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -230,11 +231,28 @@ api.post("/auth/login", wrap(async (req, res) => {
   const { email, password, subdomain } = z.object({
     email: z.string().email(), password: z.string(), subdomain: z.string().optional(),
   }).parse(req.body);
-  const session = await login(email, password, subdomain, {
-    clientType: req.header("X-Vaka-Client") ?? "web",
-    appVersion: req.header("X-Vaka-App-Version") ?? undefined,
-    userAgent: req.header("User-Agent") ?? undefined,
-    ip: req.ip,
+  let session: Awaited<ReturnType<typeof login>>;
+  try {
+    session = await login(email, password, subdomain, {
+      clientType: req.header("X-Vaka-Client") ?? "web",
+      appVersion: req.header("X-Vaka-App-Version") ?? undefined,
+      userAgent: req.header("User-Agent") ?? undefined,
+      ip: req.ip,
+    });
+  } catch (error) {
+    logEvent("auth.login.failed", {
+      requestId: req.requestId ?? null,
+      route: "/api/v1/auth/login",
+      reason: "authentication_rejected",
+    }, "warn");
+    throw error;
+  }
+  logEvent("auth.login.succeeded", {
+    requestId: req.requestId ?? null,
+    route: "/api/v1/auth/login",
+    tenantId: session.user.tenantId,
+    userId: session.user.id,
+    mfaRequired: session.mfaRequired,
   });
   return deliverSession(res, session);
 }));
@@ -1776,8 +1794,18 @@ api.patch("/invoices/:id", requirePermission("accounting.post"), wrap(async (req
     notes: body.notes ?? null,
   });
 }));
-api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) =>
-  issueInvoice({ tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId })));
+api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) => {
+  const issued = await issueInvoice({
+    tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId,
+  });
+  logEvent("invoice.posted", {
+    requestId: req.requestId ?? null,
+    tenantId: tenantId(req),
+    userId: req.auth!.userId,
+    invoiceId: issued.id,
+  });
+  return issued;
+}));
 api.post("/invoices/:id/payments", requirePermission("accounting.post"), wrap(async (req) => {
   const body = z.object({
     amount: z.string(), bankAccountId: z.string().uuid().optional(),
@@ -2094,12 +2122,22 @@ api.post("/migration/projects/:id/steps/:kind/preview", requireFeature("migratio
       csvText: migrationPreviewSchema.parse(req.body).csvText,
     })));
 api.post("/migration/projects/:id/steps/:stepId/commit", requireFeature("migration.hub"),
-  requirePermission("imports.approve"), wrap(async (req) =>
-    commitMigrationStep({
+  requirePermission("imports.approve"), wrap(async (req) => {
+    const applied = await commitMigrationStep({
       tenantId: tenantId(req), userId: req.auth!.userId,
       projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
       asOfDate: migrationCommitSchema.parse(req.body ?? {}).asOfDate,
-    })));
+    });
+    logEvent("migration.applied", {
+      requestId: req.requestId ?? null,
+      tenantId: tenantId(req),
+      userId: req.auth!.userId,
+      projectId: applied.step.projectId,
+      stepId: applied.step.id,
+      migrationKind: applied.step.kind,
+    });
+    return applied;
+  }));
 api.post("/migration/projects/:id/steps/:stepId/discard", requireFeature("migration.hub"),
   requirePermission("imports.approve"), wrap(async (req) =>
     discardMigrationStep({

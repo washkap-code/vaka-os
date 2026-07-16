@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { EVENT_BUS, platformKernel } from "../../../platform-runtime.js";
 import type { DomainEventInput, DomainEventType } from "../registry.js";
+import { logEvent } from "../../../observability.js";
 
 export type QueueDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => void;
 export type PublishDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => Promise<void>;
@@ -26,11 +27,11 @@ export async function runWithPostCommitEvents<T>(
     } catch (error) {
       // The database work has already committed. Report projection/delivery failure
       // without returning a false failure that encourages a duplicate business write.
-      console.error("[event.post_commit_publish_failed]", {
+      logEvent("event.post_commit_publish_failed", {
         eventType: event.type,
         eventId: event.id ?? null,
-        error: error instanceof Error ? error.message : "Unknown event publication error",
-      });
+        errorType: error instanceof Error ? error.name : "UnknownError",
+      }, "error");
     }
   }
   return result;
