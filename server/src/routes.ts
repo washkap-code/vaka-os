@@ -170,6 +170,13 @@ const routeParam = (req: AuthedRequest, name: string): string => {
 };
 const uuidRouteParam = (req: AuthedRequest, name: string): string =>
   z.string().uuid().parse(routeParam(req, name));
+const isHttpsUrl = (value: string): boolean => {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 const financialIdempotencyKey = (req: AuthedRequest, bodyKey?: string | null): string => {
   const headerKey = req.header("Idempotency-Key")?.trim();
   const fieldKey = bodyKey?.trim();
@@ -710,7 +717,7 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
   const body = z.object({
     companyName: z.string().trim().min(2).max(160).optional(),
     logoUrl: z.union([
-      z.string().url().refine((value) => new URL(value).protocol === "https:", "Logo URL must use HTTPS"),
+      z.string().url().refine(isHttpsUrl, "Logo URL must use HTTPS"),
       z.literal(""),
     ]).optional()
       .transform((value) => value === "" ? null : value),
@@ -752,7 +759,7 @@ api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(a
     holdingOfferBody: nullableText(500),
     holdingOfferCtaLabel: nullableText(50),
     holdingOfferCtaUrl: z.union([
-      z.string().url().refine((value) => new URL(value).protocol === "https:", "Offer link must use HTTPS"),
+      z.string().url().refine(isHttpsUrl, "Offer link must use HTTPS"),
       z.literal(""),
     ]).transform((value) => value || null),
   }).superRefine((value, ctx) => {

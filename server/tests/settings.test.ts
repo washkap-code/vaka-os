@@ -91,6 +91,12 @@ describe("profile and company settings", () => {
     });
     expect(response.status).toBe(400);
 
+    const malformedLogo = await request(app).patch("/api/v1/settings/branding").set(auth).send({
+      logoUrl: "not a valid URL",
+    });
+    expect(malformedLogo.status).toBe(400);
+    expect(malformedLogo.body.error).toBe("VALIDATION");
+
     const bankCurrency = await request(app).patch("/api/v1/settings/branding").set(auth).send({
       invoiceBankCurrency: "EUR",
     });
@@ -160,5 +166,55 @@ describe("profile and company settings", () => {
       holdingOfferCtaLabel: "Click", holdingOfferCtaUrl: "http://example.com/offer",
     });
     expect(unsafe.status).toBe(400);
+  });
+
+  it("validates optional holding-page offer URLs without throwing", async () => {
+    const account = await createSettingsTenant("holding-url");
+    const auth = { Authorization: `Bearer ${account.token}` };
+    const base = {
+      signOutDestination: "HOLDING_PAGE",
+      idleSignOutEnabled: true,
+      idleSignOutMinutes: 5,
+      holdingPageHeading: "Welcome",
+      holdingPageMessage: "Sign in to continue.",
+      holdingOfferTitle: "",
+      holdingOfferBody: "",
+      holdingOfferCtaLabel: "",
+    };
+
+    const empty = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      ...base,
+      holdingOfferCtaUrl: "",
+    });
+    expect(empty.status).toBe(200);
+    expect(empty.body.holdingOfferCtaUrl).toBeNull();
+
+    const invalid = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      ...base,
+      holdingOfferTitle: "Offer",
+      holdingOfferCtaLabel: "View offer",
+      holdingOfferCtaUrl: "not a valid URL",
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.error).toBe("VALIDATION");
+
+    const http = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      ...base,
+      holdingOfferTitle: "Offer",
+      holdingOfferCtaLabel: "View offer",
+      holdingOfferCtaUrl: "http://example.com/offer",
+    });
+    expect(http.status).toBe(400);
+    expect(http.body).toMatchObject({ error: "VALIDATION" });
+    expect(http.body.details).toContain("holdingOfferCtaUrl: Offer link must use HTTPS");
+
+    const https = await request(app).patch("/api/v1/settings/holding-page").set(auth).send({
+      ...base,
+      holdingOfferTitle: "Offer",
+      holdingOfferCtaLabel: "View offer",
+      holdingOfferCtaUrl: "https://example.com/offer",
+    });
+    expect(https.status).toBe(200);
+    expect(https.body.holdingOfferCtaUrl).toBe("https://example.com/offer");
   });
 });
