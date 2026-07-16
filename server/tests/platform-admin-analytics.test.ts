@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { loginPlatformAdminFixture, platformAdminTestPassword } from "./platform-admin-test-auth.js";
+import { db, schema } from "../src/lib.js";
 
 const app = createApp();
 const password = platformAdminTestPassword;
@@ -42,5 +43,30 @@ describe("platform admin analytics", () => {
     const controlCenterDenied = await request(app).get("/api/v1/platform/control-center")
       .set({ Authorization: `Bearer ${tenant.body.token}` });
     expect(controlCenterDenied.status).toBe(403);
+
+    const messageId = `operator-email-failure-${Date.now()}`;
+    await db.insert(schema.notifications).values({
+      id: messageId,
+      tenantId: tenant.body.tenant.id,
+      recipient: `failed-${Date.now()}@test.vaka`,
+      channel: "EMAIL",
+      template: "security.user_invitation.v1",
+      locale: "en-ZW",
+      variables: {},
+      status: "failed",
+      transmitted: false,
+    });
+    const failures = await request(app)
+      .get("/api/v1/platform/operations/email-failures/today")
+      .set(adminAuth);
+    expect(failures.status).toBe(200);
+    expect(failures.body.timezone).toBe("UTC");
+    expect(failures.body.failures).toEqual(expect.arrayContaining([
+      expect.objectContaining({ messageId, source: "notification" }),
+    ]));
+    const failuresDenied = await request(app)
+      .get("/api/v1/platform/operations/email-failures/today")
+      .set({ Authorization: `Bearer ${tenant.body.token}` });
+    expect(failuresDenied.status).toBe(403);
   });
 });

@@ -5,8 +5,9 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
-import { createHttpEmailTransport } from "./notifications.js";
-import type { EmailTransport } from "./platform/notifications/index.js";
+import { PLATFORM_NOTIFICATION_SCOPE } from "./notifications.js";
+import type { NotificationServiceContract } from "./platform/notifications/index.js";
+import { NOTIFICATION_SERVICE, platformKernel } from "./platform-runtime.js";
 import { jwtSecret, mfaEncryptionSecret, mfaEnrollmentAvailable, publicAppUrl } from "./config.js";
 import { AppError, badRequest, db, schema, unauthorized, type DB } from "./lib.js";
 
@@ -155,7 +156,7 @@ async function findRecoveryCandidate(email: string, subdomain?: string): Promise
 export async function requestPasswordReset(
   email: string,
   subdomain?: string,
-  sendEmail: EmailTransport = createHttpEmailTransport(),
+  notificationService: NotificationServiceContract = platformKernel().container.get(NOTIFICATION_SERVICE),
 ) {
   const user = await findRecoveryCandidate(email, subdomain);
   if (!user) return { accepted: true };
@@ -180,17 +181,21 @@ export async function requestPasswordReset(
   });
   const resetUrl = `${publicAppUrl()}/?resetToken=${encodeURIComponent(token)}`;
   try {
-    await sendEmail({
+    await notificationService.send({
       id: request.id,
-      tenantId: user.tenantId ?? "platform",
+      tenantId: user.tenantId ?? PLATFORM_NOTIFICATION_SCOPE,
+      actorUserId: null,
       recipient: user.email,
-      template: "security.password_reset",
+      channel: "EMAIL",
+      template: "security.password_reset.v1",
       locale: "en",
       variables: {
         fullName: user.fullName,
         resetUrl,
         expiresInMinutes: "30",
       },
+      correlationId: request.id,
+      sensitiveVariableKeys: ["resetUrl"],
       dedupeKey: `password-reset:${request.id}`,
     });
     await db.update(schema.passwordResetRequests).set({ deliveryStatus: "SENT" })

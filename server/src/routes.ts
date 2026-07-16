@@ -126,7 +126,8 @@ import {
 import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
 import { sendFinanceDocument } from "./finance-document-delivery.js";
-import { listNotifications } from "./notifications.js";
+import { listFailedEmailDeliveriesToday, listNotifications } from "./notifications.js";
+import { sendUserInvitationEmail } from "./transactional-email.js";
 import {
   initiateSubscriptionPayment, listSubscriptionPaymentAttempts, processPaynowResult,
   refreshSubscriptionPayment, subscriptionPaymentAvailability,
@@ -637,7 +638,19 @@ api.post("/security/users", requireTenantOwner as any, requireStepUp as any, wra
     email: z.string().email(), fullName: z.string().trim().min(2).max(100),
     roleId: z.string().uuid(), initialPassword: z.string().min(12).max(256).optional(),
   }).parse(req.body);
-  return createTenantUser({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...body });
+  const created = await createTenantUser({ tenantId: tenantId(req), actorUserId: req.auth!.userId, ...body });
+  try {
+    await sendUserInvitationEmail({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      user: created.user,
+      temporaryPassword: created.temporaryPassword,
+    });
+  } catch {
+    // User creation remains committed and the owner still receives the existing
+    // temporary-password response. The failed email is persisted and logged for operators.
+  }
+  return created;
 }));
 
 api.post("/security/users/:id/:status", requireTenantOwner as any, requireStepUp as any, wrap(async (req) => {
@@ -2520,6 +2533,12 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
     acceptedRestoreDrills: row.accepted_restore_drills,
   });
 }));
+api.get("/platform/operations/email-failures/today",
+  requirePlatformPermission("platform.operations.read"),
+  wrap(async () => ({
+    timezone: "UTC",
+    failures: await listFailedEmailDeliveriesToday(),
+  })));
 api.get("/platform/backup-manifests", requirePlatformPermission("platform.backups.read"), wrap(async () =>
   db.select({
     id: schema.platformBackupManifests.id,

@@ -1,7 +1,8 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
   databaseUrl,
-  emailProviderConfig,
+  emailDeliveryConfig,
   jwtSecret,
   mfaEnrollmentAvailable,
   mfaEncryptionSecret,
@@ -78,19 +79,68 @@ describe("runtime configuration", () => {
     ).toBe("local-seed-password-2026");
   });
 
-  it("keeps email disabled in local development and fails closed on incomplete production config", () => {
-    expect(emailProviderConfig({ NODE_ENV: "development" })).toBeNull();
-    expect(emailProviderConfig({ NODE_ENV: "production" })).toBeNull();
-    expect(() => emailProviderConfig({
+  it("selects memory for tests and console for development/staging by default", () => {
+    expect(emailDeliveryConfig({ NODE_ENV: "test" })).toEqual({ mode: "memory" });
+    expect(emailDeliveryConfig({ NODE_ENV: "development" })).toMatchObject({
+      mode: "console", fromName: "VAKA",
+    });
+    expect(emailDeliveryConfig({ NODE_ENV: "staging" })).toMatchObject({ mode: "console" });
+  });
+
+  it("requires complete real SMTP configuration in production", () => {
+    expect(() => emailDeliveryConfig({ NODE_ENV: "production" }))
+      .toThrow("SMTP configuration is incomplete");
+    expect(() => emailDeliveryConfig({ NODE_ENV: "production", SMTP_ENABLED: "false" }))
+      .toThrow("cannot be false in production");
+    expect(() => emailDeliveryConfig({ NODE_ENV: "production", SMTP_ENABLED: "yes" }))
+      .toThrow("must be true or false");
+  });
+
+  it("fails the production process before listening when SMTP is missing", () => {
+    const result = spawnSync(process.execPath, ["--import", "tsx", "src/index.ts"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://vaka:test@127.0.0.1:5432/vaka_test",
+        JWT_SECRET: "j".repeat(64),
+        PUBLIC_APP_URL: "https://app.example.com",
+        SMTP_ENABLED: "",
+        SMTP_HOST: "",
+        SMTP_PORT: "",
+        SMTP_AUTH_USER: "",
+        SMTP_AUTH_PASSWORD: "",
+        SMTP_FROM_ADDRESS: "",
+        SMTP_FROM_NAME: "",
+        SMTP_REPLY_TO: "",
+        SMTP_TLS: "",
+      },
+    });
+    expect(result.status).not.toBe(0);
+    expect(`${result.stdout}\n${result.stderr}`).toContain("SMTP configuration is incomplete");
+    expect(`${result.stdout}\n${result.stderr}`).not.toContain("VAKA OS API on");
+  });
+
+  it("accepts provider-neutral SMTP and enforces production TLS", () => {
+    const complete = {
       NODE_ENV: "production",
-      EMAIL_PROVIDER_URL: "https://mail.example/send",
-    })).toThrow("must be configured together");
-    expect(() => emailProviderConfig({
-      NODE_ENV: "production",
-      EMAIL_PROVIDER_URL: "http://mail.example/send",
-      EMAIL_PROVIDER_TOKEN: "a".repeat(32),
-      EMAIL_FROM: "notifications@example.com",
-    })).toThrow("must use HTTPS");
+      SMTP_HOST: "smtp.example.com",
+      SMTP_PORT: "587",
+      SMTP_AUTH_USER: "vaka-smtp",
+      SMTP_AUTH_PASSWORD: "p".repeat(32),
+      SMTP_FROM_ADDRESS: "notifications@example.com",
+      SMTP_FROM_NAME: "VAKA",
+      SMTP_REPLY_TO: "support@example.com",
+      SMTP_TLS: "starttls",
+    };
+    expect(emailDeliveryConfig(complete)).toMatchObject({
+      mode: "smtp", host: "smtp.example.com", port: 587, tls: "starttls",
+    });
+    expect(() => emailDeliveryConfig({ ...complete, SMTP_TLS: "none" }))
+      .toThrow("cannot be none in production");
+    expect(emailDeliveryConfig({ ...complete, NODE_ENV: "staging", SMTP_ENABLED: "true", SMTP_TLS: "none" }))
+      .toMatchObject({ mode: "smtp", tls: "none" });
   });
 
   it("requires an HTTPS public origin for production document links", () => {

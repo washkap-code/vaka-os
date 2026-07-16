@@ -29,8 +29,9 @@ import type {
   EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup, NotificationWriter,
 } from "./platform/notifications/index.js";
 import {
-  createHttpEmailTransport, findNotificationDuplicate, persistNotification,
+  findNotificationDuplicate, persistNotification, PLATFORM_NOTIFICATION_SCOPE,
 } from "./notifications.js";
+import { createConfiguredEmailTransport } from "./email-transport.js";
 import { InMemoryEventBus } from "./platform/events/service.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
@@ -112,17 +113,6 @@ export interface PlatformKernelOptions {
   featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
 }
 
-function configuredEmailTransport(): EmailTransport {
-  try {
-    return createHttpEmailTransport();
-  } catch (error) {
-    console.error("[notification.email_configuration_invalid]", {
-      error: error instanceof Error ? error.message : "Unknown email configuration error",
-    });
-    return async () => { throw new Error("Email delivery is not configured"); };
-  }
-}
-
 /**
  * Build a fully composed Platform Kernel for this application.
  * Idempotent per call: each invocation returns an isolated kernel.
@@ -161,24 +151,37 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   kernel.container.registerFactory(NOTIFICATION_SERVICE, () => {
     const persist = options.notificationWriter ?? persistNotification;
     const recordAudit: NotificationAuditRecorder = options.notificationAuditRecorder
-      ?? (async (request, delivery) => kernel.container.get(AUDIT_SERVICE).record({
-        tenantId: request.tenantId,
-        actorUserId: request.actorUserId,
-        action: delivery.status === "failed"
+      ?? (async (request, delivery) => {
+        const action = delivery.status === "failed"
           ? "notification.failed"
-          : delivery.transmitted ? "notification.sent" : "notification.accepted",
-        entityType: "notification",
-        entityId: delivery.requestId,
-        metadata: {
+          : delivery.transmitted ? "notification.sent" : "notification.accepted";
+        const metadata = {
           channel: request.channel,
           template: request.template,
           status: delivery.status ?? "accepted",
           transmitted: delivery.transmitted ?? false,
           deduplicated: delivery.deduplicated ?? false,
-        },
-      }));
+          correlationId: request.correlationId ?? request.id,
+        };
+        if (request.tenantId === PLATFORM_NOTIFICATION_SCOPE) {
+          await db.insert(schema.platformAuditLogs).values({
+            userId: request.actorUserId,
+            action: `platform_${action}`,
+            metadata: { ...metadata, messageId: delivery.requestId },
+          });
+          return;
+        }
+        await kernel.container.get(AUDIT_SERVICE).record({
+          tenantId: request.tenantId,
+          actorUserId: request.actorUserId,
+          action,
+          entityType: "notification",
+          entityId: delivery.requestId,
+          metadata,
+        });
+      });
     return new NotificationService({
-      EMAIL: emailGateway(options.emailTransport ?? configuredEmailTransport(), persist),
+      EMAIL: emailGateway(options.emailTransport ?? createConfiguredEmailTransport(), persist),
       IN_APP: inAppGateway(persist),
       SMS: noopGateway("SMS", persist),
       WHATSAPP: noopGateway("WHATSAPP", persist),

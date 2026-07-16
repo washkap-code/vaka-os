@@ -1,10 +1,11 @@
-import { and, desc, eq } from "drizzle-orm";
-import { emailProviderConfig, type EmailProviderConfig } from "./config.js";
+import { and, desc, eq, gte, isNull } from "drizzle-orm";
 import { db, schema } from "./lib.js";
 import type {
-  EmailTransport, EmailTransportMessage, NotificationDedupeLookup,
-  NotificationChannel, NotificationDelivery, NotificationWriter,
+  NotificationDedupeLookup, NotificationChannel, NotificationDelivery, NotificationWriter,
 } from "./platform/notifications/index.js";
+
+/** Platform identities have no tenant FK; their email attempts are structured-logged. */
+export const PLATFORM_NOTIFICATION_SCOPE = "platform";
 
 function deliveryFromRow(row: typeof schema.notifications.$inferSelect): NotificationDelivery {
   return {
@@ -18,6 +19,7 @@ function deliveryFromRow(row: typeof schema.notifications.$inferSelect): Notific
 }
 
 export const findNotificationDuplicate: NotificationDedupeLookup = async (tenantId, dedupeKey) => {
+  if (tenantId === PLATFORM_NOTIFICATION_SCOPE) return null;
   const [row] = await db.select().from(schema.notifications).where(and(
     eq(schema.notifications.tenantId, tenantId),
     eq(schema.notifications.dedupeKey, dedupeKey),
@@ -36,6 +38,16 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 export const persistNotification: NotificationWriter = async (request, result) => {
+  if (request.tenantId === PLATFORM_NOTIFICATION_SCOPE) {
+    return {
+      requestId: request.id,
+      channel: request.channel,
+      status: result.status,
+      transmitted: result.transmitted,
+      providerMessageId: result.providerMessageId,
+      acceptedAt: new Date(),
+    };
+  }
   const sensitiveKeys = new Set(request.sensitiveVariableKeys ?? []);
   const persistedVariables = Object.fromEntries(Object.entries(request.variables).map(([key, value]) =>
     [key, sensitiveKeys.has(key) ? "[REDACTED]" : value]));
@@ -106,32 +118,59 @@ export async function listNotifications(
     .limit(limit);
 }
 
-export function createHttpEmailTransport(
-  config: EmailProviderConfig | null = emailProviderConfig(),
-): EmailTransport {
-  return async (message: EmailTransportMessage) => {
-    if (!config) throw new Error("Email delivery is not configured");
-    const response = await fetch(config.url, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${config.token}`,
-        "content-type": "application/json",
-        "idempotency-key": message.dedupeKey ?? message.id,
-      },
-      body: JSON.stringify({
-        from: config.from,
-        to: message.recipient,
-        template: message.template,
-        locale: message.locale,
-        variables: message.variables,
-      }),
-    });
-    if (!response.ok) throw new Error(`Email provider rejected delivery with status ${response.status}`);
-    const payload: unknown = await response.json().catch(() => ({}));
-    const providerMessageId = typeof payload === "object" && payload !== null && "id" in payload
-      && typeof (payload as { id?: unknown }).id === "string"
-      ? (payload as { id: string }).id
-      : undefined;
-    return { providerMessageId };
-  };
+export interface FailedEmailDelivery {
+  messageId: string;
+  tenantId: string | null;
+  recipient: string;
+  template: string;
+  correlationId: string;
+  failedAt: Date;
+  source: "notification" | "password_reset";
+}
+
+/** Platform-operator read model for the UTC calendar day. */
+export async function listFailedEmailDeliveriesToday(
+  now: Date = new Date(),
+): Promise<FailedEmailDelivery[]> {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const tenantFailures = await db.select({
+    messageId: schema.notifications.id,
+    tenantId: schema.notifications.tenantId,
+    recipient: schema.notifications.recipient,
+    template: schema.notifications.template,
+    failedAt: schema.notifications.createdAt,
+  }).from(schema.notifications).where(and(
+    eq(schema.notifications.channel, "EMAIL"),
+    eq(schema.notifications.status, "failed"),
+    gte(schema.notifications.createdAt, start),
+  )).orderBy(desc(schema.notifications.createdAt));
+
+  // Platform users have no tenant_id and therefore cannot use the tenant-owned
+  // notifications table. Password-reset status is their durable failure record.
+  const platformResetFailures = await db.select({
+    messageId: schema.passwordResetRequests.id,
+    recipient: schema.users.email,
+    failedAt: schema.passwordResetRequests.createdAt,
+  }).from(schema.passwordResetRequests)
+    .innerJoin(schema.users, eq(schema.users.id, schema.passwordResetRequests.userId))
+    .where(and(
+      isNull(schema.passwordResetRequests.tenantId),
+      eq(schema.passwordResetRequests.deliveryStatus, "FAILED"),
+      gte(schema.passwordResetRequests.createdAt, start),
+    )).orderBy(desc(schema.passwordResetRequests.createdAt));
+
+  return [
+    ...tenantFailures.map((row) => ({
+      ...row,
+      correlationId: row.messageId,
+      source: "notification" as const,
+    })),
+    ...platformResetFailures.map((row) => ({
+      ...row,
+      tenantId: null,
+      template: "security.password_reset.v1",
+      correlationId: row.messageId,
+      source: "password_reset" as const,
+    })),
+  ].sort((left, right) => right.failedAt.getTime() - left.failedAt.getTime());
 }

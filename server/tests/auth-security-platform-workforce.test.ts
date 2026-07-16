@@ -11,6 +11,8 @@ import {
 import { login, requirePermission, signupTenant } from "../src/auth.js";
 import { db, schema } from "../src/lib.js";
 import { PLATFORM_ROLE_DEFINITIONS } from "../src/platform-staff.js";
+import { createInMemoryEmailTransport } from "../src/email-transport.js";
+import { buildPlatformKernel, NOTIFICATION_SERVICE } from "../src/platform-runtime.js";
 
 const runId = Date.now().toString(36);
 const email = `identity-${runId}@test.zw`;
@@ -63,22 +65,20 @@ beforeAll(async () => {
 
 describe("password recovery", () => {
   it("does not enumerate unknown identities", async () => {
-    let deliveries = 0;
-    const result = await requestPasswordReset(`unknown-${runId}@test.zw`, subdomain, async () => {
-      deliveries += 1;
-      return {};
-    });
+    const transport = createInMemoryEmailTransport();
+    const service = buildPlatformKernel({ emailTransport: transport }).container.get(NOTIFICATION_SERVICE);
+    const result = await requestPasswordReset(`unknown-${runId}@test.zw`, subdomain, service);
     expect(result).toEqual({ accepted: true });
-    expect(deliveries).toBe(0);
+    expect(transport.messages()).toHaveLength(0);
   });
 
   it("uses a single-use token, changes the password, and revokes sessions", async () => {
     await login(email, originalPassword, subdomain);
-    let resetUrl = "";
-    await requestPasswordReset(email, subdomain, async (message) => {
-      resetUrl = message.variables.resetUrl;
-      return { providerMessageId: `test-${runId}` };
-    });
+    const transport = createInMemoryEmailTransport();
+    const service = buildPlatformKernel({ emailTransport: transport }).container.get(NOTIFICATION_SERVICE);
+    await requestPasswordReset(email, subdomain, service);
+    const reset = transport.assertSent({ recipient: email, template: "security.password_reset.v1" });
+    const resetUrl = reset.message.variables.resetUrl;
     const token = new URL(resetUrl).searchParams.get("resetToken");
     expect(token).toBeTruthy();
     await completePasswordReset(token!, resetPassword);
