@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 4, Cowork/Fable: pilot launch governance pack committed (`1f27250`) — docs only, no code, no migrations. Added: `docs/engineering/RUNBOOK-RESTORE-DRILL.md` (OPS-RB-001, launch-gating restore drill), `docs/engineering/ROLLBACK-CRITERIA.md` (OPS-RC-001 — decision authority Dr. Washington Kapapiro, support owner Anthony Kakurira), `docs/engineering/mission-packs/LP-PILOT/` (CODEX-PILOT-MISSIONS.md LP-001..007: verify 0042–0044, tenant-isolation suite, CORS/config hardening, email delivery, health/logging, backup-restore scripts, full-suite gate; CODEX-ADMIN-COMPLIANCE-MISSIONS.md LP-008..010: Super Admin DMS compliance vault, ops task scheduler + launch-date-anchored management calendar with reminders/missed-deadline alerts, read-only AI compliance assistant — LP-008/009 must reuse/extend 0032_restore_drill_evidence, new migrations from 0045 per ledger rules), and `docs/legal-templates/VAKA-Legal-Sign-Off-Pack.{docx,pdf}` (VAKA-LEG-001 for Zimbabwean practitioner — POTRAZ SI 155/2024 licensing is the long-lead item, start now). NEXT: owner runs LP-001 in Codex; hosting location + contracting entity placeholders in the legal pack need filling before sending to lawyer. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 5, Codex: LP-001 merged through PR #87 with fresh migration replay and zero schema drift; migration 0045 reserved and 0042–0045 remain pending production hand-application. LP-002 implemented on `test/tenant-isolation-suite`, PR #88: 240-endpoint manifest, two-complete-tenant regression suite, five isolation/failure-mode defects fixed, fresh full suite 94 files/430 tests green, no migration. GitHub `main` now strictly requires the `Tenant isolation regression` status context. NEXT: merge #88 only when all checks are green, then run LP-003 CORS/configuration hardening. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -60,6 +60,28 @@ rules — defaults unchanged everywhere).
 
 New migrations continue from **0046**. Coordinate reservations in this ledger
 before creating another migration.
+
+## Codex pilot-readiness lane
+
+- **LP-001 complete and merged:** PR #87, merge commit `4afea0e`. Migration
+  chain `0000`–`0045` replays transactionally with zero drift. Production was
+  not accessed; the owner must still hand-apply 0042, 0043, 0044 and 0045 in
+  that order before enabling their gated surfaces or release verification.
+- **LP-002 complete, PR #88 open:** branch `test/tenant-isolation-suite`.
+  Manifest covers all 240 HTTP endpoints (199 tenant, 7 shared-authenticated,
+  24 platform-only, 10 public). The 13-test launch gate found and fixed five
+  issues: token/tenant claim mismatch acceptance, silently ignored tenant
+  overrides, role lookup without tenant ownership, cross-tenant deal contact
+  references, and inconsistent migration-reconciliation not-found status.
+  Clean verification: migrations zero drift; 94 files/430 tests; both
+  typechecks; runtime-schema check; web production build. No migration taken;
+  next remains 0046. Completion report:
+  `docs/engineering/mission-packs/LP-002/COMPLETION.md`.
+- **Required external gate:** GitHub branch protection for `main` requires
+  `Tenant isolation regression` with strict up-to-date checking. Preserve this
+  context when editing repository rules.
+- **Next:** merge #88 only after quality, security, CodeQL and Vercel are green;
+  then start LP-003 on `hardening/cors-config`.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
    closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
@@ -163,6 +185,10 @@ before creating another migration.
 `codex/p7-003-secure-report-email-delivery`, `codex/p2-008-branded-finance-report-preview`
 — all superseded by v2/extracted equivalents on `main`. They re-add old
 0024/0025 migrations and pre-P9-009 auth. Safe to delete after review.
+
+`fix/migrations-0042-0044` is fully merged via PR #87 and is safe to delete.
+Do not re-merge it. `test/tenant-isolation-suite` remains active until PR #88
+is reviewed and merged.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
@@ -374,26 +400,26 @@ the admin password hash between reruns on the same scratch db.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 4): PB-003 — Black Book directory UI + search
+## NEXT MISSION (session 5): LP-003 — CORS and configuration hardening
 
-Build the first web surface for a dark module: web Black Book page
-(browse/search entries via GET /blackbook/entries, detail view showing
-payload + sources + lastReviewed + the not-professional-advice notice),
-nav gated on the `blackbook.directory` flag (follow the PD-001/PW-004 nav
-pattern), universal search integration via P1-006. Server side exists
-(PB-001). Show verified badges honestly (source-verified ≠ certified —
-PB-002 gate still open). Web typecheck + vite build + nav-model tests.
-Before starting: clear the migration debt (apply 0042/0043/0044).
+After PR #88 is green and merged, implement LP-003 exactly from
+`docs/engineering/mission-packs/LP-PILOT/CODEX-PILOT-MISSIONS.md` on branch
+`hardening/cors-config`. Scope: strict environment-driven CORS, production
+configuration validation, secret fallback removal, cookie/session hardening,
+security headers, authentication/password-reset rate limiting, sanitised
+production errors and tests. Do not add infrastructure dependencies. Preserve
+local-development ergonomics. Production migration debt 0042–0045 remains an
+owner action and is separate from LP-003.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
 > `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
-> it has the current state, constraints and verification pattern. Confirm main
-> is clean and matches origin, confirm the migration ledger (all through 0035
-> applied in production; new migrations start at 0036), then start the next
-> workstream: [payroll accountant sign-off support / DB separation /
-> hardening — pick one]. Same discipline as always: scoped
-> diffs, scratch-Postgres verification, hand-apply idempotent DDL to
-> production BEFORE pushing code, merge to main, push via GitHub Desktop,
-> report what was verified and the exact SQL applied.
+> it has the current state, constraints and verification pattern. Confirm PR
+> #88 is merged with the required `Tenant isolation regression` context green;
+> confirm the migration ledger (production through 0041, 0042–0045 pending,
+> next free 0046); then implement LP-003 exactly from the pilot mission pack on
+> `hardening/cors-config`. Do not create a migration for LP-003 unless the pack
+> explicitly requires one and the ledger reservation is recorded first. Same
+> discipline as always: focused diff, fresh-Postgres tests, both typechecks,
+> web build, completion report, and final handoff commit.
