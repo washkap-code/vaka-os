@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 5, Codex: LP-001 merged through PR #87 with fresh migration replay and zero schema drift; migration 0045 reserved and 0042–0045 remain pending production hand-application. LP-002 implemented on `test/tenant-isolation-suite`, PR #88: 240-endpoint manifest, two-complete-tenant regression suite, five isolation/failure-mode defects fixed, fresh full suite 94 files/430 tests green, no migration. GitHub `main` now strictly requires the `Tenant isolation regression` status context. NEXT: merge #88 only when all checks are green, then run LP-003 CORS/configuration hardening. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 5, Codex: LP-001 merged through PR #87 with fresh migration replay and zero schema drift; migration 0045 reserved and 0042–0045 remain pending production hand-application. LP-002 complete on `test/tenant-isolation-suite`, PR #88: 240-endpoint manifest, two-complete-tenant regression suite, five isolation/failure-mode defects fixed, fresh full suite 94 files/430 tests green, no migration. All PR checks are green, including the dedicated 39-second isolation gate, full quality, security, CodeQL and Vercel. GitHub `main` now strictly requires the `Tenant isolation regression` status context. NEXT: merge #88 as the mission's single merge, then run LP-003 CORS/configuration hardening. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -67,7 +67,7 @@ before creating another migration.
   chain `0000`–`0045` replays transactionally with zero drift. Production was
   not accessed; the owner must still hand-apply 0042, 0043, 0044 and 0045 in
   that order before enabling their gated surfaces or release verification.
-- **LP-002 complete, PR #88 open:** branch `test/tenant-isolation-suite`.
+- **LP-002 complete, PR #88 all checks green:** branch `test/tenant-isolation-suite`.
   Manifest covers all 240 HTTP endpoints (199 tenant, 7 shared-authenticated,
   24 platform-only, 10 public). The 13-test launch gate found and fixed five
   issues: token/tenant claim mismatch acceptance, silently ignored tenant
@@ -80,8 +80,8 @@ before creating another migration.
 - **Required external gate:** GitHub branch protection for `main` requires
   `Tenant isolation regression` with strict up-to-date checking. Preserve this
   context when editing repository rules.
-- **Next:** merge #88 only after quality, security, CodeQL and Vercel are green;
-  then start LP-003 on `hardening/cors-config`.
+- **Next:** merge #88 as LP-002's single programme merge, then start LP-003 on
+  `hardening/cors-config`.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
    closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
