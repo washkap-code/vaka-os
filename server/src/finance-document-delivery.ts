@@ -225,6 +225,7 @@ export async function sendFinanceDocument(
       template,
       locale: locale.resolvedLocale,
       variables,
+      correlationId: requestId,
       sensitiveVariableKeys: input.kind === "INVOICE" ? ["documentUrl"] : undefined,
       dedupeKey: `finance-delivery:${requestId}:email`,
     });

@@ -1,9 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { listNotifications } from "../src/notifications.js";
 import { NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { db, schema } from "../src/lib.js";
 import { signupFinanceTenant } from "./finance/helpers.js";
+import { createTenantUser } from "../src/auth.js";
+import { createInMemoryEmailTransport } from "../src/email-transport.js";
+import { sendUserInvitationEmail } from "../src/transactional-email.js";
 
 describe("P1-004 notification persistence", () => {
   const runId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -97,5 +100,39 @@ describe("P1-004 notification persistence", () => {
     const rows = await db.select().from(schema.notifications)
       .where(eq(schema.notifications.id, `${runId}-notice-missing-tenant`));
     expect(rows).toHaveLength(0);
+  });
+
+  it("sends a tenant user invitation through the in-memory email transport", async () => {
+    const tenant = await signupFinanceTenant("notification-invitation");
+    const [role] = await db.select({ id: schema.roles.id }).from(schema.roles)
+      .where(and(eq(schema.roles.tenantId, tenant.tenantId), eq(schema.roles.name, "Sales")));
+    const created = await createTenantUser({
+      tenantId: tenant.tenantId,
+      actorUserId: tenant.userId,
+      email: `invited-${runId}@test.vaka`,
+      fullName: "Invited Test User",
+      roleId: role.id,
+    });
+    const transport = createInMemoryEmailTransport();
+    const service = buildPlatformKernel({ emailTransport: transport }).container.get(NOTIFICATION_SERVICE);
+    await sendUserInvitationEmail({
+      tenantId: tenant.tenantId,
+      actorUserId: tenant.userId,
+      user: created.user,
+      temporaryPassword: created.temporaryPassword,
+    }, service);
+    const sent = transport.assertSent({
+      recipient: created.user.email,
+      template: "security.user_invitation.v1",
+      correlationId: created.user.id,
+    });
+    expect(sent.rendered.subject).toContain("VAKA");
+    expect(sent.rendered.text).toContain(created.temporaryPassword);
+    const [record] = await db.select().from(schema.notifications)
+      .where(eq(schema.notifications.id, `user-invitation:${created.user.id}`));
+    expect(record).toMatchObject({
+      status: "sent",
+      variables: expect.objectContaining({ temporaryPassword: "[REDACTED]" }),
+    });
   });
 });

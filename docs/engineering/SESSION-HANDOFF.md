@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 5, Codex: LP-001 merged through PR #87 with fresh migration replay and zero schema drift; migration 0045 reserved and 0042–0045 remain pending production hand-application. LP-002 complete on `test/tenant-isolation-suite`, PR #88: 240-endpoint manifest, two-complete-tenant regression suite, five isolation/failure-mode defects fixed, fresh full suite 94 files/430 tests green, no migration. All PR checks are green, including the dedicated 39-second isolation gate, full quality, security, CodeQL and Vercel. GitHub `main` now strictly requires the `Tenant isolation regression` status context. NEXT: merge #88 as the mission's single merge, then run LP-003 CORS/configuration hardening. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 6, Codex: LP-002 merged through PR #88 at `d91a7b0`; GitHub `main` requires the `Tenant isolation regression` status context. LP-004 is complete locally on `feature/email-delivery` at `d04e22f`: provider-neutral SMTP behind `NotificationService`, safe console/memory modes, three-attempt retry, structured delivery events, operator failure endpoint, sender-domain operations guide, and all transactional call sites on one transport. Fresh migrations through 0045 have zero drift; tenant isolation 13/13; full server suite 95 files/438 tests; both typechecks and web build green. No migration taken; 0046 remains free. NEXT: owner pushes LP-004 and opens its single PR, then LP-005 observability after merge. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -67,7 +67,8 @@ before creating another migration.
   chain `0000`–`0045` replays transactionally with zero drift. Production was
   not accessed; the owner must still hand-apply 0042, 0043, 0044 and 0045 in
   that order before enabling their gated surfaces or release verification.
-- **LP-002 complete, PR #88 all checks green:** branch `test/tenant-isolation-suite`.
+- **LP-002 complete and merged:** PR #88, merge commit `d91a7b0`, branch
+  `test/tenant-isolation-suite`.
   Manifest covers all 240 HTTP endpoints (199 tenant, 7 shared-authenticated,
   24 platform-only, 10 public). The 13-test launch gate found and fixed five
   issues: token/tenant claim mismatch acceptance, silently ignored tenant
@@ -80,8 +81,21 @@ before creating another migration.
 - **Required external gate:** GitHub branch protection for `main` requires
   `Tenant isolation regression` with strict up-to-date checking. Preserve this
   context when editing repository rules.
-- **Next:** merge #88 as LP-002's single programme merge, then start LP-003 on
-  `hardening/cors-config`.
+- **LP-004 complete locally:** branch `feature/email-delivery`, implementation
+  commit `d04e22f`. Production SMTP is mandatory and boot-fatal when invalid;
+  development/staging default to rendered JSON console output; tests use an
+  in-memory assertion transport. Delivery retries at most three times and
+  records structured events. Operators can query today's failures through a
+  permission-gated endpoint. User invitation, password reset, invoice,
+  statement and payment-reminder paths use `NotificationService`. No migration
+  taken; 0046 remains free. Completion report:
+  `docs/engineering/mission-packs/LP-004/COMPLETION.md`.
+- **LP-004 operator action:** before production enablement, select the SMTP
+  provider, store all nine `SMTP_*` values, verify aligned SPF/DKIM/DMARC and
+  run representative mailbox tests. No live SMTP or DNS was touched by Codex.
+- **Next:** owner pushes `feature/email-delivery`, opens LP-004's single PR and
+  merges only after its gates are green; then start LP-005 on
+  `ops/health-logging`.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
    closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
@@ -186,9 +200,10 @@ before creating another migration.
 — all superseded by v2/extracted equivalents on `main`. They re-add old
 0024/0025 migrations and pre-P9-009 auth. Safe to delete after review.
 
-`fix/migrations-0042-0044` is fully merged via PR #87 and is safe to delete.
-Do not re-merge it. `test/tenant-isolation-suite` remains active until PR #88
-is reviewed and merged.
+`fix/migrations-0042-0044` and `test/tenant-isolation-suite` are fully merged
+through PRs #87 and #88 and are safe to delete. Do not re-merge them.
+`feature/email-delivery` is active and must not be deleted until LP-004 is
+pushed, reviewed and merged.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
@@ -395,21 +410,20 @@ the admin password hash between reruns on the same scratch db.
 3. **DB-SEPARATION** — move VAKA to its own Supabase project
    (`docs/engineering/DATABASE-SEPARATION-PLAN.md`); needs a Vercel env change
    from the owner.
-4. Production hardening: `ALLOWED_ORIGINS`, backup/restore drill, live email
-   provider, observability (P10-002).
+4. Production hardening: `ALLOWED_ORIGINS`, backup/restore drill, provision and
+   verify the LP-004 SMTP/DNS configuration, observability (P10-002).
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 5): LP-003 — CORS and configuration hardening
+## NEXT MISSION (session 6): LP-005 — Health, logging and monitoring hooks
 
-After PR #88 is green and merged, implement LP-003 exactly from
+After LP-004's PR is green and merged, implement LP-005 exactly from
 `docs/engineering/mission-packs/LP-PILOT/CODEX-PILOT-MISSIONS.md` on branch
-`hardening/cors-config`. Scope: strict environment-driven CORS, production
-configuration validation, secret fallback removal, cookie/session hardening,
-security headers, authentication/password-reset rate limiting, sanitised
-production errors and tests. Do not add infrastructure dependencies. Preserve
-local-development ergonomics. Production migration debt 0042–0045 remains an
-owner action and is separate from LP-003.
+`ops/health-logging`. Scope: health endpoints, structured JSON logs and
+provider-neutral error-monitoring hooks. Incorporate LP-004's structured email
+events and failure surface without redesigning its transport. Do not create a
+migration unless the pack explicitly requires one and 0046 is reserved in the
+ledger first. Production migration debt 0042–0045 remains an owner action.
 
 ## Kickoff prompt for the next session (copy-paste)
 
@@ -417,9 +431,11 @@ owner action and is separate from LP-003.
 > `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
 > it has the current state, constraints and verification pattern. Confirm PR
 > #88 is merged with the required `Tenant isolation regression` context green;
-> confirm the migration ledger (production through 0041, 0042–0045 pending,
-> next free 0046); then implement LP-003 exactly from the pilot mission pack on
-> `hardening/cors-config`. Do not create a migration for LP-003 unless the pack
-> explicitly requires one and the ledger reservation is recorded first. Same
+> push `feature/email-delivery`, open LP-004's single PR, and merge only after
+> all gates are green. Confirm the migration ledger (production through 0041,
+> 0042–0045 pending, next free 0046), then implement LP-005 exactly from the
+> pilot mission pack on `ops/health-logging`. Do not create a migration unless
+> the pack explicitly requires one and the ledger reservation is recorded
+> first. Preserve LP-004's single email transport and structured events. Same
 > discipline as always: focused diff, fresh-Postgres tests, both typechecks,
 > web build, completion report, and final handoff commit.

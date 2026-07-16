@@ -40,13 +40,37 @@ describe("notification channel adapters", () => {
     });
   });
 
-  it("persists a failed email attempt without exposing recipient data in the error", async () => {
+  it("retries at most three times, then persists one failed outcome", async () => {
+    const send = vi.fn().mockRejectedValue(Object.assign(new Error("provider unavailable"), { code: "ETIMEDOUT" }));
     const persist = vi.fn(writer());
-    const gateway = emailGateway(async () => { throw new Error("provider unavailable"); }, persist);
+    const log = vi.fn();
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const gateway = emailGateway(send, persist, { log, sleep });
     await expect(gateway.deliver(request("EMAIL"))).rejects.toThrow("provider unavailable");
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenNthCalledWith(1, 100);
+    expect(sleep).toHaveBeenNthCalledWith(2, 200);
+    expect(log.mock.calls.map(([event]) => event)).toEqual([
+      "email.queued", "email.retried", "email.retried", "email.failed",
+    ]);
     expect(persist).toHaveBeenLastCalledWith(expect.objectContaining({ channel: "EMAIL" }), {
       status: "failed", transmitted: false,
     });
+  });
+
+  it("records a sent outcome when a bounded retry succeeds", async () => {
+    const send = vi.fn()
+      .mockRejectedValueOnce(new Error("temporary failure"))
+      .mockResolvedValueOnce({ providerMessageId: "provider-recovered" });
+    const persist = vi.fn(writer());
+    const gateway = emailGateway(send, persist, {
+      log: vi.fn(), sleep: vi.fn().mockResolvedValue(undefined),
+    });
+    await expect(gateway.deliver(request("EMAIL"))).resolves.toMatchObject({
+      status: "sent", providerMessageId: "provider-recovered",
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(persist).toHaveBeenCalledTimes(1);
   });
 
   it("persists in-app and placeholder intent without claiming external transmission", async () => {

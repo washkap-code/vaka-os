@@ -9,6 +9,7 @@ import { getCustomerStatementSummary } from "../src/customer-statements.js";
 import { sendFinanceDocument } from "../src/finance-document-delivery.js";
 import { createDraftInvoice, issueInvoice } from "../src/invoicing.js";
 import { db, schema } from "../src/lib.js";
+import { createInMemoryEmailTransport } from "../src/email-transport.js";
 import { NOTIFICATION_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { createContact, signupFinanceTenant } from "./finance/helpers.js";
 
@@ -46,13 +47,8 @@ describe("P7-001 finance document delivery", () => {
       evidenceSource: "CUSTOMER_REQUEST",
       reason: "Customer requested invoices by email.",
     });
-    const providerMessages: Array<{ recipient: string; locale: string; variables: Record<string, string> }> = [];
-    const service = buildPlatformKernel({
-      emailTransport: async (message) => {
-        providerMessages.push(message);
-        return { providerMessageId: "provider-invoice-1" };
-      },
-    }).container.get(NOTIFICATION_SERVICE);
+    const transport = createInMemoryEmailTransport();
+    const service = buildPlatformKernel({ emailTransport: transport }).container.get(NOTIFICATION_SERVICE);
     const journalsBefore = await db.select({ id: schema.journalEntries.id }).from(schema.journalEntries)
       .where(eq(schema.journalEntries.tenantId, tenant.tenantId));
     const first = await sendFinanceDocument({
@@ -79,9 +75,12 @@ describe("P7-001 finance document delivery", () => {
       contactId: contact.id,
       asAt: new Date("2026-12-31T23:59:59.999Z"),
     }, service)).rejects.toMatchObject({ status: 409 });
-    expect(providerMessages).toHaveLength(1);
-    expect(providerMessages[0]).toMatchObject({ recipient: contact.email, locale: "en-ZW" });
-    expect(providerMessages[0].variables.documentUrl).toMatch(/^http:\/\/localhost:4000\/api\/v1\/public\/invoices\//);
+    expect(transport.messages()).toHaveLength(1);
+    const providerMessage = transport.assertSent({
+      recipient: contact.email!, template: "finance.invoice.issued.v1",
+    }).message;
+    expect(providerMessage).toMatchObject({ recipient: contact.email, locale: "en-ZW" });
+    expect(providerMessage.variables.documentUrl).toMatch(/^http:\/\/localhost:4000\/api\/v1\/public\/invoices\//);
     const notifications = await db.select().from(schema.notifications)
       .where(eq(schema.notifications.tenantId, tenant.tenantId));
     expect(notifications.filter((row) => row.channel === "EMAIL")).toHaveLength(1);
@@ -102,7 +101,7 @@ describe("P7-001 finance document delivery", () => {
     const audits = await db.select().from(schema.auditLogs).where(eq(schema.auditLogs.tenantId, tenant.tenantId));
     expect(audits.some((row) => row.action === "finance_delivery.sent"
       && (row.metadata as { consentEventId?: string })?.consentEventId === preference.id)).toBe(true);
-    expect(JSON.stringify(audits)).not.toContain(providerMessages[0].variables.documentUrl);
+    expect(JSON.stringify(audits)).not.toContain(providerMessage.variables.documentUrl);
   });
 
   it("keeps statement currencies exact and uses reviewed English fallback for an isiNdebele preference", async () => {

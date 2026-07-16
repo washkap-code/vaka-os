@@ -54,7 +54,7 @@ later add statements, payment status, and preferences.
 | Immutable issued invoice-document snapshot | Implemented foundation |
 | Branded invoice template | Professional A4 v3 implemented from immutable issue snapshot; qualified statutory review pending |
 | PDF generation/download | Implemented through P1-007 document service |
-| Invoice email delivery and delivery history | P7-001 bounded explicit-send foundation implemented; provider/retry/webhook operations gated |
+| Invoice email delivery and delivery history | SMTP delivery plus three-attempt bounded retry implemented; durable queue and delivery webhooks remain gated |
 | Secure customer invoice link/portal | Expiring/revocable PDF link foundation implemented; fuller portal missing |
 
 ## 4. Invoice document requirements
@@ -157,9 +157,11 @@ also supports customer-statement summaries and manual overdue-invoice payment
 reminders. Provider acceptance is recorded as sent-to-provider only—not
 delivered, opened, read or paid.
 
-Automatic/bulk dunning, durable queue/outbox recovery, provider retries,
-delivery/bounce webhooks, rate limits and production deliverability evidence
-remain gated. English is the reviewed fallback; ChiShona and isiNdebele
+Automatic/bulk dunning, durable queue/outbox recovery, delivery/bounce
+webhooks, rate limits and production deliverability evidence remain gated.
+LP-004 adds at most three immediate SMTP attempts with bounded backoff and an
+operator failure view; it does not claim durable asynchronous recovery.
+English is the reviewed fallback; ChiShona and isiNdebele
 preferences are retained but finance translations remain disabled pending
 qualified review.
 

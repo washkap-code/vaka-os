@@ -102,11 +102,27 @@ export function platformAdminPassword(
   return assertSafeSecret("PLATFORM_ADMIN_PASSWORD", configured, 16);
 }
 
-export interface EmailProviderConfig {
-  url: string;
-  token: string;
-  from: string;
-}
+export type SmtpTlsMode = "implicit" | "starttls" | "none";
+
+export type EmailDeliveryConfig =
+  | { mode: "memory" }
+  | {
+    mode: "console";
+    fromAddress: string;
+    fromName: string;
+    replyTo: string;
+  }
+  | {
+    mode: "smtp";
+    host: string;
+    port: number;
+    authUser: string;
+    authPassword: string;
+    fromAddress: string;
+    fromName: string;
+    replyTo: string;
+    tls: SmtpTlsMode;
+  };
 
 export interface PaynowProviderConfig {
   integrationId: string;
@@ -172,20 +188,87 @@ export function publicAppUrl(env: RuntimeEnvironment = process.env): string {
   return parsed.toString().replace(/\/$/, "");
 }
 
-/** Provider-neutral HTTP email transport. An absent provider remains unavailable; partial config is invalid. */
-export function emailProviderConfig(
-  env: RuntimeEnvironment = process.env,
-): EmailProviderConfig | null {
-  const url = valueOf(env, "EMAIL_PROVIDER_URL");
-  const token = valueOf(env, "EMAIL_PROVIDER_TOKEN");
-  const from = valueOf(env, "EMAIL_FROM");
-  if (!url && !token && !from) return null;
-  if (!url || !token || !from) {
-    throw new Error("EMAIL_PROVIDER_URL, EMAIL_PROVIDER_TOKEN and EMAIL_FROM must be configured together");
+function booleanValue(env: RuntimeEnvironment, name: string): boolean | undefined {
+  const configured = valueOf(env, name)?.toLowerCase();
+  if (!configured) return undefined;
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+  throw new Error(`${name} must be true or false`);
+}
+
+function emailAddress(env: RuntimeEnvironment, name: string): string | undefined {
+  const configured = valueOf(env, name);
+  if (configured && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
+    throw new Error(`${name} must be a valid email address`);
   }
-  let parsed: URL;
-  try { parsed = new URL(url); } catch { throw new Error("EMAIL_PROVIDER_URL must be a valid HTTPS URL"); }
-  if (parsed.protocol !== "https:") throw new Error("EMAIL_PROVIDER_URL must use HTTPS");
-  if (isProduction(env)) assertSafeSecret("EMAIL_PROVIDER_TOKEN", token, 24);
-  return { url: parsed.toString(), token, from };
+  return configured;
+}
+
+/**
+ * Single environment contract for transactional email delivery.
+ *
+ * Production always uses SMTP and fails validation when any required value is
+ * missing. Development and staging stay safe by default and emit rendered
+ * messages to the console unless SMTP_ENABLED=true. Tests always use memory.
+ */
+export function emailDeliveryConfig(
+  env: RuntimeEnvironment = process.env,
+): EmailDeliveryConfig {
+  if (valueOf(env, "NODE_ENV") === "test") return { mode: "memory" };
+
+  const enabled = booleanValue(env, "SMTP_ENABLED");
+  if (isProduction(env) && enabled === false) {
+    throw new Error("SMTP_ENABLED cannot be false in production");
+  }
+
+  const fromAddress = emailAddress(env, "SMTP_FROM_ADDRESS");
+  const fromName = valueOf(env, "SMTP_FROM_NAME");
+  const replyTo = emailAddress(env, "SMTP_REPLY_TO");
+  const useSmtp = isProduction(env) || enabled === true;
+  if (!useSmtp) {
+    return {
+      mode: "console",
+      fromAddress: fromAddress ?? "notifications@localhost",
+      fromName: fromName ?? "VAKA",
+      replyTo: replyTo ?? fromAddress ?? "notifications@localhost",
+    };
+  }
+
+  const host = valueOf(env, "SMTP_HOST");
+  const rawPort = valueOf(env, "SMTP_PORT");
+  const authUser = valueOf(env, "SMTP_AUTH_USER");
+  const authPassword = valueOf(env, "SMTP_AUTH_PASSWORD");
+  const rawTls = valueOf(env, "SMTP_TLS")?.toLowerCase();
+  const missing = [
+    ["SMTP_HOST", host], ["SMTP_PORT", rawPort], ["SMTP_AUTH_USER", authUser],
+    ["SMTP_AUTH_PASSWORD", authPassword], ["SMTP_FROM_ADDRESS", fromAddress],
+    ["SMTP_FROM_NAME", fromName], ["SMTP_REPLY_TO", replyTo], ["SMTP_TLS", rawTls],
+  ].filter(([, value]) => !value).map(([name]) => name);
+  if (missing.length) {
+    throw new Error(`SMTP configuration is incomplete; missing: ${missing.join(", ")}`);
+  }
+
+  const port = Number(rawPort);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error("SMTP_PORT must be an integer between 1 and 65535");
+  }
+  if (rawTls !== "implicit" && rawTls !== "starttls" && rawTls !== "none") {
+    throw new Error("SMTP_TLS must be implicit, starttls or none");
+  }
+  if (isProduction(env) && rawTls === "none") {
+    throw new Error("SMTP_TLS cannot be none in production");
+  }
+  if (isProduction(env)) assertSafeSecret("SMTP_AUTH_PASSWORD", authPassword!, 16);
+
+  return {
+    mode: "smtp",
+    host: host!,
+    port,
+    authUser: authUser!,
+    authPassword: authPassword!,
+    fromAddress: fromAddress!,
+    fromName: fromName!,
+    replyTo: replyTo!,
+    tls: rawTls,
+  };
 }
