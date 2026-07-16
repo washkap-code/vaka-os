@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 7, Codex: LP-004 merged through PR #89 at `7bbb43a` with every quality, security, CodeQL and preview gate green. LP-003 reconciliation found and closed real gaps on `hardening/cors-config-lp003`: aggregate fail-fast boot validation, mandatory production CORS allowlist, removal of runtime secret fallbacks, hardened cookie/header/error controls and explicit acceptance tests. Fresh migrations through 0045 have zero drift; tenant isolation 13/13; aggregate server suite 95 files/443 tests; both typechecks and web build green. No migration taken; 0046 remains free. NEXT: merge LP-003 after its PR gates pass, then implement LP-005 observability. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 8, Codex: LP-004 merged through PR #89 at `7bbb43a`; LP-003 merged through PR #90 at `d883d403`, with every quality, security, CodeQL and preview gate green. LP-005 is complete locally on `ops/health-logging` at `ff2dd29`: dependency-free liveness, schema/DB/SMTP readiness, one redacting JSON logger with request context, optional Sentry-compatible error capture, crash discipline, metrics-lite events and operator documentation. Final clean-room proof: migrations through 0045 with zero drift, tenant isolation 13/13, full server suite 96 files/454 tests, both typechecks and web build green. No migration taken; 0046 remains free. NEXT: push LP-005, open its PR and merge only after green gates, then proceed to LP-006 backup/restore. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -93,15 +93,25 @@ before creating another migration.
 - **LP-004 operator action:** before production enablement, select the SMTP
   provider, store all nine `SMTP_*` values, verify aligned SPF/DKIM/DMARC and
   run representative mailbox tests. No live SMTP or DNS was touched by Codex.
-- **LP-003 complete pending PR merge:** branch `hardening/cors-config-lp003`,
-  implementation commits `33666b5` and `072f14d`. The reconciliation audited every LP-003
+- **LP-003 complete and merged:** PR #90, merge commit `d883d403`, branch
+  `hardening/cors-config-lp003`; implementation commits `33666b5` and
+  `072f14d`. The reconciliation audited every LP-003
   criterion and closed the remaining boot-config, CORS, secret-fallback, CSP
   and explicit-test gaps. A CodeQL alert then removed the remaining
   credentialed development-origin reflection, so every credentialed origin is
   now configuration-backed. No suspected real credential was found. Completion
   report: `docs/engineering/mission-packs/LP-003/COMPLETION.md`.
-- **Next:** push LP-003, merge only after every PR gate is green, then start
-  LP-005 on `ops/health-logging`.
+- **LP-005 complete locally:** branch `ops/health-logging`, implementation
+  commit `ff2dd29`. Adds `/healthz`
+  and `/readyz`, one redacting JSON logger with request/tenant/user context,
+  optional Sentry-compatible error capture, fatal process-error handling,
+  metrics-lite business events and an operator monitoring page. Fresh replay
+  through 0045 has zero drift; tenant isolation 13/13; full server 96 files /
+  454 tests; both typechecks and web build green. No migration taken; 0046
+  remains free. Completion report:
+  `docs/engineering/mission-packs/LP-005/COMPLETION.md`.
+- **Next:** push LP-005, open its PR and merge only after every gate is green,
+  then begin LP-006 on `ops/backup-restore`.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
    closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
@@ -206,10 +216,11 @@ before creating another migration.
 — all superseded by v2/extracted equivalents on `main`. They re-add old
 0024/0025 migrations and pre-P9-009 auth. Safe to delete after review.
 
-`fix/migrations-0042-0044`, `test/tenant-isolation-suite` and
-`feature/email-delivery` are fully merged through PRs #87, #88 and #89 and are
-safe to delete. Do not re-merge them. `hardening/cors-config-lp003` is active
-and must not be deleted until LP-003 is reviewed and merged.
+`fix/migrations-0042-0044`, `test/tenant-isolation-suite`,
+`feature/email-delivery` and `hardening/cors-config-lp003` are fully merged
+through PRs #87, #88, #89 and #90 and are safe to delete. Do not re-merge
+them. `ops/health-logging` is active and must not be deleted until LP-005 is
+reviewed and merged.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
@@ -416,32 +427,35 @@ the admin password hash between reruns on the same scratch db.
 3. **DB-SEPARATION** — move VAKA to its own Supabase project
    (`docs/engineering/DATABASE-SEPARATION-PLAN.md`); needs a Vercel env change
    from the owner.
-4. Production hardening: `ALLOWED_ORIGINS`, backup/restore drill, provision and
-   verify the LP-004 SMTP/DNS configuration, observability (P10-002).
+4. Production hardening: configure the merged `ALLOWED_ORIGINS`; push and merge
+   LP-005 observability; complete the backup/restore drill; provision and
+   verify the LP-004 SMTP/DNS configuration (P10-002).
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 6): LP-005 — Health, logging and monitoring hooks
+## NEXT MISSION (session 8): LP-005 close-out, then LP-006 backup/restore
 
-After LP-004's PR is green and merged, implement LP-005 exactly from
+Push `ops/health-logging`, open the LP-005 pull request and merge only after the
+quality, tenant-isolation, security, CodeQL and preview gates are green. Then
+implement LP-006 exactly from
 `docs/engineering/mission-packs/LP-PILOT/CODEX-PILOT-MISSIONS.md` on branch
-`ops/health-logging`. Scope: health endpoints, structured JSON logs and
-provider-neutral error-monitoring hooks. Incorporate LP-004's structured email
-events and failure surface without redesigning its transport. Do not create a
-migration unless the pack explicitly requires one and 0046 is reserved in the
-ledger first. Production migration debt 0042–0045 remains an owner action.
+`ops/backup-restore`. Reuse the LP-005 event vocabulary for
+`backup.succeeded`/`backup.failed`; preserve the restore safety rail and do not
+touch production. No migration is expected. If one becomes necessary, reserve
+0046 in this ledger first. Production migration debt 0042–0045 remains an
+owner action.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
 > `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
 > it has the current state, constraints and verification pattern. Confirm PR
-> #88 is merged with the required `Tenant isolation regression` context green;
-> push `feature/email-delivery`, open LP-004's single PR, and merge only after
-> all gates are green. Confirm the migration ledger (production through 0041,
-> 0042–0045 pending, next free 0046), then implement LP-005 exactly from the
-> pilot mission pack on `ops/health-logging`. Do not create a migration unless
-> the pack explicitly requires one and the ledger reservation is recorded
-> first. Preserve LP-004's single email transport and structured events. Same
-> discipline as always: focused diff, fresh-Postgres tests, both typechecks,
-> web build, completion report, and final handoff commit.
+> LP-004 and LP-003 are merged through PRs #89 and #90. LP-005 is complete
+> locally on `ops/health-logging`; read its completion report, push the branch,
+> open the PR and merge only after every gate is green. Confirm the migration
+> ledger (production through 0041, 0042–0045 pending, next free 0046), then
+> implement LP-006 exactly from the pilot mission pack on
+> `ops/backup-restore`. Do not touch production. Preserve LP-005's JSON event
+> contract and emit `backup.succeeded`/`backup.failed`. Same discipline as
+> always: focused diff, fresh-Postgres tests, both typechecks, web build,
+> completion report, and final handoff commit.
