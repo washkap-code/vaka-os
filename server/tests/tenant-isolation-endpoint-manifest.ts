@@ -23,6 +23,8 @@ export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "GET", path: "/health", access: "public", vector: "public-contract", justification: "Operational liveness probe; returns no tenant data." },
   { method: "GET", path: "/healthz", access: "public", vector: "public-contract", justification: "Dependency-free liveness probe; returns version and process uptime only." },
   { method: "GET", path: "/readyz", access: "public", vector: "public-contract", justification: "Operational readiness probe; returns redacted check labels without tenant data or connection details." },
+  { method: "GET", path: "/api/v1/healthz", access: "public", vector: "public-contract", justification: "Vercel-delivered alias of the dependency-free liveness probe." },
+  { method: "GET", path: "/api/v1/readyz", access: "public", vector: "public-contract", justification: "Vercel-delivered alias of the redacted readiness probe." },
   { method: "POST", path: "/api/v1/auth/signup", access: "public", vector: "public-contract", justification: "Tenant bootstrap endpoint; no authenticated tenant exists yet." },
   { method: "POST", path: "/api/v1/auth/login", access: "public", vector: "public-contract", justification: "Credential exchange endpoint; rate-limited and intentionally unauthenticated." },
   { method: "POST", path: "/api/v1/auth/refresh", access: "public", vector: "public-contract", justification: "Refresh-token exchange endpoint; authenticates the rotating refresh token." },
