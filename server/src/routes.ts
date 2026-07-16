@@ -1325,8 +1325,21 @@ api.get("/deals", requirePermission("crm.read"), wrap(async (req) =>
   db.select().from(schema.deals).where(eq(schema.deals.tenantId, tenantId(req))).orderBy(desc(schema.deals.createdAt))));
 api.post("/deals", requirePermission("crm.write"), wrap(async (req) => {
   const body = dealSchema.parse(req.body);
-  const [d] = await db.insert(schema.deals).values({ ...body, tenantId: tenantId(req), ownerUserId: req.auth!.userId }).returning();
-  return d;
+  const tid = tenantId(req);
+  return db.transaction(async (tx) => {
+    const [contact] = await tx.select({ id: schema.contacts.id }).from(schema.contacts).where(and(
+      eq(schema.contacts.id, body.contactId),
+      eq(schema.contacts.tenantId, tid),
+      isNull(schema.contacts.deletedAt),
+    ));
+    if (!contact) throw notFound("Contact not found");
+    const [deal] = await tx.insert(schema.deals).values({
+      ...body,
+      tenantId: tid,
+      ownerUserId: req.auth!.userId,
+    }).returning();
+    return deal;
+  });
 }));
 api.patch("/deals/:id/stage", requirePermission("crm.write"), wrap(async (req) => {
   const { stage } = z.object({ stage: z.enum(["NEW", "QUALIFIED", "PROPOSAL", "WON", "LOST"]) }).parse(req.body);

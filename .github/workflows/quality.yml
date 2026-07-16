@@ -13,6 +13,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  tenant-isolation:
+    name: Tenant isolation regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: jonomi
+          POSTGRES_PASSWORD: jonomi_ci
+          POSTGRES_DB: jonomi_tenant_isolation_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jonomi -d jonomi_tenant_isolation_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgresql://jonomi:jonomi_ci@127.0.0.1:5432/jonomi_tenant_isolation_test
+      JWT_SECRET: ci-only-vaka-jwt-secret-not-for-production-2026
+      PLATFORM_ADMIN_PASSWORD: CI-Only-Platform-Password-2026
+      NODE_ENV: test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci --workspaces=false --ignore-scripts
+
+      - name: Replay migrations and verify schema drift
+        working-directory: server
+        run: npm run test:db:migrations
+
+      - name: Seed required reference data
+        working-directory: server
+        run: node --import tsx src/seed.ts
+
+      - name: Run tenant-isolation regression suite
+        working-directory: server
+        run: npm run test:tenant-isolation
+
   verify:
     name: Type, build, tests, and AI foundations
     runs-on: ubuntu-latest
