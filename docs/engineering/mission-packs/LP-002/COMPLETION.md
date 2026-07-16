@@ -1,7 +1,8 @@
 # LP-002 — Automated tenant-isolation regression suite
 
-**Status:** Implementation complete; pull request verification pending  
+**Status:** Complete; pull request verification in progress  
 **Branch:** `test/tenant-isolation-suite`  
+**Pull request:** #88 (`test/tenant-isolation-suite` → `main`)  
 **Completed:** 2026-07-16  
 **Migrations:** None
 
@@ -102,6 +103,9 @@ regression**. On every pull request and push to `main`, it creates a fresh
 PostgreSQL service, replays and drift-checks all migrations, seeds standard
 reference data, and runs `npm run test:tenant-isolation`. The existing full
 server suite also discovers the test normally; it was not excluded or weakened.
+GitHub branch protection on `main` now requires the **Tenant isolation
+regression** context with strict up-to-date-branch checking. No review rule,
+admin enforcement or repository restriction was added.
 
 ## Tests executed
 
@@ -130,14 +134,15 @@ decisive clean-database full pass above completed with all 430 tests green.
 2. The suite proves application-level and relational tenant ownership against
    PostgreSQL. It does not replace production RLS review, secret protection,
    or the planned CORS/configuration hardening in LP-003.
-3. The new GitHub check runs on every PR and push. Repository administrators
-   should confirm that **Tenant isolation regression** is selected as a required
-   branch-protection context for `main`; this setting is not stored in Git.
+3. The required-check setting is external GitHub repository state rather than
+   a versioned file. Repository administrators must preserve **Tenant isolation
+   regression** when changing branch rules in future.
 4. No migration number was taken. The next free migration remains `0046`.
+5. No human decision is required to merge this test-only mission once all PR
+   checks are green.
 
 ## Recommended next mission
 
 Proceed to **LP-003 — CORS and Configuration Hardening** after this pull
 request's quality, security, CodeQL and Vercel checks are green and the branch
 protection context is confirmed.
-
