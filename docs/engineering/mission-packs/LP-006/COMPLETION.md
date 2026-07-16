@@ -8,6 +8,12 @@
 
 **Status:** Implementation and disposable-database verification complete; operator provisioning and a controlled restore drill remain launch operations.
 
+**Reconciliation:** Rebasing onto post-LP-005 `origin/main` (`45f46bc`)
+rewrote the LP-006 implementation commit to `3f86a1b`. LP-005 did not add a
+separate workflow step: its 10 observability tests remain enforced by the full
+server `npm test` gate. That gate and LP-006's explicit seeded backup/restore
+round-trip coexist in the rebased quality workflow.
+
 ## 1. Files created
 
 | File | Purpose |
@@ -78,18 +84,17 @@ All database work used disposable local PostgreSQL only.
 | Tenant-isolation regression | Passed: 13/13 |
 | Settings test at repository default timeout | Passed: 4/4 |
 | Inventory-valuation test at repository default timeout | Passed: 7/7 |
-| Full server suite with 30-second local timing headroom | Passed: 95 files, 444/444 tests |
+| Full server suite at the repository's default 15-second timeout | Passed: 96/96 files, 454/454 tests |
 | Server typecheck | Passed |
 | Web typecheck | Passed |
 | Web production build | Passed; existing chunk-size advisory only |
 | Shell syntax and `git diff --check` | Passed |
 | Quality workflow YAML parse | Passed |
 
-Two earlier full-suite attempts exposed local timing instability: one produced
-a transient settings `socket hang up` at 443/444 and another timed out two
-inventory tests at the default 15 seconds. Both affected files then passed
-unchanged at 15 seconds, and the complete unchanged suite passed at 30 seconds.
-No test, test timeout in the repository, or application code was weakened.
+The complete post-rebase suite passed unchanged at the repository's default
+timeout. No test, check, timeout or application behaviour was weakened. Earlier
+pre-rebase local timing failures documented during implementation did not recur
+in this clean run.
 
 ### Exact operator commands
 
@@ -127,6 +132,9 @@ export VERIFY_ADMIN_DATABASE_URL="postgresql://vaka_restore:SECRET@127.0.0.1:543
 LP-006 implementation acceptance is met locally: backup → verified restore is
 repeatable, the signature matches, the production rail is tested against the
 new project identity, CI contains the check, and documentation is complete.
+The entire post-rebase verification matrix passed against `origin/main` at
+`45f46bc`: migrations, seeded backup/restore, tenant isolation, all 454 server
+tests, both typechecks and the web production build.
 The scripts were tested with PostgreSQL client 18.4 against disposable
 PostgreSQL 18.4. No production or shared database, cloud account, credential or
 customer record was accessed.
@@ -161,10 +169,8 @@ The migration ledger is unchanged: production is recorded at an effective
 
 ## 7. Recommended next mission
 
-First publish and merge the already-complete local LP-005 branch
-`ops/health-logging` (`ff2dd29` + final handoff `45f46bc`), because LP-006 was
-branched from current `main` as explicitly requested and does not contain that
-parallel local work. Then merge LP-006 and complete one controlled encrypted
-backup plus non-production restore drill. The next mission is **LP-007 — Full
-DB-Backed Suite: Run Green on Production-Like Database**, including the LP-006
-round-trip as a final engineering launch gate.
+Push and review the rebased `ops/backup-restore` branch, then merge LP-006 and
+complete one controlled encrypted backup plus non-production restore drill.
+The next engineering mission is **LP-007 — Full DB-Backed Suite: Run Green on
+Production-Like Database**, including the LP-006 round trip as a final launch
+gate.
