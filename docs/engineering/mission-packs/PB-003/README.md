@@ -103,14 +103,18 @@ clearly directed to confirm requirements with the competent authority.
 8. Return only a minimal Black Book search document: entry key, name, category,
    verified state and review date. Sources and the full payload remain on the
    gated detail endpoint.
-9. Extend the P6-004 parser and closed navigation map with the single governed
+9. Add a gated `/blackbook/search` composition of the P1-006 provider so an
+   authenticated tenant member with Black Book access but no CRM/accounting/
+   inventory read permission still receives the same minimal governed search
+   shape. This route must check the feature in middleware and the provider.
+10. Extend the P6-004 parser and closed navigation map with the single governed
    `blackbook -> Black Book entry` destination. Unknown shapes or navigation
    descriptors continue to fail closed.
-10. Keep all new user-facing copy in the typed locale catalogue. Stable
+11. Keep all new user-facing copy in the typed locale catalogue. Stable
     category, cadence and payload-field keys remain separate from translated
     labels. English is the current baseline; qualified Shona and Ndebele
     activation remains a PI18N professional-review mission.
-11. Preserve every PB-001 import, versioning, platform permission, audit and
+12. Preserve every PB-001 import, versioning, platform permission, audit and
     governance rule unchanged.
 
 ## Authority, tenancy, audit and data protection
