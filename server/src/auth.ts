@@ -6,7 +6,7 @@
 //   3. requirePermission — RBAC check against the user's role
 // ============================================================================
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
@@ -433,11 +433,27 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
   try {
     const header = req.headers.authorization;
     if (!header?.startsWith("Bearer ")) throw unauthorized();
-    let payload: any;
-    try { payload = jwt.verify(header.slice(7), JWT_SECRET); } catch { throw unauthorized("Invalid or expired token"); }
+    let payload: JwtPayload;
+    try {
+      const decoded = jwt.verify(header.slice(7), JWT_SECRET);
+      if (typeof decoded === "string") throw unauthorized("Invalid or expired token");
+      payload = decoded;
+    } catch { throw unauthorized("Invalid or expired token"); }
+
+    if (typeof payload.sub !== "string" || !Object.prototype.hasOwnProperty.call(payload, "tenantId")) {
+      throw unauthorized("Invalid tenant context");
+    }
 
     const [user] = await db.select().from(schema.users).where(eq(schema.users.id, payload.sub));
     if (!user || user.status !== "active") throw unauthorized("User disabled");
+    if (payload.tenantId !== user.tenantId) throw unauthorized("Invalid tenant context");
+    if (user.tenantId && req.get("X-Tenant-Id") !== undefined) {
+      throw forbidden("Tenant context is derived from the authenticated session");
+    }
+    if (user.tenantId && (
+      Object.prototype.hasOwnProperty.call(req.query, "tenantId")
+      || (req.body && typeof req.body === "object" && Object.prototype.hasOwnProperty.call(req.body, "tenantId"))
+    )) throw badRequest("Tenant context is derived from the authenticated session");
 
     let permissions: string[] = [];
     let isTenantOwner = false;
@@ -447,7 +463,10 @@ export async function authenticate(req: AuthedRequest, _res: Response, next: Nex
     let platformPermissions: string[] = [];
     if (user.tenantId) {
       if (user.roleId) {
-        const [role] = await db.select().from(schema.roles).where(eq(schema.roles.id, user.roleId));
+        const [role] = await db.select().from(schema.roles).where(and(
+          eq(schema.roles.id, user.roleId),
+          eq(schema.roles.tenantId, user.tenantId),
+        ));
         permissions = role?.permissions ?? [];
       }
       const [ownership] = await db.select({ tenantId: schema.tenantOwnerships.tenantId })

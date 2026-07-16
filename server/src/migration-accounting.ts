@@ -14,7 +14,7 @@
 // backs the project sign-off (the PM-002 "P (accountant)" gate).
 // ============================================================================
 import { and, eq, sql as dsql } from "drizzle-orm";
-import { audit, badRequest, conflict, db, fromCents, schema, toCents, type DB } from "./lib.js";
+import { audit, badRequest, conflict, db, fromCents, notFound, schema, toCents, type DB } from "./lib.js";
 import { postJournal } from "./accounting.js";
 import { normalizeHeader, parseCsv, parseMoney, safeText } from "./imports.js";
 
@@ -361,7 +361,7 @@ export async function projectReconciliation(tenantId: string, projectId: string)
     eq(schema.migrationProjects.id, projectId),
     eq(schema.migrationProjects.tenantId, tenantId),
   ));
-  if (!project) throw badRequest("Migration project not found");
+  if (!project) throw notFound("Migration project not found");
   const steps = await db.select().from(schema.migrationSteps)
     .where(and(
       eq(schema.migrationSteps.projectId, projectId),
