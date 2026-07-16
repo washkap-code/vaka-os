@@ -116,6 +116,7 @@ export const PERMISSIONS = [
   "bank_reconciliation.prepare", "bank_reconciliation.approve",
   "payroll.read", "payroll.manage", "payroll.post",
   "documents.read", "documents.manage",
+  "verify.read", "verify.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -129,6 +130,7 @@ export const DEFAULT_ROLES: { name: string; permissions: Permission[] }[] = [
     "bank_reconciliation.prepare",
     "payroll.read", "payroll.manage", "payroll.post",
     "documents.read",
+    "verify.read",
   ] },
   { name: "Sales", permissions: ["crm.read", "crm.write", "accounting.read", "inventory.read"] },
   { name: "Stock Controller", permissions: [
