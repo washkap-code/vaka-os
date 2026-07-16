@@ -1,6 +1,8 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 8, Codex: LP-004 merged through PR #89 at `7bbb43a`; LP-003 merged through PR #90 at `d883d403`, with every quality, security, CodeQL and preview gate green. LP-005 is complete locally on `ops/health-logging` at `ff2dd29`: dependency-free liveness, schema/DB/SMTP readiness, one redacting JSON logger with request context, optional Sentry-compatible error capture, crash discipline, metrics-lite events and operator documentation. Final clean-room proof: migrations through 0045 with zero drift, tenant isolation 13/13, full server suite 96 files/454 tests, both typechecks and web build green. No migration taken; 0046 remains free. NEXT: push LP-005, open its PR and merge only after green gates, then proceed to LP-006 backup/restore. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-17 (session 9, Cowork: **DB SEPARATION EXECUTED 2026-07-16** — production now runs on dedicated Supabase project `vaka-os-prod` (`ewljdjvqngxweacgwedu`, eu-west-2, PG 17.6, Ziproh org upgraded to Pro): schema provisioned at a verified 0045-equivalent baseline (drizzle-generate DDL + integrity delta, proven byte-identical to the CI chain replay), reference data copied from `vaka-platform` (5 platform roles, 4 plans, platform admin with existing password hash — no reseed needed), Vercel `DATABASE_URL` switched, new prod-required env vars set (MFA_ENCRYPTION_KEY, PAYNOW_ENCRYPTION_KEY, ALLOWED_ORIGINS, PUBLIC_APP_URL, full SMTP via Fasthosts incl. SMTP_REPLY_TO), smoke test PASSED and SQL-verified (1 tenant/contact/invoice/payment, 2 journals, debits=credits=8050.00, 0 unbalanced, 26 audit rows). **HOLD until 2026-07-23**, then drop VAKA tables from `vaka-platform` + rotate its keys (runbook in owner outputs). The old 0042–0045 production debt is SATISFIED by cutover. Defects found in prod smoke and queued as micro-missions: LP-FIX-001 (step-up TS narrowing, visible in Vercel TS 6.0.3 builds), LP-FIX-002 (health endpoints unreachable through Vercel rewrites — /api/v1-prefixed paths + root rewrites needed), LP-FIX-003 (holding-page settings 500: `new URL()` inside a zod refine throws on empty/invalid offer URL). **PV-001 verification evidence vault BUILT on `feature/pv-001-verification-vault`** — see mission pack + completion report; **migration 0046 TAKEN by PV-001; next free is 0047**. Hygiene: tracked Finder artifact `approvals 4.ts` removed. Codex lane in parallel: PB-003 Black Book UI issued (no migration allowed); LP-006 rebase awaiting owner push; LP-007 queued after LP-005/006 merge. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+
+**Previous:** 2026-07-16 (session 8, Codex: LP-004 merged through PR #89 at `7bbb43a`; LP-003 merged through PR #90 at `d883d403`, with every quality, security, CodeQL and preview gate green. LP-005 is complete locally on `ops/health-logging` at `ff2dd29`: dependency-free liveness, schema/DB/SMTP readiness, one redacting JSON logger with request context, optional Sentry-compatible error capture, crash discipline, metrics-lite events and operator documentation. Final clean-room proof: migrations through 0045 with zero drift, tenant isolation 13/13, full server suite 96 files/454 tests, both typechecks and web build green. No migration taken; 0046 remains free. NEXT: push LP-005, open its PR and merge only after green gates, then proceed to LP-006 backup/restore. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -56,10 +58,14 @@ rules — defaults unchanged everywhere).
 | 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply before enabling `migration.hub` |
 | 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply before enabling directory enquiries |
 | 0044_document_approvals | PD-002 | ⚠️ PENDING — apply before enabling document approvals |
-| 0045_schema_runtime_alignment | LP-001 | ⚠️ PENDING — apply after 0044 |
+| 0045_schema_runtime_alignment | LP-001 | ✅ included in the vaka-os-prod baseline (2026-07-16 cutover) |
+| 0046_verification_vault | PV-001 | ⚠️ PENDING — apply to `vaka-os-prod` before enabling `verify.centre` |
 
-New migrations continue from **0046**. Coordinate reservations in this ledger
-before creating another migration.
+**NOTE (2026-07-16 cutover):** production is now `vaka-os-prod`
+(`ewljdjvqngxweacgwedu`), provisioned at a verified 0045-equivalent baseline —
+0042–0045 are INCLUDED and no longer owner debt. The old `vaka-platform` rows
+above are historical. New migrations continue from **0047**. Coordinate
+reservations in this ledger before creating another migration.
 
 ## Codex pilot-readiness lane
 
