@@ -36,7 +36,7 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
 
 /**
  * CORS policy:
- * - development/test: reflect the caller's origin (unchanged behaviour)
+ * - development/test: same-origin by default; configured origins are allowed
  * - production: boot requires an explicit ALLOWED_ORIGINS list; requests that
  *   present a non-allowlisted Origin are rejected before reaching a route.
  */
@@ -45,14 +45,18 @@ export function corsMiddleware(env: RuntimeEnvironment = process.env) {
   const production = isProduction(env);
   return (req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
-    const originAllowed =
-      !!origin && (!production || allowlist.has(origin.replace(/\/$/, "").toLowerCase()));
+    const requestedOrigin = origin?.replace(/\/$/, "").toLowerCase();
+    // The response value comes from trusted configuration, never from the
+    // request header. This keeps credentialed CORS strictly allowlist-only.
+    const allowedOrigin = requestedOrigin
+      ? [...allowlist].find((candidate) => candidate === requestedOrigin)
+      : undefined;
     if (origin) res.setHeader("Vary", "Origin");
-    if (production && origin && !originAllowed) {
+    if (production && origin && !allowedOrigin) {
       return res.status(403).json({ error: "CORS_ORIGIN_DENIED", message: "Origin is not allowed" });
     }
-    if (originAllowed && origin) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
+    if (allowedOrigin) {
+      res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Access-Control-Allow-Headers",
         "Content-Type, Authorization, Idempotency-Key, X-Vaka-Client, X-Vaka-App-Version, X-Vaka-Step-Up");

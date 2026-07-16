@@ -65,11 +65,20 @@ describe("securityHeaders", () => {
 });
 
 describe("corsMiddleware", () => {
-  it("reflects the origin outside production", () => {
-    const mw = corsMiddleware({ NODE_ENV: "development" } as NodeJS.ProcessEnv);
-    const { res, headers } = fakeRes();
-    mw(fakeReq({ origin: "http://localhost:5173" }), res, () => {});
-    expect(headers["Access-Control-Allow-Origin"]).toBe("http://localhost:5173");
+  it("allows credentials outside production only for configured origins", () => {
+    const configured = corsMiddleware({
+      NODE_ENV: "development", ALLOWED_ORIGINS: "http://localhost:5173",
+    } as NodeJS.ProcessEnv);
+    const allowed = fakeRes();
+    configured(fakeReq({ origin: "http://localhost:5173" }), allowed.res, () => {});
+    expect(allowed.headers["Access-Control-Allow-Origin"]).toBe("http://localhost:5173");
+    expect(allowed.headers["Access-Control-Allow-Credentials"]).toBe("true");
+
+    const sameOriginOnly = corsMiddleware({ NODE_ENV: "development" } as NodeJS.ProcessEnv);
+    const unconfigured = fakeRes();
+    sameOriginOnly(fakeReq({ origin: "https://untrusted.example" }), unconfigured.res, () => {});
+    expect(unconfigured.headers["Access-Control-Allow-Origin"]).toBeUndefined();
+    expect(unconfigured.headers["Access-Control-Allow-Credentials"]).toBeUndefined();
   });
 
   it("only allows allowlisted origins in production", () => {
