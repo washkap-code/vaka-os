@@ -94,9 +94,11 @@ before creating another migration.
   provider, store all nine `SMTP_*` values, verify aligned SPF/DKIM/DMARC and
   run representative mailbox tests. No live SMTP or DNS was touched by Codex.
 - **LP-003 complete pending PR merge:** branch `hardening/cors-config-lp003`,
-  implementation commit `33666b5`. The reconciliation audited every LP-003
+  implementation commits `33666b5` and `072f14d`. The reconciliation audited every LP-003
   criterion and closed the remaining boot-config, CORS, secret-fallback, CSP
-  and explicit-test gaps. No suspected real credential was found. Completion
+  and explicit-test gaps. A CodeQL alert then removed the remaining
+  credentialed development-origin reflection, so every credentialed origin is
+  now configuration-backed. No suspected real credential was found. Completion
   report: `docs/engineering/mission-packs/LP-003/COMPLETION.md`.
 - **Next:** push LP-003, merge only after every PR gate is green, then start
   LP-005 on `ops/health-logging`.
