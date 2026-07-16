@@ -12,7 +12,10 @@ import { describe, expect, it } from "vitest";
 import request from "supertest";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { createApp } from "../src/app.js";
-import { issueAuthenticatedSession, login, revokeSession, setTenantUserStatus, signupTenant, createTenantUser } from "../src/auth.js";
+import {
+  createTenantUser, issueAuthenticatedSession, login, refreshCookieOptions,
+  revokeSession, setTenantUserStatus, signupTenant,
+} from "../src/auth.js";
 import { db, schema } from "../src/lib.js";
 
 const app = createApp();
@@ -85,6 +88,11 @@ describe("P9-010 refresh-token rotation", () => {
   });
 
   it("delivers the refresh credential only as a hardened, path-restricted cookie", async () => {
+    expect(refreshCookieOptions({ NODE_ENV: "production" })).toMatchObject({
+      httpOnly: true, sameSite: "strict", secure: true, path: "/api/v1/auth/refresh",
+    });
+    expect(refreshCookieOptions({ NODE_ENV: "development" }).secure).toBe(false);
+
     const { tenant, password } = await createWorkspace("CookieHardening");
     const [owner] = await db.select().from(schema.users).where(eq(schema.users.tenantId, tenant.id));
     const { cookieAttributes, body, refreshValue } = await loginViaHttp(owner.email, password, tenant.subdomain);

@@ -36,22 +36,25 @@ recorded in the metadata.
 every request.
 
 **App hardening** — input validation on every endpoint (zod), global error
-handler that never leaks internals, security headers, JSON body limits,
-parameterised queries throughout (no string-built SQL).
+handler that never leaks internals, baseline API CSP (`default-src 'none'` and
+`frame-ancestors 'none'`), security headers, JSON body limits, and parameterised
+queries throughout (no string-built SQL).
 
 **Transport hardening** (`server/src/security.ts`) — strict header set on every
-response (nosniff, DENY framing, HSTS, COOP/CORP same-origin, restrictive
-Permissions-Policy); production CORS is an explicit `ALLOWED_ORIGINS` allowlist
-(same-origin only when unset — no reflected origins in production); in-app
-rate limiting on credential endpoints (login 20/5min, signup 10/10min per IP)
-and public document links (60/min per IP) with `Retry-After` responses.
+response (nosniff, DENY framing, HSTS, CSP, COOP/CORP same-origin, restrictive
+Permissions-Policy); production CORS requires an explicit `ALLOWED_ORIGINS`
+allowlist and rejects empty, wildcard, malformed and non-allowlisted origins;
+credentialed CORS is emitted only for an allowed origin. In-app rate limiting
+covers login, signup, refresh, step-up, MFA and both password-reset endpoints,
+plus public document links, with `Retry-After` responses.
 Per-process windows: add an edge/CDN limiter when scaling horizontally.
 
 **Ransomware / data-hostage resistance** — the design assumptions that limit
 blast radius: append-only ledgers and immutable audit history (tampering is
 evident); encrypted capture payloads at rest with a dedicated key
-(`CAPTURE_ENCRYPTION_KEY`); secrets never committed (placeholder values are
-rejected at boot in production); off-site encrypted backups with documented
+(`CAPTURE_ENCRYPTION_KEY`); capture, MFA and Paynow signing material must each
+use a dedicated configured key and never fall back to JWT signing material;
+secrets are never committed and placeholder values are rejected; off-site encrypted backups with documented
 restore drills (see `docs/03-backup-disaster-recovery.md`); tenant data export
 available in every account state, so recovery never depends on one system.
 
@@ -85,6 +88,5 @@ Jonomi from claims:
 - In-app rate limiting now covers credential and public-link endpoints; a WAF
   and shared (multi-instance) rate limiting remain deployment-level concerns
   (see deployment doc).
-- Set `ALLOWED_ORIGINS` in every production environment; without it the API is
-  same-origin only, which is safe but will block legitimate cross-origin web
-  clients until configured.
+- Set an explicit `ALLOWED_ORIGINS` in every production environment. Missing or
+  wildcard configuration is a fatal boot error.

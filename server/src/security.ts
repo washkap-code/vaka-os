@@ -2,9 +2,8 @@
 // SECURITY MIDDLEWARE — transport-level hardening for the API.
 //
 //   securityHeaders   — strict browser-protection headers on every response
-//   corsMiddleware    — reflective CORS in development; explicit allowlist in
-//                       production (ALLOWED_ORIGINS, comma-separated). With no
-//                       allowlist configured, production is same-origin only.
+//   corsMiddleware    — reflective CORS in development; mandatory explicit
+//                       allowlist in production (ALLOWED_ORIGINS).
 //   createRateLimiter — fixed-window, in-memory limiter for brute-force and
 //                       abuse protection. Per-process: suitable for a single
 //                       instance; put a shared limiter (e.g. at the edge/CDN)
@@ -12,20 +11,14 @@
 //                       NODE_ENV=test unless explicitly enabled.
 // ============================================================================
 import type { NextFunction, Request, Response } from "express";
+import { allowedOrigins as configuredAllowedOrigins } from "./config.js";
 
 type RuntimeEnvironment = NodeJS.ProcessEnv;
 
 const isProduction = (env: RuntimeEnvironment) => env.NODE_ENV?.trim() === "production";
 const isTest = (env: RuntimeEnvironment) => env.NODE_ENV?.trim() === "test";
 
-/** Parse the ALLOWED_ORIGINS env value into a normalised origin set. */
-export function allowedOrigins(env: RuntimeEnvironment = process.env): Set<string> {
-  const raw = env.ALLOWED_ORIGINS?.trim();
-  if (!raw) return new Set();
-  return new Set(
-    raw.split(",").map((o) => o.trim().replace(/\/$/, "").toLowerCase()).filter(Boolean),
-  );
-}
+export { allowedOrigins } from "./config.js";
 
 /** Strict security headers applied to every response. */
 export function securityHeaders(_req: Request, res: Response, next: NextFunction) {
@@ -33,6 +26,8 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader("Content-Security-Policy",
+    "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
@@ -42,19 +37,23 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
 /**
  * CORS policy:
  * - development/test: reflect the caller's origin (unchanged behaviour)
- * - production: only origins present in ALLOWED_ORIGINS receive CORS headers;
- *   everything else is same-origin only (browsers block the response).
+ * - production: boot requires an explicit ALLOWED_ORIGINS list; requests that
+ *   present a non-allowlisted Origin are rejected before reaching a route.
  */
 export function corsMiddleware(env: RuntimeEnvironment = process.env) {
-  const allowlist = allowedOrigins(env);
+  const allowlist = configuredAllowedOrigins(env);
   const production = isProduction(env);
   return (req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
     const originAllowed =
       !!origin && (!production || allowlist.has(origin.replace(/\/$/, "").toLowerCase()));
+    if (origin) res.setHeader("Vary", "Origin");
+    if (production && origin && !originAllowed) {
+      return res.status(403).json({ error: "CORS_ORIGIN_DENIED", message: "Origin is not allowed" });
+    }
     if (originAllowed && origin) {
       res.setHeader("Access-Control-Allow-Origin", origin);
-      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Access-Control-Allow-Headers",
         "Content-Type, Authorization, Idempotency-Key, X-Vaka-Client, X-Vaka-App-Version, X-Vaka-Step-Up");
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
@@ -76,6 +75,25 @@ export interface RateLimiterOptions {
   enabledInTests?: boolean;
   /** Key extractor; defaults to the client IP. */
   keyOf?: (req: Request) => string;
+}
+
+/** Credential surfaces protected by the baseline in-process limiter. */
+export const AUTH_RATE_LIMIT_POLICIES: readonly {
+  path: string;
+  options: RateLimiterOptions;
+}[] = [
+  { path: "/api/v1/auth/login", options: { windowMs: 5 * 60_000, max: 20, label: "login attempts" } },
+  { path: "/api/v1/auth/refresh", options: { windowMs: 5 * 60_000, max: 30, label: "session renewals" } },
+  { path: "/api/v1/auth/step-up", options: { windowMs: 5 * 60_000, max: 10, label: "reauthentication attempts" } },
+  { path: "/api/v1/auth/signup", options: { windowMs: 10 * 60_000, max: 10, label: "signup attempts" } },
+  { path: "/api/v1/auth/password-reset/request", options: { windowMs: 15 * 60_000, max: 5, label: "password reset requests" } },
+  { path: "/api/v1/auth/password-reset/complete", options: { windowMs: 15 * 60_000, max: 10, label: "password reset attempts" } },
+  { path: "/api/v1/auth/mfa", options: { windowMs: 5 * 60_000, max: 20, label: "two-factor attempts" } },
+] as const;
+
+/** Fixed client response for unexpected failures; input details never escape. */
+export function sanitisedInternalError(_error: unknown) {
+  return { error: "INTERNAL" as const, message: "An unexpected error occurred" };
 }
 
 interface WindowState { count: number; resetAt: number; }
