@@ -1,6 +1,6 @@
 # LP-002 — Automated tenant-isolation regression suite
 
-**Status:** Complete; pull request verification in progress  
+**Status:** Complete; all pull request checks green  
 **Branch:** `test/tenant-isolation-suite`  
 **Pull request:** #88 (`test/tenant-isolation-suite` → `main`)  
 **Completed:** 2026-07-16  
@@ -120,6 +120,14 @@ admin enforcement or repository restriction was added.
 - Web production build: passed. The existing large-chunk warning remains; the
   build completed successfully.
 - `git diff --check`: passed.
+- GitHub quality run `29489585340`: dedicated tenant-isolation job passed in
+  39 seconds; full type/build/conformance/migration/test/AI job passed in
+  4 minutes 12 seconds.
+- GitHub CodeQL JavaScript/TypeScript analysis: passed.
+- Server and web high/critical dependency audit and typecheck gates: passed.
+- Gitleaks: passed with no leak finding.
+- CycloneDX SBOM generation and artifact upload: passed.
+- Vercel preview deployment and preview comments: passed.
 
 An earlier diagnostic full-suite pass used a repeatedly seeded database and
 reported one timeout plus two fixture/validation failures. The affected files
@@ -143,6 +151,6 @@ decisive clean-database full pass above completed with all 430 tests green.
 
 ## Recommended next mission
 
-Proceed to **LP-003 — CORS and Configuration Hardening** after this pull
-request's quality, security, CodeQL and Vercel checks are green and the branch
-protection context is confirmed.
+Merge PR #88 as LP-002's single programme merge, then proceed to **LP-003 —
+CORS and Configuration Hardening**. The quality, security, CodeQL and Vercel
+checks are green and the branch-protection context is confirmed.
