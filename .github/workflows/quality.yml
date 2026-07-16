@@ -131,6 +131,16 @@ jobs:
         working-directory: server
         run: node --import tsx src/seed.ts
 
+      - name: Install PostgreSQL backup client tools
+        run: |
+          if ! command -v pg_dump >/dev/null || ! command -v pg_restore >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client
+          fi
+
+      - name: Verify backup round trip and production safety rail
+        run: bash scripts/tests/backup-restore.test.sh
+
       - name: Type-check server and web
         run: npm run typecheck
 
