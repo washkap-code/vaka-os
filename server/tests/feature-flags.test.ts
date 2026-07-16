@@ -14,10 +14,11 @@ import { db, schema } from "../src/lib.js";
 import { FeatureFlagService, UnknownFeatureError } from "../src/platform/features/service.js";
 import { FEATURE_CATALOGUE, type FeatureFlagStore, type SetFeatureFlagInput } from "../src/platform/features/types.js";
 import { requireFeature } from "../src/feature-flags.js";
+import { loginPlatformAdminFixture, platformAdminTestPassword } from "./platform-admin-test-auth.js";
 
 const app = createApp();
 const uniq = `ff${Date.now().toString(36)}`;
-const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD;
+const adminPassword = platformAdminTestPassword;
 
 async function makeTenant(n: string) {
   const res = await request(app).post("/api/v1/auth/signup").send({
@@ -121,19 +122,7 @@ describe("platform administration", () => {
   });
 
   it.skipIf(!adminPassword)("lists, toggles with step-up + note, and audits", async () => {
-    const login = await request(app).post("/api/v1/auth/login").send({
-      email: "washington@africaprocure.com", password: adminPassword,
-    });
-    expect(login.status).toBe(200);
-    let effectivePassword = adminPassword!;
-    const adminAuth = { Authorization: `Bearer ${login.body.token}` };
-    if (login.body.user.mustChangePassword) {
-      effectivePassword = "CI-Only-Replacement-Password-2026";
-      const changed = await request(app).post("/api/v1/auth/change-password").set(adminAuth).send({
-        currentPassword: adminPassword, newPassword: effectivePassword,
-      });
-      expect(changed.status).toBe(200);
-    }
+    const { auth: adminAuth, effectivePassword } = await loginPlatformAdminFixture(app);
 
     const list = await request(app).get(`/api/v1/platform/tenants/${B.tenantId}/features`).set(adminAuth);
     expect(list.status).toBe(200);

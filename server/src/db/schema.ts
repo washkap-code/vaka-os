@@ -780,7 +780,11 @@ export const payments = pgTable("payments", {
   idempotencyFingerprint: text("idempotency_fingerprint"),
   createdBy: uuid("created_by"),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("payments_tenant_idempotency").on(t.tenantId, t.idempotencyKey)]);
+}, (t) => [
+  uniqueIndex("payments_tenant_idempotency")
+    .on(t.tenantId, t.idempotencyKey)
+    .where(sql`${t.idempotencyKey} IS NOT NULL`),
+]);
 
 // P2-005: closed financial periods. A CLOSED row locks its month against any
 // journal posting (enforced in postJournal and by a DB trigger); corrections
@@ -826,7 +830,7 @@ export const journalEntries = pgTable("journal_entries", {
 // journal service inside the same DB transaction. Amounts in tenant base ccy.
 export const journalLines = pgTable("journal_lines", {
   id: id(),
-  journalEntryId: uuid("journal_entry_id").notNull().references(() => journalEntries.id),
+  journalEntryId: uuid("journal_entry_id").notNull().references(() => journalEntries.id, { onDelete: "restrict" }),
   accountId: uuid("account_id").notNull().references(() => accounts.id),
   debit: money("debit").default("0").notNull(),
   credit: money("credit").default("0").notNull(),
@@ -850,7 +854,11 @@ export const expenses = pgTable("expenses", {
   idempotencyFingerprint: text("idempotency_fingerprint"),
   createdBy: uuid("created_by"),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("expenses_tenant_idempotency").on(t.tenantId, t.idempotencyKey)]);
+}, (t) => [
+  uniqueIndex("expenses_tenant_idempotency")
+    .on(t.tenantId, t.idempotencyKey)
+    .where(sql`${t.idempotencyKey} IS NOT NULL`),
+]);
 
 export const bankAccounts = pgTable("bank_accounts", {
   id: id(),
@@ -988,7 +996,9 @@ export const stockMovements = pgTable("stock_movements", {
   createdAt: createdAt(),
 }, (t) => [
   index("sm_tenant_product").on(t.tenantId, t.productId, t.warehouseId),
-  uniqueIndex("stock_movements_tenant_idempotency").on(t.tenantId, t.idempotencyKey),
+  uniqueIndex("stock_movements_tenant_idempotency")
+    .on(t.tenantId, t.idempotencyKey)
+    .where(sql`${t.idempotencyKey} IS NOT NULL`),
 ]);
 
 // Rebuildable current weighted-average valuation cache. Append-only movement
@@ -1325,7 +1335,7 @@ export const subscriptionPaymentAttempts = pgTable("subscription_payment_attempt
   index("subscription_payment_attempts_initiated_by").on(t.initiatedBy),
   check("subscription_payment_attempts_provider_check", sql`${t.provider} = 'PAYNOW'`),
   check("subscription_payment_attempts_status_check", sql`${t.status} IN ('CREATED', 'PENDING', 'PAID', 'FAILED', 'CANCELLED', 'DISPUTED', 'REFUNDED', 'REQUIRES_REVIEW')`),
-]);
+]).enableRLS();
 
 export const dunningEvents = pgTable("dunning_events", {
   id: id(),

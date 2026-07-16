@@ -11,7 +11,7 @@ if (!databaseUrl) {
   process.exit(0);
 }
 
-const required = [
+const alwaysRequired = [
   ["tenants", "country_code"],
   ["tenants", "invoice_payment_terms"],
   ["tenants", "invoice_bank_name"],
@@ -79,10 +79,39 @@ const required = [
   ["accounting_periods", "period_month"],
   ["accounting_periods", "status"],
 ];
+const gatedRequirements = {
+  "migration.hub": [
+    ["migration_projects", "tenant_id"],
+    ["migration_steps", "project_id"],
+    ["migration_open_items", "step_id"],
+  ],
+  "network.directory": [
+    ["business_profiles", "accept_enquiries"],
+    ["directory_enquiries", "profile_id"],
+  ],
+  "documents.workspace": [
+    ["workspace_documents", "retention_until"],
+    ["document_approvals", "document_id"],
+  ],
+};
 const client = new pg.Client({ connectionString: databaseUrl });
 
 try {
   await client.connect();
+  const enabledResult = await client.query(
+    `select distinct feature_key
+       from tenant_feature_flags
+      where enabled is true
+        and feature_key = any($1::text[])`,
+    [Object.keys(gatedRequirements)],
+  );
+  const enabledFeatures = new Set(enabledResult.rows.map((row) => row.feature_key));
+  const required = [
+    ...alwaysRequired,
+    ...Object.entries(gatedRequirements)
+      .filter(([featureKey]) => enabledFeatures.has(featureKey))
+      .flatMap(([, requirements]) => requirements),
+  ];
   const requiredValues = required
     .map(([table, column]) => `('${table}', '${column}')`)
     .join(", ");
@@ -95,7 +124,8 @@ try {
   const present = new Set(result.rows.map((row) => `${row.table_name}.${row.column_name}`));
   const missing = required.map(([table, column]) => `${table}.${column}`).filter((key) => !present.has(key));
   if (missing.length) throw new Error(`Runtime schema is not deployment-ready. Missing: ${missing.join(", ")}`);
-  console.log("Runtime schema is deployment-ready");
+  const enabledSummary = [...enabledFeatures].sort().join(", ") || "none";
+  console.log(`Runtime schema is deployment-ready (enabled gated features: ${enabledSummary})`);
 } finally {
   await client.end();
 }

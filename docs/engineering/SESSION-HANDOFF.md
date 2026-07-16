@@ -26,15 +26,16 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration on `main`: `0043_directory_enquiries.sql`.
+Highest migration on `main`: `0045_schema_runtime_alignment.sql`.
 **Migrations through 0041 are applied and verified in production.
-⚠️ PUSH GATE: 0042 AND 0043 are NOT yet applied — the Supabase MCP in this
-session lost its VAKA scope (back on BioCheck) mid-session. Apply
-`server/drizzle/0042_migration_hub.sql` then
-`server/drizzle/0043_directory_enquiries.sql` (both idempotent) via the
-Supabase SQL editor or a VAKA-scoped MCP, verify the four new tables exist
-empty and business_profiles gained accept_enquiries (default false), THEN
-push main.**
+⚠️ PRODUCTION APPLY REQUIRED: 0042–0045 are NOT yet applied. Apply
+`server/drizzle/0042_migration_hub.sql`,
+`server/drizzle/0043_directory_enquiries.sql`,
+`server/drizzle/0044_document_approvals.sql`, then
+`server/drizzle/0045_schema_runtime_alignment.sql` through the Supabase SQL
+editor or a VAKA-scoped MCP. Verify the gated tables remain empty and the
+0045 column rename/type alignment completed before enabling affected features
+or declaring the next production release verified.**
 (0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
 verified: all new tables exist and are empty = flags OFF, no policies, no
 rules — defaults unchanged everywhere).
@@ -52,18 +53,19 @@ rules — defaults unchanged everywhere).
 | 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
 | 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
 | 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
-| 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply BEFORE pushing main |
-| 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply BEFORE pushing main |
-| 0044_document_approvals | PD-002 | ⚠️ PENDING — apply BEFORE pushing main |
+| 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply before enabling `migration.hub` |
+| 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply before enabling directory enquiries |
+| 0044_document_approvals | PD-002 | ⚠️ PENDING — apply before enabling document approvals |
+| 0045_schema_runtime_alignment | LP-001 | ⚠️ PENDING — apply after 0044 |
 
-New migrations continue from **0045**. **Migration numbers are reserved by
-this (Cowork) session — parallel Codex work must NOT create migrations.**
+New migrations continue from **0046**. Coordinate reservations in this ledger
+before creating another migration.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
-   closed before touching its tables — but 0042, 0043 and 0044 MUST be
-   applied (in order, all idempotent) BEFORE any of migration.hub,
+   closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
+   applied (in order) BEFORE any of migration.hub,
    network.directory-enquiries or documents.workspace-approvals is enabled
-   for any tenant, and ideally before the next push.**
+   for any tenant, and before the next production release verification.**
    **PD-002 is DONE (2026-07-15, session 3):** document approvals with the
    second-person rule enforced in service AND by DB CHECK (decider ≠
    requester; one PENDING per document via partial unique index; decided

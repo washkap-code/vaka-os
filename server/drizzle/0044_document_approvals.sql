@@ -3,19 +3,21 @@
 -- Retention: retention_until on workspace_documents — a document under
 -- retention cannot be archived until the date passes.
 -- Additive and idempotent; empty table + null column change nothing.
+-- Every statement is PostgreSQL transaction-safe. Apply this file as one
+-- transaction (the automated migration verifier enforces that contract).
 
 ALTER TABLE "workspace_documents"
   ADD COLUMN IF NOT EXISTS "retention_until" date;
 
 CREATE TABLE IF NOT EXISTS "document_approvals" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
-  "document_id" uuid NOT NULL REFERENCES "workspace_documents"("id"),
+  "tenant_id" uuid NOT NULL CONSTRAINT "document_approvals_tenant_id_tenants_id_fk" REFERENCES "tenants"("id"),
+  "document_id" uuid NOT NULL CONSTRAINT "document_approvals_document_id_workspace_documents_id_fk" REFERENCES "workspace_documents"("id"),
   "version" integer NOT NULL,
   "note" text,
   "status" text DEFAULT 'PENDING' NOT NULL,
-  "requested_by" uuid NOT NULL REFERENCES "users"("id"),
-  "decided_by" uuid REFERENCES "users"("id"),
+  "requested_by" uuid NOT NULL CONSTRAINT "document_approvals_requested_by_users_id_fk" REFERENCES "users"("id"),
+  "decided_by" uuid CONSTRAINT "document_approvals_decided_by_users_id_fk" REFERENCES "users"("id"),
   "decision_note" text,
   "decided_at" timestamptz,
   "created_at" timestamptz DEFAULT now() NOT NULL,
