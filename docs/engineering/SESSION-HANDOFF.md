@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 8, Codex: LP-004 merged through PR #89 at `7bbb43a`; LP-003 merged through PR #90 at `d883d403`, with every quality, security, CodeQL and preview gate green. LP-005 is complete locally on `ops/health-logging` at `ff2dd29`: dependency-free liveness, schema/DB/SMTP readiness, one redacting JSON logger with request context, optional Sentry-compatible error capture, crash discipline, metrics-lite events and operator documentation. Final clean-room proof: migrations through 0045 with zero drift, tenant isolation 13/13, full server suite 96 files/454 tests, both typechecks and web build green. No migration taken; 0046 remains free. NEXT: push LP-005, open its PR and merge only after green gates, then proceed to LP-006 backup/restore. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 11, Codex: LP-005 is merged into `origin/main` at `45f46bc`. LP-FIX-003 is complete locally on `fix/holding-page-url-validation` at `9e01cd5`: malformed holding-offer and branding URLs now fail exception-safely with HTTP 400, while empty remains no link and HTTPS remains accepted. The audit found and fixed both unsafe Zod URL callbacks. Focused settings 5/5, migrations `0000`–`0045` with zero drift, both typechecks and web build are green. Full-suite coverage is complete across aggregate plus targeted runs, but no clean single aggregate result was obtained because host load above 20 caused unrelated socket/hook/test timeouts; hosted CI is mandatory before merge. LP-FIX-002 remains complete locally at `12c7987`; LP-006 remains rebased and verified locally at `cb0a3cd`. Dedicated production is `vaka-os-prod` (`ewljdjvqngxweacgwedu`) at a verified 0045-equivalent baseline; the old `vaka-platform` VAKA tables remain under the owner hold. No migration taken; 0046 remains free. NEXT: push LP-FIX-003 and require a green hosted full-server gate, deploy/smoke both micro-fixes, then close out LP-006 and proceed to LP-007. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -18,27 +18,22 @@ this repository.
 - **Git:** the sandbox has NO push credentials. Commit locally via shell git;
   PUSH via GitHub Desktop (confirm "Current Repository" = `vaka-os` first).
   Pushing `main` auto-deploys to Vercel.
-- **Database:** shared Supabase project `vaka-platform` (`kjabilwcdwpncthbskvy`),
-  co-located with GENFIN (25 `genfin_*` tables with real data). NEVER run
-  `drizzle-kit push` / `db:push` against production. All schema changes are
-  hand-applied as idempotent additive SQL via the Supabase MCP `apply_migration`,
-  BEFORE the code that uses them is pushed.
+- **Production database:** dedicated Supabase project `vaka-os-prod`
+  (`ewljdjvqngxweacgwedu`), provisioned 2026-07-16 and verified at an
+  0045-equivalent baseline. NEVER run `drizzle-kit push` / `db:push` against
+  production. Future schema changes are hand-applied as reviewed additive SQL
+  before dependent code or flags are enabled.
+- **Former shared project:** `vaka-platform` (`kjabilwcdwpncthbskvy`) remains
+  under the cutover hold. Do not restore into it or remove its VAKA tables
+  until the owner smoke test and hold period are complete. GENFIN data is out
+  of VAKA scope at all times.
 
 ## Migration ledger (production truth)
 
 Highest migration on `main`: `0045_schema_runtime_alignment.sql`.
-**Migrations through 0041 are applied and verified in production.
-⚠️ PRODUCTION APPLY REQUIRED: 0042–0045 are NOT yet applied. Apply
-`server/drizzle/0042_migration_hub.sql`,
-`server/drizzle/0043_directory_enquiries.sql`,
-`server/drizzle/0044_document_approvals.sql`, then
-`server/drizzle/0045_schema_runtime_alignment.sql` through the Supabase SQL
-editor or a VAKA-scoped MCP. Verify the gated tables remain empty and the
-0045 column rename/type alignment completed before enabling affected features
-or declaring the next production release verified.**
-(0036–0038 applied via Supabase MCP on 2026-07-15 BEFORE the code push;
-verified: all new tables exist and are empty = flags OFF, no policies, no
-rules — defaults unchanged everywhere).
+**The dedicated `vaka-os-prod` project is verified at an effective
+0045-equivalent baseline as of 2026-07-16.** This is the production truth for
+new work. Retain the former shared project unchanged through the owner hold.
 
 | Migration | Mission | Applied |
 | --- | --- | --- |
@@ -53,10 +48,10 @@ rules — defaults unchanged everywhere).
 | 0039_document_workspace | PD-001 | ✅ 2026-07-15 (verified: tables empty, roles backfilled) |
 | 0040_blackbook_registry | PB-001 | ✅ 2026-07-15 (verified: 3 tables exist, empty) |
 | 0041_business_profiles | PN-001 | ✅ 2026-07-15 (verified: table exists, empty) |
-| 0042_migration_hub | PM-001/002 | ⚠️ PENDING — apply before enabling `migration.hub` |
-| 0043_directory_enquiries | PN-003 | ⚠️ PENDING — apply before enabling directory enquiries |
-| 0044_document_approvals | PD-002 | ⚠️ PENDING — apply before enabling document approvals |
-| 0045_schema_runtime_alignment | LP-001 | ⚠️ PENDING — apply after 0044 |
+| 0042_migration_hub | PM-001/002 | ✅ 2026-07-16 dedicated-project baseline |
+| 0043_directory_enquiries | PN-003 | ✅ 2026-07-16 dedicated-project baseline |
+| 0044_document_approvals | PD-002 | ✅ 2026-07-16 dedicated-project baseline |
+| 0045_schema_runtime_alignment | LP-001 | ✅ 2026-07-16 dedicated-project baseline verified |
 
 New migrations continue from **0046**. Coordinate reservations in this ledger
 before creating another migration.
@@ -64,9 +59,9 @@ before creating another migration.
 ## Codex pilot-readiness lane
 
 - **LP-001 complete and merged:** PR #87, merge commit `4afea0e`. Migration
-  chain `0000`–`0045` replays transactionally with zero drift. Production was
-  not accessed; the owner must still hand-apply 0042, 0043, 0044 and 0045 in
-  that order before enabling their gated surfaces or release verification.
+  chain `0000`–`0045` replays transactionally with zero drift. Its original
+  production-apply debt is superseded by the dedicated project's verified
+  0045-equivalent baseline recorded above.
 - **LP-002 complete and merged:** PR #88, merge commit `d91a7b0`, branch
   `test/tenant-isolation-suite`.
   Manifest covers all 240 HTTP endpoints (199 tenant, 7 shared-authenticated,
@@ -101,23 +96,35 @@ before creating another migration.
   credentialed development-origin reflection, so every credentialed origin is
   now configuration-backed. No suspected real credential was found. Completion
   report: `docs/engineering/mission-packs/LP-003/COMPLETION.md`.
-- **LP-005 complete locally:** branch `ops/health-logging`, implementation
-  commit `ff2dd29`. Adds `/healthz`
-  and `/readyz`, one redacting JSON logger with request/tenant/user context,
-  optional Sentry-compatible error capture, fatal process-error handling,
-  metrics-lite business events and an operator monitoring page. Fresh replay
-  through 0045 has zero drift; tenant isolation 13/13; full server 96 files /
-  454 tests; both typechecks and web build green. No migration taken; 0046
-  remains free. Completion report:
+- **LP-005 complete and merged:** `origin/main` at `45f46bc`, implementation
+  `ff2dd29`. Adds `/healthz`, `/readyz`, one redacting JSON logger with request,
+  tenant and user context, optional Sentry-compatible capture, fatal process
+  handling, metrics-lite events and operator documentation. Completion report:
   `docs/engineering/mission-packs/LP-005/COMPLETION.md`.
-- **Next:** push LP-005, open its PR and merge only after every gate is green,
-  then begin LP-006 on `ops/backup-restore`.
-   **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
-   still pending. Safe because every new surface is flag-gated and fails
-   closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
-   applied (in order) BEFORE any of migration.hub,
-   network.directory-enquiries or documents.workspace-approvals is enabled
-   for any tenant, and before the next production release verification.**
+- **LP-FIX-002 complete locally, not pushed or merged:** branch
+  `fix/health-endpoints-vercel-routing`, implementation and evidence `015d4a2`.
+  Root health URLs rewrite to the function ahead of the SPA fallback; root and
+  `/api/v1/` Express registrations share the original unauthenticated handlers.
+  Clean evidence: migrations zero drift, focused observability 11/11, full
+  server 96 files/456 tests, both typechecks and web build. Production smoke
+  verification remains required after deployment. Completion report:
+  `docs/engineering/mission-packs/LP-FIX-002/COMPLETION.md`.
+- **LP-FIX-003 complete locally, not pushed or merged:** branch
+  `fix/holding-page-url-validation`, implementation and evidence `9e01cd5`.
+  The exception-safe HTTPS predicate covers both holding-offer and branding
+  URLs; empty/malformed/HTTP/HTTPS behaviour is regression-tested. Focused
+  settings 5/5, migrations, both typechecks and web build are green. Local
+  aggregate runs were degraded by host saturation; merge requires a clean
+  hosted full-server gate. Completion report:
+  `docs/engineering/mission-packs/LP-FIX-003/COMPLETION.md`.
+- **LP-006 rebased and verified locally, not pushed or merged:** branch
+  `ops/backup-restore`, final commit `cb0a3cd`. The combined CI retains LP-005's
+  full-server coverage and adds LP-006's seeded backup → throwaway restore →
+  matching 10-table signature gate. No migration was taken. Completion report:
+  `docs/engineering/mission-packs/LP-006/COMPLETION.md`.
+- **LP-006 operator gate:** provision the backup role, independent encryption
+  key, encrypted directory, optional object storage, cron and alert; run one
+  controlled encrypted backup and non-production restore drill before launch.
    **PD-002 is DONE (2026-07-15, session 3):** document approvals with the
    second-person rule enforced in service AND by DB CHECK (decider ≠
    requester; one PENDING per document via partial unique index; decided
@@ -218,9 +225,13 @@ before creating another migration.
 
 `fix/migrations-0042-0044`, `test/tenant-isolation-suite`,
 `feature/email-delivery` and `hardening/cors-config-lp003` are fully merged
-through PRs #87, #88, #89 and #90 and are safe to delete. Do not re-merge
-them. `ops/health-logging` is active and must not be deleted until LP-005 is
-reviewed and merged.
+through PRs #87–#90 and are safe to delete. Do not re-merge them.
+`ops/health-logging` is contained in `origin/main` at `45f46bc` and is safe to
+delete after owner review.
+
+`ops/backup-restore`, `fix/health-endpoints-vercel-routing` and
+`fix/holding-page-url-validation` are active local branches. Preserve them
+until their respective PRs are reviewed and merged.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
@@ -424,38 +435,38 @@ the admin password hash between reruns on the same scratch db.
    `verification.status` to APPROVED. Follow-on payroll missions when needed:
    non-statutory deductions, ZIMRA P2 export, payslip PDFs, net-pay
    settlement automation, ZWG runs.
-3. **DB-SEPARATION** — move VAKA to its own Supabase project
-   (`docs/engineering/DATABASE-SEPARATION-PLAN.md`); needs a Vercel env change
-   from the owner.
-4. Production hardening: configure the merged `ALLOWED_ORIGINS`; push and merge
-   LP-005 observability; complete the backup/restore drill; provision and
-   verify the LP-004 SMTP/DNS configuration (P10-002).
+3. **DB-SEPARATION — cutover complete, hold open:** dedicated production is
+   `vaka-os-prod` (`ewljdjvqngxweacgwedu`) at the verified 0045-equivalent
+   baseline. Owner must complete smoke testing and the hold. Decommission the
+   old VAKA tables in `vaka-platform` only after formal hold closure.
+4. Production hardening: ship LP-FIX-002 and LP-FIX-003, smoke-test the root
+   health URLs and holding-page URL validation; push and merge LP-006; run the
+   encrypted backup and non-production restore drill; provision and verify
+   LP-004 SMTP/DNS; confirm `ALLOWED_ORIGINS`, health and backup-failure alerts.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 8): LP-005 close-out, then LP-006 backup/restore
+## NEXT MISSION (session 11): micro-fix close-out, then LP-006/LP-007
 
-Push `ops/health-logging`, open the LP-005 pull request and merge only after the
-quality, tenant-isolation, security, CodeQL and preview gates are green. Then
-implement LP-006 exactly from
-`docs/engineering/mission-packs/LP-PILOT/CODEX-PILOT-MISSIONS.md` on branch
-`ops/backup-restore`. Reuse the LP-005 event vocabulary for
-`backup.succeeded`/`backup.failed`; preserve the restore safety rail and do not
-touch production. No migration is expected. If one becomes necessary, reserve
-0046 in this ledger first. Production migration debt 0042–0045 remains an
-owner action.
+Push both micro-fix branches independently and merge each only after all hosted
+gates are green. LP-FIX-003 specifically needs the hosted full-server gate to
+replace its load-degraded local aggregate evidence. Externally verify the two
+root health URLs and the holding-page 200/400 URL matrix after deployment.
+Then push/review/merge LP-006, run its controlled restore drill, and start
+LP-007 only when LP-001 through LP-006 are contained in current `main`. No
+migration is required; 0046 remains free.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
-> `docs/engineering/SESSION-HANDOFF.md` in the connected "VAKA OS" folder first —
-> it has the current state, constraints and verification pattern. Confirm PR
-> LP-004 and LP-003 are merged through PRs #89 and #90. LP-005 is complete
-> locally on `ops/health-logging`; read its completion report, push the branch,
-> open the PR and merge only after every gate is green. Confirm the migration
-> ledger (production through 0041, 0042–0045 pending, next free 0046), then
-> implement LP-006 exactly from the pilot mission pack on
-> `ops/backup-restore`. Do not touch production. Preserve LP-005's JSON event
-> contract and emit `backup.succeeded`/`backup.failed`. Same discipline as
-> always: focused diff, fresh-Postgres tests, both typechecks, web build,
-> completion report, and final handoff commit.
+> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. LP-FIX-002 is
+> complete locally at `12c7987`; LP-FIX-003 is complete locally at `9e01cd5`.
+> Push them independently and merge only with green hosted gates; LP-FIX-003
+> particularly requires a clean hosted full-server run because local host load
+> invalidated aggregate timing. Smoke-test both fixes after deployment. LP-006
+> is rebased and verified locally at `cb0a3cd`; push/review/merge it, then run
+> the controlled encrypted backup/non-production restore drill and proceed to
+> LP-007. Production is the dedicated `vaka-os-prod` project
+> (`ewljdjvqngxweacgwedu`) at an effective 0045 baseline; preserve the old
+> `vaka-platform` VAKA tables through the owner hold. Never access production
+> during tests or take migration 0046 without a ledger reservation.
