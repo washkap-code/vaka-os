@@ -1,7 +1,8 @@
-import { createApp } from "./app.js";
-import { emailDeliveryConfig } from "./config.js";
-// Validate before opening the listener: production must never boot without a
-// complete real SMTP configuration.
-emailDeliveryConfig();
-const port = Number(process.env.PORT || 4000);
-createApp().listen(port, () => console.log(`VAKA OS API on :${port}`));
+import { loadLocalEnvironment, runtimeConfig } from "./config.js";
+
+loadLocalEnvironment();
+// Validate the whole runtime contract before importing modules that consume
+// configuration or opening the HTTP listener.
+const config = runtimeConfig();
+const { createApp } = await import("./app.js");
+createApp().listen(config.port, () => console.log(`VAKA OS API on :${config.port}`));

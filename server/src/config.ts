@@ -1,17 +1,15 @@
-const DEVELOPMENT_DATABASE_URL =
-  "postgresql://jonomi:jonomi_dev@localhost:5432/jonomi_platform";
-const DEVELOPMENT_JWT_SECRET =
-  "development-only-vaka-jwt-secret-do-not-use-outside-local-development";
-
 const unsafeSecretValues = new Set([
   "dev-secret",
   "change-me",
+  "change_me",
   "changeme",
+  "generate_32_random_bytes",
   "generate_64_random_bytes",
   "set_strong_password_before_seed",
 ]);
 
 type RuntimeEnvironment = NodeJS.ProcessEnv;
+export type RuntimeMode = "development" | "test" | "staging" | "production";
 
 function valueOf(env: RuntimeEnvironment, name: string): string | undefined {
   const value = env[name]?.trim();
@@ -22,10 +20,35 @@ function isProduction(env: RuntimeEnvironment): boolean {
   return valueOf(env, "NODE_ENV") === "production";
 }
 
-function assertSafeSecret(name: string, value: string, minimumBytes: number): string {
+export function runtimeMode(env: RuntimeEnvironment = process.env): RuntimeMode {
+  const configured = valueOf(env, "NODE_ENV");
+  if (!configured) throw new Error("NODE_ENV is required");
+  if (configured !== "development" && configured !== "test"
+    && configured !== "staging" && configured !== "production") {
+    throw new Error("NODE_ENV must be development, test, staging or production");
+  }
+  return configured;
+}
+
+/** Load an optional local .env file without ever consulting it in production. */
+export function loadLocalEnvironment(env: RuntimeEnvironment = process.env): void {
+  if (isProduction(env)) return;
+  try {
+    process.loadEnvFile();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+}
+
+function assertNotPlaceholder(name: string, value: string): string {
   if (unsafeSecretValues.has(value.toLowerCase())) {
     throw new Error(`${name} contains a known placeholder value`);
   }
+  return value;
+}
+
+function assertSafeSecret(name: string, value: string, minimumBytes: number): string {
+  assertNotPlaceholder(name, value);
   if (Buffer.byteLength(value, "utf8") < minimumBytes) {
     throw new Error(`${name} must contain at least ${minimumBytes} bytes`);
   }
@@ -34,62 +57,48 @@ function assertSafeSecret(name: string, value: string, minimumBytes: number): st
 
 export function databaseUrl(env: RuntimeEnvironment = process.env): string {
   const configured = valueOf(env, "DATABASE_URL");
-  if (configured) return configured;
-  if (isProduction(env)) {
-    throw new Error("DATABASE_URL is required in production");
+  if (!configured) throw new Error("DATABASE_URL is required");
+  let parsed: URL;
+  try {
+    parsed = new URL(configured);
+  } catch {
+    throw new Error("DATABASE_URL must be a valid PostgreSQL URL");
   }
-  return DEVELOPMENT_DATABASE_URL;
+  if (parsed.protocol !== "postgresql:" && parsed.protocol !== "postgres:") {
+    throw new Error("DATABASE_URL must use the postgresql protocol");
+  }
+  if (parsed.password) assertNotPlaceholder("DATABASE_URL password", decodeURIComponent(parsed.password));
+  return configured;
 }
 
 export function jwtSecret(env: RuntimeEnvironment = process.env): string {
   const configured = valueOf(env, "JWT_SECRET");
-  if (configured) {
-    return isProduction(env)
-      ? assertSafeSecret("JWT_SECRET", configured, 64)
-      : configured;
-  }
-  if (isProduction(env)) {
-    throw new Error("JWT_SECRET is required in production");
-  }
-  return DEVELOPMENT_JWT_SECRET;
+  if (!configured) throw new Error("JWT_SECRET is required");
+  return isProduction(env)
+    ? assertSafeSecret("JWT_SECRET", configured, 64)
+    : assertNotPlaceholder("JWT_SECRET", configured);
 }
 
-/**
- * Dedicated capture encryption material is preferred. During the migration
- * period, the JWT secret remains a compatibility fallback so existing
- * deployments do not stop serving captured evidence when the new field is
- * introduced. Production environments should set CAPTURE_ENCRYPTION_KEY and
- * rotate it only through a planned decrypt-and-re-encrypt migration.
- */
+/** Dedicated capture encryption material; never falls back to another key. */
 export function captureEncryptionSecret(env: RuntimeEnvironment = process.env): string {
   const configured = valueOf(env, "CAPTURE_ENCRYPTION_KEY");
-  if (configured) {
-    return isProduction(env)
-      ? assertSafeSecret("CAPTURE_ENCRYPTION_KEY", configured, 32)
-      : configured;
-  }
-  return jwtSecret(env);
+  if (!configured) throw new Error("CAPTURE_ENCRYPTION_KEY is required");
+  return isProduction(env)
+    ? assertSafeSecret("CAPTURE_ENCRYPTION_KEY", configured, 32)
+    : assertNotPlaceholder("CAPTURE_ENCRYPTION_KEY", configured);
 }
 
-/**
- * Stable encryption/HMAC material for MFA factors and recovery codes. Keep it
- * separate from JWT signing so routine session-key rotation cannot lock out
- * enrolled users. The fallback keeps existing deployments bootable while the
- * dedicated key is introduced; production must set the dedicated value before
- * any factor is enrolled.
- */
+/** Stable MFA material; separate from JWT signing and required at runtime. */
 export function mfaEncryptionSecret(env: RuntimeEnvironment = process.env): string {
   const configured = valueOf(env, "MFA_ENCRYPTION_KEY");
-  if (configured) {
-    return isProduction(env)
-      ? assertSafeSecret("MFA_ENCRYPTION_KEY", configured, 32)
-      : configured;
-  }
-  return jwtSecret(env);
+  if (!configured) throw new Error("MFA_ENCRYPTION_KEY is required");
+  return isProduction(env)
+    ? assertSafeSecret("MFA_ENCRYPTION_KEY", configured, 32)
+    : assertNotPlaceholder("MFA_ENCRYPTION_KEY", configured);
 }
 
 export function mfaEnrollmentAvailable(env: RuntimeEnvironment = process.env): boolean {
-  return !isProduction(env) || Boolean(valueOf(env, "MFA_ENCRYPTION_KEY"));
+  return Boolean(valueOf(env, "MFA_ENCRYPTION_KEY"));
 }
 
 export function platformAdminPassword(
@@ -139,15 +148,18 @@ export function paynowProviderConfig(
   env: RuntimeEnvironment = process.env,
 ): PaynowProviderConfig | null {
   const enabledValue = valueOf(env, "PAYNOW_ENABLED")?.toLowerCase();
+  if (isProduction(env) && !enabledValue) {
+    throw new Error("PAYNOW_ENABLED is required in production (set true or false explicitly)");
+  }
   if (enabledValue && enabledValue !== "true" && enabledValue !== "false") {
     throw new Error("PAYNOW_ENABLED must be true or false");
   }
   if (enabledValue !== "true") return null;
   const integrationId = valueOf(env, "PAYNOW_INTEGRATION_ID");
   const integrationKey = valueOf(env, "PAYNOW_INTEGRATION_KEY");
-  const configuredCurrency = valueOf(env, "PAYNOW_CURRENCY") ?? "USD";
-  if (!integrationId || !integrationKey) {
-    throw new Error("PAYNOW_INTEGRATION_ID and PAYNOW_INTEGRATION_KEY are required when Paynow is enabled");
+  const configuredCurrency = valueOf(env, "PAYNOW_CURRENCY");
+  if (!integrationId || !integrationKey || !configuredCurrency) {
+    throw new Error("PAYNOW_INTEGRATION_ID, PAYNOW_INTEGRATION_KEY and PAYNOW_CURRENCY are required when Paynow is enabled");
   }
   if (!/^\d+$/.test(integrationId)) throw new Error("PAYNOW_INTEGRATION_ID must be numeric");
   if (configuredCurrency !== "USD" && configuredCurrency !== "ZWG") {
@@ -159,15 +171,46 @@ export function paynowProviderConfig(
 
 export function paynowEncryptionSecret(env: RuntimeEnvironment = process.env): string {
   const configured = valueOf(env, "PAYNOW_ENCRYPTION_KEY");
-  if (configured) {
-    return isProduction(env)
-      ? assertSafeSecret("PAYNOW_ENCRYPTION_KEY", configured, 32)
-      : configured;
+  if (!configured) throw new Error("PAYNOW_ENCRYPTION_KEY is required");
+  return isProduction(env)
+    ? assertSafeSecret("PAYNOW_ENCRYPTION_KEY", configured, 32)
+    : assertNotPlaceholder("PAYNOW_ENCRYPTION_KEY", configured);
+}
+
+/** Parse and validate the explicit browser origins allowed to use credentials. */
+export function allowedOrigins(env: RuntimeEnvironment = process.env): Set<string> {
+  const raw = valueOf(env, "ALLOWED_ORIGINS");
+  if (!raw) {
+    if (isProduction(env)) throw new Error("ALLOWED_ORIGINS is required in production");
+    return new Set();
   }
-  if (isProduction(env) && paynowProviderConfig(env)) {
-    throw new Error("PAYNOW_ENCRYPTION_KEY is required when Paynow is enabled in production");
+  const origins = new Set<string>();
+  for (const candidate of raw.split(",").map((entry) => entry.trim()).filter(Boolean)) {
+    if (candidate === "*") throw new Error("ALLOWED_ORIGINS must not contain wildcard origins");
+    let parsed: URL;
+    try { parsed = new URL(candidate); } catch { throw new Error(`ALLOWED_ORIGINS contains an invalid origin: ${candidate}`); }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      throw new Error(`ALLOWED_ORIGINS contains a non-HTTP origin: ${candidate}`);
+    }
+    const normalised = candidate.replace(/\/$/, "").toLowerCase();
+    if (normalised !== parsed.origin.toLowerCase()) {
+      throw new Error(`ALLOWED_ORIGINS entries must be origins without paths: ${candidate}`);
+    }
+    origins.add(parsed.origin.toLowerCase());
   }
-  return jwtSecret(env);
+  if (isProduction(env) && origins.size === 0) {
+    throw new Error("ALLOWED_ORIGINS must contain at least one origin in production");
+  }
+  return origins;
+}
+
+export function serverPort(env: RuntimeEnvironment = process.env): number {
+  const configured = valueOf(env, "PORT") ?? "4000";
+  const port = Number(configured);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error("PORT must be an integer between 1 and 65535");
+  }
+  return port;
 }
 
 /** Absolute public origin used only to build revocable customer document links. */
@@ -271,4 +314,52 @@ export function emailDeliveryConfig(
     replyTo: replyTo!,
     tls: rawTls,
   };
+}
+
+export interface RuntimeConfig {
+  mode: RuntimeMode;
+  databaseUrl: string;
+  jwtSecret: string;
+  captureEncryptionSecret: string;
+  mfaEncryptionSecret: string;
+  paynowEncryptionSecret: string;
+  allowedOrigins: Set<string>;
+  publicAppUrl: string;
+  emailDelivery: EmailDeliveryConfig;
+  paynowProvider: PaynowProviderConfig | null;
+  port: number;
+}
+
+/**
+ * Validate the complete runtime contract in one pass before importing the
+ * application graph. Every failure is reported together so an operator can
+ * repair configuration without repeated deploy/fail cycles.
+ */
+export function runtimeConfig(env: RuntimeEnvironment = process.env): RuntimeConfig {
+  const errors: string[] = [];
+  const read = <T>(loader: () => T): T | undefined => {
+    try { return loader(); } catch (error) {
+      errors.push(error instanceof Error ? error.message : "Unknown configuration error");
+      return undefined;
+    }
+  };
+
+  const config = {
+    mode: read(() => runtimeMode(env)),
+    databaseUrl: read(() => databaseUrl(env)),
+    jwtSecret: read(() => jwtSecret(env)),
+    captureEncryptionSecret: read(() => captureEncryptionSecret(env)),
+    mfaEncryptionSecret: read(() => mfaEncryptionSecret(env)),
+    paynowEncryptionSecret: read(() => paynowEncryptionSecret(env)),
+    allowedOrigins: read(() => allowedOrigins(env)),
+    publicAppUrl: read(() => publicAppUrl(env)),
+    emailDelivery: read(() => emailDeliveryConfig(env)),
+    paynowProvider: read(() => paynowProviderConfig(env)),
+    port: read(() => serverPort(env)),
+  };
+
+  if (errors.length) {
+    throw new Error(`Invalid runtime configuration:\n${errors.map((error) => `- ${error}`).join("\n")}`);
+  }
+  return config as RuntimeConfig;
 }

@@ -127,10 +127,10 @@ export const REFRESH_COOKIE_NAME = "vaka_refresh";
 export const REFRESH_COOKIE_PATH = "/api/v1/auth/refresh";
 const REFRESH_COOKIE_MAX_AGE_MS = 30 * 86_400_000; // matches the idle window
 
-const refreshCookieOptions = () => ({
+export const refreshCookieOptions = (env: NodeJS.ProcessEnv = process.env) => ({
   httpOnly: true as const,
   sameSite: "strict" as const,
-  secure: process.env.NODE_ENV?.trim() === "production",
+  secure: env.NODE_ENV?.trim() === "production",
   path: REFRESH_COOKIE_PATH,
 });
 

@@ -36,6 +36,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://jonomi:jonomi_ci@127.0.0.1:5432/jonomi_tenant_isolation_test
       JWT_SECRET: ci-only-vaka-jwt-secret-not-for-production-2026
+      CAPTURE_ENCRYPTION_KEY: ci-only-capture-encryption-key-not-for-production
+      MFA_ENCRYPTION_KEY: ci-only-mfa-encryption-key-not-for-production
+      PAYNOW_ENCRYPTION_KEY: ci-only-paynow-encryption-key-not-for-production
       PLATFORM_ADMIN_PASSWORD: CI-Only-Platform-Password-2026
       NODE_ENV: test
 
@@ -91,6 +94,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://jonomi:jonomi_ci@127.0.0.1:5432/jonomi_platform_test
       JWT_SECRET: ci-only-vaka-jwt-secret-not-for-production-2026
+      CAPTURE_ENCRYPTION_KEY: ci-only-capture-encryption-key-not-for-production
+      MFA_ENCRYPTION_KEY: ci-only-mfa-encryption-key-not-for-production
+      PAYNOW_ENCRYPTION_KEY: ci-only-paynow-encryption-key-not-for-production
       PLATFORM_ADMIN_PASSWORD: CI-Only-Platform-Password-2026
       NODE_ENV: test
 

@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 6, Codex: LP-002 merged through PR #88 at `d91a7b0`; GitHub `main` requires the `Tenant isolation regression` status context. LP-004 is complete locally on `feature/email-delivery` at `d04e22f`: provider-neutral SMTP behind `NotificationService`, safe console/memory modes, three-attempt retry, structured delivery events, operator failure endpoint, sender-domain operations guide, and all transactional call sites on one transport. Fresh migrations through 0045 have zero drift; tenant isolation 13/13; full server suite 95 files/438 tests; both typechecks and web build green. No migration taken; 0046 remains free. NEXT: owner pushes LP-004 and opens its single PR, then LP-005 observability after merge. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 7, Codex: LP-004 merged through PR #89 at `7bbb43a` with every quality, security, CodeQL and preview gate green. LP-003 reconciliation found and closed real gaps on `hardening/cors-config-lp003`: aggregate fail-fast boot validation, mandatory production CORS allowlist, removal of runtime secret fallbacks, hardened cookie/header/error controls and explicit acceptance tests. Fresh migrations through 0045 have zero drift; tenant isolation 13/13; aggregate server suite 95 files/443 tests; both typechecks and web build green. No migration taken; 0046 remains free. NEXT: merge LP-003 after its PR gates pass, then implement LP-005 observability. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -81,8 +81,8 @@ before creating another migration.
 - **Required external gate:** GitHub branch protection for `main` requires
   `Tenant isolation regression` with strict up-to-date checking. Preserve this
   context when editing repository rules.
-- **LP-004 complete locally:** branch `feature/email-delivery`, implementation
-  commit `d04e22f`. Production SMTP is mandatory and boot-fatal when invalid;
+- **LP-004 complete and merged:** PR #89, merge commit `7bbb43a`, branch
+  `feature/email-delivery`. Production SMTP is mandatory and boot-fatal when invalid;
   development/staging default to rendered JSON console output; tests use an
   in-memory assertion transport. Delivery retries at most three times and
   records structured events. Operators can query today's failures through a
@@ -93,9 +93,15 @@ before creating another migration.
 - **LP-004 operator action:** before production enablement, select the SMTP
   provider, store all nine `SMTP_*` values, verify aligned SPF/DKIM/DMARC and
   run representative mailbox tests. No live SMTP or DNS was touched by Codex.
-- **Next:** owner pushes `feature/email-delivery`, opens LP-004's single PR and
-  merges only after its gates are green; then start LP-005 on
-  `ops/health-logging`.
+- **LP-003 complete pending PR merge:** branch `hardening/cors-config-lp003`,
+  implementation commits `33666b5` and `072f14d`. The reconciliation audited every LP-003
+  criterion and closed the remaining boot-config, CORS, secret-fallback, CSP
+  and explicit-test gaps. A CodeQL alert then removed the remaining
+  credentialed development-origin reflection, so every credentialed origin is
+  now configuration-backed. No suspected real credential was found. Completion
+  report: `docs/engineering/mission-packs/LP-003/COMPLETION.md`.
+- **Next:** push LP-003, merge only after every PR gate is green, then start
+  LP-005 on `ops/health-logging`.
    **⚠️ MIGRATION DEBT (2026-07-15): owner pushed main while 0042/0043 were
    still pending. Safe because every new surface is flag-gated and fails
    closed before touching its tables — but 0042, 0043, 0044 and 0045 MUST be
@@ -200,10 +206,10 @@ before creating another migration.
 — all superseded by v2/extracted equivalents on `main`. They re-add old
 0024/0025 migrations and pre-P9-009 auth. Safe to delete after review.
 
-`fix/migrations-0042-0044` and `test/tenant-isolation-suite` are fully merged
-through PRs #87 and #88 and are safe to delete. Do not re-merge them.
-`feature/email-delivery` is active and must not be deleted until LP-004 is
-pushed, reviewed and merged.
+`fix/migrations-0042-0044`, `test/tenant-isolation-suite` and
+`feature/email-delivery` are fully merged through PRs #87, #88 and #89 and are
+safe to delete. Do not re-merge them. `hardening/cors-config-lp003` is active
+and must not be deleted until LP-003 is reviewed and merged.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
