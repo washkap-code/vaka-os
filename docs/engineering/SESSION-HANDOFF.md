@@ -1,6 +1,6 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-16 (session 9, Codex: LP-005 is merged into `origin/main` at `45f46bc`, preserving dependency-free health/readiness, redacting structured logging, request context, monitoring hooks and its 10-test observability coverage inside the full server gate. LP-006 has been rebased onto that main; implementation is now `3f86a1b`, with the post-rebase verification matrix still to be recorded. The combined quality workflow retains LP-005 through `npm test` and adds LP-006's explicit seeded backup/restore round trip. Dedicated production is `vaka-os-prod` (`ewljdjvqngxweacgwedu`), provisioned 2026-07-16 at a verified 0045-equivalent baseline. DB-SEPARATION is complete pending owner smoke test and hold; former `vaka-platform` VAKA tables remain until post-hold decommission. No migration taken; 0046 remains free. NEXT: complete LP-006 post-rebase verification, push it, execute the controlled restore drill, then LP-007. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
+**Updated:** 2026-07-16 (session 9, Codex: LP-005 is merged into `origin/main` at `45f46bc`, preserving dependency-free health/readiness, redacting structured logging, request context, monitoring hooks and its 10-test observability coverage inside the full server gate. LP-006 has been rebased onto that main; implementation is now `3f86a1b` and post-rebase evidence is `a8eb349`. The combined quality workflow retains LP-005 through `npm test` and adds LP-006's explicit seeded backup/restore round trip. Post-rebase verification is green: migrations `0000`–`0045` with zero drift, backup round trip and safety rails, tenant isolation 13/13, full server suite 96 files/454 tests, both typechecks and the web production build. Dedicated production is `vaka-os-prod` (`ewljdjvqngxweacgwedu`), provisioned 2026-07-16 at a verified 0045-equivalent baseline. DB-SEPARATION is complete pending owner smoke test and hold; former `vaka-platform` VAKA tables remain until post-hold decommission. No migration taken; 0046 remains free. NEXT: push/review/merge LP-006, execute the controlled restore drill, then LP-007. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
 
 **Previous:** 2026-07-15 (session 3: PB-000/PB-000B Black Book Zimbabwe dataset reviewed and merged to main (`607a024`) — data + docs only, no code. ✅ PUSH GATE CLEARED: migration 0039 applied to production via a re-authorised VAKA-scoped Supabase MCP and verified — all three document tables exist empty, roles backfilled (Owner/Admin: documents.read+manage; Accountant: read only). Main is safe to push via GitHub Desktop.)
 
@@ -101,12 +101,15 @@ before creating another migration.
   handling, metrics-lite events and operator documentation. Its observability
   tests run in the existing full-server CI gate. Completion report:
   `docs/engineering/mission-packs/LP-005/COMPLETION.md`.
-- **LP-006 rebased locally, not pushed or merged:** branch
-  `ops/backup-restore`, implementation `3f86a1b` plus the rebased handoff. The
-  combined CI retains LP-005's full-server coverage and adds LP-006's seeded
-  backup → throwaway restore → matching 10-table signature gate. Encryption,
-  local-document archive, retention, optional S3-compatible upload, structured
-  failure and both production identity safety rails remain intact. Completion
+- **LP-006 rebased and verified locally, not pushed or merged:** branch
+  `ops/backup-restore`, implementation `3f86a1b`, post-rebase evidence
+  `a8eb349` plus the final handoff. The combined CI retains LP-005's full-server
+  coverage and adds LP-006's seeded backup → throwaway restore → matching
+  10-table signature gate. Encryption, local-document archive, retention,
+  optional S3-compatible upload, structured failure and both production
+  identity safety rails remain intact. Clean post-rebase evidence: migrations
+  `0000`–`0045` with zero drift; backup round trip; tenant isolation 13/13;
+  server 96 files/454 tests; both typechecks; web production build. Completion
   report: `docs/engineering/mission-packs/LP-006/COMPLETION.md`.
 - **LP-006 operator gate:** provision the backup role, independent encryption
   key, encrypted directory, optional object storage, cron and alert; run one
