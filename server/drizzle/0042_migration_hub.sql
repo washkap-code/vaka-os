@@ -5,15 +5,17 @@
 -- open-item register for accountant reconciliation.
 -- Empty tables change nothing. Additive and idempotent: safe to hand-apply
 -- to production before the code deploys.
+-- Every statement is PostgreSQL transaction-safe. Apply this file as one
+-- transaction (the automated migration verifier enforces that contract).
 
 CREATE TABLE IF NOT EXISTS "migration_projects" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
+  "tenant_id" uuid NOT NULL CONSTRAINT "migration_projects_tenant_id_tenants_id_fk" REFERENCES "tenants"("id"),
   "name" text NOT NULL,
   "source_system" text NOT NULL,
   "status" text DEFAULT 'OPEN' NOT NULL,
   "sign_off" jsonb,
-  "created_by" uuid NOT NULL REFERENCES "users"("id"),
+  "created_by" uuid NOT NULL CONSTRAINT "migration_projects_created_by_users_id_fk" REFERENCES "users"("id"),
   "created_at" timestamptz DEFAULT now() NOT NULL,
   "updated_at" timestamptz DEFAULT now() NOT NULL,
   CONSTRAINT "migration_projects_status_check" CHECK ("status" IN ('OPEN', 'CLOSED')),
@@ -26,15 +28,15 @@ CREATE INDEX IF NOT EXISTS "migration_projects_tenant"
 
 CREATE TABLE IF NOT EXISTS "migration_steps" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
-  "project_id" uuid NOT NULL REFERENCES "migration_projects"("id"),
+  "tenant_id" uuid NOT NULL CONSTRAINT "migration_steps_tenant_id_tenants_id_fk" REFERENCES "tenants"("id"),
+  "project_id" uuid NOT NULL CONSTRAINT "migration_steps_project_id_migration_projects_id_fk" REFERENCES "migration_projects"("id"),
   "kind" text NOT NULL,
   "status" text DEFAULT 'STAGED' NOT NULL,
-  "import_batch_id" uuid REFERENCES "import_batches"("id"),
+  "import_batch_id" uuid CONSTRAINT "migration_steps_import_batch_id_import_batches_id_fk" REFERENCES "import_batches"("id"),
   "journal_entry_id" uuid,
   "reversal_journal_entry_id" uuid,
   "summary" jsonb DEFAULT '{}'::jsonb NOT NULL,
-  "created_by" uuid NOT NULL REFERENCES "users"("id"),
+  "created_by" uuid NOT NULL CONSTRAINT "migration_steps_created_by_users_id_fk" REFERENCES "users"("id"),
   "created_at" timestamptz DEFAULT now() NOT NULL,
   "updated_at" timestamptz DEFAULT now() NOT NULL,
   CONSTRAINT "migration_steps_kind_check" CHECK ("kind" IN (
@@ -49,9 +51,9 @@ CREATE INDEX IF NOT EXISTS "migration_steps_tenant"
 
 CREATE TABLE IF NOT EXISTS "migration_open_items" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "tenant_id" uuid NOT NULL REFERENCES "tenants"("id"),
-  "project_id" uuid NOT NULL REFERENCES "migration_projects"("id"),
-  "step_id" uuid NOT NULL REFERENCES "migration_steps"("id"),
+  "tenant_id" uuid NOT NULL CONSTRAINT "migration_open_items_tenant_id_tenants_id_fk" REFERENCES "tenants"("id"),
+  "project_id" uuid NOT NULL CONSTRAINT "migration_open_items_project_id_migration_projects_id_fk" REFERENCES "migration_projects"("id"),
+  "step_id" uuid NOT NULL CONSTRAINT "migration_open_items_step_id_migration_steps_id_fk" REFERENCES "migration_steps"("id"),
   "side" text NOT NULL,
   "contact_name" text NOT NULL,
   "reference" text NOT NULL,

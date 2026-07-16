@@ -78,6 +78,13 @@ const required = [
   ["accounting_periods", "tenant_id"],
   ["accounting_periods", "period_month"],
   ["accounting_periods", "status"],
+  ["migration_projects", "tenant_id"],
+  ["migration_steps", "project_id"],
+  ["migration_open_items", "step_id"],
+  ["business_profiles", "accept_enquiries"],
+  ["directory_enquiries", "profile_id"],
+  ["workspace_documents", "retention_until"],
+  ["document_approvals", "document_id"],
 ];
 const client = new pg.Client({ connectionString: databaseUrl });
 

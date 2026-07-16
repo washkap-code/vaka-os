@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -60,9 +62,9 @@ jobs:
         working-directory: web
         run: npm ci --workspaces=false --ignore-scripts
 
-      - name: Create test database schema
+      - name: Replay migrations and verify schema drift
         working-directory: server
-        run: npm run test:db:prepare
+        run: npm run test:db:migrations
 
       - name: Seed required reference data
         working-directory: server

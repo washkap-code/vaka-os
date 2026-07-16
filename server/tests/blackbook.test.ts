@@ -17,6 +17,7 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { desc, eq } from "drizzle-orm";
 import { createApp } from "../src/app.js";
+import { loginPlatformAdminFixture, platformAdminTestPassword } from "./platform-admin-test-auth.js";
 import { db, schema } from "../src/lib.js";
 import {
   BLACKBOOK_CATEGORIES, importDataset, listEntries, getEntry, validateDataset,
@@ -25,7 +26,7 @@ import {
 
 const app = createApp();
 const uniq = `bb${Date.now().toString(36)}`;
-const adminPassword = process.env.PLATFORM_ADMIN_PASSWORD;
+const adminPassword = platformAdminTestPassword;
 const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
 
 // Isolated synthetic country so tests never collide with real ZW content or
@@ -219,19 +220,7 @@ describe("governance (platform import path)", () => {
     expect(res.status).toBe(403);
   });
   it.skipIf(!adminPassword)("platform import requires step-up and is audited", async () => {
-    const login = await request(app).post("/api/v1/auth/login").send({
-      email: "washington@africaprocure.com", password: adminPassword,
-    });
-    expect(login.status).toBe(200);
-    let effectivePassword = adminPassword!;
-    const adminAuth = { Authorization: `Bearer ${login.body.token}` };
-    if (login.body.user.mustChangePassword) {
-      effectivePassword = "CI-Only-Replacement-Password-2026";
-      const changed = await request(app).post("/api/v1/auth/change-password").set(adminAuth).send({
-        currentPassword: adminPassword, newPassword: effectivePassword,
-      });
-      expect(changed.status).toBe(200);
-    }
+    const { auth: adminAuth, effectivePassword } = await loginPlatformAdminFixture(app);
 
     const dataset: any = miniDataset();
     dataset.government_organisation[0].notes = "Imported via platform route.";
