@@ -508,6 +508,11 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .auth-link { background: transparent; border: 0; color: var(--brand); cursor: pointer; font: inherit; font-weight: 600; padding: 3px; text-decoration: underline; text-underline-offset: 2px; }
 .auth-link:hover { color: var(--text); }
 .err-text { color: var(--danger); font-size: 12.5px; margin-top: 8px; }
+/* Premium photographic backdrop for the VAKA sign-in surface (scoped out of tenant holding). */
+.auth { overflow: hidden; position: relative; }
+.auth::before { background: linear-gradient(180deg, rgb(var(--vaka-workspace-overlay-rgb) / .84), rgb(var(--vaka-workspace-overlay-rgb) / .93)), url("/media/vaka-hero.webp") center / cover no-repeat; content: ""; inset: 0; position: absolute; z-index: 0; }
+.auth .box { position: relative; z-index: 1; box-shadow: var(--vaka-shadow-lg); }
+.holding-login .auth::before { display: none; }
 
 .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .kanban .col { background: var(--vaka-workspace-surface-subtle); border-radius: 10px; padding: 10px; min-height: 120px; }
@@ -662,6 +667,15 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .holding-login { align-items: center; display: flex; justify-content: center; min-width: 0; padding: clamp(var(--vaka-space-4), 5vw, var(--vaka-space-8)); }
 .holding-login .auth { background: transparent; min-height: auto; width: 100%; }
 .holding-login .auth .box { border: 1px solid var(--vaka-color-border); box-shadow: var(--vaka-shadow-md); max-width: 30rem; width: 100%; }
+/* Subtle photographic texture behind the tenant-branded holding panel. */
+.holding-brand-panel { overflow: hidden; }
+.holding-brand-panel::before { background: url("/media/vaka-executives.webp") center / cover no-repeat; content: ""; inset: 0; opacity: .12; position: absolute; z-index: 0; }
+.holding-brand-panel > * { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .auth .box { animation: auth-rise var(--vaka-motion-slow) var(--vaka-ease-enter) both; }
+  .holding-brand-mark, .holding-eyebrow, .holding-brand-panel > h1 { animation: auth-rise var(--vaka-motion-slow) var(--vaka-ease-enter) both; }
+  @keyframes auth-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+}
 .idle-warning { align-items: center; background: rgb(var(--vaka-home-black-rgb) / .58); display: flex; inset: 0; justify-content: center; padding: var(--vaka-space-4); position: fixed; z-index: 200; }
 .idle-warning-dialog { background: var(--vaka-color-surface); border: 1px solid var(--vaka-color-border); border-radius: var(--vaka-radius-lg); box-shadow: var(--vaka-shadow-lg); max-width: 30rem; padding: var(--vaka-space-6); }
 .idle-warning h2 { font-size: var(--vaka-type-heading-2); margin-bottom: var(--vaka-space-3); }

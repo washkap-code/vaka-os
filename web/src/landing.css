@@ -152,6 +152,7 @@
 .v-hero-product { max-width: 760px; min-width: 0; position: relative; text-align: left; z-index: 2; }
 .v-hero-media { inset: 0; overflow: hidden; position: absolute; z-index: 0; }
 .v-hero-media img { height: 100%; object-fit: cover; object-position: 72% 40%; opacity: .32; width: 100%; }
+.v-hero-video { height: 100%; inset: 0; object-fit: cover; object-position: 72% 40%; opacity: .32; position: absolute; width: 100%; }
 .v-hero-media::after { background: linear-gradient(102deg, rgb(var(--vaka-home-ink-rgb) / .97) 0%, rgb(var(--vaka-home-ink-rgb) / .82) 40%, rgb(var(--vaka-home-ink-rgb) / .48) 100%); content: ""; inset: 0; position: absolute; }
 
 /* Photographic audiences band */
@@ -161,6 +162,7 @@
 .v-audience-grid { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
 .v-audience-card { align-items: flex-end; border: 1px solid rgb(var(--vaka-home-white-rgb) / .1); border-radius: var(--vaka-radius-lg); display: flex; min-height: 430px; overflow: hidden; position: relative; }
 .v-audience-card img { height: 100%; inset: 0; object-fit: cover; position: absolute; transition: transform var(--vaka-home-motion-scroll-slow) var(--vaka-ease-standard); width: 100%; }
+.v-audience-video { height: 100%; inset: 0; object-fit: cover; position: absolute; width: 100%; }
 .v-audience-card::after { background: linear-gradient(180deg, rgb(var(--vaka-home-ink-rgb) / 0) 30%, rgb(var(--vaka-home-ink-rgb) / .58) 62%, rgb(var(--vaka-home-ink-rgb) / .95) 100%); content: ""; inset: 0; position: absolute; }
 .v-audience-card > div { padding: 24px 22px; position: relative; z-index: 1; }
 .v-audience-card .v-product-label { color: var(--v-gold-bright); margin-top: 0; }

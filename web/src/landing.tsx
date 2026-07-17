@@ -231,6 +231,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
   const storedLocale = typeof window === "undefined" ? null : localStorage.getItem(LANGUAGE_KEY);
   const [locale, setLocale] = useState<HomeLocale>(() => resolveHomeLocale(storedLocale, browserLocale));
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heroVideo, setHeroVideo] = useState(false);
   const copy = useMemo(() => HOME_EN, []);
   const languageNotice = locale !== "en";
 
@@ -283,6 +284,13 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
     }
     root.setAttribute("data-reveal-ready", "");
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const motionOk = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+    const largeScreen = window.matchMedia("(min-width: 861px)").matches;
+    if (motionOk && largeScreen) setHeroVideo(true);
   }, []);
 
   const go = (id: string) => {
@@ -343,6 +351,11 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
         <section className="v-hero" id="top">
           <div className="v-hero-media" aria-hidden="true">
             <img src="/media/vaka-hero.webp" alt="" decoding="async" />
+            {heroVideo && (
+              <video className="v-hero-video" autoPlay muted loop playsInline preload="metadata" poster="/media/vaka-hero.webp">
+                <source src="/media/vaka-hero.mp4" type="video/mp4" />
+              </video>
+            )}
           </div>
           <div className="v-hero-copy">
             <span className="v-eyebrow">{copy.hero.eyebrow}</span>
@@ -413,8 +426,18 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
           </div>
           <div className="v-audience-grid">
             {copy.audiences.items.map((item) => (
-              <article className="v-audience-card" key={item.image}>
+              <article
+                className="v-audience-card"
+                key={item.image}
+                onMouseEnter={(event) => { const video = event.currentTarget.querySelector("video"); if (video) void video.play().catch(() => {}); }}
+                onMouseLeave={(event) => { const video = event.currentTarget.querySelector("video"); if (video) video.pause(); }}
+              >
                 <img src={`/media/vaka-${item.image}.webp`} alt={item.alt} loading="lazy" decoding="async" />
+                {heroVideo && (
+                  <video className="v-audience-video" muted loop playsInline preload="none" poster={`/media/vaka-${item.image}.webp`}>
+                    <source src={`/media/vaka-${item.image}.mp4`} type="video/mp4" />
+                  </video>
+                )}
                 <div>
                   <span className="v-product-label">{item.label}</span>
                   <h3>{item.title}</h3>
