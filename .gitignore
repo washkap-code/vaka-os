@@ -8,3 +8,6 @@ dist/
 .DS_Store
 artifacts/
 tmp/
+
+# macOS-generated root lockfile breaks Linux (Vercel) builds — never commit
+/package-lock.json

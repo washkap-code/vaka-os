@@ -9,6 +9,7 @@ const LIVE_SURFACES = [
   "src/shell/user-menu.tsx", "src/shell/workspace-shell.tsx",
   "src/shell/universal-workbench.tsx", "src/shell/workbench-model.ts",
   "src/shell/command-palette.tsx", "src/shell/command-search-model.ts",
+  "src/blackbook/blackbook-directory.tsx", "src/blackbook/blackbook-model.ts",
   "src/platform/platform-admin-shell.tsx", "src/platform/platform-admin-model.ts",
   "src/procurement/procurement-workspace.tsx",
 ];

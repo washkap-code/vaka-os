@@ -303,6 +303,7 @@ export async function listEntries(query: z.infer<typeof listEntriesQuerySchema>)
     conditions.push(or(
       ilike(schema.blackbookEntries.name, needle),
       ilike(schema.blackbookEntries.entryKey, needle),
+      sql<boolean>`${schema.blackbookEntries.payload}::text ILIKE ${needle}`,
     )!);
   }
   return db.select({

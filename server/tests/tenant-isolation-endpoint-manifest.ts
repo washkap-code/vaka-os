@@ -176,6 +176,7 @@ export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "POST", path: "/api/v1/documents/:id/approvals", access: "tenant", vector: "tenant-object-mutation" },
   { method: "POST", path: "/api/v1/documents/approvals/:approvalId/decide", access: "tenant", vector: "tenant-object-mutation" },
   { method: "PUT", path: "/api/v1/documents/:id/retention", access: "tenant", vector: "tenant-object-mutation" },
+  { method: "GET", path: "/api/v1/blackbook/search", access: "shared-authenticated", vector: "shared-projection", justification: "Feature- and country-scoped Black Book search returns shared curated reference summaries." },
   { method: "GET", path: "/api/v1/blackbook/entries", access: "shared-authenticated", vector: "shared-projection", justification: "Curated country-pack directory is shared reference data." },
   { method: "GET", path: "/api/v1/blackbook/entries/:key", access: "shared-authenticated", vector: "shared-projection", justification: "Curated country-pack directory record is shared reference data." },
   { method: "GET", path: "/api/v1/verification/evidence", access: "tenant", vector: "tenant-list-or-aggregate" },

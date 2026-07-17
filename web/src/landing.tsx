@@ -425,14 +425,14 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
             <p>{copy.audiences.description}</p>
           </div>
           <div className="v-audience-grid">
-            {copy.audiences.items.map((item) => (
+            {copy.audiences.items.map((item, index) => (
               <article
                 className="v-audience-card"
                 key={item.image}
                 onMouseEnter={(event) => { const video = event.currentTarget.querySelector("video"); if (video) void video.play().catch(() => {}); }}
                 onMouseLeave={(event) => { const video = event.currentTarget.querySelector("video"); if (video) video.pause(); }}
               >
-                <img src={`/media/vaka-${item.image}.webp`} alt={item.alt} loading="lazy" decoding="async" />
+                <img src={`/media/vaka-${item.image}.webp`} alt={item.alt} loading={index < 2 ? "eager" : "lazy"} decoding={index < 2 ? "sync" : "async"} />
                 {heroVideo && (
                   <video className="v-audience-video" muted loop playsInline preload="none" poster={`/media/vaka-${item.image}.webp`}>
                     <source src={`/media/vaka-${item.image}.mp4`} type="video/mp4" />

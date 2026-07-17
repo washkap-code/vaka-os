@@ -140,12 +140,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     new LocalisationService(countryPacks),
   );
 
-  kernel.container.registerFactory(FEATURE_FLAG_SERVICE, () =>
-    new FeatureFlagService(
-      options.featureFlagStore ?? postgresFeatureFlagStore,
-      options.featureFlagAuditRecorder ?? recordFeatureFlagAudit,
-    ),
+  const featureFlagService = new FeatureFlagService(
+    options.featureFlagStore ?? postgresFeatureFlagStore,
+    options.featureFlagAuditRecorder ?? recordFeatureFlagAudit,
   );
+  kernel.container.registerValue(FEATURE_FLAG_SERVICE, featureFlagService);
 
   kernel.container.registerFactory(APPROVAL_SERVICE, () => new ApprovalService());
 
@@ -207,7 +206,7 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     new DocumentService(options.documentStore ?? new PostgresDocumentStore()),
   );
 
-  const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService);
+  const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService, featureFlagService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
   subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
   subscribeCustomerTimeline(kernel.container.get(EVENT_BUS), options.customerTimelineProjector ?? new CustomerTimelineProjector());

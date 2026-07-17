@@ -10,6 +10,7 @@ export type WorkspacePage =
   | "payroll"
   | "tasks"
   | "documents"
+  | "blackbook"
   | "imports"
   | "usersActivity"
   | "billing"
@@ -36,6 +37,7 @@ export const workspaceNavigation: readonly WorkspaceNavigationItem[] = [
   { key: "payroll", permission: "payroll.read" },
   { key: "tasks", feature: "workflow.centre" },
   { key: "documents", permission: "documents.read", feature: "documents.workspace" },
+  { key: "blackbook", feature: "blackbook.directory" },
   { key: "imports", permission: "imports.create" },
   { key: "usersActivity", ownerOnly: true },
   { key: "billing" },

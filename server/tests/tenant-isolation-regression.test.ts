@@ -292,7 +292,7 @@ describe("endpoint inventory contract", () => {
   it("documents every public and cross-tenant shared exception", () => {
     const exceptions = endpointCoverageManifest.filter(({ access }) =>
       access === "public" || access === "shared-authenticated");
-    expect(exceptions).toHaveLength(21);
+    expect(exceptions).toHaveLength(22);
     expect(exceptions.every(({ justification }) => Boolean(justification))).toBe(true);
   });
 
