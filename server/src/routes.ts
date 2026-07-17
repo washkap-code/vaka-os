@@ -2029,11 +2029,37 @@ api.put("/documents/:id/retention", requireFeature("documents.workspace"),
       retentionSchema.parse(req.body).retentionUntil)));
 
 // ---------------------------------------------------------------------------
-// PB-001: Black Book registry — tenant reads of governed platform content.
+// PB-001/PB-003: Black Book registry reads and universal-search projection.
 // Ships dark behind `blackbook.directory`; fails closed with FEATURE_DISABLED.
 // Reads are open to any authenticated tenant member (reference data), and
 // every detail response carries sources + review date (directory, not advice).
 // ---------------------------------------------------------------------------
+api.get("/blackbook/search", requireFeature("blackbook.directory"), wrap(async (req, res) => {
+  const query = searchQuerySchema.parse({
+    q: req.query.q,
+    limit: req.query.limit,
+    cursor: req.query.cursor,
+    entityTypes: ["blackbook"],
+  });
+  let result;
+  try {
+    result = await platformKernel().container.get(SEARCH_SERVICE).search<SearchResultDocument>({
+      text: query.q,
+      limit: query.limit,
+      cursor: query.cursor,
+      entityTypes: query.entityTypes,
+    }, {
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      permissions: req.auth!.permissions,
+    });
+  } catch (error) {
+    if (error instanceof InvalidSearchQueryError) throw badRequest(error.message);
+    throw error;
+  }
+  res.setHeader("Cache-Control", "private, no-store");
+  return result;
+}));
 api.get("/blackbook/entries", requireFeature("blackbook.directory"), wrap(async (req) =>
   listBlackbookEntries(listBlackbookEntriesQuerySchema.parse({
     category: req.query.category as string | undefined,

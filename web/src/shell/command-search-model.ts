@@ -1,7 +1,13 @@
+import type { BlackbookCategory } from "../blackbook/blackbook-model";
 import type { WorkspacePage } from "./navigation";
 
+const BLACKBOOK_SEARCH_CATEGORIES: readonly BlackbookCategory[] = [
+  "government_organisation", "regulator", "local_authority", "utility",
+  "tender_portal", "business_association", "licence_type", "compliance_event", "service",
+];
+
 type SearchObject = {
-  key: "customer" | "supplier" | "invoice" | "product";
+  key: "customer" | "supplier" | "invoice" | "product" | "blackbook";
   fallbackLabel: string;
   navigation: { section: string; recordView: string | null };
 };
@@ -43,16 +49,27 @@ type ProductSearchDocument = {
   trackStock: boolean;
 };
 
+type BlackbookSearchDocument = {
+  id: string;
+  entityType: "blackbook";
+  key: string;
+  name: string;
+  category: BlackbookCategory;
+  verified: boolean;
+  lastReviewed: string;
+};
+
 export type WorkspaceSearchResult = {
   id: string;
-  entityType: "customer" | "supplier" | "invoice" | "product";
+  entityType: "customer" | "supplier" | "invoice" | "product" | "blackbook";
   title: string;
-  document: CustomerSearchDocument | SupplierSearchDocument | InvoiceSearchDocument | ProductSearchDocument;
+  document: CustomerSearchDocument | SupplierSearchDocument | InvoiceSearchDocument | ProductSearchDocument
+    | BlackbookSearchDocument;
   object: SearchObject;
 };
 
 export type WorkspaceSearchTarget = {
-  page: Extract<WorkspacePage, "contacts" | "suppliers" | "invoices" | "products">;
+  page: Extract<WorkspacePage, "contacts" | "suppliers" | "invoices" | "products" | "blackbook">;
   entityType: WorkspaceSearchResult["entityType"];
   recordId: string;
 };
@@ -62,6 +79,7 @@ const navigationByEntity = {
   supplier: { page: "suppliers", section: "procurement", recordView: "supplier" },
   invoice: { page: "invoices", section: "accounting", recordView: "invoice" },
   product: { page: "products", section: "inventory", recordView: "product" },
+  blackbook: { page: "blackbook", section: "blackbook", recordView: "entry" },
 } as const;
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -76,6 +94,10 @@ function string(value: unknown): value is string {
 
 function currency(value: unknown): value is "USD" | "ZWG" {
   return value === "USD" || value === "ZWG";
+}
+
+function blackbookCategory(value: unknown): value is BlackbookCategory {
+  return typeof value === "string" && (BLACKBOOK_SEARCH_CATEGORIES as readonly string[]).includes(value);
 }
 
 function parseObject(value: unknown, entityType: WorkspaceSearchResult["entityType"]): SearchObject | null {
@@ -122,13 +144,21 @@ function parseDocument(value: unknown, entityType: WorkspaceSearchResult["entity
       salePrice: candidate.salePrice, isActive: candidate.isActive, trackStock: candidate.trackStock,
     } satisfies ProductSearchDocument;
   }
+  if (entityType === "blackbook" && candidate.key === id && string(candidate.name)
+    && blackbookCategory(candidate.category) && typeof candidate.verified === "boolean"
+    && string(candidate.lastReviewed)) {
+    return {
+      id, entityType, key: candidate.key, name: candidate.name, category: candidate.category,
+      verified: candidate.verified, lastReviewed: candidate.lastReviewed,
+    } satisfies BlackbookSearchDocument;
+  }
   return null;
 }
 
 function parseResult(value: unknown): WorkspaceSearchResult | null {
   const candidate = record(value);
   if (!candidate || !string(candidate.id) || !string(candidate.title)
-    || !["customer", "supplier", "invoice", "product"].includes(String(candidate.entityType))) return null;
+    || !["customer", "supplier", "invoice", "product", "blackbook"].includes(String(candidate.entityType))) return null;
   const entityType = candidate.entityType as WorkspaceSearchResult["entityType"];
   const object = parseObject(candidate.object, entityType);
   const document = parseDocument(candidate.document, entityType, candidate.id);

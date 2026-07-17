@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema, type DB } from "./lib.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
@@ -10,9 +10,15 @@ import { DOMAIN_EVENTS, type DomainEventPayloads } from "./platform/events/regis
 import type { MetadataServiceContract } from "./platform/metadata/interfaces.js";
 import type { MetadataObjectDefinition } from "./platform/metadata/types.js";
 
-export const SEARCH_ENTITY_TYPES = ["customer", "supplier", "invoice", "product"] as const;
+const INDEXED_SEARCH_ENTITY_TYPES = ["customer", "supplier", "invoice", "product"] as const;
+type IndexedSearchEntityType = typeof INDEXED_SEARCH_ENTITY_TYPES[number];
+export const SEARCH_ENTITY_TYPES = [...INDEXED_SEARCH_ENTITY_TYPES, "blackbook"] as const;
 export type SearchEntityType = typeof SEARCH_ENTITY_TYPES[number];
 type SearchPermission = "crm.read" | "accounting.read" | "inventory.read";
+
+export interface SearchFeatureGate {
+  isEnabled(tenantId: string, key: string): Promise<boolean>;
+}
 
 export const searchQuerySchema = z.object({
   q: z.string().trim().min(2).max(120),
@@ -28,11 +34,12 @@ export type SearchResultDocument =
   | { id: string; entityType: "customer"; name: string; contactType: "INDIVIDUAL" | "COMPANY" }
   | { id: string; entityType: "supplier"; name: string; contactType: "INDIVIDUAL" | "COMPANY"; supplierCode: string | null; supplierCurrency: "USD" | "ZWG" | null }
   | { id: string; entityType: "invoice"; number: string | null; status: string; currency: "USD" | "ZWG"; total: string; customerName: string }
-  | { id: string; entityType: "product"; sku: string; name: string; currency: "USD" | "ZWG"; salePrice: string; isActive: boolean; trackStock: boolean };
+  | { id: string; entityType: "product"; sku: string; name: string; currency: "USD" | "ZWG"; salePrice: string; isActive: boolean; trackStock: boolean }
+  | { id: string; entityType: "blackbook"; key: string; name: string; category: string; verified: boolean; lastReviewed: string };
 
 type IndexedDocument = {
   tenantId: string;
-  entityType: SearchEntityType;
+  entityType: IndexedSearchEntityType;
   entityId: string;
   title: string;
   searchText: string;
@@ -198,9 +205,12 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   private readonly reconciledTenants = new Set<string>();
   private readonly pendingReconciliations = new Map<string, Promise<void>>();
 
-  constructor(private readonly metadata: MetadataServiceContract) {}
+  constructor(
+    private readonly metadata: MetadataServiceContract,
+    private readonly features: SearchFeatureGate,
+  ) {}
 
-  private async definition(tenantId: string, entityType: SearchEntityType): Promise<MetadataObjectDefinition> {
+  private async definition(tenantId: string, entityType: IndexedSearchEntityType): Promise<MetadataObjectDefinition> {
     const definition = await this.metadata.object(entityType, tenantId);
     if (!definition) throw new InvalidSearchQueryError(`Metadata object is not registered: ${entityType}`);
     searchPermission(definition);
@@ -256,7 +266,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       ];
       await tx.delete(schema.searchDocuments).where(and(
         eq(schema.searchDocuments.tenantId, tenantId),
-        inArray(schema.searchDocuments.entityType, SEARCH_ENTITY_TYPES),
+        inArray(schema.searchDocuments.entityType, INDEXED_SEARCH_ENTITY_TYPES),
       ));
       if (documents.length) await tx.insert(schema.searchDocuments).values(documents);
     });
@@ -332,7 +342,6 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
   }
 
   async search<TDocument>(query: SearchQuery, scope: SearchScope): Promise<SearchResponse<TDocument>> {
-    await this.reconcileTenant(scope.tenantId);
     const requestedTypes = query.entityTypes?.length
       ? query.entityTypes.map((value) => {
         if (!SEARCH_ENTITY_TYPES.includes(value as SearchEntityType)) {
@@ -341,10 +350,21 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
         return value as SearchEntityType;
       })
       : [...SEARCH_ENTITY_TYPES];
+    const indexedRequestedTypes = requestedTypes.filter((type): type is IndexedSearchEntityType =>
+      (INDEXED_SEARCH_ENTITY_TYPES as readonly string[]).includes(type));
+    if (indexedRequestedTypes.length) await this.reconcileTenant(scope.tenantId);
+
     const permissions = new Set(scope.permissions ?? []);
-    const definitions = new Map<SearchEntityType, MetadataObjectDefinition>();
-    for (const type of requestedTypes) definitions.set(type, await this.definition(scope.tenantId, type));
-    const allowedTypes = requestedTypes.filter((type) => permissions.has(searchPermission(definitions.get(type)!)));
+    const definitions = new Map<IndexedSearchEntityType, MetadataObjectDefinition>();
+    for (const type of indexedRequestedTypes) definitions.set(type, await this.definition(scope.tenantId, type));
+    const allowedIndexedTypes = indexedRequestedTypes.filter((type) =>
+      permissions.has(searchPermission(definitions.get(type)!)));
+    const blackbookAllowed = requestedTypes.includes("blackbook")
+      && await this.features.isEnabled(scope.tenantId, "blackbook.directory");
+    const allowedTypes: SearchEntityType[] = [
+      ...allowedIndexedTypes,
+      ...(blackbookAllowed ? ["blackbook" as const] : []),
+    ];
     if (!allowedTypes.length) return { results: [] };
 
     const normalizedQuery = normalizeSearchText([query.text]);
@@ -352,44 +372,115 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
     const fingerprint = cursorFingerprint(query, allowedTypes);
     const offset = decodeCursor(query.cursor, fingerprint);
     const limit = query.limit ?? 25;
-    const score = sql<number>`CASE
-      WHEN lower(${schema.searchDocuments.title}) = ${normalizedQuery} THEN 100
-      WHEN position(${normalizedQuery} in lower(${schema.searchDocuments.title})) = 1 THEN 80
-      WHEN position(${normalizedQuery} in lower(${schema.searchDocuments.title})) > 0 THEN 60
-      ELSE 40 END`;
-    const rows = await db.select({
-      entityId: schema.searchDocuments.entityId,
-      entityType: schema.searchDocuments.entityType,
-      title: schema.searchDocuments.title,
-      document: schema.searchDocuments.document,
-      score,
-    }).from(schema.searchDocuments).where(and(
-      eq(schema.searchDocuments.tenantId, scope.tenantId),
-      inArray(schema.searchDocuments.entityType, allowedTypes),
-      inArray(schema.searchDocuments.permission, [...permissions]),
-      ...terms.map((term) => sql`position(${term} in ${schema.searchDocuments.searchText}) > 0`),
-    )).orderBy(desc(score), asc(schema.searchDocuments.title), asc(schema.searchDocuments.entityId))
-      .limit(limit + 1).offset(offset);
-    const hasMore = rows.length > limit;
-    const page = rows.slice(0, limit);
-    return {
-      results: page.map((row) => ({
-        id: row.entityId,
-        entityType: row.entityType,
-        title: row.title,
-        document: row.document as TDocument,
-        score: row.score,
-        object: (() => {
-          const definition = definitions.get(row.entityType as SearchEntityType)!;
-          return {
+    const fetchLimit = offset + limit + 1;
+    const ranked: Array<{
+      id: string;
+      entityType: SearchEntityType;
+      title: string;
+      document: TDocument;
+      score: number;
+      object: NonNullable<SearchResponse<TDocument>["results"][number]["object"]>;
+    }> = [];
+
+    if (allowedIndexedTypes.length) {
+      const indexedScore = sql<number>`CASE
+        WHEN lower(${schema.searchDocuments.title}) = ${normalizedQuery} THEN 100
+        WHEN position(${normalizedQuery} in lower(${schema.searchDocuments.title})) = 1 THEN 80
+        WHEN position(${normalizedQuery} in lower(${schema.searchDocuments.title})) > 0 THEN 60
+        ELSE 40 END`;
+      const rows = await db.select({
+        entityId: schema.searchDocuments.entityId,
+        entityType: schema.searchDocuments.entityType,
+        title: schema.searchDocuments.title,
+        document: schema.searchDocuments.document,
+        score: indexedScore,
+      }).from(schema.searchDocuments).where(and(
+        eq(schema.searchDocuments.tenantId, scope.tenantId),
+        inArray(schema.searchDocuments.entityType, allowedIndexedTypes),
+        inArray(schema.searchDocuments.permission, [...permissions]),
+        ...terms.map((term) => sql`position(${term} in ${schema.searchDocuments.searchText}) > 0`),
+      )).orderBy(desc(indexedScore), asc(schema.searchDocuments.title), asc(schema.searchDocuments.entityId))
+        .limit(fetchLimit);
+      for (const row of rows) {
+        const entityType = row.entityType as IndexedSearchEntityType;
+        const definition = definitions.get(entityType)!;
+        ranked.push({
+          id: row.entityId,
+          entityType,
+          title: row.title,
+          document: row.document as TDocument,
+          score: row.score,
+          object: {
             key: definition.key,
             version: definition.version,
             labelKey: definition.labelKey,
             fallbackLabel: definition.fallbackLabel,
             navigation: definition.navigation,
-          };
-        })(),
-      })),
+          },
+        });
+      }
+    }
+
+    if (blackbookAllowed) {
+      const [tenant] = await db.select({ countryCode: schema.tenants.countryCode })
+        .from(schema.tenants).where(eq(schema.tenants.id, scope.tenantId)).limit(1);
+      if (tenant) {
+        const blackbookScore = sql<number>`CASE
+          WHEN lower(${schema.blackbookEntries.name}) = ${normalizedQuery} THEN 100
+          WHEN position(${normalizedQuery} in lower(${schema.blackbookEntries.name})) = 1 THEN 80
+          WHEN position(${normalizedQuery} in lower(${schema.blackbookEntries.name})) > 0 THEN 60
+          ELSE 40 END`;
+        const rows = await db.select({
+          key: schema.blackbookEntries.entryKey,
+          category: schema.blackbookEntries.category,
+          name: schema.blackbookEntries.name,
+          verified: schema.blackbookEntries.verified,
+          lastReviewed: schema.blackbookEntries.lastReviewed,
+          score: blackbookScore,
+        }).from(schema.blackbookEntries).where(and(
+          eq(schema.blackbookEntries.countryCode, tenant.countryCode),
+          eq(schema.blackbookEntries.status, "ACTIVE"),
+          ...terms.map((term) => or(
+            sql<boolean>`position(${term} in lower(${schema.blackbookEntries.name})) > 0`,
+            sql<boolean>`position(${term} in lower(${schema.blackbookEntries.entryKey})) > 0`,
+            sql<boolean>`position(${term} in lower(${schema.blackbookEntries.payload}::text)) > 0`,
+          )!),
+        )).orderBy(desc(blackbookScore), asc(schema.blackbookEntries.name), asc(schema.blackbookEntries.entryKey))
+          .limit(fetchLimit);
+        for (const row of rows) {
+          ranked.push({
+            id: row.key,
+            entityType: "blackbook",
+            title: row.name,
+            document: {
+              id: row.key,
+              entityType: "blackbook",
+              key: row.key,
+              name: row.name,
+              category: row.category,
+              verified: row.verified,
+              lastReviewed: row.lastReviewed,
+            } as TDocument,
+            score: row.score,
+            object: {
+              key: "blackbook",
+              version: "2026-07-16.1",
+              labelKey: "metadata.objects.blackbook.label",
+              fallbackLabel: "Black Book",
+              navigation: { section: "blackbook", recordView: "entry" },
+            },
+          });
+        }
+      }
+    }
+
+    ranked.sort((left, right) => right.score - left.score
+      || (left.title < right.title ? -1 : left.title > right.title ? 1 : 0)
+      || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+    const hasMore = ranked.length > offset + limit;
+    const page = ranked.slice(offset, offset + limit);
+    return {
+      results: page,
       ...(hasMore ? { nextCursor: encodeCursor(offset + limit, fingerprint) } : {}),
     };
   }

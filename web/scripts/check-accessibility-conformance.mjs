@@ -42,6 +42,7 @@ const files = [
   "src/shell/workspace-shell.tsx",
   "src/platform/platform-admin-shell.tsx",
   "src/shell/command-palette.tsx",
+  "src/blackbook/blackbook-directory.tsx",
   "src/procurement/procurement-workspace.tsx",
 ];
 const sources = new Map();
@@ -61,6 +62,7 @@ const focus = sources.get("src/accessibility/use-modal-focus.ts");
 const primitives = sources.get("src/design-system/primitives.tsx");
 const platformShell = sources.get("src/platform/platform-admin-shell.tsx");
 const procurement = sources.get("src/procurement/procurement-workspace.tsx");
+const blackbook = sources.get("src/blackbook/blackbook-directory.tsx");
 
 for (const expected of ["htmlFor={id}", '"aria-describedby": describedBy', '"aria-invalid": error ? true']) {
   requireContract(issues, "src/accessibility/legacy-field.tsx", field, expected);
@@ -162,6 +164,19 @@ for (const expected of [
   "data-modal-initial-focus",
   'role="alert"',
 ]) requireContract(issues, "src/procurement/procurement-workspace.tsx", procurement, expected);
+
+for (const expected of [
+  'role="search"',
+  'role="group" aria-label={copy.categoryLabel}',
+  'aria-pressed={category === option}',
+  'ref={detailHeadingRef} tabIndex={-1}',
+  'role={listStatus === "error" ? "alert" : "status"}',
+  'aria-live="polite"',
+  'aria-labelledby="blackbook-information-title"',
+  'aria-labelledby="blackbook-sources-title"',
+  'target="_blank" rel="noreferrer noopener"',
+  'aria-label={copy.noticeLabel}',
+]) requireContract(issues, "src/blackbook/blackbook-directory.tsx", blackbook, expected);
 
 for (const expected of [
   'href="#platform-main"',

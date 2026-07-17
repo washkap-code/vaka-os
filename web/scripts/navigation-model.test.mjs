@@ -6,6 +6,10 @@ import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "..
 import { parseWorkspaceSearchResponse, workspaceSearchTarget } from "../src/shell/command-search-model.ts";
 import { filterPlatformTenants, visiblePlatformAdminPages } from "../src/platform/platform-admin-model.ts";
 import { idleSignOutPhase, normalizeIdleSignOutMinutes } from "../src/shell/idle-signout-model.ts";
+import {
+  BLACKBOOK_CATEGORIES, blackbookDetailValues, parseBlackbookEntries, parseBlackbookEntry,
+} from "../src/blackbook/blackbook-model.ts";
+import { appEnglish } from "../src/locales/app.en.ts";
 
 const notificationCatalogue = {
   lowStockTitle: "Low stock", lowStockDetail: "{name}: {onHand}/{threshold}",
@@ -37,6 +41,13 @@ test("a forbidden current page falls back to the first visible destination", () 
 
 test("billing and settings remain available without domain permissions", () => {
   assert.deepEqual(visibleWorkspaceNavigation([], false).map((item) => item.key), ["billing", "settings"]);
+});
+
+test("Black Book navigation fails closed without its feature and needs no extra role permission", () => {
+  assert.equal(visibleWorkspaceNavigation([], false).some((item) => item.key === "blackbook"), false);
+  assert.equal(visibleWorkspaceNavigation([], false, ["blackbook.directory"])
+    .some((item) => item.key === "blackbook"), true);
+  assert.equal(resolveWorkspacePage("blackbook", visibleWorkspaceNavigation([], false)), "billing");
 });
 
 test("platform administration navigation exposes only authorised operating areas", () => {
@@ -127,6 +138,43 @@ test("workspace search maps the canonical supplier projection to procurement", (
     object: { key: "supplier", fallbackLabel: "Supplier", navigation: { section: "procurement", recordView: "supplier" } },
   }] });
   assert.deepEqual(workspaceSearchTarget(result), { page: "suppliers", entityType: "supplier", recordId: "supplier-one" });
+});
+
+test("workspace search maps only a governed Black Book entry descriptor", () => {
+  const [result] = parseWorkspaceSearchResponse({ results: [{
+    id: "zimra", entityType: "blackbook", title: "Zimbabwe Revenue Authority",
+    document: {
+      id: "zimra", entityType: "blackbook", key: "zimra", name: "Zimbabwe Revenue Authority",
+      category: "regulator", verified: true, lastReviewed: "2026-07-15", sources: ["must-not-render"],
+    },
+    object: { key: "blackbook", fallbackLabel: "Black Book", navigation: { section: "blackbook", recordView: "entry" } },
+  }] });
+  assert.deepEqual(workspaceSearchTarget(result), { page: "blackbook", entityType: "blackbook", recordId: "zimra" });
+  assert.equal(JSON.stringify(result).includes("must-not-render"), false);
+  assert.equal(workspaceSearchTarget({
+    ...result,
+    object: { ...result.object, navigation: { section: "settings", recordView: "entry" } },
+  }), null);
+});
+
+test("Black Book response parsing accepts only canonical categories and supported payload fields", () => {
+  const summary = {
+    key: "zimra", category: "regulator", name: "Zimbabwe Revenue Authority",
+    verified: true, lastReviewed: "2026-07-15", currentVersion: 2,
+  };
+  assert.deepEqual(parseBlackbookEntries([summary, { ...summary, category: "unknown" }]), [summary]);
+  const detail = parseBlackbookEntry({
+    ...summary,
+    payload: { id: "zimra", website: "https://www.zimra.co.zw/", notes: "Official authority", invented: "ignore" },
+    sources: ["https://www.zimra.co.zw/"],
+    notice: "Server fallback notice",
+  });
+  assert.ok(detail);
+  assert.deepEqual(blackbookDetailValues(detail.payload), [
+    { key: "website", value: "https://www.zimra.co.zw/" },
+    { key: "notes", value: "Official authority" },
+  ]);
+  assert.equal(BLACKBOOK_CATEGORIES.every((category) => Boolean(appEnglish.blackbook.categories[category])), true);
 });
 
 test("idle sign-out policy enforces the minimum, warning and expired phases", () => {

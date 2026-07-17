@@ -10,7 +10,9 @@ import {
   type WorkspaceSearchTarget,
 } from "./command-search-model";
 
-const entityOrder: readonly WorkspaceSearchResult["entityType"][] = ["customer", "supplier", "invoice", "product"];
+const entityOrder: readonly WorkspaceSearchResult["entityType"][] = [
+  "customer", "supplier", "invoice", "product", "blackbook",
+];
 
 function resultDetail(result: WorkspaceSearchResult): string {
   if (result.document.entityType === "customer") {
@@ -26,11 +28,19 @@ function resultDetail(result: WorkspaceSearchResult): string {
   if (result.document.entityType === "invoice") {
     return `${result.document.customerName} · ${fmt(result.document.total, result.document.currency)}`;
   }
+  if (result.document.entityType === "blackbook") {
+    return `${appEnglish.shell.search.blackbookEntry} · ${appEnglish.blackbook.categories[result.document.category]}`;
+  }
   return `${result.document.sku} · ${fmt(result.document.salePrice, result.document.currency)}`;
 }
 
-export function CommandPalette({ onSelect }: { onSelect: (target: WorkspaceSearchTarget) => void }) {
+export function CommandPalette({ onSelect, includeBlackbook, searchPath }: {
+  onSelect: (target: WorkspaceSearchTarget) => void;
+  includeBlackbook: boolean;
+  searchPath: "/search" | "/blackbook/search";
+}) {
   const copy = appEnglish.shell.search;
+  const blackbookOnly = searchPath === "/blackbook/search";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WorkspaceSearchResult[]>([]);
@@ -87,7 +97,7 @@ export function CommandPalette({ onSelect }: { onSelect: (target: WorkspaceSearc
     const timer = window.setTimeout(async () => {
       setStatus("loading");
       try {
-        const response = await api(`/search?q=${encodeURIComponent(trimmed)}&limit=20`, { signal: controller.signal });
+        const response = await api(`${searchPath}?q=${encodeURIComponent(trimmed)}&limit=20`, { signal: controller.signal });
         if (version !== requestVersionRef.current) return;
         const parsed = parseWorkspaceSearchResponse(response);
         setResults(parsed);
@@ -103,7 +113,7 @@ export function CommandPalette({ onSelect }: { onSelect: (target: WorkspaceSearc
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [open, query]);
+  }, [open, query, searchPath]);
 
   const grouped = useMemo(() => entityOrder.map((entityType) => ({
     entityType,
@@ -149,12 +159,17 @@ export function CommandPalette({ onSelect }: { onSelect: (target: WorkspaceSearc
       aria-label={copy.trigger} aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
       <span aria-hidden="true">⌕</span><span>{copy.trigger}</span><kbd>⌘K</kbd>
     </button>
-    <Dialog open={open} onClose={closePalette} title={copy.title} description={copy.description} closeLabel={copy.close}>
+    <Dialog open={open} onClose={closePalette} title={copy.title}
+      description={blackbookOnly ? copy.blackbookOnlyDescription
+        : includeBlackbook ? copy.descriptionWithBlackbook : copy.description} closeLabel={copy.close}>
       <div className="command-palette">
-        <label htmlFor="workspace-command-query">{copy.label}</label>
+        <label htmlFor="workspace-command-query">{blackbookOnly ? copy.blackbookOnlyLabel
+          : includeBlackbook ? copy.labelWithBlackbook : copy.label}</label>
         <input ref={inputRef} id="workspace-command-query" className="command-search-input" type="search"
           value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={onInputKeyDown}
-          placeholder={copy.placeholder} autoComplete="off" role="combobox" aria-autocomplete="list"
+          placeholder={blackbookOnly ? copy.blackbookOnlyPlaceholder
+            : includeBlackbook ? copy.placeholderWithBlackbook : copy.placeholder}
+          autoComplete="off" role="combobox" aria-autocomplete="list"
           aria-expanded={results.length > 0} aria-controls="workspace-search-results"
           aria-activedescendant={activeResult ? `workspace-search-result-${activeResult.entityType}-${activeResult.id}` : undefined} />
         <p className={`command-search-status ${status === "error" ? "command-search-status--error" : ""}`}

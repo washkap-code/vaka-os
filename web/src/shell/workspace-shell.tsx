@@ -62,7 +62,10 @@ export function WorkspaceShell({ tenant, user, navigation, currentPage, onNaviga
     </nav>
     <div className="workspace-foot">{copy.workspace.replace("{subdomain}", tenant.subdomain)}<br />{copy.poweredBy}</div>
   </>;
-  const searchAvailable = navigation.some((item) => ["contacts", "suppliers", "invoices", "products"].includes(item.key));
+  const workspaceSearchAvailable = navigation.some((item) =>
+    ["contacts", "suppliers", "invoices", "products"].includes(item.key));
+  const blackbookAvailable = navigation.some((item) => item.key === "blackbook");
+  const searchAvailable = workspaceSearchAvailable || blackbookAvailable;
 
   return <div className="shell">
     <a className="skip-link" href="#workspace-main">{copy.skipToContent}</a>
@@ -71,7 +74,8 @@ export function WorkspaceShell({ tenant, user, navigation, currentPage, onNaviga
       <button ref={menuButtonRef} className="shell-icon-button mobile-menu-button" type="button"
         aria-label={copy.openMenu} aria-expanded={drawerOpen} aria-controls="workspace-mobile-drawer"
         onClick={() => setDrawerOpen(true)}><span aria-hidden="true">☰</span></button>
-      {searchAvailable && <CommandPalette onSelect={onSearchSelect} />}
+      {searchAvailable && <CommandPalette onSelect={onSearchSelect} includeBlackbook={blackbookAvailable}
+        searchPath={workspaceSearchAvailable ? "/search" : "/blackbook/search"} />}
       <div className="workspace-header-actions"><NotificationMenu />
         <UserMenu fullName={user.fullName} email={user.email}
           onSettings={() => navigate("settings")} onLogout={onLogout} />

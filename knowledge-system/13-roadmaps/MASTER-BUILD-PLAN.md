@@ -50,7 +50,7 @@ Goal: every module consumes shared contracts; no duplicated infrastructure.
 | P1-003 | Establish the first callable kernel audit adoption seam with row-parity and fail-closed tests | P1-002 | ✅ Implemented; full-suite verified 2026-07-12 |
 | P1-004 | Notification service adapter → email + persisted in-app behind one contract; SMS/WhatsApp placeholders | P1-002 | ✅ Implemented; provider/product adoption gated |
 | P1-005 | Event bus adapter: emit domain events (invoice.issued, payment.recorded, stock.moved…) from existing write paths; in-process subscribers | P1-002 | ✅ Implemented; durable delivery gated |
-| P1-006 | Search service adapter over existing entities (customers, invoices, products) with tenant-scoped index | P1-002 | ✅ Technically verified internal adapter; durable/scale operations gated |
+| P1-006 | Search service adapter over existing entities (customers, suppliers, invoices, products) with tenant-scoped index | P1-002 | ✅ Technically verified internal adapter; PB-003 adds a flag/country-scoped Black Book read-through projection; durable/scale operations gated |
 | P1-007 | Document service adapter unifying invoice PDFs + capture storage behind one contract | P1-002 | ✅ Implemented; endpoint parity and tenant isolation verified |
 | P1-008 | Metadata registry seeded with canonical objects (Company, Customer, Invoice…) powering search + AI context | P1-005 | ✅ Technically verified read-only registry; AI context/value access gated |
 
@@ -208,7 +208,9 @@ qualified review. P2-006 is implemented as a reconciled posted-ledger technical
 preview with CSV/PDF export; complete AP open-item accounting, canonical legal-
 entity scope and professional approval remain open. P1-004 and P1-005 are implemented and verified as
 internal adapter foundations. P1-006 is implemented and full-suite verified as
-a bounded internal keyword-search adapter. P1-008 is implemented and
+a bounded internal keyword-search adapter; PB-003 extends it with a dark,
+feature- and country-scoped Black Book read-through projection without copying
+global content into the tenant index. P1-008 is implemented and
 full-suite verified as a read-only canonical metadata registry; it does not
 enable AI value access. P3-003 is implemented and full-suite verified for
 manual CRM activity plus VAKA-recorded invoice/payment milestones; it does not
@@ -365,6 +367,11 @@ marketed as live (Constitution rule). Three gate types govern go-live:
 | PB-005 | Compliance calendar: country-pack obligations (VAT, PAYE, NSSA, QPD, annual return) → tenant reminders via notifications | PB-002, P1-004 | T |
 | PB-006 | Tender hub (curated PRAZ + public tenders; manual curation first) | PB-003 | P (content ops) |
 | PB-007 | AI Black Book advisor — grounded strictly in PB content, cites entries, refuses beyond sources | PB-004, P8-002 | T + AI gate |
+
+**Current delivery note (2026-07-16):** PB-003 is technically implemented
+behind `blackbook.directory`, with the tenant directory and P1-006 integration
+kept dark. PB-002's signed professional content-review gate remains open, so no
+tenant enablement or publication is authorised.
 
 ### P7 (continued) — Mail & Communications, full hub
 

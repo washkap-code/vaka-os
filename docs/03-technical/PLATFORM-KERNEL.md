@@ -21,7 +21,7 @@ rewrite and not a claim that every service is live in production.
 | `workflow` | named orchestration handlers | in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
-| `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Invoice/Product adapter composed; broader enterprise search gated |
+| `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Supplier/Invoice/Product adapter plus PB-003 flag- and country-scoped Black Book projection composed; broader enterprise search gated |
 | `metadata` | extensible typed entity metadata | P1-008 immutable canonical registry composed; dynamic values and broad adoption gated |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
 | `types` | reusable type helpers and tenant-scope assertions | small contract utility |
@@ -125,10 +125,13 @@ rebuildable PostgreSQL index. An authenticated `/search` route supplies verified
 actor, tenant and permissions; the provider applies tenant and entity-read
 permission filters again. Canonical records remain authoritative. Lazy tenant
 reconciliation indexes pre-existing Customers, Invoices and Products, while
-P1-005 subscribers re-read affected records after committed customer, invoice,
-payment, stock and import facts. Delivery remains best-effort; durable indexing,
-deletion events, scale evidence, semantic search and user-facing global search
-remain gated.
+P1-005 subscribers re-read affected records after committed customer, supplier,
+invoice, payment, stock and import facts. PB-003 composes active Black Book
+entries as a read-through result source: the provider derives the country from
+the authenticated tenant and checks `blackbook.directory` without copying
+global registry content into `search_documents`. Delivery remains best-effort;
+durable indexing, deletion events, scale evidence and semantic search remain
+gated.
 
 ## Metadata adoption seam (P1-008)
 

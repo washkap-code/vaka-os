@@ -20,6 +20,7 @@ Mission Pack (.md)  →  Implementation branch  →  Code review  →  Verificat
 
 | ID | Title | Status |
 |----|-------|--------|
+| PB-003 | Black Book directory UI and universal search integration | ✅ Technically verified dark build; PB-002 professional content gate remains open and tenant enablement is blocked |
 | P1-001 | Platform Kernel Foundation | ✅ Complete (PR #44, #45) |
 | P1-002 | Identity & Audit Adapters | ✅ Complete |
 | P1-003 | First kernel audit adoption seam | ✅ Implemented; full DB-backed suite verified green (2026-07-12) |
