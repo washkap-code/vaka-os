@@ -77,7 +77,7 @@ export async function performStepUp(auth: StepUpAuth, currentPassword: string, c
   if (outcome === "mfa_prompt_required") {
     throw new AppError(401, "Enter your authenticator or recovery code to continue", "STEP_UP_MFA_REQUIRED");
   }
-  if (!outcome.ok) {
+  if (outcome.ok === false) {
     // Redacted, privacy-minimised security evidence; committed independently
     // of the failed verification.
     await recordStepUpAudit(db, auth, "failed", { failure: outcome.failure });
