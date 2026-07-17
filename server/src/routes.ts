@@ -63,6 +63,11 @@ import {
   listImportRuns as listBlackbookImportRuns,
 } from "./blackbook.js";
 import {
+  addEvidence, addEvidenceSchema, evidenceStatusFilterSchema, getEvidence,
+  listEvidence, renewEvidence, renewEvidenceSchema, withdrawEvidence,
+  withdrawEvidenceSchema,
+} from "./verification-vault.js";
+import {
   directoryQuerySchema, enquirySchema, getDirectoryProfile, getMyProfile,
   listEnquiries, profileInputSchema, publishProfile, resolveEnquiry, saveProfile,
   searchDirectory, sendEnquiry, unpublishProfile,
@@ -2041,6 +2046,33 @@ api.get("/blackbook/entries/:key", requireFeature("blackbook.directory"), wrap(a
     .parse((req.query.country as string | undefined) ?? "ZW");
   return getBlackbookEntry(country, key);
 }));
+
+// ---------------------------------------------------------------------------
+// PV-001: verification evidence vault. Typed, expiring references into the
+// PD-001 documents workspace with an append-only renewal chain. Ships dark
+// behind `verify.centre`; fails closed. Review/badges arrive with PV-002 —
+// nothing here asserts that a business "is verified".
+// ---------------------------------------------------------------------------
+api.get("/verification/evidence", requireFeature("verify.centre"),
+  requirePermission("verify.read"), wrap(async (req) =>
+    listEvidence(tenantId(req), {
+      status: evidenceStatusFilterSchema.optional()
+        .parse(req.query.status as string | undefined) ?? "ACTIVE",
+    })));
+api.post("/verification/evidence", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    addEvidence(tenantId(req), req.auth!.userId, addEvidenceSchema.parse(req.body))));
+api.get("/verification/evidence/:id", requireFeature("verify.centre"),
+  requirePermission("verify.read"), wrap(async (req) =>
+    getEvidence(tenantId(req), uuidRouteParam(req, "id"))));
+api.post("/verification/evidence/:id/renew", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    renewEvidence(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      renewEvidenceSchema.parse(req.body))));
+api.post("/verification/evidence/:id/withdraw", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    withdrawEvidence(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      withdrawEvidenceSchema.parse(req.body).reason)));
 
 // ---------------------------------------------------------------------------
 // PN-001: opt-in public business profile. Nothing public by default; edits

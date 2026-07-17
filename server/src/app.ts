@@ -43,13 +43,13 @@ export function createApp(options: AppOptions = {}) {
   // CORS: same-origin by default, explicit ALLOWED_ORIGINS for credentials.
   app.use(corsMiddleware());
 
-  app.get("/healthz", (_req, res) => res.json({
+  const healthz = (_req: Request, res: Response) => res.json({
     status: "ok",
     service: "vaka-os",
     version,
     uptimeSeconds: Math.floor(uptimeSeconds()),
-  }));
-  app.get("/readyz", async (_req, res) => {
+  });
+  const readyz = async (_req: Request, res: Response) => {
     try {
       const report = await readiness.check();
       return res.status(report.status === "ready" ? 200 : 503).json(report);
@@ -60,7 +60,14 @@ export function createApp(options: AppOptions = {}) {
         checks: { service: { status: "fail", critical: true, detail: "readiness check failed" } },
       });
     }
-  });
+  };
+
+  app.get("/healthz", healthz);
+  app.get("/readyz", readyz);
+  // Vercel preserves the public request path when rewriting to the serverless
+  // function, so API-prefixed probes need explicit pre-auth registrations.
+  app.get("/api/v1/healthz", healthz);
+  app.get("/api/v1/readyz", readyz);
 
   // brute-force protection on credential endpoints; abuse protection on
   // public document links. (Per-process windows; add an edge limiter when

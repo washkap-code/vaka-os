@@ -6,6 +6,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "web/dist",
   "rewrites": [
+    { "source": "/healthz", "destination": "/api" },
+    { "source": "/readyz", "destination": "/api" },
     { "source": "/api/v1/:path*", "destination": "/api" },
     { "source": "/:path((?!api/).*)", "destination": "/index.html" }
   ],

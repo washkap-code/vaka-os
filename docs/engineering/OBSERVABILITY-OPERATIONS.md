@@ -2,13 +2,14 @@
 
 ## Monitor targets
 
-Point the external uptime monitor at the deployed API origin, not the web
-origin.
+Point the external uptime monitor at the production root URLs below. Vercel
+routes these public paths to the API function before the single-page
+application fallback.
 
 | Endpoint | Purpose | Healthy response | Recommended cadence |
 | --- | --- | --- | --- |
-| `GET /healthz` | Liveness only: proves the process can answer HTTP. It deliberately performs no dependency checks. | HTTP 200 with service version and process uptime. | Every minute. |
-| `GET /readyz` | Readiness: checks a cheap database query, the schema markers for migration 0045, and the configured email transport. | HTTP 200 with each check marked `pass` or non-production `not_required`. Any failed critical check returns HTTP 503. | Every minute, with an alert after three consecutive failures. |
+| `GET https://vakaos.com/healthz` | Liveness only: proves the process can answer HTTP. It deliberately performs no dependency checks. | HTTP 200 with service version and process uptime. | Every minute. |
+| `GET https://vakaos.com/readyz` | Readiness: checks a cheap database query, the schema markers for migration 0045, and the configured email transport. | HTTP 200 with each check marked `pass` or non-production `not_required`. Any failed critical check returns HTTP 503. | Every minute, with an alert after three consecutive failures. |
 
 Both routes are unauthenticated so an uptime service can call them. Responses
 contain status labels only: they never expose database URLs, SMTP hosts,

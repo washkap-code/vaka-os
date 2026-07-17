@@ -1605,6 +1605,58 @@ export const workspaceDocumentVersions = pgTable("workspace_document_versions", 
 ]);
 
 // ---------------------------------------------------------------------------
+// PV-001 — Verification evidence vault. Evidence bytes live in the PD-001
+// documents workspace; rows here register typed, expiring references with an
+// append-only renewal chain (ACTIVE → SUPERSEDED | WITHDRAWN, never edited).
+// Behind the `verify.centre` flag. Review/badges arrive with PV-002.
+// ---------------------------------------------------------------------------
+export const VERIFICATION_EVIDENCE_TYPES = [
+  "INCORPORATION_CERTIFICATE", "TAX_CLEARANCE", "CR14_DIRECTORS",
+  "PROOF_OF_ADDRESS", "DIRECTOR_ID", "VAT_REGISTRATION",
+  "LICENCE", "INSURANCE", "OTHER",
+] as const;
+
+export const verificationEvidence = pgTable("verification_evidence", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  documentId: uuid("document_id").notNull().references(() => workspaceDocuments.id),
+  documentVersion: integer("document_version").notNull(),
+  evidenceType: text("evidence_type").notNull(),
+  issuer: text("issuer").notNull(),
+  referenceNumber: text("reference_number"),
+  notes: text("notes"),
+  validFrom: date("valid_from"),
+  expiresAt: date("expires_at"),
+  status: text("status").default("ACTIVE").notNull(),
+  supersededBy: uuid("superseded_by"),
+  withdrawnReason: text("withdrawn_reason"),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({ columns: [t.supersededBy], foreignColumns: [t.id], name: "verification_evidence_superseded_by_verification_evidence_id_fk" }),
+  uniqueIndex("verification_evidence_singleton_active")
+    .on(t.tenantId, t.evidenceType)
+    .where(sql`${t.status} = 'ACTIVE' AND ${t.evidenceType} IN
+      ('INCORPORATION_CERTIFICATE', 'TAX_CLEARANCE', 'CR14_DIRECTORS',
+       'PROOF_OF_ADDRESS', 'VAT_REGISTRATION')`),
+  index("verification_evidence_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  index("verification_evidence_tenant_expiry").on(t.tenantId, t.expiresAt),
+  check("verification_evidence_type_check", sql`${t.evidenceType} IN
+    ('INCORPORATION_CERTIFICATE', 'TAX_CLEARANCE', 'CR14_DIRECTORS',
+     'PROOF_OF_ADDRESS', 'DIRECTOR_ID', 'VAT_REGISTRATION',
+     'LICENCE', 'INSURANCE', 'OTHER')`),
+  check("verification_evidence_status_check", sql`${t.status} IN ('ACTIVE', 'SUPERSEDED', 'WITHDRAWN')`),
+  check("verification_evidence_version_check", sql`${t.documentVersion} >= 1`),
+  check("verification_evidence_issuer_check", sql`length(trim(${t.issuer})) BETWEEN 1 AND 160`),
+  check("verification_evidence_reference_check", sql`${t.referenceNumber} IS NULL OR length(${t.referenceNumber}) <= 80`),
+  check("verification_evidence_notes_check", sql`${t.notes} IS NULL OR length(${t.notes}) <= 500`),
+  check("verification_evidence_validity_check", sql`${t.validFrom} IS NULL OR ${t.expiresAt} IS NULL OR ${t.expiresAt} > ${t.validFrom}`),
+  check("verification_evidence_superseded_check", sql`(${t.status} = 'SUPERSEDED') = (${t.supersededBy} IS NOT NULL)`),
+  check("verification_evidence_withdrawn_check", sql`(${t.status} = 'WITHDRAWN') = (${t.withdrawnReason} IS NOT NULL)`),
+]);
+
+// ---------------------------------------------------------------------------
 // PB-001 — Black Book registry (versioned, governed platform content).
 // GLOBAL reference data owned by platform staff — deliberately NO tenant_id.
 // Tenant reads are gated by the `blackbook.directory` feature flag; the only

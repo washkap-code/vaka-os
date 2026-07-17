@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import express from "express";
 import request from "supertest";
+import { readFileSync } from "node:fs";
 import { createApp } from "../src/app.js";
 import { createErrorTracker, createFatalHandler, noopErrorTracker } from "../src/error-tracking.js";
 import { createReadinessChecker, EXPECTED_MIGRATION, type ReadinessReport } from "../src/health.js";
@@ -35,6 +36,38 @@ describe("LP-005 health endpoints", () => {
       status: "ok", service: "vaka-os", version: "test-release", uptimeSeconds: 42,
     });
     expect(readiness.check).not.toHaveBeenCalled();
+  });
+
+  it("serves the API-prefixed health paths delivered to the Vercel function", async () => {
+    const readiness = { check: vi.fn(async () => readyReport(true)) };
+    const app = createApp({
+      readinessChecker: readiness,
+      version: "test-release",
+      uptimeSeconds: () => 42.9,
+    });
+
+    const liveness = await request(app).get("/api/v1/healthz").expect(200);
+    expect(liveness.body).toEqual({
+      status: "ok", service: "vaka-os", version: "test-release", uptimeSeconds: 42,
+    });
+
+    const ready = await request(app).get("/api/v1/readyz").expect(200);
+    expect(ready.body).toEqual(readyReport(true));
+    expect(readiness.check).toHaveBeenCalledOnce();
+  });
+
+  it("routes public health URLs to the function before the SPA fallback", () => {
+    const config = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8")) as {
+      rewrites: Array<{ source: string; destination: string }>;
+    };
+    const spaFallbackIndex = config.rewrites.findIndex(({ destination }) => destination === "/index.html");
+    expect(spaFallbackIndex).toBeGreaterThanOrEqual(0);
+    for (const source of ["/healthz", "/readyz"]) {
+      const rewriteIndex = config.rewrites.findIndex((rewrite) => rewrite.source === source);
+      expect(rewriteIndex).toBeGreaterThanOrEqual(0);
+      expect(rewriteIndex).toBeLessThan(spaFallbackIndex);
+      expect(config.rewrites[rewriteIndex]?.destination).toBe("/api");
+    }
   });
 
   it("returns readiness detail with 200 or 503 and no internal error text", async () => {
