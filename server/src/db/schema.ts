@@ -1576,6 +1576,7 @@ export const workspaceDocuments = pgTable("workspace_documents", {
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
+  uniqueIndex("workspace_documents_id_tenant_unique").on(t.id, t.tenantId),
   index("workspace_documents_tenant_status").on(t.tenantId, t.status, t.createdAt),
   index("workspace_documents_tenant_folder").on(t.tenantId, t.folderId),
   check("workspace_documents_classification_check", sql`${t.classification} IN
@@ -1599,6 +1600,8 @@ export const workspaceDocumentVersions = pgTable("workspace_document_versions", 
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("workspace_document_versions_doc_version").on(t.documentId, t.version),
+  uniqueIndex("workspace_document_versions_doc_version_tenant_unique")
+    .on(t.documentId, t.version, t.tenantId),
   index("workspace_document_versions_tenant_doc").on(t.tenantId, t.documentId),
   check("workspace_document_versions_version_check", sql`${t.version} >= 1`),
   check("workspace_document_versions_size_check", sql`${t.byteSize} > 0 AND ${t.byteSize} <= 1500000`),
@@ -1635,6 +1638,7 @@ export const verificationEvidence = pgTable("verification_evidence", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   foreignKey({ columns: [t.supersededBy], foreignColumns: [t.id], name: "verification_evidence_superseded_by_verification_evidence_id_fk" }),
+  uniqueIndex("verification_evidence_id_tenant_unique").on(t.id, t.tenantId),
   uniqueIndex("verification_evidence_singleton_active")
     .on(t.tenantId, t.evidenceType)
     .where(sql`${t.status} = 'ACTIVE' AND ${t.evidenceType} IN
@@ -1654,6 +1658,159 @@ export const verificationEvidence = pgTable("verification_evidence", {
   check("verification_evidence_validity_check", sql`${t.validFrom} IS NULL OR ${t.expiresAt} IS NULL OR ${t.expiresAt} > ${t.validFrom}`),
   check("verification_evidence_superseded_check", sql`(${t.status} = 'SUPERSEDED') = (${t.supersededBy} IS NOT NULL)`),
   check("verification_evidence_withdrawn_check", sql`(${t.status} = 'WITHDRAWN') = (${t.withdrawnReason} IS NOT NULL)`),
+]);
+
+// ---------------------------------------------------------------------------
+// PV-002 — frozen verification submissions, platform review decisions and
+// VERIFIED badge issue records. Snapshot/decision/badge tables are protected
+// by append-only triggers in migration 0047; badge revocation is a later
+// decision plus APPROVED → REVOKED request transition, never a badge rewrite.
+// ---------------------------------------------------------------------------
+export const VERIFICATION_REQUEST_STATUSES = [
+  "DRAFT", "SUBMITTED", "IN_REVIEW", "APPROVED", "REJECTED", "REVOKED",
+] as const;
+
+export const VERIFICATION_DECISIONS = ["APPROVE", "REJECT", "REVOKE"] as const;
+
+export const verificationRequests = pgTable("verification_requests", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  status: text("status").default("DRAFT").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  submittedBy: uuid("submitted_by").references(() => users.id),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  inReviewBy: uuid("in_review_by").references(() => users.id),
+  inReviewAt: timestamp("in_review_at", { withTimezone: true }),
+  sodActorIds: jsonb("sod_actor_ids").$type<string[]>().default([]).notNull(),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("verification_requests_id_tenant_unique").on(t.id, t.tenantId),
+  uniqueIndex("verification_requests_one_open_per_tenant")
+    .on(t.tenantId).where(sql`${t.status} IN ('DRAFT', 'SUBMITTED', 'IN_REVIEW')`),
+  index("verification_requests_tenant_time").on(t.tenantId, t.createdAt),
+  index("verification_requests_queue")
+    .on(t.status, t.submittedAt).where(sql`${t.status} IN ('SUBMITTED', 'IN_REVIEW')`),
+  check("verification_requests_status_check", sql`${t.status} IN
+    ('DRAFT', 'SUBMITTED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'REVOKED')`),
+  check("verification_requests_sod_actors_check", sql`jsonb_typeof(${t.sodActorIds}) = 'array'`),
+  check("verification_requests_lifecycle_check", sql`
+    (${t.status} = 'DRAFT'
+      AND ${t.submittedBy} IS NULL AND ${t.submittedAt} IS NULL
+      AND ${t.inReviewBy} IS NULL AND ${t.inReviewAt} IS NULL)
+    OR (${t.status} = 'SUBMITTED'
+      AND ${t.submittedBy} IS NOT NULL AND ${t.submittedAt} IS NOT NULL
+      AND ${t.inReviewBy} IS NULL AND ${t.inReviewAt} IS NULL)
+    OR (${t.status} IN ('IN_REVIEW', 'APPROVED', 'REJECTED', 'REVOKED')
+      AND ${t.submittedBy} IS NOT NULL AND ${t.submittedAt} IS NOT NULL
+      AND ${t.inReviewBy} IS NOT NULL AND ${t.inReviewAt} IS NOT NULL)
+  `),
+]);
+
+export const verificationRequestEvidenceSnapshots = pgTable("verification_request_evidence_snapshots", {
+  id: id(),
+  requestId: uuid("request_id").notNull(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  evidenceId: uuid("evidence_id").notNull(),
+  documentId: uuid("document_id").notNull(),
+  documentVersion: integer("document_version").notNull(),
+  evidenceType: text("evidence_type").notNull(),
+  issuer: text("issuer").notNull(),
+  referenceNumber: text("reference_number"),
+  validFrom: date("valid_from"),
+  expiresAt: date("expires_at"),
+  fileName: text("file_name").notNull(),
+  mediaType: text("media_type").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  checksum: text("checksum").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({
+    name: "verification_snapshot_request_tenant_fk",
+    columns: [t.requestId, t.tenantId],
+    foreignColumns: [verificationRequests.id, verificationRequests.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "verification_snapshot_evidence_tenant_fk",
+    columns: [t.evidenceId, t.tenantId],
+    foreignColumns: [verificationEvidence.id, verificationEvidence.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "verification_snapshot_document_tenant_fk",
+    columns: [t.documentId, t.tenantId],
+    foreignColumns: [workspaceDocuments.id, workspaceDocuments.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "verification_snapshot_version_tenant_fk",
+    columns: [t.documentId, t.documentVersion, t.tenantId],
+    foreignColumns: [workspaceDocumentVersions.documentId, workspaceDocumentVersions.version, workspaceDocumentVersions.tenantId],
+  }).onDelete("restrict"),
+  unique("verification_snapshot_request_evidence_unique").on(t.requestId, t.evidenceId),
+  index("verification_snapshot_tenant_request").on(t.tenantId, t.requestId, t.capturedAt),
+  check("verification_snapshot_version_check", sql`${t.documentVersion} >= 1`),
+  check("verification_snapshot_type_check", sql`${t.evidenceType} IN
+    ('INCORPORATION_CERTIFICATE', 'TAX_CLEARANCE', 'CR14_DIRECTORS',
+     'PROOF_OF_ADDRESS', 'DIRECTOR_ID', 'VAT_REGISTRATION',
+     'LICENCE', 'INSURANCE', 'OTHER')`),
+  check("verification_snapshot_issuer_check", sql`length(trim(${t.issuer})) BETWEEN 1 AND 160`),
+  check("verification_snapshot_reference_check", sql`${t.referenceNumber} IS NULL OR length(${t.referenceNumber}) <= 80`),
+  check("verification_snapshot_validity_check", sql`${t.validFrom} IS NULL OR ${t.expiresAt} IS NULL OR ${t.expiresAt} > ${t.validFrom}`),
+  check("verification_snapshot_size_check", sql`${t.byteSize} > 0 AND ${t.byteSize} <= 1500000`),
+]);
+
+export const verificationDecisions = pgTable("verification_decisions", {
+  id: id(),
+  requestId: uuid("request_id").notNull(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  decision: text("decision").notNull(),
+  reason: text("reason").notNull(),
+  decidedBy: uuid("decided_by").notNull().references(() => users.id),
+  sodEvaluation: jsonb("sod_evaluation").$type<Record<string, unknown>>().notNull(),
+  decidedAt: timestamp("decided_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({
+    name: "verification_decisions_request_tenant_fk",
+    columns: [t.requestId, t.tenantId],
+    foreignColumns: [verificationRequests.id, verificationRequests.tenantId],
+  }).onDelete("restrict"),
+  uniqueIndex("verification_decisions_terminal_once")
+    .on(t.requestId).where(sql`${t.decision} IN ('APPROVE', 'REJECT')`),
+  uniqueIndex("verification_decisions_revoke_once")
+    .on(t.requestId).where(sql`${t.decision} = 'REVOKE'`),
+  index("verification_decisions_tenant_request").on(t.tenantId, t.requestId, t.decidedAt),
+  check("verification_decisions_decision_check", sql`${t.decision} IN ('APPROVE', 'REJECT', 'REVOKE')`),
+  check("verification_decisions_reason_check", sql`length(trim(${t.reason})) BETWEEN 3 AND 1000`),
+  check("verification_decisions_sod_check", sql`jsonb_typeof(${t.sodEvaluation}) = 'object'`),
+]);
+
+export const verificationBadges = pgTable("verification_badges", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  requestId: uuid("request_id").notNull(),
+  approvalDecisionId: uuid("approval_decision_id").notNull().references(() => verificationDecisions.id, { onDelete: "restrict" }),
+  level: text("level").default("VERIFIED").notNull(),
+  issuedAt: timestamp("issued_at", { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: date("expires_at").notNull(),
+  issuedBy: uuid("issued_by").notNull().references(() => users.id),
+  evidenceSnapshotRef: uuid("evidence_snapshot_ref").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({
+    name: "verification_badges_request_tenant_fk",
+    columns: [t.requestId, t.tenantId],
+    foreignColumns: [verificationRequests.id, verificationRequests.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "verification_badges_snapshot_ref_fk",
+    columns: [t.evidenceSnapshotRef, t.tenantId],
+    foreignColumns: [verificationRequests.id, verificationRequests.tenantId],
+  }).onDelete("restrict"),
+  unique("verification_badges_request_unique").on(t.requestId),
+  unique("verification_badges_approval_unique").on(t.approvalDecisionId),
+  index("verification_badges_tenant_time").on(t.tenantId, t.issuedAt),
+  check("verification_badges_level_check", sql`${t.level} = 'VERIFIED'`),
+  check("verification_badges_snapshot_ref_check", sql`${t.evidenceSnapshotRef} = ${t.requestId}`),
+  check("verification_badges_expiry_check", sql`${t.expiresAt} > ${t.issuedAt}::date`),
 ]);
 
 // ---------------------------------------------------------------------------
