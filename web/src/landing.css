@@ -151,9 +151,9 @@
 .v-availability.v-status-preview small { color: rgb(var(--vaka-home-white-rgb) / .68); }
 .v-hero-product { max-width: 760px; min-width: 0; position: relative; text-align: left; z-index: 2; }
 .v-hero-media { inset: 0; overflow: hidden; position: absolute; z-index: 0; }
-.v-hero-media img { height: 100%; object-fit: cover; object-position: 72% 40%; opacity: .32; width: 100%; }
-.v-hero-video { height: 100%; inset: 0; object-fit: cover; object-position: 72% 40%; opacity: .32; position: absolute; width: 100%; }
-.v-hero-media::after { background: linear-gradient(102deg, rgb(var(--vaka-home-ink-rgb) / .97) 0%, rgb(var(--vaka-home-ink-rgb) / .82) 40%, rgb(var(--vaka-home-ink-rgb) / .48) 100%); content: ""; inset: 0; position: absolute; }
+.v-hero-media img { height: 100%; object-fit: cover; object-position: 72% 40%; opacity: .62; width: 100%; }
+.v-hero-video { height: 100%; inset: 0; object-fit: cover; object-position: 72% 40%; opacity: .62; position: absolute; width: 100%; }
+.v-hero-media::after { background: linear-gradient(102deg, rgb(var(--vaka-home-ink-rgb) / .9) 0%, rgb(var(--vaka-home-ink-rgb) / .64) 44%, rgb(var(--vaka-home-ink-rgb) / .28) 100%); content: ""; inset: 0; position: absolute; }
 
 /* Photographic audiences band */
 .v-audiences { background: var(--v-ink); color: var(--vaka-home-pure-white); }
@@ -387,8 +387,8 @@
   .v-trust-grid { grid-template-columns: repeat(2, 1fr); }
   .v-hero { grid-template-columns: 1fr; padding-top: var(--vaka-space-20); text-align: center; }
   .v-hero::before { left: 50%; right: auto; transform: translateX(-50%); }
-  .v-hero-media img { opacity: .16; }
-  .v-hero-media::after { background: linear-gradient(180deg, rgb(var(--vaka-home-ink-rgb) / .84), rgb(var(--vaka-home-ink-rgb) / .96)); }
+  .v-hero-media img { opacity: .5; }
+  .v-hero-media::after { background: linear-gradient(180deg, rgb(var(--vaka-home-ink-rgb) / .52) 0%, rgb(var(--vaka-home-ink-rgb) / .78) 58%, rgb(var(--vaka-home-ink-rgb) / .92) 100%); }
   .v-audience-grid { grid-template-columns: repeat(2, 1fr); }
   .v-hero-copy { margin: 0 auto; }
   .v-hero h1 { margin-left: auto; margin-right: auto; max-width: 880px; }
