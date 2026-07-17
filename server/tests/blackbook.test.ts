@@ -1,5 +1,5 @@
 // ============================================================================
-// PB-001 TESTS — Black Book registry.
+// PB-001/PB-003 TESTS — Black Book registry, directory and search projection.
 //   1. validateDataset: implements the schema.md import contract (checks
 //      1–8, 10) — every rejection class exercised on a synthetic dataset.
 //   2. Import: create → unchanged → versioned update; atomic failure leaves
@@ -69,6 +69,7 @@ function miniDataset(): BlackbookDataset {
 }
 
 let owner: { token: string; tenantId: string; userId: string };
+let disabledTenant: { token: string; tenantId: string };
 
 beforeAll(async () => {
   const res = await request(app).post("/api/v1/auth/signup").send({
@@ -79,6 +80,17 @@ beforeAll(async () => {
   expect(res.status).toBe(200);
   const me = await request(app).get("/api/v1/me").set(auth(res.body.token));
   owner = { token: res.body.token, tenantId: res.body.tenant.id, userId: me.body.user.id };
+  const disabled = await request(app).post("/api/v1/auth/signup").send({
+    companyName: `BlackBook Disabled ${uniq}`, subdomain: `${uniq}b`, baseCurrency: "USD",
+    ownerEmail: `disabled-${uniq}@test.zw`, ownerPassword: "SuperSecret123!", ownerName: "Owner",
+    planName: "Growth",
+  });
+  expect(disabled.status).toBe(200);
+  disabledTenant = { token: disabled.body.token, tenantId: disabled.body.tenant.id };
+  await db.update(schema.tenants).set({ countryCode: COUNTRY })
+    .where(eq(schema.tenants.id, owner.tenantId));
+  await db.update(schema.tenants).set({ countryCode: COUNTRY })
+    .where(eq(schema.tenants.id, disabledTenant.tenantId));
 });
 
 describe("validateDataset (schema.md contract)", () => {
@@ -180,6 +192,13 @@ describe("tenant reads (behind blackbook.directory)", () => {
     const res = await request(app).get("/api/v1/blackbook/entries").set(auth(owner.token));
     expect(res.status).toBe(403);
     expect(res.body.code ?? res.body.error ?? JSON.stringify(res.body)).toMatch(/FEATURE|disabled/i);
+    const gatedSearch = await request(app).get("/api/v1/blackbook/search")
+      .query({ q: "Test Ministry" }).set(auth(owner.token));
+    expect(gatedSearch.status).toBe(403);
+    const search = await request(app).get("/api/v1/search")
+      .query({ q: "Test Ministry", entityTypes: "blackbook" }).set(auth(owner.token));
+    expect(search.status).toBe(200);
+    expect(search.body.results).toEqual([]);
   });
   it("lists and reads entries with provenance once enabled", async () => {
     await db.insert(schema.tenantFeatureFlags).values({
@@ -196,6 +215,49 @@ describe("tenant reads (behind blackbook.directory)", () => {
       .get(`/api/v1/blackbook/entries?country=${COUNTRY}&q=renamed`).set(auth(owner.token));
     expect(search.status).toBe(200);
     expect(search.body.map((entry: any) => entry.key)).toEqual(["test-ministry"]);
+
+    const keywordSearch = await request(app)
+      .get(`/api/v1/blackbook/entries?country=${COUNTRY}&q=synthetic%20test%20record`).set(auth(owner.token));
+    expect(keywordSearch.status).toBe(200);
+    expect(keywordSearch.body.map((entry: any) => entry.key)).toEqual(["test-ministry"]);
+
+    const universal = await request(app).get("/api/v1/search")
+      .query({ q: "synthetic test record", entityTypes: "blackbook" }).set(auth(owner.token));
+    expect(universal.status).toBe(200);
+    expect(universal.body.results).toHaveLength(1);
+    expect(universal.body.results[0]).toMatchObject({
+      id: "test-ministry",
+      entityType: "blackbook",
+      title: "Test Ministry (Renamed)",
+      document: {
+        id: "test-ministry",
+        entityType: "blackbook",
+        key: "test-ministry",
+        category: "government_organisation",
+        verified: true,
+        lastReviewed: "2026-07-15",
+      },
+      object: {
+        key: "blackbook",
+        navigation: { section: "blackbook", recordView: "entry" },
+      },
+    });
+    expect(universal.body.results[0].document).not.toHaveProperty("payload");
+    expect(universal.body.results[0].document).not.toHaveProperty("sources");
+
+    const directorySearch = await request(app).get("/api/v1/blackbook/search")
+      .query({ q: "synthetic test record" }).set(auth(owner.token));
+    expect(directorySearch.status).toBe(200);
+    expect(directorySearch.headers["cache-control"]).toBe("private, no-store");
+    expect(directorySearch.body.results.map((result: any) => result.id)).toEqual(["test-ministry"]);
+
+    const disabledSearch = await request(app).get("/api/v1/search")
+      .query({ q: "synthetic test record", entityTypes: "blackbook" }).set(auth(disabledTenant.token));
+    expect(disabledSearch.status).toBe(200);
+    expect(disabledSearch.body.results).toEqual([]);
+    const disabledDirectorySearch = await request(app).get("/api/v1/blackbook/search")
+      .query({ q: "synthetic test record" }).set(auth(disabledTenant.token));
+    expect(disabledDirectorySearch.status).toBe(403);
 
     const detail = await request(app)
       .get(`/api/v1/blackbook/entries/test-licence?country=${COUNTRY}`).set(auth(owner.token));

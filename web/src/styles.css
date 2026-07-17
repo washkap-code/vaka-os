@@ -684,6 +684,65 @@ label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); 
 .billing-payment-action { align-items: center; display: flex; flex-wrap: wrap; gap: var(--vaka-space-2); min-width: 9rem; }
 .billing-run-result .cards { margin: var(--vaka-space-4) 0; }
 
+/* PB-003 — Black Book directory and detail */
+.blackbook-workspace { display: grid; gap: var(--vaka-space-5); margin: 0 auto; max-width: var(--vaka-container-max); min-width: 0; width: 100%; }
+.blackbook-directory-header, .blackbook-detail-header { align-items: flex-start; display: flex; gap: var(--vaka-space-4); justify-content: space-between; }
+.blackbook-directory-header h1, .blackbook-detail-header h1 { margin-bottom: var(--vaka-space-1); overflow-wrap: anywhere; }
+.blackbook-readonly, .blackbook-status { background: var(--vaka-workspace-surface-subtle); border: 1px solid var(--line); border-radius: var(--vaka-radius-full); color: var(--muted); flex: 0 0 auto; font-size: var(--vaka-type-label); font-weight: var(--vaka-weight-semibold); padding: var(--vaka-space-2) var(--vaka-space-3); }
+.blackbook-status.is-verified { background: var(--vaka-workspace-success-surface); color: var(--vaka-color-success-text); }
+.blackbook-notice { background: var(--vaka-workspace-warning-surface-strong); border: 1px solid var(--vaka-workspace-warning-border); border-radius: var(--vaka-workspace-radius-panel); display: grid; gap: var(--vaka-space-1); padding: var(--vaka-space-4); }
+.blackbook-notice strong { color: var(--vaka-workspace-warning-text-strong); }
+.blackbook-notice p { color: var(--vaka-workspace-warning-text-alt); line-height: var(--vaka-leading-body); margin: 0; }
+.blackbook-search { background: var(--vaka-workspace-surface); border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-panel); display: grid; gap: var(--vaka-space-2); padding: var(--vaka-space-4); }
+.blackbook-search > label { color: var(--text); font-weight: var(--vaka-weight-semibold); }
+.blackbook-search > div { align-items: stretch; display: flex; gap: var(--vaka-space-2); }
+.blackbook-search input { flex: 1 1 20rem; min-height: var(--vaka-control-height-md); min-width: 0; }
+.blackbook-search .btn { min-height: var(--vaka-control-height-md); }
+.blackbook-categories { display: flex; flex-wrap: wrap; gap: var(--vaka-space-2); }
+.blackbook-category { background: var(--vaka-workspace-surface); border: 1px solid var(--line); border-radius: var(--vaka-radius-full); color: var(--text); cursor: pointer; font: inherit; min-height: var(--vaka-control-height-md); padding: var(--vaka-space-2) var(--vaka-space-4); }
+.blackbook-category:hover { background: var(--vaka-workspace-surface-hover); border-color: var(--brand); }
+.blackbook-category.is-active { background: var(--brand); border-color: var(--brand); color: var(--vaka-color-text-inverse); font-weight: var(--vaka-weight-semibold); }
+.blackbook-results-status { color: var(--muted); line-height: var(--vaka-leading-body); margin: 0; }
+.blackbook-results-status.is-error { color: var(--danger); }
+.blackbook-entry-list { display: grid; gap: var(--vaka-space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); list-style: none; margin: 0; padding: 0; }
+.blackbook-entry-list li { min-width: 0; }
+.blackbook-entry-list button { background: var(--vaka-workspace-surface); border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-panel); box-shadow: var(--vaka-shadow-xs); color: var(--text); cursor: pointer; display: grid; gap: var(--vaka-space-4); height: 100%; min-height: 10rem; padding: var(--vaka-space-5); text-align: left; width: 100%; }
+.blackbook-entry-list button:hover { background: var(--vaka-workspace-surface-hover); border-color: var(--brand); }
+.blackbook-entry-heading { display: grid; gap: var(--vaka-space-2); min-width: 0; }
+.blackbook-entry-heading strong { font-size: var(--vaka-type-heading-3); overflow-wrap: anywhere; }
+.blackbook-category-label { color: var(--vaka-color-info-text); font-size: var(--vaka-type-label); font-weight: var(--vaka-weight-bold); letter-spacing: var(--vaka-tracking-label); text-transform: uppercase; }
+.blackbook-entry-meta { color: var(--muted); display: flex; flex-wrap: wrap; font-size: var(--vaka-type-small); gap: var(--vaka-space-2) var(--vaka-space-4); }
+.blackbook-open-entry { color: var(--brand); font-weight: var(--vaka-weight-semibold); margin-top: auto; }
+.blackbook-back { justify-self: start; min-height: var(--vaka-control-height-md); }
+.blackbook-state { background: var(--vaka-workspace-surface); border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-panel); color: var(--muted); padding: var(--vaka-space-6); }
+.blackbook-state--error { background: var(--vaka-workspace-danger-surface); color: var(--danger); display: grid; gap: var(--vaka-space-3); justify-items: start; }
+.blackbook-detail { display: grid; gap: var(--vaka-space-5); margin: 0 auto; max-width: var(--vaka-reading-max); min-width: 0; width: 100%; }
+.blackbook-detail-header > div { display: grid; gap: var(--vaka-space-2); min-width: 0; }
+.blackbook-verification-help { color: var(--muted); line-height: var(--vaka-leading-body); margin: calc(var(--vaka-space-3) * -1) 0 0; }
+.blackbook-review-date { align-items: baseline; background: var(--vaka-workspace-info-surface); border-radius: var(--vaka-workspace-radius-control); display: flex; flex-wrap: wrap; gap: var(--vaka-space-2) var(--vaka-space-4); padding: var(--vaka-space-3) var(--vaka-space-4); }
+.blackbook-review-date span { color: var(--vaka-workspace-info-text); }
+.blackbook-detail-section { display: grid; gap: var(--vaka-space-3); }
+.blackbook-detail-section h2 { font-size: var(--vaka-type-heading-3); }
+.blackbook-facts { border: 1px solid var(--line); border-radius: var(--vaka-workspace-radius-panel); margin: 0; overflow: hidden; }
+.blackbook-facts > div { display: grid; gap: var(--vaka-space-2); grid-template-columns: minmax(9rem, .7fr) minmax(0, 1.3fr); padding: var(--vaka-space-4); }
+.blackbook-facts > div + div { border-top: 1px solid var(--line); }
+.blackbook-facts dt { color: var(--muted); font-weight: var(--vaka-weight-semibold); }
+.blackbook-facts dd { line-height: var(--vaka-leading-body); margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.blackbook-value-list { display: grid; gap: var(--vaka-space-2); margin: 0; padding-left: var(--vaka-space-5); }
+.blackbook-reference-link { background: transparent; border: 0; color: var(--brand); cursor: pointer; font: inherit; min-height: var(--vaka-control-height-sm); padding: var(--vaka-space-1) 0; text-align: left; text-decoration: underline; text-underline-offset: .15em; }
+.blackbook-official-link, .blackbook-sources a { color: var(--brand); display: grid; gap: var(--vaka-space-1); overflow-wrap: anywhere; text-underline-offset: .15em; }
+.blackbook-official-link span, .blackbook-sources a span { color: var(--muted); font-size: var(--vaka-type-small); font-weight: var(--vaka-weight-regular); }
+.blackbook-sources { display: grid; gap: var(--vaka-space-3); margin: 0; padding-left: var(--vaka-space-6); }
+
+@media (max-width: 640px) {
+  .blackbook-directory-header, .blackbook-detail-header { align-items: stretch; flex-direction: column; }
+  .blackbook-readonly, .blackbook-status { align-self: flex-start; }
+  .blackbook-search > div { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .blackbook-search .btn { width: 100%; }
+  .blackbook-category { flex: 1 1 auto; }
+  .blackbook-facts > div { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* P4-002 — controlled procurement lifecycle */
 .procurement-workspace { display: grid; gap: var(--vaka-space-5); }
 .procurement-header { align-items: flex-start; display: flex; gap: var(--vaka-space-4); justify-content: space-between; }

@@ -31,6 +31,8 @@ const TasksWorkspace = lazy(() => import("./tasks/tasks-workspace")
   .then((module) => ({ default: module.TasksWorkspace })));
 const DocumentsWorkspace = lazy(() => import("./documents/documents-workspace")
   .then((module) => ({ default: module.DocumentsWorkspace })));
+const BlackbookDirectory = lazy(() => import("./blackbook/blackbook-directory")
+  .then((module) => ({ default: module.BlackbookDirectory })));
 
 // ============================================================================
 // VAKA PLATFORM — web client
@@ -1298,7 +1300,7 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
   const t = me.tenant!;
   const suspended = me.accessLevel !== "full";
   const visibleNav = useMemo(() => visibleWorkspaceNavigation(me.permissions, me.isTenantOwner, me.features ?? []),
-    [me.permissions, me.isTenantOwner]);
+    [me.permissions, me.isTenantOwner, me.features]);
   const page = resolveWorkspacePage(requestedPage, visibleNav);
   const selectSearchTarget = useCallback((target: WorkspaceSearchTarget) => {
     setSearchTarget(target);
@@ -1339,6 +1341,10 @@ function Shell({ me, onLogout, onRefresh }: { me: Me; onLogout: (reason?: "EXPLI
         {page === "documents" && <Suspense fallback={<div className="panel">{appEnglish.documents.title}…</div>}>
           <DocumentsWorkspace readonly={suspended}
             canManage={me.permissions.includes("documents.manage")} />
+        </Suspense>}
+        {page === "blackbook" && <Suspense fallback={<div className="panel">{appEnglish.blackbook.loading}</div>}>
+          <BlackbookDirectory initialEntryKey={searchTarget?.entityType === "blackbook" ? searchTarget.recordId : null}
+            onInitialEntryConsumed={consumeSearchTarget} />
         </Suspense>}
         {page === "usersActivity" && me.isTenantOwner && <UsersActivity />}
         {page === "imports" && <ImportCenter
