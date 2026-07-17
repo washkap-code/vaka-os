@@ -133,6 +133,19 @@ export const HOME_EN = {
       { title: "Built to expand", description: "Separate country rules from the platform so future markets can be localised responsibly.", icon: "growth" },
     ],
   },
+  audiences: {
+    eyebrow: "Who VAKA is for",
+    title: "Built for the people who build Zimbabwe’s economy.",
+    description: "From boardrooms to counter tops, VAKA is shaped around how Zimbabwean businesses actually operate—clear, connected and built to grow.",
+    featureCaption: "Owners and operators building something durable.",
+    featureAlt: "Confident Zimbabwean business owner in a tailored blazer",
+    items: [
+      { image: "executives", label: "Leadership", title: "Executives & owners", description: "See the whole business at a glance and lead with current numbers.", alt: "Zimbabwean executives collaborating in a modern boardroom" },
+      { image: "entrepreneurs", label: "SMEs & traders", title: "Entrepreneurs", description: "Run stock, sales and customers from one workspace on any device.", alt: "Zimbabwean shop owner managing stock on a tablet" },
+      { image: "finance", label: "Professionals", title: "Finance & advisors", description: "Keep clean, auditable records and clear financial visibility.", alt: "Zimbabwean finance professional reviewing dashboards" },
+      { image: "mobile", label: "Mobile-first", title: "Connected teams", description: "Work wherever business happens, with mobile apps on the roadmap.", alt: "Zimbabwean entrepreneur accepting a mobile payment on a phone" },
+    ],
+  },
   problem: {
     eyebrow: "Business problems, connected outcomes",
     title: "Your business should not be spread across five different places.",

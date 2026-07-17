@@ -254,6 +254,37 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
+  const homeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const root = homeRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const targets = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        ".v-section-heading, .v-capability, .v-outcome, .v-roadmap-card, .v-trust-grid article, .v-plan, .v-audience-card, .v-story-portrait, .v-workflow-step, .v-partner-tiers article",
+      ),
+    );
+    if (!targets.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    const foldThreshold = window.innerHeight * 0.92;
+    for (const element of targets) {
+      element.classList.add("v-reveal");
+      if (element.getBoundingClientRect().top < foldThreshold) element.classList.add("is-visible");
+      else observer.observe(element);
+    }
+    root.setAttribute("data-reveal-ready", "");
+    return () => observer.disconnect();
+  }, []);
+
   const go = (id: string) => {
     document.getElementById(id)?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
@@ -273,7 +304,7 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
     .map((id) => [id, copy.nav[id === "faq" ? "resources" : id]] as const);
 
   return (
-    <div className="v-home">
+    <div className="v-home" ref={homeRef}>
       <a className="v-skip" href="#main">{copy.accessibility.skip}</a>
       <header className="v-nav">
         <button className="v-logo" onClick={() => go("top")} aria-label={copy.meta.title}>
@@ -310,6 +341,9 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
 
       <main id="main">
         <section className="v-hero" id="top">
+          <div className="v-hero-media" aria-hidden="true">
+            <img src="/media/vaka-hero.webp" alt="" decoding="async" />
+          </div>
           <div className="v-hero-copy">
             <span className="v-eyebrow">{copy.hero.eyebrow}</span>
             <h1>{copy.hero.title}</h1>
@@ -340,7 +374,9 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
         <div className="v-credibility" aria-label={copy.accessibility.productCapabilities}>{copy.capabilityLine}</div>
 
         <section className="v-section v-story" id="why">
-          <div className="v-story-mark" aria-hidden="true">V</div>
+          <figure className="v-story-portrait">
+            <img src="/media/vaka-portrait.webp" alt={copy.audiences.featureAlt} loading="lazy" decoding="async" />
+          </figure>
           <div>
             <span className="v-eyebrow v-eyebrow-dark">{copy.story.eyebrow}</span>
             <h2>{copy.story.title}</h2>
@@ -364,6 +400,26 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
                 <span className="v-icon">{icon(capability.icon)}</span>
                 <h3>{capability.title}</h3>
                 <p>{capability.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="v-section v-audiences" id="who">
+          <div className="v-section-heading">
+            <span className="v-eyebrow">{copy.audiences.eyebrow}</span>
+            <h2>{copy.audiences.title}</h2>
+            <p>{copy.audiences.description}</p>
+          </div>
+          <div className="v-audience-grid">
+            {copy.audiences.items.map((item) => (
+              <article className="v-audience-card" key={item.image}>
+                <img src={`/media/vaka-${item.image}.webp`} alt={item.alt} loading="lazy" decoding="async" />
+                <div>
+                  <span className="v-product-label">{item.label}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                </div>
               </article>
             ))}
           </div>
