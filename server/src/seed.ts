@@ -5,6 +5,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { platformAdminPassword } from "./config.js";
 import { CURRENT_PLANS, PLATFORM_ADMIN_EMAIL, PLATFORM_ADMIN_NAME } from "./commercial.js";
 import { PLATFORM_ROLE_DEFINITIONS } from "./platform-staff.js";
+import { logEvent } from "./observability.js";
 
 async function main() {
   const adminPassword = platformAdminPassword();
@@ -77,7 +78,7 @@ async function main() {
       updatedBy: platformAdmin.id,
     }).onConflictDoNothing({ target: schema.platformStaffProfiles.userId });
   }
-  console.log("Seeded plans + platform admin");
+  logEvent("seed.completed", { platformAdminPresent: Boolean(platformAdmin) });
   process.exit(0);
 }
 main();

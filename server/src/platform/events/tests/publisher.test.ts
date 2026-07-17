@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { EVENT_BUS, platformKernel } from "../../../platform-runtime.js";
 import { runWithPostCommitEvents } from "../adapters/publisher.js";
 import { DOMAIN_EVENTS } from "../registry.js";
+import { applicationLogger } from "../../../observability.js";
 
 describe("post-commit domain event publisher", () => {
   afterEach(() => { vi.restoreAllMocks(); });
@@ -34,7 +35,7 @@ describe("post-commit domain event publisher", () => {
   });
 
   it("returns committed work when a post-commit projection is unavailable", async () => {
-    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const logged = vi.spyOn(applicationLogger, "error").mockImplementation(() => undefined);
     const result = await runWithPostCommitEvents(async (queue) => {
       queue({ type: DOMAIN_EVENTS.INVOICE_VOIDED, tenantId: "tenant-1", actorUserId: "user-1",
         payload: { invoiceId: "invoice-committed", reason: "test" } });
@@ -42,9 +43,10 @@ describe("post-commit domain event publisher", () => {
     }, async () => { throw new Error("optional projection unavailable"); });
 
     expect(result).toBe("committed");
-    expect(logged).toHaveBeenCalledWith("[event.post_commit_publish_failed]", expect.objectContaining({
+    expect(logged).toHaveBeenCalledWith("event.post_commit_publish_failed", expect.objectContaining({
+      event: "event.post_commit_publish_failed",
       eventType: DOMAIN_EVENTS.INVOICE_VOIDED,
-      error: "optional projection unavailable",
+      errorType: "Error",
     }));
   });
 });

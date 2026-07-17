@@ -270,9 +270,16 @@ beforeAll(async () => {
 
 describe("endpoint inventory contract", () => {
   it("enumerates every Express endpoint and requires an isolation vector", async () => {
-    const source = await readFile(new URL("../src/routes.ts", import.meta.url), "utf8");
+    const [appSource, source] = await Promise.all([
+      readFile(new URL("../src/app.ts", import.meta.url), "utf8"),
+      readFile(new URL("../src/routes.ts", import.meta.url), "utf8"),
+    ]);
+    const appRegistration = /\bapp\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
     const registration = /\bapi\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
-    const discovered: string[] = ["GET /health"];
+    const discovered: string[] = [];
+    for (const match of appSource.matchAll(appRegistration)) {
+      discovered.push(`${match[1].toUpperCase()} ${match[2]}`);
+    }
     for (const match of source.matchAll(registration)) {
       discovered.push(`${match[1].toUpperCase()} /api/v1${match[2]}`);
     }
@@ -285,7 +292,7 @@ describe("endpoint inventory contract", () => {
   it("documents every public and cross-tenant shared exception", () => {
     const exceptions = endpointCoverageManifest.filter(({ access }) =>
       access === "public" || access === "shared-authenticated");
-    expect(exceptions).toHaveLength(17);
+    expect(exceptions).toHaveLength(19);
     expect(exceptions.every(({ justification }) => Boolean(justification))).toBe(true);
   });
 

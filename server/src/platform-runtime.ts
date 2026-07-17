@@ -32,6 +32,7 @@ import {
   findNotificationDuplicate, persistNotification, PLATFORM_NOTIFICATION_SCOPE,
 } from "./notifications.js";
 import { createConfiguredEmailTransport } from "./email-transport.js";
+import { applicationLogger, logEvent } from "./observability.js";
 import { InMemoryEventBus } from "./platform/events/service.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
@@ -193,10 +194,10 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       options.eventSubscriberError(error, event.type);
       return;
     }
-    console.error("[event.subscriber_failed]", {
+    logEvent("event.subscriber_failed", {
       eventType: event.type,
-      error: error instanceof Error ? error.message : "Unknown subscriber error",
-    });
+      errorType: error instanceof Error ? error.name : "UnknownError",
+    }, "error", applicationLogger);
   }));
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());

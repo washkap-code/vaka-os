@@ -63,6 +63,11 @@ import {
   listImportRuns as listBlackbookImportRuns,
 } from "./blackbook.js";
 import {
+  addEvidence, addEvidenceSchema, evidenceStatusFilterSchema, getEvidence,
+  listEvidence, renewEvidence, renewEvidenceSchema, withdrawEvidence,
+  withdrawEvidenceSchema,
+} from "./verification-vault.js";
+import {
   directoryQuerySchema, enquirySchema, getDirectoryProfile, getMyProfile,
   listEnquiries, profileInputSchema, publishProfile, resolveEnquiry, saveProfile,
   searchDirectory, sendEnquiry, unpublishProfile,
@@ -158,6 +163,7 @@ import {
   warehouseCreateSchema, warehouseUpdateSchema,
 } from "./warehouse-settings.js";
 import { getSupplierAnalytics, supplierAnalyticsQuerySchema } from "./supplier-analytics.js";
+import { logEvent } from "./observability.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -230,11 +236,28 @@ api.post("/auth/login", wrap(async (req, res) => {
   const { email, password, subdomain } = z.object({
     email: z.string().email(), password: z.string(), subdomain: z.string().optional(),
   }).parse(req.body);
-  const session = await login(email, password, subdomain, {
-    clientType: req.header("X-Vaka-Client") ?? "web",
-    appVersion: req.header("X-Vaka-App-Version") ?? undefined,
-    userAgent: req.header("User-Agent") ?? undefined,
-    ip: req.ip,
+  let session: Awaited<ReturnType<typeof login>>;
+  try {
+    session = await login(email, password, subdomain, {
+      clientType: req.header("X-Vaka-Client") ?? "web",
+      appVersion: req.header("X-Vaka-App-Version") ?? undefined,
+      userAgent: req.header("User-Agent") ?? undefined,
+      ip: req.ip,
+    });
+  } catch (error) {
+    logEvent("auth.login.failed", {
+      requestId: req.requestId ?? null,
+      route: "/api/v1/auth/login",
+      reason: "authentication_rejected",
+    }, "warn");
+    throw error;
+  }
+  logEvent("auth.login.succeeded", {
+    requestId: req.requestId ?? null,
+    route: "/api/v1/auth/login",
+    tenantId: session.user.tenantId,
+    userId: session.user.id,
+    mfaRequired: session.mfaRequired,
   });
   return deliverSession(res, session);
 }));
@@ -1776,8 +1799,18 @@ api.patch("/invoices/:id", requirePermission("accounting.post"), wrap(async (req
     notes: body.notes ?? null,
   });
 }));
-api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) =>
-  issueInvoice({ tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId })));
+api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) => {
+  const issued = await issueInvoice({
+    tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId,
+  });
+  logEvent("invoice.posted", {
+    requestId: req.requestId ?? null,
+    tenantId: tenantId(req),
+    userId: req.auth!.userId,
+    invoiceId: issued.id,
+  });
+  return issued;
+}));
 api.post("/invoices/:id/payments", requirePermission("accounting.post"), wrap(async (req) => {
   const body = z.object({
     amount: z.string(), bankAccountId: z.string().uuid().optional(),
@@ -2008,6 +2041,33 @@ api.get("/blackbook/entries/:key", requireFeature("blackbook.directory"), wrap(a
 }));
 
 // ---------------------------------------------------------------------------
+// PV-001: verification evidence vault. Typed, expiring references into the
+// PD-001 documents workspace with an append-only renewal chain. Ships dark
+// behind `verify.centre`; fails closed. Review/badges arrive with PV-002 —
+// nothing here asserts that a business "is verified".
+// ---------------------------------------------------------------------------
+api.get("/verification/evidence", requireFeature("verify.centre"),
+  requirePermission("verify.read"), wrap(async (req) =>
+    listEvidence(tenantId(req), {
+      status: evidenceStatusFilterSchema.optional()
+        .parse(req.query.status as string | undefined) ?? "ACTIVE",
+    })));
+api.post("/verification/evidence", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    addEvidence(tenantId(req), req.auth!.userId, addEvidenceSchema.parse(req.body))));
+api.get("/verification/evidence/:id", requireFeature("verify.centre"),
+  requirePermission("verify.read"), wrap(async (req) =>
+    getEvidence(tenantId(req), uuidRouteParam(req, "id"))));
+api.post("/verification/evidence/:id/renew", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    renewEvidence(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      renewEvidenceSchema.parse(req.body))));
+api.post("/verification/evidence/:id/withdraw", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    withdrawEvidence(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
+      withdrawEvidenceSchema.parse(req.body).reason)));
+
+// ---------------------------------------------------------------------------
 // PN-001: opt-in public business profile. Nothing public by default; edits
 // stay private; only the tenant OWNER can publish (freezes the snapshot the
 // PN-002 directory will read) or unpublish (removes it immediately). Ships
@@ -2094,12 +2154,22 @@ api.post("/migration/projects/:id/steps/:kind/preview", requireFeature("migratio
       csvText: migrationPreviewSchema.parse(req.body).csvText,
     })));
 api.post("/migration/projects/:id/steps/:stepId/commit", requireFeature("migration.hub"),
-  requirePermission("imports.approve"), wrap(async (req) =>
-    commitMigrationStep({
+  requirePermission("imports.approve"), wrap(async (req) => {
+    const applied = await commitMigrationStep({
       tenantId: tenantId(req), userId: req.auth!.userId,
       projectId: uuidRouteParam(req, "id"), stepId: uuidRouteParam(req, "stepId"),
       asOfDate: migrationCommitSchema.parse(req.body ?? {}).asOfDate,
-    })));
+    });
+    logEvent("migration.applied", {
+      requestId: req.requestId ?? null,
+      tenantId: tenantId(req),
+      userId: req.auth!.userId,
+      projectId: applied.step.projectId,
+      stepId: applied.step.id,
+      migrationKind: applied.step.kind,
+    });
+    return applied;
+  }));
 api.post("/migration/projects/:id/steps/:stepId/discard", requireFeature("migration.hub"),
   requirePermission("imports.approve"), wrap(async (req) =>
     discardMigrationStep({

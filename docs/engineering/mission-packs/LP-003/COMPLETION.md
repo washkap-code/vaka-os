@@ -1,6 +1,6 @@
 # LP-003 — CORS and Configuration Hardening
 
-**Status:** Complete pending pull-request gates
+**Status:** Complete and merged through PR #90 (`d883d403`)
 **Branch:** `hardening/cors-config-lp003`
 **Completed:** 2026-07-16
 **Migration:** None; migration number 0046 remains free
@@ -100,7 +100,7 @@ Conditional or optional values:
 - No production environment, shared database, secret store or runtime was
   accessed or changed.
 - GitHub's full unmodified suite, tenant-isolation, security, CodeQL and preview
-  gates remain the final merge gate for this branch.
+  gates passed. PR #90 merged to `main` at `d883d403`.
 
 ## 6. Risks and human decisions
 
