@@ -1,0 +1,142 @@
+[
+  {
+    "id": "zw-public-sector-wf-budget-commitment",
+    "name": "Budget and commitment control",
+    "category": "industry_workflow",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Control spend against approved budgets with commitments raised before orders.",
+    "stages": [
+      "Load approved budget",
+      "Raise commitment/requisition",
+      "Check budget availability",
+      "Order and receive",
+      "Report execution vs budget"
+    ],
+    "erpCapabilities": [
+      "Budgeting",
+      "Commitment control",
+      "Procurement",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-public-sector-kpi-budget-execution"
+    ]
+  },
+  {
+    "id": "zw-public-sector-wf-egp-procurement",
+    "name": "Procurement through eGP",
+    "category": "industry_workflow",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Publish, evaluate and award procurement through the regulated channels with a full audit trail.",
+    "stages": [
+      "Plan procurement",
+      "Publish via eGP/portals",
+      "Receive and evaluate bids",
+      "Award and contract",
+      "Record for audit"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Black Book tender portals",
+      "Approvals",
+      "Audit trail"
+    ],
+    "relatedKpiIds": [
+      "zw-public-sector-kpi-procurement-cycle"
+    ]
+  },
+  {
+    "id": "zw-public-sector-wf-revenue-billing",
+    "name": "Rates and service billing (councils)",
+    "category": "industry_workflow",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill rates, rents and service charges to ratepayer accounts with collections and arrears management.",
+    "stages": [
+      "Maintain ratepayer register",
+      "Bill rates/services per cycle",
+      "Receipt across channels",
+      "Manage arrears and plans",
+      "Report collection rates"
+    ],
+    "erpCapabilities": [
+      "Billing",
+      "Receivables",
+      "Receipts",
+      "Statements"
+    ],
+    "relatedKpiIds": [
+      "zw-public-sector-kpi-revenue-collection",
+      "zw-public-sector-kpi-arrears"
+    ]
+  },
+  {
+    "id": "zw-public-sector-wf-payables",
+    "name": "Supplier payments and creditor control",
+    "category": "industry_workflow",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Process supplier invoices against orders and receipts with payment scheduling.",
+    "stages": [
+      "Match invoice to PO/GRN",
+      "Approve per delegation",
+      "Schedule payment runs",
+      "Pay and reconcile",
+      "Report creditor ageing"
+    ],
+    "erpCapabilities": [
+      "Payables",
+      "Three-way match",
+      "Approvals",
+      "Bank reconciliation"
+    ],
+    "relatedKpiIds": [
+      "zw-public-sector-kpi-creditor-days"
+    ]
+  },
+  {
+    "id": "zw-public-sector-wf-audit-actions",
+    "name": "Audit finding follow-up",
+    "category": "industry_workflow",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track audit findings to resolution with owners and evidence; the statutory audit regime is a declared gap.",
+    "stages": [
+      "Register findings",
+      "Assign owners and deadlines",
+      "Track remediation",
+      "Attach evidence",
+      "Report closure status"
+    ],
+    "erpCapabilities": [
+      "Action register",
+      "Task automation",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-public-sector-kpi-audit-actions"
+    ]
+  }
+]

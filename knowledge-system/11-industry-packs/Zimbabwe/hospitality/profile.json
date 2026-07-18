@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-hospitality",
+    "name": "Hospitality (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses providing accommodation, food, beverage and tourism experiences: hotels, lodges, restaurants, bars, caterers and tour operators.",
+    "subSectors": [
+      {
+        "name": "Hotels and lodges",
+        "description": "Accommodation from city hotels to safari lodges."
+      },
+      {
+        "name": "Guest houses and boarding houses",
+        "description": "Small accommodation providers."
+      },
+      {
+        "name": "Restaurants and catering",
+        "description": "Food service from fine dining to fast food and events catering."
+      },
+      {
+        "name": "Bars and nightlife",
+        "description": "Licensed liquor outlets and entertainment venues."
+      },
+      {
+        "name": "Tour and safari operators",
+        "description": "Tours, transfers, activities and safari operations."
+      },
+      {
+        "name": "Conferencing and events",
+        "description": "Venues and event services."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Home-based caterers and single-room operators."
+      },
+      {
+        "tier": "Small",
+        "description": "Guest houses, small restaurants and single-vehicle tour operators."
+      },
+      {
+        "tier": "Medium",
+        "description": "Full-service hotels, lodges and multi-outlet restaurant groups."
+      },
+      {
+        "tier": "Large",
+        "description": "Hotel groups and integrated tourism operators."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Official accommodation grading bands and MSME thresholds were not verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Tourism-authority registration and grading are declared as research gaps rather than described."
+  }
+]

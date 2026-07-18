@@ -1,0 +1,174 @@
+[
+  {
+    "id": "zw-ngo-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "The Black Book record's applicability covers organisations starting a business; non-profit tax treatment and exemptions are deliberately not asserted. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Organisations register with ZIMRA through TaRMS when starting operations; tax treatment of non-profit income requires ZIMRA confirmation.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting operations; specific exemptions must be confirmed with ZIMRA.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers; applies equally to non-profit employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "NGOs that employ staff register for PAYE, remit monthly and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "NGOs employing labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-reg-welfare-ministry",
+    "name": "Social welfare portfolio oversight (context)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Recorded as portfolio context from the Parliament ministers list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Ministry of Public Service, Labour and Social Welfare holds the social-welfare portfolio under which private voluntary organisations are administered.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Portfolio context; PVO registration obligations are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-public-service-labour-social-welfare"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-gap-pvo-registration",
+    "name": "Private voluntary organisation (PVO) registration",
+    "category": "industry_gap",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "PVO registration, trust registration alternatives and district-level MOUs for NGO operations are not yet evidenced by Black Book records; no process or fee is asserted and entity-form choice needs professional advice.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-public-service-labour-social-welfare"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-gap-tax-exemption",
+    "name": "Non-profit tax status and exemptions",
+    "category": "industry_gap",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Income-tax, VAT and duty treatment of non-profit organisations (including any exemption processes) is not yet evidenced by Black Book records; nothing is asserted.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ]
+    }
+  },
+  {
+    "id": "zw-ngo-gap-ngo-forum",
+    "name": "NGO coordination bodies",
+    "category": "industry_gap",
+    "industryId": "zw-ngo",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "NGO coordination and membership bodies are not yet represented in the Black Book's business associations.",
+    "proposedBlackBookCategory": "business_association"
+  }
+]

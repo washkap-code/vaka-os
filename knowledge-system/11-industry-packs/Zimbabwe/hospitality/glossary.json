@@ -1,0 +1,119 @@
+[
+  {
+    "id": "zw-hospitality-term-premises-registration",
+    "name": "Premises registration certificate",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Bulawayo Health Inspectorate's annually renewed certificate expressly covering hotels, boarding houses, lodging houses and food premises.",
+    "blackBook": {
+      "authorityIds": [
+        "bulawayo-city-council"
+      ],
+      "licenceTypeIds": [
+        "bulawayo-premises-registration-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-term-liquor-licence",
+    "name": "Liquor licence",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/objective/111?l=en",
+      "https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Licence from the national Liquor Licensing Board required to sell liquor.",
+    "blackBook": {
+      "authorityIds": [
+        "liquor-licensing-board"
+      ],
+      "licenceTypeIds": [
+        "zimbabwe-liquor-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-term-folio",
+    "name": "Folio",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The running guest account to which room, food and extras are posted until settlement."
+  },
+  {
+    "id": "zw-hospitality-term-revpar",
+    "name": "RevPAR / ADR",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Revenue per available room and average daily rate; core accommodation performance measures."
+  },
+  {
+    "id": "zw-hospitality-term-cover",
+    "name": "Cover",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "One guest served in a meal period; the unit of restaurant volume."
+  },
+  {
+    "id": "zw-hospitality-term-voucher",
+    "name": "Agent voucher",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A tour agent's authorisation to bill services to the agent's account."
+  },
+  {
+    "id": "zw-hospitality-term-rack-rate",
+    "name": "Rack rate",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The published full room rate before discounts or agent terms."
+  },
+  {
+    "id": "zw-hospitality-term-service-charge",
+    "name": "Service charge",
+    "category": "industry_term",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An added percentage distributed to staff under house policy; treatment should be configured, not assumed."
+  }
+]

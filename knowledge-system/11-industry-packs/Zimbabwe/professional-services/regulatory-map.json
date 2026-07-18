@@ -1,0 +1,303 @@
+[
+  {
+    "id": "zw-professional-services-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-praz-supplier",
+    "name": "PRAZ supplier registration for public-sector engagements",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported by the Black Book record's applicability to suppliers seeking public-procurement eligibility. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Firms providing services to public entities register with PRAZ as suppliers/bidders and renew annually.",
+    "obligationKind": "PROCUREMENT",
+    "appliesWhen": "Before bidding for public-sector engagements.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "licenceTypeIds": [
+        "praz-supplier-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "praz-supplier-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-praz-supplier-registration-obligation"
+      ],
+      "serviceIds": [
+        "praz-bidder-registration",
+        "egp-electronic-tendering"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-reg-associations",
+    "name": "Business membership bodies relevant to professional firms",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://zncc.co.zw/",
+      "https://www.emcoz.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Membership is voluntary. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Firms may voluntarily join cross-sector bodies such as ZNCC and the employers' confederation EMCOZ; profession-specific councils are recorded as gaps below.",
+    "obligationKind": "ASSOCIATION",
+    "appliesWhen": "Voluntary membership.",
+    "blackBook": {
+      "associationIds": [
+        "zncc",
+        "emcoz"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-gap-law-society",
+    "name": "Legal practice registration and practising certificates",
+    "category": "industry_gap",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of legal practitioners and firms, annual practising certificates and trust-account rules administered through the legal profession's statutory bodies are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-justice-legal-parliamentary-affairs"
+      ]
+    }
+  },
+  {
+    "id": "zw-professional-services-gap-audit-regulation",
+    "name": "Audit and accountancy regulation",
+    "category": "industry_gap",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of auditors and accountants with the profession's statutory board and institutes is not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-professional-services-gap-engineering-council",
+    "name": "Engineering and built-environment councils",
+    "category": "industry_gap",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of engineers, architects, quantity surveyors and valuers with their statutory councils is not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-professional-services-gap-estate-agents",
+    "name": "Estate agents registration",
+    "category": "industry_gap",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of estate agents and their trust-account obligations with the profession's statutory council are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-professional-services-gap-trust-accounts",
+    "name": "Client trust account rules",
+    "category": "industry_gap",
+    "industryId": "zw-professional-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Statutory client/trust money rules for legal, estate-agency and similar practices are not yet evidenced by Black Book records; the ERP must treat client money separation as a configurable control pending evidence.",
+    "proposedBlackBookCategory": "compliance_event"
+  }
+]

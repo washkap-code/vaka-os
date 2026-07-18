@@ -1,0 +1,285 @@
+[
+  {
+    "id": "zw-education-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-reg-education-ministries",
+    "name": "Education portfolio oversight (context)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Recorded as portfolio context from the Parliament ministers list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Ministries of Primary and Secondary Education and of Higher and Tertiary Education hold the national education portfolios.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Portfolio context; registration and accreditation obligations are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-primary-secondary-education",
+        "ministry-higher-tertiary-education"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-gap-school-registration",
+    "name": "Independent school and ECD centre registration",
+    "category": "industry_gap",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of independent schools and early-childhood centres under the education framework is not yet evidenced by Black Book records; no fee or process is asserted.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-primary-secondary-education"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-gap-tertiary-accreditation",
+    "name": "Tertiary institution registration and accreditation",
+    "category": "industry_gap",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration/accreditation of private colleges and higher-education institutions (including the higher-education quality council) is not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-higher-tertiary-education"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-gap-vocational",
+    "name": "Vocational training centre registration and trade testing",
+    "category": "industry_gap",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of vocational training centres and national trade-testing/examination arrangements are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-higher-tertiary-education"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-gap-council-premises",
+    "name": "Council registration of school premises",
+    "category": "industry_gap",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Whether school or ECD premises fall on council premises-registration lists is not yet evidenced as a distinct Black Book record.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council",
+        "bulawayo-city-council"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-gap-zimsec",
+    "name": "National examinations centre registration",
+    "category": "industry_gap",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration as an examinations centre with the national examinations council is not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-primary-secondary-education"
+      ]
+    }
+  }
+]

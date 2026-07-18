@@ -1,0 +1,163 @@
+[
+  {
+    "id": "zw-public-sector-reg-egp-procurement",
+    "name": "Public procurement through PRAZ-regulated channels",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book records: the eGP service and the tender portals are recorded as public-entity procurement channels. Detailed procurement rules and thresholds are deliberately not restated. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Public entities conduct procurement under the PRAZ-regulated framework, publishing opportunities through the national eGP and public tender portals.",
+    "obligationKind": "PROCUREMENT",
+    "appliesWhen": "For procurement conducted by public entities; supplier-side registration is the counterpart obligation.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "serviceIds": [
+        "egp-electronic-tendering"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp",
+        "bulawayo-procurement-portal",
+        "mutare-tender-notices",
+        "zetdc-procurement-notices"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-reg-paye",
+    "name": "Employer (PAYE) obligations (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Public entities that employ staff register for PAYE, remit monthly and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "As employers; monthly remittance and annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-reg-nssa",
+    "name": "NSSA employer obligations",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour; scheme applicability for specific public-service categories must be confirmed with NSSA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Public entities employing labour register with NSSA and remit POBS contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "As employers of labour; monthly remittance.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-reg-local-government-ministry",
+    "name": "Local government portfolio oversight (context)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Recorded as portfolio context from the Parliament ministers list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Ministry of Local Government and Public Works holds the local-government portfolio under which councils are administered.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Portfolio context for local authorities.",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-local-government-public-works"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-gap-pfm",
+    "name": "Public financial management obligations",
+    "category": "industry_gap",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Budgeting, reporting and treasury obligations under the public financial-management framework are not yet evidenced by Black Book records; nothing is asserted.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-finance-investment-promotion"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-gap-auditor-general",
+    "name": "Auditor-General audit obligations",
+    "category": "industry_gap",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Annual audit obligations of public entities by the Office of the Auditor-General are not yet evidenced by Black Book records (the office itself is not yet a directory entry).",
+    "proposedBlackBookCategory": "government_organisation"
+  },
+  {
+    "id": "zw-public-sector-gap-corporate-governance",
+    "name": "Public entity corporate governance obligations",
+    "category": "industry_gap",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Corporate-governance obligations for public entities (board, remuneration and reporting rules) are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "compliance_event"
+  }
+]

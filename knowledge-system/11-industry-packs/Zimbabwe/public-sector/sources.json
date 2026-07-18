@@ -1,0 +1,64 @@
+[
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-public-sector-reg-paye"
+    ],
+    "note": "Employer obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-public-sector-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-praz-org-zw",
+    "domain": "praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-public-sector-reg-egp-procurement",
+      "zw-public-sector-term-egp"
+    ],
+    "note": "Public-procurement framework and eGP.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-egp-praz-org-zw",
+    "domain": "egp.praz.org.zw",
+    "publisher": "Zimbabwe eGP portal (PRAZ)",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-public-sector-reg-egp-procurement",
+      "zw-public-sector-term-egp"
+    ],
+    "note": "Electronic tendering.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-parlzim-gov-zw",
+    "domain": "parlzim.gov.zw",
+    "publisher": "Parliament of Zimbabwe",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-public-sector-reg-local-government-ministry"
+    ],
+    "note": "Ministerial portfolio list.",
+    "lastChecked": "2026-07-15"
+  }
+]

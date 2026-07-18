@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-financial-services",
+    "name": "Financial Services (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Regulated and allied financial businesses: banks and deposit-takers, microfinance, insurance and pensions, securities and asset management, payments and money-transfer services, and financial advisory intermediaries.",
+    "subSectors": [
+      {
+        "name": "Banking and deposit-taking",
+        "description": "Commercial banks, building societies and deposit-taking institutions."
+      },
+      {
+        "name": "Microfinance",
+        "description": "Credit-only and deposit-taking microfinance institutions."
+      },
+      {
+        "name": "Insurance and pensions",
+        "description": "Insurers, reinsurers, brokers, agents and pension funds."
+      },
+      {
+        "name": "Securities and asset management",
+        "description": "Brokers, asset managers and collective investment schemes."
+      },
+      {
+        "name": "Payments and money transfer",
+        "description": "Payment providers, money-transfer agencies and bureaux de change."
+      },
+      {
+        "name": "Financial advisory",
+        "description": "Intermediaries and advisory firms."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Single-branch intermediaries and agents."
+      },
+      {
+        "tier": "Small",
+        "description": "Credit-only microfinance and small brokerages."
+      },
+      {
+        "tier": "Medium",
+        "description": "Established insurers, MFIs and asset managers."
+      },
+      {
+        "tier": "Large",
+        "description": "Banking groups and composite insurers."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official institution-size classification or capital-threshold table was verified from an official source in this revision; minimum capital requirements are deliberately not restated."
+    },
+    "notes": "Descriptive segmentation for product design. Institution licensing classes and prudential obligations are declared as research gaps; VAKA's ERP scope here is business administration, not prudential systems."
+  }
+]

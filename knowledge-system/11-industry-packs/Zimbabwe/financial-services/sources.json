@@ -1,0 +1,91 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-company-incorporation"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-paye",
+      "zw-financial-services-reg-vat",
+      "zw-financial-services-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-rbz-co-zw",
+    "domain": "rbz.co.zw",
+    "publisher": "Reserve Bank of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-rbz",
+      "zw-financial-services-term-rbz"
+    ],
+    "note": "Central bank functions page.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-ipec-co-zw",
+    "domain": "ipec.co.zw",
+    "publisher": "Insurance and Pensions Commission",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-ipec",
+      "zw-financial-services-term-ipec"
+    ],
+    "note": "Mandate and core functions.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-seczim-co-zw",
+    "domain": "seczim.co.zw",
+    "publisher": "Securities and Exchange Commission of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-financial-services-reg-seczim",
+      "zw-financial-services-term-seczim"
+    ],
+    "note": "Regulator site.",
+    "lastChecked": "2026-07-15"
+  }
+]

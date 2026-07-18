@@ -1,0 +1,164 @@
+[
+  {
+    "id": "zw-education-wf-enrolment-billing",
+    "name": "Enrolment and termly fee billing",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Enrol learners and bill termly fees, levies and optional charges to family accounts.",
+    "stages": [
+      "Enrol/re-enrol learners",
+      "Set fee structure per level/term",
+      "Bill family accounts",
+      "Apply bursaries/discounts",
+      "Issue statements"
+    ],
+    "erpCapabilities": [
+      "Learner register",
+      "Invoicing",
+      "Receivables",
+      "Customer statements"
+    ],
+    "relatedKpiIds": [
+      "zw-education-kpi-enrolment",
+      "zw-education-kpi-fee-collection"
+    ]
+  },
+  {
+    "id": "zw-education-wf-collections",
+    "name": "Fee collections and payment plans",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Collect fees across channels with payment plans and arrears follow-up.",
+    "stages": [
+      "Receipt payments (cash, transfer, mobile money)",
+      "Allocate to family accounts",
+      "Agree payment plans",
+      "Follow up arrears",
+      "Escalate per policy"
+    ],
+    "erpCapabilities": [
+      "Receipts",
+      "Payment plans",
+      "Reminders",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-education-kpi-debtor-days",
+      "zw-education-kpi-fee-collection"
+    ]
+  },
+  {
+    "id": "zw-education-wf-payroll-terms",
+    "name": "Academic payroll and contracts",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Pay teaching and support staff including term-time and part-time contracts with statutory deductions.",
+    "stages": [
+      "Register staff and contracts",
+      "Capture part-time/extra loads",
+      "Run payroll with statutory deductions",
+      "Remit statutory payments",
+      "Report staff cost per department"
+    ],
+    "erpCapabilities": [
+      "Payroll (Zimbabwe)",
+      "Cost allocation",
+      "Compliance calendar"
+    ],
+    "relatedKpiIds": [
+      "zw-education-kpi-staff-cost-ratio"
+    ]
+  },
+  {
+    "id": "zw-education-wf-boarding-catering",
+    "name": "Boarding and catering operations",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Run boarding houses and catering with stock control and per-learner costing.",
+    "stages": [
+      "Plan menus and provisions",
+      "Procure and receive (GRN)",
+      "Issue to kitchens",
+      "Track boarding occupancy",
+      "Cost per boarder"
+    ],
+    "erpCapabilities": [
+      "Inventory",
+      "Procurement",
+      "Cost allocation"
+    ],
+    "relatedKpiIds": [
+      "zw-education-kpi-boarding-occupancy"
+    ]
+  },
+  {
+    "id": "zw-education-wf-compliance",
+    "name": "Registration and compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track statutory registrations and the declared-gap items (school registration, exams centre, council premises) once evidenced.",
+    "stages": [
+      "Register applicable obligations",
+      "Link Black Book compliance events",
+      "Schedule renewals/inspections",
+      "Prepare filings",
+      "Record outcomes"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-education-wf-development-projects",
+    "name": "Capital development projects",
+    "category": "industry_workflow",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage building projects (classrooms, boarding) with budgets and contractor control; ESIA screening applies to listed projects.",
+    "stages": [
+      "Budget project",
+      "Engage contractors",
+      "Track costs vs budget",
+      "Certify contractor work",
+      "Capitalise assets"
+    ],
+    "erpCapabilities": [
+      "Project costing",
+      "Procurement",
+      "Asset register"
+    ],
+    "relatedKpiIds": []
+  }
+]

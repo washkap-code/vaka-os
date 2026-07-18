@@ -1,0 +1,60 @@
+[
+  {
+    "id": "zw-ngo",
+    "name": "NGO and Non-Profit (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Non-profit organisations delivering development, humanitarian, faith-based and community programmes: local NGOs, international NGO country offices, trusts, faith organisations and community-based organisations.",
+    "subSectors": [
+      {
+        "name": "Local NGOs",
+        "description": "Zimbabwean development and advocacy organisations."
+      },
+      {
+        "name": "International NGO offices",
+        "description": "Country programmes of international organisations."
+      },
+      {
+        "name": "Trusts and foundations",
+        "description": "Grant-making and programme trusts."
+      },
+      {
+        "name": "Faith-based organisations",
+        "description": "Church-linked welfare and development programmes."
+      },
+      {
+        "name": "Community-based organisations",
+        "description": "Grassroots associations and cooperatives."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Volunteer-run community organisations."
+      },
+      {
+        "tier": "Small",
+        "description": "Single-programme NGOs with a small secretariat."
+      },
+      {
+        "tier": "Medium",
+        "description": "Multi-programme NGOs with district offices."
+      },
+      {
+        "tier": "Large",
+        "description": "National programmes and international country offices."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official organisation-size classification was verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Legal-form and registration regimes (PVO, trust, common-law association) are declared as research gaps rather than described; entity-form choice needs professional advice."
+  }
+]

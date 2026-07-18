@@ -1,0 +1,167 @@
+[
+  {
+    "id": "zw-hospitality-wf-bookings-billing",
+    "name": "Bookings, folios and billing",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage reservations through to guest folios and settlement across cash, card and corporate accounts.",
+    "stages": [
+      "Take reservation",
+      "Check in and open folio",
+      "Post room, F&B and extras",
+      "Settle at checkout",
+      "Invoice corporate/agent accounts"
+    ],
+    "erpCapabilities": [
+      "Bookings",
+      "Invoicing",
+      "Receivables",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-hospitality-kpi-occupancy",
+      "zw-hospitality-kpi-revpar",
+      "zw-hospitality-kpi-adr"
+    ]
+  },
+  {
+    "id": "zw-hospitality-wf-fnb-stock",
+    "name": "Food and beverage stock control",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Control kitchen and bar stock from purchase to plate with recipe costing and variance checks.",
+    "stages": [
+      "Purchase and receive (GRN)",
+      "Store and issue to outlets",
+      "Cost recipes/menus",
+      "Count bars and kitchens",
+      "Investigate variances"
+    ],
+    "erpCapabilities": [
+      "Inventory",
+      "Recipe costing",
+      "Cycle counts",
+      "Procurement"
+    ],
+    "relatedKpiIds": [
+      "zw-hospitality-kpi-food-cost"
+    ]
+  },
+  {
+    "id": "zw-hospitality-wf-events",
+    "name": "Events and conferencing",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Quote, contract and bill events with deposits and post-event reconciliation.",
+    "stages": [
+      "Quote event package",
+      "Contract and take deposit",
+      "Schedule resources",
+      "Deliver and capture extras",
+      "Final bill and reconcile"
+    ],
+    "erpCapabilities": [
+      "Quotations",
+      "Deposits/prepayments",
+      "Invoicing",
+      "Scheduling"
+    ],
+    "relatedKpiIds": [
+      "zw-hospitality-kpi-covers"
+    ]
+  },
+  {
+    "id": "zw-hospitality-wf-licence-calendar",
+    "name": "Licence and registration calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track liquor, premises and registration renewals from Black Book compliance events; tourism registration is a declared gap.",
+    "stages": [
+      "Register applicable licences",
+      "Link Black Book compliance events",
+      "Schedule renewals",
+      "Prepare renewal documents",
+      "Record outcomes"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-hospitality-kpi-licence-currency"
+    ]
+  },
+  {
+    "id": "zw-hospitality-wf-agent-settlement",
+    "name": "Tour agent and corporate account settlement",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage agent commissions, vouchers and corporate credit accounts.",
+    "stages": [
+      "Register agents and terms",
+      "Bill against vouchers/orders",
+      "Track commissions",
+      "Issue statements",
+      "Collect and reconcile"
+    ],
+    "erpCapabilities": [
+      "Receivables",
+      "Commission tracking",
+      "Customer statements"
+    ],
+    "relatedKpiIds": [
+      "zw-hospitality-kpi-debtor-days"
+    ]
+  },
+  {
+    "id": "zw-hospitality-wf-shift-payroll",
+    "name": "Rostered and casual staff payroll",
+    "category": "industry_workflow",
+    "industryId": "zw-hospitality",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Roster and pay permanent, casual and seasonal staff with statutory deductions and service-charge handling flagged for policy review.",
+    "stages": [
+      "Roster staff",
+      "Capture hours and casual work",
+      "Run payroll with statutory deductions",
+      "Remit statutory payments",
+      "Allocate cost to outlets"
+    ],
+    "erpCapabilities": [
+      "Payroll (Zimbabwe)",
+      "Rostering",
+      "Cost allocation"
+    ],
+    "relatedKpiIds": []
+  }
+]

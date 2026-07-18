@@ -1,0 +1,139 @@
+[
+  {
+    "id": "zw-professional-services-wf-engagement",
+    "name": "Client and engagement management",
+    "category": "industry_workflow",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Open engagements/matters with scope, rates and conflict checks; close with archiving.",
+    "stages": [
+      "Accept client (KYC/conflict check)",
+      "Open engagement with scope and rates",
+      "Staff the engagement",
+      "Monitor budget vs recorded time",
+      "Close and archive"
+    ],
+    "erpCapabilities": [
+      "CRM",
+      "Engagement register",
+      "Document workspace",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-professional-services-kpi-revenue-per-professional"
+    ]
+  },
+  {
+    "id": "zw-professional-services-wf-timesheets",
+    "name": "Timesheets and WIP",
+    "category": "industry_workflow",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Record professional time to engagements and manage unbilled WIP.",
+    "stages": [
+      "Record time daily",
+      "Review and approve time",
+      "Post to WIP",
+      "Review WIP ageing",
+      "Write off or carry forward"
+    ],
+    "erpCapabilities": [
+      "Timesheets",
+      "WIP ledger",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-professional-services-kpi-utilisation",
+      "zw-professional-services-kpi-wip-days"
+    ]
+  },
+  {
+    "id": "zw-professional-services-wf-billing",
+    "name": "Fee billing and collections",
+    "category": "industry_workflow",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill fees from WIP or fixed arrangements, recover disbursements and collect.",
+    "stages": [
+      "Prepare fee note from WIP/fixed fee",
+      "Add recoverable disbursements",
+      "Approve and issue",
+      "Track payment",
+      "Follow up arrears"
+    ],
+    "erpCapabilities": [
+      "Invoicing",
+      "Receivables",
+      "Customer statements"
+    ],
+    "relatedKpiIds": [
+      "zw-professional-services-kpi-realisation",
+      "zw-professional-services-kpi-debtor-days",
+      "zw-professional-services-kpi-recovery-disbursements"
+    ]
+  },
+  {
+    "id": "zw-professional-services-wf-retainers",
+    "name": "Retainers and advance billing",
+    "category": "industry_workflow",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage retainers and advances with drawdown against work performed; statutory trust-money rules are a declared gap.",
+    "stages": [
+      "Agree retainer terms",
+      "Bill and receipt advance",
+      "Draw down against time/fees",
+      "Report balance to client",
+      "Refund or renew"
+    ],
+    "erpCapabilities": [
+      "Deposits/prepayments",
+      "Billing",
+      "Client statements"
+    ],
+    "relatedKpiIds": [
+      "zw-professional-services-kpi-wip-days"
+    ]
+  },
+  {
+    "id": "zw-professional-services-wf-compliance",
+    "name": "Practice compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track statutory registrations and the declared-gap items (practising certificates, council registrations) once evidenced.",
+    "stages": [
+      "Register applicable obligations",
+      "Link Black Book compliance events",
+      "Schedule renewals",
+      "Prepare filings",
+      "Record outcomes"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": []
+  }
+]

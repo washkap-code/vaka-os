@@ -1,0 +1,343 @@
+[
+  {
+    "id": "zw-financial-services-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-rbz",
+    "name": "Reserve Bank of Zimbabwe regulation",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.rbz.co.zw/index.php/about-us/about-us/functions"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record (regulator category and published functions page). Specific licence classes, capital requirements and returns are deliberately recorded as gaps, not restated. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Reserve Bank of Zimbabwe is the central bank and a financial-sector regulator; banking, microfinance and payments institutions operate within its regulatory remit as published in its functions.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "For institutions within RBZ's published regulatory remit; specific licence classes are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-ipec",
+    "name": "Insurance and Pensions Commission regulation",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ipec.co.zw/mandate-core-functions/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record (the Commission's name and mandate page). Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Insurers, insurance intermediaries and pension funds are regulated by the Insurance and Pensions Commission.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "For insurance and pensions businesses; registration classes are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "ipec"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-reg-seczim",
+    "name": "Securities and Exchange Commission regulation",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://seczim.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record (the Commission's name and site). Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Securities dealers, advisors and collective investment schemes are regulated by the Securities and Exchange Commission of Zimbabwe.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "For capital-markets businesses; licence categories are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "seczim"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-banking-licences",
+    "name": "Banking and deposit-taking licence classes",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Banking, building-society and deposit-taking licence classes, minimum capital and prudential returns are not yet evidenced by Black Book records; nothing is asserted here.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-microfinance",
+    "name": "Microfinance registration",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Credit-only and deposit-taking microfinance registration and renewals are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-insurance-classes",
+    "name": "Insurance and pensions registration classes",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Insurer, broker, agent and pension-fund registration classes and levies are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ipec"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-securities-licences",
+    "name": "Securities licence categories",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Dealer, advisor, asset-manager and collective-investment licence categories are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "seczim"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-payments",
+    "name": "Payment systems and money-transfer authorisations",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Payment-provider, money-transfer and bureau-de-change authorisations are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-gap-aml",
+    "name": "AML/CFT obligations",
+    "category": "industry_gap",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Anti-money-laundering registration, reporting and the financial-intelligence framework are not yet evidenced by Black Book records; the ERP must treat KYC/AML as configurable controls pending evidence.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  }
+]

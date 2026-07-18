@@ -1,0 +1,98 @@
+[
+  {
+    "id": "zw-ngo-term-pvo",
+    "name": "PVO",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Private voluntary organisation — the registration category for many NGOs; the regime is a declared research gap."
+  },
+  {
+    "id": "zw-ngo-term-restricted",
+    "name": "Restricted funds",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Donor money usable only for agreed purposes, tracked separately from unrestricted funds."
+  },
+  {
+    "id": "zw-ngo-term-burn-rate",
+    "name": "Burn rate",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Speed of grant spend against budget and time elapsed."
+  },
+  {
+    "id": "zw-ngo-term-liquidation",
+    "name": "Advance liquidation",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Accounting for a field advance with receipts and returning any balance."
+  },
+  {
+    "id": "zw-ngo-term-costed-workplan",
+    "name": "Costed workplan",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The activity budget that links programme plans to grant lines."
+  },
+  {
+    "id": "zw-ngo-term-subgrant",
+    "name": "Sub-grant / partner agreement",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Funds passed to an implementing partner with flow-down obligations."
+  },
+  {
+    "id": "zw-ngo-term-cost-share",
+    "name": "Cost share / match",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The organisation's own contribution required by some donors."
+  },
+  {
+    "id": "zw-ngo-term-per-diem",
+    "name": "Per diem",
+    "category": "industry_term",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Daily field allowance paid under policy; configured in payroll or advances."
+  }
+]

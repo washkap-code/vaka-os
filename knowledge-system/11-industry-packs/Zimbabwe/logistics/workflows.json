@@ -1,0 +1,163 @@
+[
+  {
+    "id": "zw-logistics-wf-trip-costing",
+    "name": "Trip and job costing",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Cost each trip/job with fuel, tolls, driver and allocated fixed costs against billed revenue.",
+    "stages": [
+      "Open trip/job",
+      "Allocate vehicle and driver",
+      "Capture fuel, tolls and expenses",
+      "Record delivery completion",
+      "Close and compare cost to revenue"
+    ],
+    "erpCapabilities": [
+      "Job costing",
+      "Fuel management",
+      "Billing"
+    ],
+    "relatedKpiIds": [
+      "zw-logistics-kpi-cost-per-km",
+      "zw-logistics-kpi-revenue-per-vehicle"
+    ]
+  },
+  {
+    "id": "zw-logistics-wf-pod-billing",
+    "name": "Proof-of-delivery to invoice",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill from confirmed PODs with contract rates and fuel adjustments where agreed.",
+    "stages": [
+      "Dispatch with delivery documents",
+      "Capture POD (mobile)",
+      "Rate the job per contract",
+      "Invoice and statement",
+      "Collect and reconcile"
+    ],
+    "erpCapabilities": [
+      "Mobile capture",
+      "Invoicing",
+      "Receivables"
+    ],
+    "relatedKpiIds": [
+      "zw-logistics-kpi-otd",
+      "zw-logistics-kpi-debtor-days"
+    ]
+  },
+  {
+    "id": "zw-logistics-wf-fleet-maintenance",
+    "name": "Fleet maintenance and downtime",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Schedule services, manage breakdowns and track parts and downtime per vehicle.",
+    "stages": [
+      "Register fleet and service plans",
+      "Schedule preventive services",
+      "Record breakdowns",
+      "Issue parts from stores",
+      "Analyse downtime and cost per vehicle"
+    ],
+    "erpCapabilities": [
+      "Asset register",
+      "Maintenance scheduling",
+      "Inventory"
+    ],
+    "relatedKpiIds": [
+      "zw-logistics-kpi-downtime",
+      "zw-logistics-kpi-fleet-utilisation"
+    ]
+  },
+  {
+    "id": "zw-logistics-wf-fuel-management",
+    "name": "Fuel management",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Control fuel from bulk purchase or cards to per-vehicle consumption monitoring.",
+    "stages": [
+      "Purchase fuel (bulk/cards)",
+      "Issue per vehicle/trip",
+      "Capture odometer readings",
+      "Monitor consumption vs norms",
+      "Investigate variances"
+    ],
+    "erpCapabilities": [
+      "Fuel ledger",
+      "Inventory",
+      "Exception alerts"
+    ],
+    "relatedKpiIds": [
+      "zw-logistics-kpi-fuel-share",
+      "zw-logistics-kpi-cost-per-km"
+    ]
+  },
+  {
+    "id": "zw-logistics-wf-compliance",
+    "name": "Fleet compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track statutory registrations and the declared-gap items (vehicle licensing, permits, agent licences) once evidenced.",
+    "stages": [
+      "Register obligations per vehicle/operator",
+      "Link Black Book compliance events",
+      "Schedule renewals/inspections",
+      "Prepare filings",
+      "Record outcomes"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-logistics-wf-driver-payroll",
+    "name": "Driver payroll and trip allowances",
+    "category": "industry_workflow",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Pay drivers with trip-based allowances and statutory deductions.",
+    "stages": [
+      "Register drivers and licences",
+      "Capture trips and allowances",
+      "Run payroll with statutory deductions",
+      "Remit statutory payments",
+      "Allocate cost to vehicles"
+    ],
+    "erpCapabilities": [
+      "Payroll (Zimbabwe)",
+      "Cost allocation"
+    ],
+    "relatedKpiIds": []
+  }
+]
