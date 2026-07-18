@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-professional-services",
+    "name": "Professional Services (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Firms selling professional expertise and regulated practice services: legal, accounting and audit, engineering, architecture, surveying, IT, consulting, real estate and related practices.",
+    "subSectors": [
+      {
+        "name": "Legal practices",
+        "description": "Law firms and conveyancing practices."
+      },
+      {
+        "name": "Accounting, audit and tax",
+        "description": "Accounting firms, auditors and tax advisors."
+      },
+      {
+        "name": "Engineering and built environment",
+        "description": "Consulting engineers, architects and quantity surveyors."
+      },
+      {
+        "name": "IT and digital services",
+        "description": "Software, systems and digital consultancies."
+      },
+      {
+        "name": "Management consulting",
+        "description": "Strategy, HR and operational advisory."
+      },
+      {
+        "name": "Real estate services",
+        "description": "Estate agencies, valuers and property managers."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Sole practitioners."
+      },
+      {
+        "tier": "Small",
+        "description": "Partner-led firms with small professional teams."
+      },
+      {
+        "tier": "Medium",
+        "description": "Multi-partner firms with departments."
+      },
+      {
+        "tier": "Large",
+        "description": "National firms and network member firms."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official firm-size classification was verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Professional council registration regimes are declared as research gaps rather than described."
+  }
+]

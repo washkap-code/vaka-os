@@ -1,0 +1,126 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-company-incorporation"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-paye",
+      "zw-healthcare-reg-vat",
+      "zw-healthcare-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mcaz-co-zw",
+    "domain": "mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-mcaz-premises",
+      "zw-healthcare-term-mcaz-premises"
+    ],
+    "note": "Medicines premises licensing.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-onlineservices-mcaz-co-zw",
+    "domain": "onlineservices.mcaz.co.zw",
+    "publisher": "MCAZ online register",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-term-mcaz-premises"
+    ],
+    "note": "Public licence register search.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-hararecity-co-zw",
+    "domain": "hararecity.co.zw",
+    "publisher": "City of Harare",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-harare-health-registration"
+    ],
+    "note": "Health registration of premises.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-citybyo-co-zw",
+    "domain": "citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-bulawayo-premises"
+    ],
+    "note": "Premises registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-ema-co-zw",
+    "domain": "ema.co.zw",
+    "publisher": "Environmental Management Agency",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-ema-esia"
+    ],
+    "note": "ESIA certification.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mohcc-gov-zw",
+    "domain": "mohcc.gov.zw",
+    "publisher": "Ministry of Health and Child Care",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-healthcare-reg-referral-directory",
+      "zw-healthcare-term-central-hospital"
+    ],
+    "note": "Central hospital directory.",
+    "lastChecked": "2026-07-15"
+  }
+]

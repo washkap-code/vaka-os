@@ -1,0 +1,165 @@
+[
+  {
+    "id": "zw-healthcare-wf-patient-billing",
+    "name": "Patient and funder billing",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill encounters across cash, funder and corporate payers with payer-specific terms.",
+    "stages": [
+      "Register patient and payer",
+      "Capture encounter and charges",
+      "Invoice cash or submit funder claim",
+      "Track settlements and shortfalls",
+      "Collect patient balances"
+    ],
+    "erpCapabilities": [
+      "Invoicing",
+      "Receivables by payer",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-healthcare-kpi-revenue-per-visit",
+      "zw-healthcare-kpi-debtor-days"
+    ]
+  },
+  {
+    "id": "zw-healthcare-wf-claims-cycle",
+    "name": "Funder claims cycle",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Prepare, submit and reconcile medical-aid claims, managing rejections and resubmissions; tariff frameworks are a declared gap.",
+    "stages": [
+      "Validate membership and benefits",
+      "Prepare claim batch",
+      "Submit to funder",
+      "Process remittances and rejections",
+      "Resubmit or bill patient"
+    ],
+    "erpCapabilities": [
+      "Claims register",
+      "Receivables",
+      "Task automation"
+    ],
+    "relatedKpiIds": [
+      "zw-healthcare-kpi-claims-days",
+      "zw-healthcare-kpi-claim-rejection"
+    ]
+  },
+  {
+    "id": "zw-healthcare-wf-pharmacy-stock",
+    "name": "Pharmacy stock with batch and expiry control",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage medicines with batch tracking, expiry dates and controlled-substance flags (statutory registers are a declared gap).",
+    "stages": [
+      "Receive with batch and expiry capture",
+      "Bin and rotate stock (FEFO)",
+      "Dispense against prescriptions/sales",
+      "Monitor expiries and quarantine",
+      "Write off with approval"
+    ],
+    "erpCapabilities": [
+      "Batch/expiry inventory",
+      "Approvals",
+      "Audit trail"
+    ],
+    "relatedKpiIds": [
+      "zw-healthcare-kpi-stock-expiry",
+      "zw-healthcare-kpi-dispensing-margin"
+    ]
+  },
+  {
+    "id": "zw-healthcare-wf-licence-compliance",
+    "name": "Facility and premises compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track MCAZ premises licences, council registrations and declared-gap items against renewal cycles.",
+    "stages": [
+      "Register applicable licences",
+      "Link Black Book compliance events",
+      "Schedule renewals and inspections",
+      "Prepare renewal documents",
+      "Record outcomes and evidence"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-healthcare-kpi-licence-currency"
+    ]
+  },
+  {
+    "id": "zw-healthcare-wf-appointments",
+    "name": "Appointment and encounter scheduling",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Schedule practitioners and rooms, linking encounters to billing.",
+    "stages": [
+      "Book appointment",
+      "Confirm and remind",
+      "Record encounter",
+      "Hand off to billing",
+      "Analyse utilisation"
+    ],
+    "erpCapabilities": [
+      "Scheduling",
+      "Notifications",
+      "Billing handoff"
+    ],
+    "relatedKpiIds": [
+      "zw-healthcare-kpi-patient-visits"
+    ]
+  },
+  {
+    "id": "zw-healthcare-wf-payroll-professionals",
+    "name": "Professional and locum payroll",
+    "category": "industry_workflow",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Pay salaried staff and sessional/locum professionals with statutory deductions.",
+    "stages": [
+      "Register staff and locum contracts",
+      "Capture sessions/time",
+      "Run payroll with statutory deductions",
+      "Remit statutory payments",
+      "Allocate cost to service lines"
+    ],
+    "erpCapabilities": [
+      "Payroll (Zimbabwe)",
+      "Cost allocation",
+      "Compliance calendar"
+    ],
+    "relatedKpiIds": []
+  }
+]

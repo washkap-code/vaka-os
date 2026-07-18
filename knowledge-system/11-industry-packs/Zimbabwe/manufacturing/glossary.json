@@ -1,0 +1,139 @@
+[
+  {
+    "id": "zw-manufacturing-term-effluent-licence",
+    "name": "Effluent licence",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "EMA licence required by industrial operations discharging effluent, with quarterly waste-management reporting.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-effluent-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-term-czi",
+    "name": "CZI",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.czi.co.zw/czi263/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "The Confederation of Zimbabwe Industries, the industrial sector's membership body.",
+    "blackBook": {
+      "associationIds": [
+        "czi"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-term-bom",
+    "name": "BOM (bill of materials)",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The recipe of materials and quantities consumed to make one unit of product."
+  },
+  {
+    "id": "zw-manufacturing-term-oee",
+    "name": "OEE",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Overall equipment effectiveness: availability x performance x quality."
+  },
+  {
+    "id": "zw-manufacturing-term-grn",
+    "name": "GRN (goods received note)",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The receiving document confirming materials accepted into stores."
+  },
+  {
+    "id": "zw-manufacturing-term-otif",
+    "name": "OTIF",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "On-time-in-full: orders delivered complete on the promised date."
+  },
+  {
+    "id": "zw-manufacturing-term-standard-cost",
+    "name": "Standard cost",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The planned unit cost against which actual production costs are compared."
+  },
+  {
+    "id": "zw-manufacturing-term-changeover",
+    "name": "Changeover",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Time lost converting a line between products; a key OEE loss."
+  },
+  {
+    "id": "zw-manufacturing-term-quarantine",
+    "name": "Quarantine stock",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Stock held from use pending quality disposition."
+  },
+  {
+    "id": "zw-manufacturing-term-batch-traceability",
+    "name": "Batch traceability",
+    "category": "industry_term",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Linking finished goods to input material batches for recall and quality."
+  }
+]

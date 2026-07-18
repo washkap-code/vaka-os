@@ -1,0 +1,178 @@
+[
+  {
+    "id": "zw-construction-term-esia",
+    "name": "ESIA certificate",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Environmental and Social Impact Assessment certificate issued by EMA, required before implementing projects in EMA-listed categories.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-term-egp",
+    "name": "eGP",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Zimbabwe's electronic government procurement portal operated under PRAZ, used for public tender submission.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-term-praz-registration",
+    "name": "PRAZ bidder registration",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Annual registration of suppliers, bidders and contractors for public-procurement eligibility, valid to 31 December.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "complianceEventIds": [
+        "praz-supplier-registration-renewal"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-term-boq",
+    "name": "BOQ (bill of quantities)",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An itemised schedule of measured work used to price and control a construction contract."
+  },
+  {
+    "id": "zw-construction-term-payment-certificate",
+    "name": "Payment certificate",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The certified valuation of work done that authorises a progress payment under the contract."
+  },
+  {
+    "id": "zw-construction-term-retention",
+    "name": "Retention",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A percentage withheld from each certificate, released after the defects liability period."
+  },
+  {
+    "id": "zw-construction-term-practical-completion",
+    "name": "Practical completion",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The contract milestone when works are complete enough for the employer to take possession."
+  },
+  {
+    "id": "zw-construction-term-defects-liability",
+    "name": "Defects liability period",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The period after practical completion during which the contractor must remedy defects."
+  },
+  {
+    "id": "zw-construction-term-variation-order",
+    "name": "Variation order",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An instructed change to contracted work adjusting scope, price or programme."
+  },
+  {
+    "id": "zw-construction-term-wip",
+    "name": "WIP (work in progress)",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Cost of work performed that has not yet been certified or billed."
+  },
+  {
+    "id": "zw-construction-term-bid-bond",
+    "name": "Bid and performance security",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Guarantees supporting a bid or contract performance, commonly required in public works."
+  },
+  {
+    "id": "zw-construction-term-site-instruction",
+    "name": "Site instruction",
+    "category": "industry_term",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A written instruction issued on site that may lead to a variation or cost record."
+  }
+]

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "zw-education-term-itf16",
+    "name": "ITF 16",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "ZIMRA's annual employee earnings, deductions, credits and PAYE return; applies to schools as employers.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-itf16-annual-return"
+      ]
+    }
+  },
+  {
+    "id": "zw-education-term-levy",
+    "name": "Levy",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A charge billed alongside tuition for a defined purpose (development, sport, exams); configured per fee structure."
+  },
+  {
+    "id": "zw-education-term-term",
+    "name": "Term billing",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Billing cycle aligned to the three-term school year rather than calendar months."
+  },
+  {
+    "id": "zw-education-term-bursary",
+    "name": "Bursary / scholarship",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A discount or third-party-funded reduction applied to a learner's fees."
+  },
+  {
+    "id": "zw-education-term-family-account",
+    "name": "Family account",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "One receivable account covering all learners of one payer."
+  },
+  {
+    "id": "zw-education-term-ecd",
+    "name": "ECD",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Early childhood development; pre-primary learning levels."
+  },
+  {
+    "id": "zw-education-term-boarder",
+    "name": "Boarder / day scholar",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Learners charged boarding fees versus day attendance only."
+  },
+  {
+    "id": "zw-education-term-exam-centre",
+    "name": "Examinations centre",
+    "category": "industry_term",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A school registered to host national examinations; registration is a declared research gap."
+  }
+]

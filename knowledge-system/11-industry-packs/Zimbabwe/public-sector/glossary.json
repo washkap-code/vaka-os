@@ -1,0 +1,97 @@
+[
+  {
+    "id": "zw-public-sector-term-egp",
+    "name": "eGP",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Zimbabwe's electronic government procurement portal, the national public-procurement channel under PRAZ.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp"
+      ]
+    }
+  },
+  {
+    "id": "zw-public-sector-term-commitment",
+    "name": "Commitment",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A budget reservation raised before ordering, preventing overspend."
+  },
+  {
+    "id": "zw-public-sector-term-vote",
+    "name": "Vote / budget line",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The approved budget subdivision against which spend is controlled."
+  },
+  {
+    "id": "zw-public-sector-term-ratepayer",
+    "name": "Ratepayer account",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The property-linked account billed for rates and municipal services."
+  },
+  {
+    "id": "zw-public-sector-term-virement",
+    "name": "Virement",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An approved transfer between budget lines under delegation rules."
+  },
+  {
+    "id": "zw-public-sector-term-audit-finding",
+    "name": "Audit finding",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An issue raised in an audit requiring tracked remediation; the statutory audit regime is a declared research gap."
+  },
+  {
+    "id": "zw-public-sector-term-delegation",
+    "name": "Delegation of authority",
+    "category": "industry_term",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The approval matrix defining who may commit and approve at each threshold."
+  }
+]

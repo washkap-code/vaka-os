@@ -1,0 +1,80 @@
+[
+  {
+    "id": "zw-retail",
+    "name": "Retail (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses that sell goods to final consumers from shops, stores, markets, forecourts, pharmacies or online channels, including mixed wholesale-retail traders.",
+    "subSectors": [
+      {
+        "name": "General dealers and grocery",
+        "description": "Neighbourhood shops and grocers selling everyday goods."
+      },
+      {
+        "name": "Supermarkets and chains",
+        "description": "Multi-branch formal grocery and general merchandise retailers."
+      },
+      {
+        "name": "Tuckshops and informal micro-retail",
+        "description": "Very small, often informal outlets and market or street vendors."
+      },
+      {
+        "name": "Hardware and building supplies",
+        "description": "Retail of building materials, tools and fittings."
+      },
+      {
+        "name": "Pharmacy retail",
+        "description": "Retail of medicines from MCAZ-licensed premises."
+      },
+      {
+        "name": "Fuel and LPG retail",
+        "description": "Service stations and LPG retail sites licensed by ZERA."
+      },
+      {
+        "name": "Liquor retail",
+        "description": "Bottle stores and other licensed liquor outlets."
+      },
+      {
+        "name": "Clothing, textiles and footwear",
+        "description": "Apparel and fabric retail."
+      },
+      {
+        "name": "Electronics and mobile",
+        "description": "Phones, airtime, electronics and accessories."
+      },
+      {
+        "name": "Wholesale-retail hybrids",
+        "description": "Cash-and-carry operations serving both traders and consumers."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Informal vendors and tuckshops, typically owner-operated."
+      },
+      {
+        "tier": "Small",
+        "description": "Single licensed shop with a small staff complement."
+      },
+      {
+        "tier": "Medium",
+        "description": "Multi-branch or high-volume single-site retailers with formal payroll and VAT registration."
+      },
+      {
+        "tier": "Large",
+        "description": "National chains and franchised groups with central procurement and multiple branches."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Zimbabwe's official MSME size classifications (employee, turnover and asset bands) were not verified from an official source in this revision; source the current SME definition before product use."
+    },
+    "notes": "Descriptive segmentation for product design; not an official statistical classification. Alignment to the ZIMSTAT/ISIC classification is a follow-up research item."
+  }
+]

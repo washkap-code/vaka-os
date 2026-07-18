@@ -1,0 +1,140 @@
+[
+  {
+    "id": "zw-ngo-wf-grant-management",
+    "name": "Grant and donor agreement management",
+    "category": "industry_workflow",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Register grants with budgets, restrictions, reporting deadlines and currencies.",
+    "stages": [
+      "Register donor and agreement",
+      "Load budget and restrictions",
+      "Schedule reporting deadlines",
+      "Track amendments",
+      "Close out grant"
+    ],
+    "erpCapabilities": [
+      "Grant register",
+      "Budgeting",
+      "Compliance calendar",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-ngo-kpi-burn-rate",
+      "zw-ngo-kpi-reporting-timeliness"
+    ]
+  },
+  {
+    "id": "zw-ngo-wf-fund-accounting",
+    "name": "Restricted fund accounting",
+    "category": "industry_workflow",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Account for funds by restriction class with allocations and inter-fund controls.",
+    "stages": [
+      "Set up funds and cost centres",
+      "Allocate income to funds",
+      "Post spend against fund budgets",
+      "Control inter-fund borrowing",
+      "Report by fund"
+    ],
+    "erpCapabilities": [
+      "Fund ledgers",
+      "Cost allocation",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-ngo-kpi-restricted-balance",
+      "zw-ngo-kpi-fund-utilisation"
+    ]
+  },
+  {
+    "id": "zw-ngo-wf-donor-procurement",
+    "name": "Procurement under donor rules",
+    "category": "industry_workflow",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Run procurement honouring configured donor thresholds and documentation requirements.",
+    "stages": [
+      "Plan procurement per grant rules",
+      "Quote/tender per thresholds",
+      "Approve per donor matrix",
+      "Receive and pay",
+      "File evidence per donor"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Approvals (configurable matrices)",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-ngo-kpi-support-cost-ratio"
+    ]
+  },
+  {
+    "id": "zw-ngo-wf-advances",
+    "name": "Programme advances and liquidations",
+    "category": "industry_workflow",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Issue field advances and control their liquidation with receipts.",
+    "stages": [
+      "Request and approve advance",
+      "Disburse",
+      "Capture field expenses (mobile)",
+      "Liquidate against receipts",
+      "Age and recover balances"
+    ],
+    "erpCapabilities": [
+      "Advance ledger",
+      "Mobile capture",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-ngo-kpi-advance-ageing"
+    ]
+  },
+  {
+    "id": "zw-ngo-wf-donor-reporting",
+    "name": "Donor financial reporting",
+    "category": "industry_workflow",
+    "industryId": "zw-ngo",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Produce donor-format financial reports from fund ledgers on schedule.",
+    "stages": [
+      "Map ledger to donor format",
+      "Draft report per period",
+      "Review and approve",
+      "Submit and record",
+      "Respond to donor queries"
+    ],
+    "erpCapabilities": [
+      "Reporting",
+      "Compliance calendar",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-ngo-kpi-reporting-timeliness"
+    ]
+  }
+]

@@ -1,0 +1,142 @@
+[
+  {
+    "id": "zw-mining-term-effluent-licence",
+    "name": "Effluent licence",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "EMA licence required by industrial and mining operations discharging effluent, with quarterly waste-management reporting.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-effluent-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-mining-term-esia",
+    "name": "ESIA certificate",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Environmental and Social Impact Assessment certificate issued by EMA, required before implementing projects in EMA-listed categories.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-mining-term-head-grade",
+    "name": "Head grade",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Metal content of ore fed to the plant, driving recovered output."
+  },
+  {
+    "id": "zw-mining-term-recovery",
+    "name": "Recovery",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Share of contained metal actually recovered by the plant."
+  },
+  {
+    "id": "zw-mining-term-stoping",
+    "name": "Stoping / development",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Ore extraction (stoping) versus tunnelling to access ore (development); costed separately."
+  },
+  {
+    "id": "zw-mining-term-stripping",
+    "name": "Stripping ratio",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Waste moved per tonne of ore in open-pit mining."
+  },
+  {
+    "id": "zw-mining-term-custom-milling",
+    "name": "Custom milling",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Processing of small-scale miners' ore at a third-party mill for a fee or share."
+  },
+  {
+    "id": "zw-mining-term-assay",
+    "name": "Assay",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Laboratory determination of metal content used in settlements and plant control."
+  },
+  {
+    "id": "zw-mining-term-hoisting",
+    "name": "Hoisting / tramming",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Moving ore from underground to surface and around the mine; key cost activities."
+  },
+  {
+    "id": "zw-mining-term-claim",
+    "name": "Claim / mining title",
+    "category": "industry_term",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The registered right to prospect or mine a defined area; title administration is a declared research gap in this seed."
+  }
+]

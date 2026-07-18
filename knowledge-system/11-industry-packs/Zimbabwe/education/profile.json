@@ -1,0 +1,60 @@
+[
+  {
+    "id": "zw-education",
+    "name": "Education (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-education",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Private and independent providers of education and training: schools, colleges, early-childhood centres, tertiary institutions and skills-training providers.",
+    "subSectors": [
+      {
+        "name": "Independent schools",
+        "description": "Private primary and secondary schools."
+      },
+      {
+        "name": "Early childhood development",
+        "description": "Creches, nurseries and ECD centres."
+      },
+      {
+        "name": "Colleges and tertiary",
+        "description": "Private colleges and higher-education institutions."
+      },
+      {
+        "name": "Vocational and skills training",
+        "description": "Trade, technical and professional training providers."
+      },
+      {
+        "name": "Tutoring and supplementary education",
+        "description": "Tutoring centres and exam-preparation services."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Home-based ECD and tutoring providers."
+      },
+      {
+        "tier": "Small",
+        "description": "Single-campus schools and training centres."
+      },
+      {
+        "tier": "Medium",
+        "description": "Established schools and colleges with boarding or multiple streams."
+      },
+      {
+        "tier": "Large",
+        "description": "School groups and private tertiary institutions."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official institution-size classification was verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. School registration and accreditation regimes are declared as research gaps rather than described."
+  }
+]

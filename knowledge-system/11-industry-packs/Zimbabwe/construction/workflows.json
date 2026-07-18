@@ -1,0 +1,225 @@
+[
+  {
+    "id": "zw-construction-wf-tender-pipeline",
+    "name": "Tender pipeline and bid management",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track public and private tender opportunities from notice to award, including eGP submissions and bid security.",
+    "stages": [
+      "Capture opportunity (eGP or private invitation)",
+      "Qualify: PRAZ registration, tax clearance and capacity",
+      "Prepare bid and pricing",
+      "Submit and track outcome",
+      "Record award or loss reasons"
+    ],
+    "erpCapabilities": [
+      "Tender pipeline",
+      "Black Book tender portals",
+      "Document workspace",
+      "Task automation"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-tender-win-rate"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-boq-estimation",
+    "name": "BOQ estimation and quotation",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Build estimates from bills of quantities with material, labour, plant and subcontract rates, converting to contract budgets on award.",
+    "stages": [
+      "Load or capture BOQ items",
+      "Price materials, labour, plant and subcontracts",
+      "Apply overheads, contingencies and margin",
+      "Issue quotation or bid price",
+      "Convert to project budget on award"
+    ],
+    "erpCapabilities": [
+      "Quotations",
+      "Project budgeting",
+      "Price lists",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-project-margin"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-project-costing",
+    "name": "Project costing and WIP control",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Collect costs to projects and cost codes, tracking committed and actual against budget and work in progress.",
+    "stages": [
+      "Set up project and cost codes",
+      "Commit costs via purchase orders and subcontracts",
+      "Capture actuals: materials, labour, plant",
+      "Review budget vs committed vs actual",
+      "Report WIP and forecast final cost"
+    ],
+    "erpCapabilities": [
+      "Project costing",
+      "Procurement",
+      "Payroll allocation",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-wip",
+      "zw-construction-kpi-project-margin"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-progress-billing",
+    "name": "Progress claims, certificates and retention",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill certified work through payment certificates, tracking retention withheld and its release after defects liability.",
+    "stages": [
+      "Prepare progress claim/valuation",
+      "Record certified amount",
+      "Invoice certified value less retention",
+      "Track retention ledger",
+      "Release retention after defects period"
+    ],
+    "erpCapabilities": [
+      "Invoicing",
+      "Receivables",
+      "Contract terms",
+      "Compliance calendar"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-certified-vs-invoiced",
+      "zw-construction-kpi-retention",
+      "zw-construction-kpi-debtor-days"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-subcontractors",
+    "name": "Subcontractor management",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Engage, certify and pay subcontractors with back-to-back terms, retention and any withholding-tax controls flagged for review.",
+    "stages": [
+      "Onboard subcontractor and terms",
+      "Issue subcontract orders",
+      "Certify subcontract work",
+      "Apply retention and statutory checks",
+      "Pay and reconcile"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Supplier bills",
+      "Approvals",
+      "Payables"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-labour-ratio"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-site-materials",
+    "name": "Site materials tracking",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Issue materials from central stores to sites and track site stock, wastage and returns.",
+    "stages": [
+      "Requisition from site",
+      "Issue/transfer stock to site",
+      "Record site usage against cost codes",
+      "Return or write off surplus",
+      "Reconcile site stock"
+    ],
+    "erpCapabilities": [
+      "Inventory transfers",
+      "Stock movements (append-only)",
+      "Mobile capture"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-wip"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-plant-management",
+    "name": "Plant and equipment management",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track owned and hired plant allocation, usage hours, maintenance and charge-out to projects.",
+    "stages": [
+      "Register plant and hire agreements",
+      "Allocate to projects",
+      "Capture usage hours",
+      "Schedule maintenance",
+      "Charge cost to projects"
+    ],
+    "erpCapabilities": [
+      "Asset register",
+      "Project costing",
+      "Maintenance scheduling"
+    ],
+    "relatedKpiIds": [
+      "zw-construction-kpi-plant-utilisation"
+    ]
+  },
+  {
+    "id": "zw-construction-wf-esia-compliance",
+    "name": "Project environmental compliance (ESIA)",
+    "category": "industry_workflow",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track ESIA certification status and quarterly reporting obligations for listed projects from Black Book compliance events.",
+    "stages": [
+      "Screen project against EMA-listed categories",
+      "Track certificate application",
+      "Schedule quarterly progress reports",
+      "Monitor certificate validity/renewal",
+      "File evidence in document workspace"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace",
+      "Task automation"
+    ],
+    "relatedKpiIds": []
+  }
+]

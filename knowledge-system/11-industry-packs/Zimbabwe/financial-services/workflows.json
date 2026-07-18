@@ -1,0 +1,138 @@
+[
+  {
+    "id": "zw-financial-services-wf-client-onboarding",
+    "name": "Client onboarding with KYC controls",
+    "category": "industry_workflow",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Onboard clients with configurable KYC checks and approvals; statutory AML obligations are a declared gap.",
+    "stages": [
+      "Capture client and documents",
+      "Run configured KYC checks",
+      "Approve or escalate",
+      "Open accounts/policies/facilities",
+      "Review periodically"
+    ],
+    "erpCapabilities": [
+      "CRM",
+      "Document workspace",
+      "Approvals",
+      "Audit trail"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-financial-services-wf-product-billing",
+    "name": "Premium, fee and facility billing",
+    "category": "industry_workflow",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Bill premiums, fees and facility charges on their cycles with receipting and arrears control.",
+    "stages": [
+      "Set product billing cycles",
+      "Generate bills/debit orders",
+      "Receipt and allocate",
+      "Manage arrears",
+      "Report collections"
+    ],
+    "erpCapabilities": [
+      "Billing",
+      "Receivables",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-financial-services-kpi-fee-income",
+      "zw-financial-services-kpi-premium-debtors"
+    ]
+  },
+  {
+    "id": "zw-financial-services-wf-commissions",
+    "name": "Agent and broker commission management",
+    "category": "industry_workflow",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Calculate, approve and settle commissions with clawback handling.",
+    "stages": [
+      "Register agents and rates",
+      "Calculate commissions per period",
+      "Approve and process clawbacks",
+      "Settle and issue statements",
+      "Reconcile ledger"
+    ],
+    "erpCapabilities": [
+      "Commission engine",
+      "Payables",
+      "Statements"
+    ],
+    "relatedKpiIds": [
+      "zw-financial-services-kpi-commission-payable"
+    ]
+  },
+  {
+    "id": "zw-financial-services-wf-claims",
+    "name": "Claims administration (insurance)",
+    "category": "industry_workflow",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Register, assess and settle claims with reserves and recoveries tracked.",
+    "stages": [
+      "Register claim",
+      "Assess and reserve",
+      "Approve settlement",
+      "Pay and record recoveries",
+      "Analyse claims experience"
+    ],
+    "erpCapabilities": [
+      "Claims register",
+      "Approvals",
+      "Payables",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-financial-services-kpi-claims-ratio"
+    ]
+  },
+  {
+    "id": "zw-financial-services-wf-regulatory-calendar",
+    "name": "Regulatory returns calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track licence renewals and regulatory returns once the gap records are evidenced; statutory tax/employer events already apply.",
+    "stages": [
+      "Register applicable obligations",
+      "Link Black Book compliance events",
+      "Schedule returns/renewals",
+      "Prepare filings",
+      "Record outcomes and evidence"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace"
+    ],
+    "relatedKpiIds": [
+      "zw-financial-services-kpi-cost-income"
+    ]
+  }
+]

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-company-incorporation",
+      "zw-hospitality-reg-liquor-licence",
+      "zw-hospitality-term-liquor-licence"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-paye",
+      "zw-hospitality-reg-vat",
+      "zw-hospitality-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-hararecity-co-zw",
+    "domain": "hararecity.co.zw",
+    "publisher": "City of Harare",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-harare-licensing"
+    ],
+    "note": "Business licensing and health registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-citybyo-co-zw",
+    "domain": "citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-bulawayo-premises",
+      "zw-hospitality-term-premises-registration"
+    ],
+    "note": "Premises registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mlg-gov-zw",
+    "domain": "mlg.gov.zw",
+    "publisher": "Ministry of Local Government and Public Works",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-liquor-licence",
+      "zw-hospitality-term-liquor-licence"
+    ],
+    "note": "Liquor licensing service pages.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-parlzim-gov-zw",
+    "domain": "parlzim.gov.zw",
+    "publisher": "Parliament of Zimbabwe",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-hospitality-reg-tourism-ministry"
+    ],
+    "note": "Ministerial portfolio list.",
+    "lastChecked": "2026-07-15"
+  }
+]

@@ -1,0 +1,447 @@
+[
+  {
+    "id": "zw-manufacturing-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-ema-effluent",
+    "name": "Effluent discharge licensing (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported: the Black Book record's applicability expressly covers industrial operations discharging effluent, and the quarterly reporting event names industrial licence holders. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Industrial operations discharging effluent require an EMA effluent licence and submit quarterly waste-management reports.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "When the plant discharges effluent; quarterly reporting while licensed.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-effluent-licence"
+      ],
+      "complianceEventIds": [
+        "ema-effluent-quarterly-waste-report"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-effluent-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-ema-esia",
+    "name": "ESIA certificate for plant projects (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific plant project is in an EMA-listed category must be confirmed against EMA's current prescribed list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Plant construction or expansion projects in EMA-listed categories require an ESIA certificate before implementation.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "Before implementing a project in an EMA-listed category.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ],
+      "complianceEventIds": [
+        "ema-esia-before-project-implementation",
+        "ema-esia-quarterly-progress-report",
+        "ema-esia-certificate-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-esia-certificate"
+      ],
+      "serviceIds": [
+        "ema-environmental-assessment-review"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-mcaz-premises",
+    "name": "Medicines manufacturing premises (MCAZ)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "The Black Book record covers medicines premises and business types subject to MCAZ licensing; whether a specific manufacturing activity is in scope must be confirmed with MCAZ. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Premises manufacturing or dealing in medicines are subject to MCAZ premises licensing.",
+    "obligationKind": "SECTOR_LICENCE",
+    "appliesWhen": "Before operating medicines premises subject to MCAZ licensing.",
+    "blackBook": {
+      "authorityIds": [
+        "mcaz"
+      ],
+      "licenceTypeIds": [
+        "mcaz-premises-licence"
+      ],
+      "complianceGuideIds": [
+        "guide-mcaz-premises-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-local-authority-premises",
+    "name": "Council licensing of factory and food premises",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/51",
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific factory or food-processing premises type appears on a council's list must be confirmed with that council. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Premises of the types listed by councils — including food premises — require council licensing or registration (Harare and Bulawayo evidenced; other councils operate their own regimes).",
+    "obligationKind": "LOCAL_AUTHORITY",
+    "appliesWhen": "When operating listed premises types within a council area.",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council",
+        "bulawayo-city-council"
+      ],
+      "licenceTypeIds": [
+        "harare-business-licence",
+        "harare-health-registration",
+        "bulawayo-premises-registration-certificate"
+      ],
+      "complianceEventIds": [
+        "harare-business-licence-renewal",
+        "harare-health-registration-review",
+        "bulawayo-premises-registration-renewal"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-praz-supplier",
+    "name": "PRAZ supplier registration for public-entity supply",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported by the Black Book record's applicability to suppliers seeking public-procurement eligibility. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Manufacturers supplying public entities register with PRAZ as suppliers/bidders and renew annually.",
+    "obligationKind": "PROCUREMENT",
+    "appliesWhen": "Before bidding to supply public entities.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "licenceTypeIds": [
+        "praz-supplier-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "praz-supplier-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-praz-supplier-registration-obligation"
+      ],
+      "serviceIds": [
+        "praz-bidder-registration",
+        "egp-electronic-tendering"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-associations",
+    "name": "Business membership bodies relevant to manufacturing",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.czi.co.zw/czi263/",
+      "https://zncc.co.zw/",
+      "https://www.emcoz.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Membership is voluntary; these bodies exist per their Black Book records. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Manufacturers may voluntarily join the Confederation of Zimbabwe Industries (the industrial sector body), ZNCC and the employers' confederation EMCOZ.",
+    "obligationKind": "ASSOCIATION",
+    "appliesWhen": "Voluntary membership.",
+    "blackBook": {
+      "associationIds": [
+        "czi",
+        "zncc",
+        "emcoz"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-reg-competition-oversight",
+    "name": "Competition and fair-trading oversight",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "The authority exists per its Black Book record, but its specific application to manufacturing transactions was not evidenced in this revision; declared unverified rather than asserted.",
+    "obligation": "The Competition and Tariff Commission provides economy-wide competition oversight relevant to industrial mergers and trade practices.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Economy-wide; specific applicability to a given transaction is not evidenced here.",
+    "blackBook": {
+      "authorityIds": [
+        "competition-tariff-commission"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-gap-factory-registration",
+    "name": "Factory registration and occupational safety inspection",
+    "category": "industry_gap",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Factory registration/inspection obligations under the Factories and Works framework (occupational safety and health administration) are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-gap-standards",
+    "name": "Product standards and certification (SAZ)",
+    "category": "industry_gap",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Product standards, certification marks and any mandatory specifications administered through the national standards body are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-manufacturing-gap-food-safety",
+    "name": "Food manufacturing safety obligations",
+    "category": "industry_gap",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "National food-safety registration for manufacturers (beyond council premises registration) is not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-health-child-care"
+      ]
+    }
+  },
+  {
+    "id": "zw-manufacturing-gap-excise",
+    "name": "Excise duties on excisable products",
+    "category": "industry_gap",
+    "industryId": "zw-manufacturing",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Excise registration and duty obligations for excisable products (for example beverages and tobacco products) are not yet evidenced by Black Book records; no rate is asserted.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ]
+    }
+  }
+]

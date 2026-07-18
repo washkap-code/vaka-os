@@ -1,0 +1,100 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-company-incorporation"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-paye",
+      "zw-professional-services-reg-vat",
+      "zw-professional-services-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-praz-org-zw",
+    "domain": "praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-praz-supplier"
+    ],
+    "note": "Supplier/bidder registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-egp-praz-org-zw",
+    "domain": "egp.praz.org.zw",
+    "publisher": "Zimbabwe eGP portal (PRAZ)",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-praz-supplier"
+    ],
+    "note": "Electronic tendering.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zncc-co-zw",
+    "domain": "zncc.co.zw",
+    "publisher": "Zimbabwe National Chamber of Commerce",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-associations"
+    ],
+    "note": "Membership body.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-emcoz-co-zw",
+    "domain": "emcoz.co.zw",
+    "publisher": "Employers' Confederation of Zimbabwe",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-professional-services-reg-associations"
+    ],
+    "note": "Employers' membership body.",
+    "lastChecked": "2026-07-15"
+  }
+]

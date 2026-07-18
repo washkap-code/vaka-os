@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-logistics",
+    "name": "Logistics and Transport (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses moving goods and people and managing supply chains: road haulage, courier and last-mile delivery, passenger transport, freight forwarding, customs clearing and warehousing services.",
+    "subSectors": [
+      {
+        "name": "Road haulage",
+        "description": "General and specialised freight, including cross-border."
+      },
+      {
+        "name": "Courier and last-mile",
+        "description": "Parcel, e-commerce and urban delivery."
+      },
+      {
+        "name": "Passenger transport",
+        "description": "Buses, commuter and staff transport operators."
+      },
+      {
+        "name": "Freight forwarding and clearing",
+        "description": "Forwarders and customs clearing agents."
+      },
+      {
+        "name": "Warehousing and 3PL",
+        "description": "Storage, handling and third-party logistics."
+      },
+      {
+        "name": "Fuel and heavy-equipment transport",
+        "description": "Specialised and hazardous cargo operators."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Single-vehicle owner-operators."
+      },
+      {
+        "tier": "Small",
+        "description": "Small fleets with informal maintenance."
+      },
+      {
+        "tier": "Medium",
+        "description": "Managed fleets with depots and contracts."
+      },
+      {
+        "tier": "Large",
+        "description": "National and regional fleet operators and 3PLs."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official operator-size classification was verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Vehicle licensing, operator permits and customs-agent regimes are declared as research gaps rather than described."
+  }
+]

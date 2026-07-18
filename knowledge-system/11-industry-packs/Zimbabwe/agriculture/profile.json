@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-agriculture",
+    "name": "Agriculture (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses producing crops, livestock, poultry and fish for sale, together with directly related on-farm services; primary production rather than downstream agro-processing.",
+    "subSectors": [
+      {
+        "name": "Field crops",
+        "description": "Maize, tobacco, wheat, soya beans, cotton and similar arable crops."
+      },
+      {
+        "name": "Horticulture",
+        "description": "Fruit, vegetables and flowers, including export horticulture."
+      },
+      {
+        "name": "Livestock",
+        "description": "Beef, dairy, pig and small-livestock production."
+      },
+      {
+        "name": "Poultry",
+        "description": "Broiler and layer production and day-old-chick supply."
+      },
+      {
+        "name": "Fisheries and aquaculture",
+        "description": "Fish farming and capture fisheries."
+      },
+      {
+        "name": "Agri-services",
+        "description": "Tillage, spraying, harvesting and agronomy services to farms."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Smallholder and communal producers selling surplus."
+      },
+      {
+        "tier": "Small",
+        "description": "Small commercial farms and intensive poultry/horticulture units."
+      },
+      {
+        "tier": "Medium",
+        "description": "Commercial farms with permanent labour and mechanisation."
+      },
+      {
+        "tier": "Large",
+        "description": "Estates, corporate farms and integrated producers."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Official farm-size or MSME classification bands (including the land-reform A1/A2 model definitions) were not verified from an official source in this revision; source before product use."
+    },
+    "notes": "Descriptive segmentation for product design; not an official statistical classification. Agro-processing is treated as manufacturing and excluded from this seed."
+  }
+]

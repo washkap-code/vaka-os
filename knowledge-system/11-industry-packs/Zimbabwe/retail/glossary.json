@@ -1,0 +1,191 @@
+[
+  {
+    "id": "zw-retail-term-tarms",
+    "name": "TaRMS",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "ZIMRA's Tax and Revenue Management System through which new businesses register as taxpayers.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ]
+    }
+  },
+  {
+    "id": "zw-retail-term-vat-operator",
+    "name": "VAT operator and tax period",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "A VAT-registered person ('operator') files returns for the tax period ZIMRA assigns (for example monthly or two-monthly), due by the 25th of the following month per the Black Book records.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ]
+    }
+  },
+  {
+    "id": "zw-retail-term-pobs",
+    "name": "POBS",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "NSSA's Pensions and Other Benefits Scheme, to which employers remit monthly contributions.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "complianceEventIds": [
+        "nssa-pobs-monthly-remittance"
+      ]
+    }
+  },
+  {
+    "id": "zw-retail-term-itf16",
+    "name": "ITF 16",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "ZIMRA's annual employee earnings, deductions, credits and PAYE return.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-itf16-annual-return"
+      ]
+    }
+  },
+  {
+    "id": "zw-retail-term-tuckshop",
+    "name": "Tuckshop",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A very small, often informal retail outlet selling everyday goods, typically owner-operated."
+  },
+  {
+    "id": "zw-retail-term-general-dealer",
+    "name": "General dealer",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A shop trading in a broad range of everyday goods; the phrase also appears as a municipal licence class in some councils."
+  },
+  {
+    "id": "zw-retail-term-cash-and-carry",
+    "name": "Cash and carry",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A wholesale-retail hybrid where customers, often traders, pay upfront and transport goods themselves."
+  },
+  {
+    "id": "zw-retail-term-grn",
+    "name": "GRN (goods received note)",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The receiving document confirming quantities accepted into stock against a purchase order."
+  },
+  {
+    "id": "zw-retail-term-shrinkage",
+    "name": "Shrinkage",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Stock loss between purchase and sale from theft, damage, expiry or record error."
+  },
+  {
+    "id": "zw-retail-term-markup-margin",
+    "name": "Markup vs margin",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Markup is profit over cost; margin is profit over selling price. Confusing the two misprices stock."
+  },
+  {
+    "id": "zw-retail-term-layby",
+    "name": "Lay-bye",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A sale where the customer pays in instalments and collects the goods when fully paid."
+  },
+  {
+    "id": "zw-retail-term-runner-book",
+    "name": "Order book / credit book",
+    "category": "industry_term",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Informal record of customer credit sales kept by small retailers; the ERP replaces it with customer accounts."
+  }
+]

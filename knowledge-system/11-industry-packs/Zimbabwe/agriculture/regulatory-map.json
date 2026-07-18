@@ -1,0 +1,404 @@
+[
+  {
+    "id": "zw-agriculture-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-ema-effluent",
+    "name": "Effluent discharge licensing (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "The Black Book record applies to enterprises discharging effluent; whether a specific farm operation falls within scope must be confirmed with EMA. The quarterly reporting event is recorded for industrial and mining licence holders — its application to farm dischargers needs confirmation. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Enterprises discharging effluent — which can include intensive livestock, dairy and aquaculture operations — require an EMA effluent licence and submit quarterly waste-management reports where licensed as industrial dischargers.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "When the operation discharges effluent within EMA's licensing scope; quarterly reporting per licence conditions.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-effluent-licence"
+      ],
+      "complianceEventIds": [
+        "ema-effluent-quarterly-waste-report"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-effluent-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-ema-esia",
+    "name": "ESIA certificate for listed agricultural projects (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific agricultural project is in an EMA-listed category must be confirmed against EMA's current prescribed list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Agricultural projects in EMA-listed categories (for example large irrigation or dam works) require an ESIA certificate before implementation.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "Before implementing a project in an EMA-listed category.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ],
+      "complianceEventIds": [
+        "ema-esia-before-project-implementation",
+        "ema-esia-quarterly-progress-report",
+        "ema-esia-certificate-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-esia-certificate"
+      ],
+      "serviceIds": [
+        "ema-environmental-assessment-review"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-praz-supplier",
+    "name": "PRAZ supplier registration for public supply programmes",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported by the Black Book record's applicability to suppliers seeking public-procurement eligibility. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Agribusinesses supplying goods or services to public entities register with PRAZ as suppliers/bidders and renew annually.",
+    "obligationKind": "PROCUREMENT",
+    "appliesWhen": "Before bidding to supply public entities; registration renews each calendar year.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "licenceTypeIds": [
+        "praz-supplier-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "praz-supplier-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-praz-supplier-registration-obligation"
+      ],
+      "serviceIds": [
+        "praz-bidder-registration",
+        "egp-electronic-tendering"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-reg-associations",
+    "name": "Farmer and business membership bodies",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://cfuzim.org/home-commercial-farmers-union/about-cfu/",
+      "https://zncc.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Membership is voluntary; additional farmer unions are recorded as gaps below. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Farmers may voluntarily join membership bodies such as the Commercial Farmers' Union; cross-sector bodies such as ZNCC also serve agribusinesses.",
+    "obligationKind": "ASSOCIATION",
+    "appliesWhen": "Voluntary membership.",
+    "blackBook": {
+      "associationIds": [
+        "cfu-zimbabwe",
+        "zncc"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-gap-ama",
+    "name": "Agricultural Marketing Authority (AMA) registration",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of buyers, traders, processors and contractors of agricultural products with the Agricultural Marketing Authority is believed to apply to many agribusiness activities but is not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "regulator",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-lands-agriculture-fisheries"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-gap-timb",
+    "name": "Tobacco Industry and Marketing Board (TIMB) licensing",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Tobacco grower registration and the licensing of buyers, auction floors and contractors administered by TIMB are not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "regulator",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-lands-agriculture-fisheries"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-gap-veterinary",
+    "name": "Livestock movement and veterinary permits",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Livestock movement permits, branding and disease-control requirements administered through the Department of Veterinary Services are not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-lands-agriculture-fisheries"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-gap-water-permits",
+    "name": "Water abstraction and irrigation permits (ZINWA)",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Water abstraction agreements/permits for irrigation administered through ZINWA and catchment councils are not yet evidenced by a Black Book record (the existing ZINWA record covers water connections).",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-lands-agriculture-fisheries"
+      ],
+      "utilityIds": [
+        "zinwa"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-gap-farmer-unions",
+    "name": "Additional farmer unions",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Other farmer representative bodies (for example national smallholder farmer unions) are not yet represented in the Black Book's business associations.",
+    "proposedBlackBookCategory": "business_association"
+  },
+  {
+    "id": "zw-agriculture-gap-vat-treatment",
+    "name": "VAT treatment of agricultural produce and inputs",
+    "category": "industry_gap",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "The VAT status of specific agricultural produce and inputs (standard-rated, zero-rated or exempt) varies by item and is not yet documented as Black Book content; no treatment is asserted here.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ]
+    }
+  }
+]

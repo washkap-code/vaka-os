@@ -1,0 +1,340 @@
+[
+  {
+    "id": "zw-hospitality-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-bulawayo-premises",
+    "name": "Bulawayo premises registration (hotels, boarding and lodging houses)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported: the Black Book record's applicability expressly lists hotels, boarding houses and lodging houses and food premises. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Hotels, boarding houses and lodging houses, and food premises, in Bulawayo require the Health Inspectorate's annually renewed registration certificate.",
+    "obligationKind": "LOCAL_AUTHORITY",
+    "appliesWhen": "When operating listed premises types in Bulawayo; certificate valid to 31 December.",
+    "blackBook": {
+      "authorityIds": [
+        "bulawayo-city-council"
+      ],
+      "licenceTypeIds": [
+        "bulawayo-premises-registration-certificate"
+      ],
+      "complianceEventIds": [
+        "bulawayo-premises-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-bulawayo-premises-registration-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-harare-licensing",
+    "name": "Harare business licence and health registration (food premises)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/51",
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/50"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "The Black Book records expressly list food premises. Harare and Bulawayo are evidenced examples; every council operates its own regime. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Food premises in Harare require the council business licence and health registration of premises.",
+    "obligationKind": "LOCAL_AUTHORITY",
+    "appliesWhen": "When operating food premises in the City of Harare; renewals per council cycle.",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council"
+      ],
+      "licenceTypeIds": [
+        "harare-business-licence",
+        "harare-health-registration"
+      ],
+      "complianceEventIds": [
+        "harare-business-licence-renewal",
+        "harare-health-registration-review"
+      ],
+      "complianceGuideIds": [
+        "guide-harare-business-licence",
+        "guide-harare-health-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-liquor-licence",
+    "name": "Liquor licence (Liquor Licensing Board)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/objective/111?l=en",
+      "https://www.mlg.gov.zw/liquor-licensing/?service=liquor-licensing"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Licence classes and any additional council requirements must be confirmed with the Board. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Bars, restaurants and venues selling liquor apply to the national Liquor Licensing Board and renew per Board instructions.",
+    "obligationKind": "SECTOR_LICENCE",
+    "appliesWhen": "Before selling liquor; renewals per current licence expiry and Board instructions.",
+    "blackBook": {
+      "authorityIds": [
+        "liquor-licensing-board"
+      ],
+      "licenceTypeIds": [
+        "zimbabwe-liquor-licence"
+      ],
+      "complianceEventIds": [
+        "zimbabwe-liquor-licence-application-or-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-zimbabwe-liquor-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-reg-tourism-ministry",
+    "name": "Tourism portfolio oversight (context)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.parlzim.gov.zw/ministers/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Recorded as portfolio context from the Parliament ministers list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Ministry of Tourism and Hospitality holds the national tourism portfolio.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Portfolio context; operator registration obligations are recorded as gaps below.",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-tourism-hospitality"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-gap-zta-registration",
+    "name": "Tourism authority registration and grading",
+    "category": "industry_gap",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration and grading of designated tourist facilities and tour operators with the national tourism authority, and any tourism levy, are not yet evidenced by Black Book records; no fee or levy rate is asserted.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-tourism-hospitality"
+      ]
+    }
+  },
+  {
+    "id": "zw-hospitality-gap-haz",
+    "name": "Hospitality sector association",
+    "category": "industry_gap",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "The hospitality sector's membership association is not yet represented in the Black Book's business associations.",
+    "proposedBlackBookCategory": "business_association"
+  },
+  {
+    "id": "zw-hospitality-gap-food-handlers",
+    "name": "Food handlers' medical certificates",
+    "category": "industry_gap",
+    "industryId": "zw-hospitality",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Council food-handler medical examination/certificate requirements for staff are not yet evidenced as distinct Black Book records.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council",
+        "bulawayo-city-council"
+      ]
+    }
+  }
+]

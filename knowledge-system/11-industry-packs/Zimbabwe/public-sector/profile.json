@@ -1,0 +1,52 @@
+[
+  {
+    "id": "zw-public-sector",
+    "name": "Public Sector (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-public-sector",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Public entities operating as organisations: local authorities, state-owned enterprises, agencies, commissions and parastatals — administered through public financial-management and procurement frameworks.",
+    "subSectors": [
+      {
+        "name": "Local authorities",
+        "description": "City, municipal, town and rural district councils."
+      },
+      {
+        "name": "State-owned enterprises",
+        "description": "Commercial parastatals and utilities."
+      },
+      {
+        "name": "Agencies and commissions",
+        "description": "Regulatory and service agencies."
+      },
+      {
+        "name": "Public institutions",
+        "description": "Hospitals, schools and tertiary institutions in the public system."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Small",
+        "description": "Local boards and small agencies."
+      },
+      {
+        "tier": "Medium",
+        "description": "Municipalities, town councils and mid-size agencies."
+      },
+      {
+        "tier": "Large",
+        "description": "City councils, major SOEs and national agencies."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Entity classification follows statute rather than size bands; no classification table was verified in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Public financial-management and audit obligations are declared as research gaps; VAKA's scope here is entity administration, budgeting, billing and procurement workflow, not national PFM systems."
+  }
+]

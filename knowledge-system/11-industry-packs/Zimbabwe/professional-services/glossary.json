@@ -1,0 +1,98 @@
+[
+  {
+    "id": "zw-professional-services-term-matter",
+    "name": "Matter / engagement",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The unit of client work to which time, disbursements and fees attach."
+  },
+  {
+    "id": "zw-professional-services-term-wip",
+    "name": "WIP (unbilled time)",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Recorded professional time not yet billed to the client."
+  },
+  {
+    "id": "zw-professional-services-term-fee-note",
+    "name": "Fee note",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The professional invoice for fees and recoverable disbursements."
+  },
+  {
+    "id": "zw-professional-services-term-disbursement",
+    "name": "Disbursement",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A cost incurred on the client's behalf, recoverable on the fee note."
+  },
+  {
+    "id": "zw-professional-services-term-retainer",
+    "name": "Retainer",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An advance held against future fees; statutory trust rules for client money are a declared research gap."
+  },
+  {
+    "id": "zw-professional-services-term-practising-certificate",
+    "name": "Practising certificate",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The annual authority to practise issued by a professional council; regimes are declared research gaps."
+  },
+  {
+    "id": "zw-professional-services-term-conflict-check",
+    "name": "Conflict check",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Screening a new engagement against existing clients and matters before acceptance."
+  },
+  {
+    "id": "zw-professional-services-term-realisation",
+    "name": "Realisation",
+    "category": "industry_term",
+    "industryId": "zw-professional-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Billed fees as a share of the standard value of time recorded."
+  }
+]

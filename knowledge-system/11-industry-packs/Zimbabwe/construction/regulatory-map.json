@@ -1,0 +1,352 @@
+[
+  {
+    "id": "zw-construction-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-praz-supplier",
+    "name": "PRAZ supplier/bidder registration for public works",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.praz.org.zw/public-procurement-matters-registration-of-bidders-and-contractors/",
+      "https://egp.praz.org.zw/egp-"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Directly supported by the Black Book record's applicability to suppliers, bidders and contractors seeking public-procurement eligibility. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Contractors bidding for public construction works register with PRAZ as suppliers/bidders and renew each calendar year.",
+    "obligationKind": "PROCUREMENT",
+    "appliesWhen": "Before bidding for public procurement; registration runs to 31 December and renews annually.",
+    "blackBook": {
+      "authorityIds": [
+        "praz"
+      ],
+      "licenceTypeIds": [
+        "praz-supplier-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "praz-supplier-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-praz-supplier-registration-obligation"
+      ],
+      "serviceIds": [
+        "praz-bidder-registration",
+        "egp-electronic-tendering"
+      ],
+      "tenderPortalIds": [
+        "zimbabwe-egp",
+        "bulawayo-procurement-portal",
+        "mutare-tender-notices",
+        "zetdc-procurement-notices"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-ema-esia",
+    "name": "ESIA certificate for listed projects (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific project is in an EMA-listed category must be confirmed against EMA's current prescribed list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Construction projects in EMA-listed categories with potential negative environmental effects require an ESIA certificate before implementation, with quarterly progress reports and renewal rules while conditions apply.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "Before implementing a project in an EMA-listed category; quarterly reporting and renewal rules per certificate conditions.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ],
+      "complianceEventIds": [
+        "ema-esia-before-project-implementation",
+        "ema-esia-quarterly-progress-report",
+        "ema-esia-certificate-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-esia-certificate"
+      ],
+      "serviceIds": [
+        "ema-environmental-assessment-review"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-reg-associations",
+    "name": "Business membership bodies relevant to construction",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://zncc.co.zw/",
+      "https://www.emcoz.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Membership is voluntary; sector-specific construction federations are recorded as gaps below. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Contractors may voluntarily join cross-sector bodies such as ZNCC and the employers' confederation EMCOZ.",
+    "obligationKind": "ASSOCIATION",
+    "appliesWhen": "Voluntary membership.",
+    "blackBook": {
+      "associationIds": [
+        "zncc",
+        "emcoz"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-gap-council-plan-approval",
+    "name": "Municipal building plan approval and inspections",
+    "category": "industry_gap",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: council plan-approval processes exist under building by-laws but are not yet evidenced by a Black Book record; the referenced councils are examples of the authority class. No fee, form, or deadline is asserted.",
+    "description": "Local authorities approve building plans and inspect works under building by-laws and planning law; the Black Book has no licence-type record yet for plan approval, inspection stages or occupation certificates.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council",
+        "bulawayo-city-council"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-gap-contractor-registration",
+    "name": "Public-works contractor registration/categorisation",
+    "category": "industry_gap",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration or categorisation of building and civil contractors for public works (historically administered under the Ministry responsible for public works) is not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-local-government-public-works"
+      ]
+    }
+  },
+  {
+    "id": "zw-construction-gap-cifoz",
+    "name": "Construction industry federation membership",
+    "category": "industry_gap",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Sector membership bodies for contractors (for example a construction industry federation) are not yet represented in the Black Book's business associations.",
+    "proposedBlackBookCategory": "business_association"
+  },
+  {
+    "id": "zw-construction-gap-nec-construction",
+    "name": "National Employment Council for the construction industry",
+    "category": "industry_gap",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Sector collective-bargaining obligations (minimum wages, levies and union dues administered through the industry's employment council) are not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-construction-gap-withholding-tax",
+    "name": "Contract withholding tax and tax clearance (ITF 263)",
+    "category": "industry_gap",
+    "industryId": "zw-construction",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Withholding on contract payments to suppliers without a valid tax clearance, and the tax clearance certificate itself, are not yet documented as Black Book records.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ]
+    }
+  }
+]

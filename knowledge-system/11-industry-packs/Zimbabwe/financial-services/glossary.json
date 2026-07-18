@@ -1,0 +1,119 @@
+[
+  {
+    "id": "zw-financial-services-term-rbz",
+    "name": "RBZ",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.rbz.co.zw/index.php/about-us/about-us/functions"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "The Reserve Bank of Zimbabwe, the central bank and financial-sector regulator.",
+    "blackBook": {
+      "authorityIds": [
+        "rbz"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-term-ipec",
+    "name": "IPEC",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ipec.co.zw/mandate-core-functions/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "The Insurance and Pensions Commission, regulator of insurance and pensions business.",
+    "blackBook": {
+      "authorityIds": [
+        "ipec"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-term-seczim",
+    "name": "SECZim",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://seczim.co.zw/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "The Securities and Exchange Commission of Zimbabwe, regulator of capital markets.",
+    "blackBook": {
+      "authorityIds": [
+        "seczim"
+      ]
+    }
+  },
+  {
+    "id": "zw-financial-services-term-par",
+    "name": "PAR",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Portfolio at risk: the share of a loan book overdue beyond a chosen day threshold."
+  },
+  {
+    "id": "zw-financial-services-term-clawback",
+    "name": "Commission clawback",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Recovery of paid commission when a policy or facility lapses early."
+  },
+  {
+    "id": "zw-financial-services-term-kyc",
+    "name": "KYC",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Know-your-customer checks at onboarding; statutory AML framework is a declared research gap."
+  },
+  {
+    "id": "zw-financial-services-term-reserve",
+    "name": "Claim reserve",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The estimated liability held for a registered but unsettled claim."
+  },
+  {
+    "id": "zw-financial-services-term-debit-order",
+    "name": "Debit order / stop order",
+    "category": "industry_term",
+    "industryId": "zw-financial-services",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Recurring collection instructions used for premiums and instalments."
+  }
+]

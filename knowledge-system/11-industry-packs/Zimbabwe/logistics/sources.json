@@ -1,0 +1,100 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-company-incorporation"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-paye",
+      "zw-logistics-reg-vat",
+      "zw-logistics-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-praz-org-zw",
+    "domain": "praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-praz-supplier"
+    ],
+    "note": "Supplier/bidder registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-egp-praz-org-zw",
+    "domain": "egp.praz.org.zw",
+    "publisher": "Zimbabwe eGP portal (PRAZ)",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-praz-supplier"
+    ],
+    "note": "Electronic tendering.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zera-co-zw",
+    "domain": "zera.co.zw",
+    "publisher": "Zimbabwe Energy Regulatory Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-zera-petroleum"
+    ],
+    "note": "Petroleum retail licensing.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zim-gov-zw",
+    "domain": "zim.gov.zw",
+    "publisher": "Government of Zimbabwe portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-logistics-reg-transport-ministry"
+    ],
+    "note": "Ministerial portfolio context.",
+    "lastChecked": "2026-07-15"
+  }
+]

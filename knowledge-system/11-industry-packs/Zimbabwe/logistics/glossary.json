@@ -1,0 +1,98 @@
+[
+  {
+    "id": "zw-logistics-term-pod",
+    "name": "POD (proof of delivery)",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The signed or captured confirmation that goods were delivered; the billing trigger."
+  },
+  {
+    "id": "zw-logistics-term-backload",
+    "name": "Backload",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Return-leg cargo that turns an empty return into revenue."
+  },
+  {
+    "id": "zw-logistics-term-demurrage",
+    "name": "Demurrage / standing time",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Charges for vehicle time lost waiting at loading or border points."
+  },
+  {
+    "id": "zw-logistics-term-consignment",
+    "name": "Consignment note",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The document accompanying goods in transit identifying consignor, consignee and cargo."
+  },
+  {
+    "id": "zw-logistics-term-bond",
+    "name": "Bonded cargo",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Goods moving under customs control before duty payment; agent licensing is a declared research gap."
+  },
+  {
+    "id": "zw-logistics-term-tautliner",
+    "name": "Fleet classes",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Common vehicle classes (rigid, tautliner, flatbed, tanker, refrigerated) used for rating and allocation."
+  },
+  {
+    "id": "zw-logistics-term-norm",
+    "name": "Fuel norm",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Expected consumption per vehicle class used to detect fuel loss."
+  },
+  {
+    "id": "zw-logistics-term-turnaround",
+    "name": "Turnaround time",
+    "category": "industry_term",
+    "industryId": "zw-logistics",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Time from job start to vehicle available again; drives utilisation."
+  }
+]
