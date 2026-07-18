@@ -80,7 +80,8 @@ WHERE "status" = 'published' AND "published_snapshot" IS NOT NULL;
 ALTER TABLE "business_profiles"
   ALTER COLUMN "company_id" SET NOT NULL,
   ALTER COLUMN "slug" SET NOT NULL,
-  ALTER COLUMN "name" SET NOT NULL;
+  ALTER COLUMN "name" SET NOT NULL,
+  ALTER COLUMN "status" SET DEFAULT 'draft';
 
 DO $migration$
 BEGIN

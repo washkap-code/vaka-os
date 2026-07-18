@@ -41,8 +41,9 @@ function slugify(value: string): string {
 }
 
 function isUniqueViolation(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error
-    && (error as { code?: unknown }).code === "23505";
+  if (typeof error !== "object" || error === null) return false;
+  const candidate = error as { code?: unknown; cause?: unknown };
+  return candidate.code === "23505" || isUniqueViolation(candidate.cause);
 }
 
 function publicSnapshot(record: OwnProfileRecord): PublicProfileSnapshot {
@@ -180,7 +181,7 @@ export class NetworkService {
     if (current.profile?.status === "suspended") {
       throw conflict("A suspended profile cannot be edited");
     }
-    const candidate = input.slug ?? current.profile?.slug ?? slugify(input.name);
+    const candidate = input.slug ?? current.profile?.slug ?? slugify(current.company.subdomain);
     const slug = candidate.length >= 3 ? candidate : `business-${context.tenantId.slice(0, 8)}`;
     let profile;
     try {

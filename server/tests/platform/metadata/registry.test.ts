@@ -103,6 +103,15 @@ describe("MetadataRegistry validation", () => {
       Product: { sku: "VAKA-001", name: "Ledger Book", salePrice: "5.50", reorderLevel: 10, trackStock: true },
       Employee: { employeeNumber: "EMP-001", firstName: "Tariro", lastName: "Moyo", currency: "USD", basicSalary: "850.00" },
       User: { email: "owner@vaka.example", fullName: "VAKA Owner", status: "active" },
+      BusinessProfile: {
+        companyId: UUID_A,
+        slug: "vaka-test-business",
+        name: "VAKA Test Business",
+        description: "A complete public business profile describing the company's capabilities, operating footprint, customer outcomes, and reliable contact path.",
+        industryPrimary: "professional-services",
+        country: "ZW",
+        emailPublic: "hello@vaka.example",
+      },
     };
     for (const [objectName, payload] of Object.entries(payloads)) {
       expect(registry.validate(objectName, payload), objectName).toEqual({ valid: true, errors: [] });
@@ -157,5 +166,18 @@ describe("MetadataRegistry validation", () => {
       valid: false,
       errors: [{ field: "$", code: "payload", message: "Payload must be an object" }],
     });
+  });
+
+  it("enforces Business Profile publication length and contact rules without database calls", () => {
+    const result = registry.validate("BusinessProfile", {
+      companyId: UUID_A,
+      slug: "short-profile",
+      name: "Short profile",
+      description: "Too short",
+      industryPrimary: "manufacturing",
+      country: "ZW",
+    });
+    expect(result.errors).toContainEqual(expect.objectContaining({ field: "description", code: "validation" }));
+    expect(result.errors).toContainEqual(expect.objectContaining({ field: "phone|emailPublic|website", code: "required" }));
   });
 });

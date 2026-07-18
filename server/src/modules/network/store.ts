@@ -14,6 +14,7 @@ export interface OwnProfileRecord {
   capabilities: ProfileCapabilityInput[];
   company: {
     legalName: string;
+    subdomain: string;
     registrationNumber: string | null;
     country: string;
     verificationStatus: "verified" | "unverified";
@@ -48,6 +49,7 @@ export class PostgresNetworkStore {
   async getOwn(tenantId: string): Promise<OwnProfileRecord> {
     const [company] = await db.select({
       legalName: schema.tenants.companyName,
+      subdomain: schema.tenants.subdomain,
       registrationNumber: schema.tenants.registrationNumber,
       country: schema.tenants.countryCode,
       verified: sql<boolean>`EXISTS (
@@ -72,6 +74,7 @@ export class PostgresNetworkStore {
       capabilities,
       company: {
         legalName: company.legalName,
+        subdomain: company.subdomain,
         registrationNumber: company.registrationNumber,
         country: company.country,
         verificationStatus: company.verified ? "verified" : "unverified",
