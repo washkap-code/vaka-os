@@ -59,7 +59,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "verification_requests_one_open_per_tenant"
   ON "verification_requests" ("tenant_id")
   WHERE "status" IN ('DRAFT', 'SUBMITTED', 'IN_REVIEW');
 CREATE INDEX IF NOT EXISTS "verification_requests_tenant_time"
-  ON "verification_requests" ("tenant_id", "created_at" DESC);
+  ON "verification_requests" ("tenant_id", "created_at");
 CREATE INDEX IF NOT EXISTS "verification_requests_queue"
   ON "verification_requests" ("status", "submitted_at" ASC)
   WHERE "status" IN ('SUBMITTED', 'IN_REVIEW');
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS "verification_badges" (
 );
 
 CREATE INDEX IF NOT EXISTS "verification_badges_tenant_time"
-  ON "verification_badges" ("tenant_id", "issued_at" DESC);
+  ON "verification_badges" ("tenant_id", "issued_at");
 
 -- Requests are mutable only through the declared state machine. Submission
 -- and review context become frozen as soon as their transitions occur.
