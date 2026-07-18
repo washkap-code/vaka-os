@@ -5,7 +5,7 @@
 // ============================================================================
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 
 type TaskStatus = "OPEN" | "DONE" | "DISMISSED";
 type TenantTask = {
