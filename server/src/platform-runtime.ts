@@ -50,6 +50,9 @@ import {
   type ProcurementApprovalNotifierContract,
 } from "./procurement-notifications.js";
 import { ApprovalService } from "./platform/workflow/approvals.js";
+import { WorkflowService } from "./platform/workflow/service.js";
+import type { WorkflowStoreContract } from "./platform/workflow/interfaces.js";
+import { PostgresWorkflowStore } from "./workflow-store.js";
 import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
@@ -93,6 +96,9 @@ export const FEATURE_FLAG_SERVICE: ServiceToken<FeatureFlagService> =
 export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
   createServiceToken("platform.workflow.approvals");
 
+export const WORKFLOW_SERVICE: ServiceToken<WorkflowService> =
+  createServiceToken("platform.workflow.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -118,6 +124,8 @@ export interface PlatformKernelOptions {
   /** Override the feature-flag store/audit (tests). Defaults to Postgres + audit_logs. */
   featureFlagStore?: FeatureFlagStore;
   featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
+  /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
+  workflowStore?: WorkflowStoreContract;
 }
 
 /**
@@ -203,6 +211,12 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       eventType: event.type,
       errorType: error instanceof Error ? error.name : "UnknownError",
     }, "error", applicationLogger);
+  }));
+
+  kernel.container.registerFactory(WORKFLOW_SERVICE, () => new WorkflowService({
+    store: options.workflowStore ?? new PostgresWorkflowStore(),
+    audit: kernel.container.get(AUDIT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
   }));
 
   kernel.container.registerValue(

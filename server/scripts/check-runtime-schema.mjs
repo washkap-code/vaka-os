@@ -78,6 +78,9 @@ const alwaysRequired = [
   ["accounting_periods", "tenant_id"],
   ["accounting_periods", "period_month"],
   ["accounting_periods", "status"],
+  ["workflow_definitions", "steps_json"],
+  ["workflow_instances", "current_step"],
+  ["workflow_actions", "action"],
 ];
 const gatedRequirements = {
   "migration.hub": [
