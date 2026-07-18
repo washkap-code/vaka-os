@@ -137,12 +137,16 @@ jobs:
         working-directory: server
         run: npm run test:full
 
-      - name: Install PostgreSQL backup client tools
+      # The runner preinstalls postgresql-client 16, whose pg_dump aborts with
+      # "server version mismatch" against the pinned postgres:17 service.
+      # Install the matching v17 client from PGDG and put it first on PATH.
+      - name: Install PostgreSQL 17 client tools (match pinned server major)
         run: |
-          if ! command -v pg_dump >/dev/null || ! command -v pg_restore >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install --yes postgresql-client
-          fi
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-common
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt-get install --yes postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
       - name: Verify backup round trip and production safety rail
         run: bash scripts/tests/backup-restore.test.sh
