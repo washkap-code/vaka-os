@@ -1,6 +1,57 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-18 (session 21, Codex universal-audit lane, branch
+**Updated:** 2026-07-18 (session 22, Codex Mail lane, branch
+`feature/mail-core`, implementation commit `9e26568`: **owner-issued MISSION
+P9-001 VAKA Mail Core implemented and verified.** Migration
+`0052_mail_core.sql` adds tenant/account-scoped mailbox accounts, folders and
+UID cursors, threads, messages, DocumentService-backed attachments and
+message/thread business-object links. IMAP and SMTP configuration uses a
+dedicated, versioned AES-256-GCM envelope backed only by
+`MAIL_ENCRYPTION_KEY`; account APIs return configured flags and never return
+plaintext or ciphertext configuration. The dependency-free IMAP adapter
+supports implicit TLS/STARTTLS, folder discovery, UIDVALIDITY and incremental
+UID fetch; the single-flight interval scheduler contains account/provider
+failures and marks degraded accounts `ERROR`. MIME ingestion bounds message
+and attachment size, strips active HTML, threads by References/In-Reply-To
+before normalized-subject fallback, and auto-links Customer/Supplier email
+matches inside the tenant. SMTP send/reply sets Message-ID, In-Reply-To and
+References, then stores the accepted message in Sent. Identifier-only
+`mail.sent`/`mail.received` facts extend the closed EventType catalogue.
+Authenticated APIs provide account CRUD, thread search/read, send/reply and
+manual object links behind default-off `mail.hub`, the three Mail permissions,
+tenant scope and private/shared mailbox checks. Six Mail objects extend the
+MetadataRegistry; account create/update and message send are transactionally
+audited; linked messages appear in the Universal Timeline only when the caller
+also has mailbox visibility, and never expose bodies/addresses/attachments in
+timeline entries. Verification on isolated PostgreSQL 18: clean migration
+replay `0000`–`0052` with zero Drizzle drift; guarded `0052` down migration;
+runtime-schema readiness; focused Mail/platform contracts 50/50; endpoint
+isolation and document-adapter regressions 15/15; exact final server suite 110
+passed files plus one environment-gated skipped file, 534 passed tests plus
+three environment-gated skips (537 total); root server+web typecheck; and web
+Vite production build. The first full pass exposed and resolved nested-router
+endpoint discovery and a legacy document-error contract; the second pass is
+the definitive green result. **DEPENDENCY TRUTH:** a fresh fetch at kickoff
+showed `origin/main` still at `d473650` (P1-002), while this branch is correctly
+stacked on the verified local P1-006 handoff `1c4a182`. Push/merge/reconcile in
+strict order: P1-003, P1-004, P1-005, P1-006, then P9-001. Production is
+applied through 0047; apply 0048–0052 in order and provision
+`MAIL_ENCRYPTION_KEY` before deploying P9-001. Keep `mail.hub` off until a
+controlled pilot. **RISKS/NEXT:** no Gmail/Microsoft OAuth, webhook recovery,
+UI, malware/DLP quarantine, retention/legal hold/export, or distributed sync
+lease exists; the raw IMAP adapter needs provider-interoperability evidence;
+and SMTP acceptance can precede a rare local persistence failure because no
+queue infrastructure was authorised. Recommended next mission: P9-002 Gmail
+and Microsoft OAuth connectors with revocation, webhook authenticity, cursor
+reconciliation and provider recovery tests, after the dependency stack is
+merged. No implementation blocker remains beyond owner push, strict merge and
+migration order, production secret provisioning and hosted PostgreSQL 17
+gates. Active dependency branches to preserve are
+`feature/platform-workflow-engine`, `feature/platform-notification-service`,
+`feature/platform-event-bus`, `feature/platform-universal-audit` and this
+`feature/mail-core`; several do not yet have current remote tips.)
+
+**Previous:** 2026-07-18 (session 21, Codex universal-audit lane, branch
 `feature/platform-universal-audit`, implementation commit `ba0e12b`:
 **owner-issued MISSION P1-006 Universal Audit & Timeline implemented and
 verified.** Migration `0051_platform_universal_audit.sql` adds the singular,
@@ -160,8 +211,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the active universal-audit branch:
-`0051_platform_universal_audit.sql`. Production is currently applied through
+Highest migration in the active Mail branch:
+`0052_mail_core.sql`. Production is currently applied through
 `0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
@@ -191,15 +242,16 @@ again to the dedicated project.
 | 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
 | 0050_platform_event_bus | P1-005 Event Bus Hardening | ⚠️ TAKEN on `feature/platform-event-bus`; NOT applied to production; apply after 0049 and before deploying this branch |
 | 0051_platform_universal_audit | P1-006 Universal Audit & Timeline | ⚠️ TAKEN on `feature/platform-universal-audit`; NOT applied to production; apply after 0050 and before deploying this branch |
+| 0052_mail_core | P9-001 VAKA Mail Core | ⚠️ TAKEN on `feature/mail-core`; NOT applied to production; apply after 0051 and provision `MAIL_ENCRYPTION_KEY` before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
 Migrations **0046 and 0047 are applied to production**. Migrations **0048**,
-**0049**, **0050** and **0051** are taken by the owner-issued P1-003 Workflow
-Engine, P1-004 Notification Service, P1-005 Event Bus Hardening and P1-006
-Universal Audit & Timeline respectively; none is applied to production. Apply
-them in numeric order before deploying P1-006. New reservations continue from
-**0052**; coordinate them in this ledger before
+**0049**, **0050**, **0051** and **0052** are taken by the owner-issued P1-003
+Workflow Engine, P1-004 Notification Service, P1-005 Event Bus Hardening,
+P1-006 Universal Audit & Timeline and P9-001 Mail Core respectively; none is
+applied to production. Apply them in numeric order before deploying P9-001.
+New reservations continue from **0053**; coordinate them in this ledger before
 creating another migration.
 
 ## Part II verification lane
@@ -665,29 +717,32 @@ the admin password hash between reruns on the same scratch db.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 20): merge the platform stack, then recover persisted events
+## NEXT MISSION (session 22): merge the platform stack, then P9-002 OAuth
 
 Push and merge the platform branches in strict dependency order: P1-003
-workflow, P1-004 notifications, then P1-005 events. Rebase or merge current
-`origin/main` at each review boundary and require the hosted PostgreSQL 17
-quality gates. Apply migrations 0048, 0049 and 0050 in order only after their
-corresponding branches merge. The next free migration is 0051. After P1-005 is
-contained, implement a leased recovery/replay worker for persisted
-`pending`/`retrying`/`failed` events plus permission-gated operator retry
-controls; preserve the closed catalogue, minimal payloads and broker-free
-architecture.
+workflow, P1-004 notifications, P1-005 events, P1-006 audit/timeline, then
+P9-001 Mail Core. Reconcile current `origin/main` at each review boundary and
+require hosted PostgreSQL 17 gates. Apply migrations 0048–0052 in order only
+after their corresponding branches merge; provision `MAIL_ENCRYPTION_KEY`
+before the Mail deploy and leave `mail.hub` off pending a controlled pilot.
+The next free migration is 0053. Then execute P9-002: Gmail and Microsoft OAuth
+connectors with least-privilege scopes, encrypted/revocable tokens, webhook
+authenticity, cursor reconciliation, provider recovery evidence and no change
+to the P9-001 mailbox/API contracts.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
-> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. P1-005 Event Bus
-> Hardening is complete on `feature/platform-event-bus` above local P1-004 and
-> P1-003. Fetch and verify remote truth, then push/review/merge P1-003, P1-004
-> and P1-005 in that order with hosted PostgreSQL 17 gates green. Production is
-> applied only through 0047; apply 0048, 0049 and 0050 in order after the
-> corresponding merges. The next free migration is 0051. Then build a leased,
-> broker-free event recovery/replay worker and admin retry controls for
-> persisted pending/retrying/failed events. Preserve minimal typed payloads,
-> tenant scope, handler idempotency and post-commit dispatch. The old
+> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. P9-001 VAKA Mail
+> Core is complete on `feature/mail-core`, stacked on the verified local
+> P1-003→P1-006 dependency chain. Fetch and verify remote truth, then
+> push/review/merge P1-003, P1-004, P1-005, P1-006 and P9-001 in that order
+> with hosted PostgreSQL 17 gates green. Production is applied only through
+> 0047; apply 0048–0052 in order after the corresponding merges, provision
+> `MAIL_ENCRYPTION_KEY`, and keep `mail.hub` off pending pilot approval. The
+> next free migration is 0053. Then implement P9-002 Gmail/Microsoft OAuth with
+> least-privilege scopes, revocation, authenticated webhooks, cursor
+> reconciliation and provider recovery tests. Preserve tenant/mailbox scope,
+> encrypted secrets, minimal typed events and the existing API contract. The old
 > `vaka-platform` rollback hold still ends 2026-07-23 unless the owner extends
 > it.
