@@ -1,12 +1,13 @@
 import type {
-  NotificationChannel, NotificationDelivery, NotificationRequest, NotificationStatus,
+  NotificationChannel, NotificationDelivery, NotificationRequest, NotificationSendInput,
+  NotificationStatus,
 } from "./types.js";
 
 export interface NotificationGateway {
   deliver(request: NotificationRequest): Promise<NotificationDelivery>;
 }
 
-export type NotificationGateways = Record<NotificationChannel, NotificationGateway>;
+export type NotificationGateways = Partial<Record<NotificationChannel, NotificationGateway>>;
 
 export type NotificationWriter = (
   request: NotificationRequest,
@@ -23,6 +24,10 @@ export type NotificationAuditRecorder = (
   delivery: NotificationDelivery,
 ) => Promise<void>;
 
+export type NotificationPreferenceLookup = (
+  request: NotificationRequest,
+) => Promise<boolean>;
+
 export interface NotificationServiceContract {
-  send(request: NotificationRequest): Promise<NotificationDelivery>;
+  send(request: NotificationSendInput): Promise<NotificationDelivery>;
 }

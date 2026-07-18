@@ -660,6 +660,9 @@ export async function commitProductImport(opts: {
       queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${product.id}:imported`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
         tenantId: opts.tenantId, actorUserId: opts.actorUserId,
         payload: { productId: product.id, change: "imported" } });
+      queue({ id: `${DOMAIN_EVENTS.PRODUCT_CREATED}:${product.id}`, type: DOMAIN_EVENTS.PRODUCT_CREATED,
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId,
+        payload: { productId: product.id } });
     }
     return { batch: completed, importedRows: created.length };
   }));

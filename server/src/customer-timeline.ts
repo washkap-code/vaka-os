@@ -242,11 +242,11 @@ export async function getCustomerTimeline(input: {
 
 export function subscribeCustomerTimeline(bus: EventBusContract, projector: CustomerTimelineProjectorContract): void {
   bus.subscribe<DomainEventPayloads["activity.recorded"]>(DOMAIN_EVENTS.ACTIVITY_RECORDED, (event) =>
-    projector.projectActivity(event.tenantId ?? "", event.payload.activityId));
+    projector.projectActivity(event.tenantId ?? "", event.payload.activityId), { handlerName: "timeline.activity" });
   bus.subscribe<DomainEventPayloads["invoice.issued"]>(DOMAIN_EVENTS.INVOICE_ISSUED, (event) =>
-    projector.projectInvoice(event.tenantId ?? "", event.payload.invoiceId, "invoice.issued", undefined, event.actorUserId ?? null));
+    projector.projectInvoice(event.tenantId ?? "", event.payload.invoiceId, "invoice.issued", undefined, event.actorUserId ?? null), { handlerName: "timeline.invoice.issued" });
   bus.subscribe<DomainEventPayloads["invoice.voided"]>(DOMAIN_EVENTS.INVOICE_VOIDED, (event) =>
-    projector.projectInvoice(event.tenantId ?? "", event.payload.invoiceId, "invoice.voided", event.occurredAt, event.actorUserId ?? null));
+    projector.projectInvoice(event.tenantId ?? "", event.payload.invoiceId, "invoice.voided", event.occurredAt, event.actorUserId ?? null), { handlerName: "timeline.invoice.voided" });
   bus.subscribe<DomainEventPayloads["payment.recorded"]>(DOMAIN_EVENTS.PAYMENT_RECORDED, (event) =>
-    projector.projectPayment(event.tenantId ?? "", event.payload.paymentId));
+    projector.projectPayment(event.tenantId ?? "", event.payload.paymentId), { handlerName: "timeline.payment.recorded" });
 }

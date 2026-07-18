@@ -25,6 +25,7 @@ import { enforceApprovalPolicy } from "./approval-policies.js";
 import type {
   PayeTable, PayrollConfig, SocialSecurityRule,
 } from "./platform/localisation/types.js";
+import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
 
 // ---------------------------------------------------------------------------
 // Input validation
@@ -287,7 +288,7 @@ export async function createEmployee(
       `multi-currency payroll is a later mission`,
     );
   }
-  return db.transaction(async (tx) => {
+  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [existing] = await tx.select({ id: schema.employees.id }).from(schema.employees).where(and(
       eq(schema.employees.tenantId, tenantId),
       eq(schema.employees.employeeNumber, input.employeeNumber),
@@ -310,8 +311,15 @@ export async function createEmployee(
     await audit(tx, tenantId, userId, "payroll.employee.created", "employee", employee.id, {
       employeeNumber: employee.employeeNumber,
     });
+    queue({
+      id: `${DOMAIN_EVENTS.EMPLOYEE_CREATED}:${employee.id}`,
+      type: DOMAIN_EVENTS.EMPLOYEE_CREATED,
+      tenantId,
+      actorUserId: userId,
+      payload: { employeeId: employee.id },
+    });
     return employee;
-  });
+  }));
 }
 
 export async function updateEmployee(

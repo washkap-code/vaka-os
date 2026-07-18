@@ -114,7 +114,10 @@ import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js"
 import {
   listRestoreDrills, recordRestoreDrill, reviewRestoreDrill,
 } from "./platform/admin/restore-drills.js";
-import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import {
+  DOMAIN_EVENTS, EVENT_TYPES, runWithPostCommitEvents, type EventType,
+} from "./platform/events/index.js";
+import { listPlatformEvents } from "./platform-events.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
@@ -126,7 +129,7 @@ import {
 } from "./finance-report-snapshots.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
@@ -137,7 +140,10 @@ import {
 import { latestEmailPreference, recordEmailPreference } from "./communication-preferences.js";
 import { FINANCE_DELIVERY_LOCALES } from "./finance-delivery-catalogues.js";
 import { sendFinanceDocument } from "./finance-document-delivery.js";
-import { listFailedEmailDeliveriesToday, listNotifications } from "./notifications.js";
+import {
+  listFailedEmailDeliveriesToday, listNotificationInbox, markAllNotificationsRead,
+  markNotificationRead,
+} from "./notifications.js";
 import { sendUserInvitationEmail } from "./transactional-email.js";
 import {
   initiateSubscriptionPayment, listSubscriptionPaymentAttempts, processPaynowResult,
@@ -602,21 +608,57 @@ api.post("/security/my-sessions/:id/revoke", wrap(async (req) => {
 }));
 
 const notificationListQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(20),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).optional(),
+  unread: z.enum(["true", "false"]).transform((value) => value === "true").optional(),
 });
 api.get("/notifications", wrap(async (req, res) => {
-  const { limit } = notificationListQuerySchema.parse(req.query);
-  const notifications = await listNotifications(tenantId(req), {
-    limit,
-    recipient: req.auth!.userId,
-    channel: "IN_APP",
+  const { limit, page, pageSize, unread } = notificationListQuerySchema.parse(req.query);
+  const result = await listNotificationInbox(tenantId(req), req.auth!.userId, {
+    page,
+    pageSize: pageSize ?? limit ?? 20,
+    unread,
   });
   res.setHeader("Cache-Control", "private, no-store");
   return {
-    notifications: notifications.map(({ id, template, locale, variables, status, createdAt }) => ({
-      id, template, locale, variables, status, createdAt,
+    notifications: result.notifications.map((notification) => ({
+      id: notification.id,
+      template: notification.template,
+      locale: notification.locale,
+      variables: notification.variables,
+      status: notification.status,
+      createdAt: notification.createdAt,
+      ...(notification.title !== null || notification.body !== null || notification.link !== null
+        ? {
+          priority: notification.priority,
+          title: notification.title,
+          body: notification.body,
+          link: notification.link,
+          objectType: notification.objectType,
+          objectId: notification.objectId,
+          readAt: notification.readAt,
+        }
+        : {}),
     })),
+    page: result.page,
+    pageSize: result.pageSize,
+    total: result.total,
+    hasMore: result.hasMore,
   };
+}));
+api.post("/notifications/read-all", wrap(async (req, res) => {
+  const updated = await markAllNotificationsRead(tenantId(req), req.auth!.userId);
+  res.setHeader("Cache-Control", "private, no-store");
+  return { updated };
+}));
+api.post("/notifications/:id/read", wrap(async (req, res) => {
+  const notification = await markNotificationRead(
+    tenantId(req), req.auth!.userId, routeParam(req, "id"),
+  );
+  if (!notification) throw notFound("Notification not found");
+  res.setHeader("Cache-Control", "private, no-store");
+  return notification;
 }));
 
 api.get("/security/activity", requireTenantOwner as any, wrap(async (req) => {
@@ -1492,6 +1534,8 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
     });
     queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${p.id}:created`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
       tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id, change: "created" } });
+    queue({ id: `${DOMAIN_EVENTS.PRODUCT_CREATED}:${p.id}`, type: DOMAIN_EVENTS.PRODUCT_CREATED,
+      tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id } });
     if (openingStock) {
       const opening = await recordOpeningStock(tx, {
         tenantId: tid,
@@ -1815,6 +1859,7 @@ api.patch("/invoices/:id", requirePermission("accounting.post"), wrap(async (req
 api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) => {
   const issued = await issueInvoice({
     tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId,
+    approvalIdentity: platformKernel().container.get(IDENTITY_FACTORY).for(req.auth),
   });
   logEvent("invoice.posted", {
     requestId: req.requestId ?? null,
@@ -2689,6 +2734,17 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
     suspendedTenants: row.suspended_tenants,
     acceptedRestoreDrills: row.accepted_restore_drills,
   });
+}));
+const platformEventQuerySchema = z.object({
+  tenantId: z.string().uuid(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  status: z.enum(["pending", "processing", "retrying", "processed", "failed"]).optional(),
+  eventType: z.enum(EVENT_TYPES as [EventType, ...EventType[]]).optional(),
+}).strict();
+api.get("/platform/events", requirePlatformPermission("platform.operations.read"), wrap(async (req) => {
+  const query = platformEventQuerySchema.parse(req.query);
+  return listPlatformEvents(query.tenantId, query);
 }));
 api.get("/platform/operations/email-failures/today",
   requirePlatformPermission("platform.operations.read"),
