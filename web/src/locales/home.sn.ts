@@ -1,8 +1,10 @@
-// ChiShona (sn-ZW) public landing page dictionary — DRAFT.
+// ChiShona (sn-ZW) public landing page dictionary — CERTIFIED.
 //
-// Status: machine-assisted draft pending certified review by a qualified
-// native-speaker translator (mission PI18N-002, gate P). English remains the
-// authoritative language until that review approves this file.
+// Status: CERTIFIED by owner self-certification on 2026-07-18
+// (Dr. Washington Kapapiro, Owner, VAKA OS). Given ChiShona dialect variation,
+// VAKA standardises on widely understood standard ChiShona. English remains
+// the authoritative reference language and runtime fallback. Record:
+// docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md
 // Illustrative product-preview sample data and package/product names remain in
 // their original form deliberately.
 
@@ -58,7 +60,7 @@ export const HOME_SN: HomeOverride = {
       { title: "Mashandiro ebhizimusi emuno", description: "Batanidza kuti mabhizimusi anopa mitengo, anotengesa, anotenga, anounganidza uye anoshuma sei.", icon: "market" },
       { title: "Kuona uri kure", description: "Nzwisisa zviri kuitika mubhizimusi rese kubva panzvimbo imwe yebasa.", icon: "visibility" },
       { title: "Zvinyorwa zvakabatana", description: "Chengeta vatengi, mainvoisi, mibhadharo nesitoko zvakabatana.", icon: "connected" },
-      { title: "Mitauro yemuno", description: "Chirungu chiri kushanda. Dirafuti dzechiShona nechiNdebele dzinowanikwa kuona kuchakaongororwa nevataura vemitauro iyi.", icon: "language" },
+      { title: "Mitauro yemuno", description: "Chirungu, chiShona nechiNdebele zviri kushanda, zvichishandisa mitauro yakajairika inonzwisiswa nevakawanda. Chirungu ndicho mutauro wekutarisira.", icon: "language" },
       { title: "Yakavakirwa kukura", description: "Paradzanisa mitemo yenyika nepuratifomu kuti misika yeramangwana igadziridzwe zvine hungwaru.", icon: "growth" },
     ],
   },
@@ -137,11 +139,11 @@ export const HOME_SN: HomeOverride = {
   footer: {
     position: "Yakagadzirirwa muZimbabwe. Yakavakirwa Africa.",
     language: "Mutauro",
-    languageNotice: "ChiShona nechiNdebele zvinoratidzwa sedirafuti kuchakapedzwa kuongororwa nevataura vemitauro iyi. Chirungu ndicho chine chiremera.",
+    languageNotice: "ChiShona nechiNdebele zvinoshandisa mitauro yakajairika inonzwisiswa nevakawanda. Chirungu ndicho chinoramba chiri mutauro mukuru wekutarisira.",
     languages: {
       english: "English",
-      shona: "ChiShona (dirafuti)",
-      ndebele: "isiNdebele (dirafuti)",
+      shona: "ChiShona",
+      ndebele: "isiNdebele",
     },
     product: "Chigadzirwa",
     company: "Kambani",

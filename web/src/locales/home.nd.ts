@@ -1,8 +1,10 @@
-// isiNdebele (nd-ZW) public landing page dictionary — DRAFT.
+// isiNdebele (nd-ZW) public landing page dictionary — CERTIFIED.
 //
-// Status: machine-assisted draft pending certified review by a qualified
-// native-speaker translator (mission PI18N-003, gate P). English remains the
-// authoritative language until that review approves this file.
+// Status: CERTIFIED by owner self-certification on 2026-07-18
+// (Dr. Washington Kapapiro, Owner, VAKA OS). Given regional variation, VAKA
+// standardises on widely understood standard Zimbabwean isiNdebele. English
+// remains the authoritative reference language and runtime fallback. Record:
+// docs/engineering/mission-packs/PI18N-003/CERTIFICATION.md
 // Illustrative product-preview sample data and package/product names remain in
 // their original form deliberately.
 
@@ -58,7 +60,7 @@ export const HOME_ND: HomeOverride = {
       { title: "Izindlela zebhizinisi zalapha", description: "Hlanganisa indlela amabhizinisi anika intengo, athengisa, athenga, aqoqa njalo abika ngayo.", icon: "market" },
       { title: "Ukubona ukude", description: "Zwisisa okwenzakalayo kulo lonke ibhizinisi usendaweni eyodwa yomsebenzi.", icon: "visibility" },
       { title: "Amarekhodi ahlanganisiweyo", description: "Gcina abathengi, ama-invoyisi, izinkokhelo lempahla kuhlangene.", icon: "connected" },
-      { title: "Izindimi zalapha", description: "IsiNgisi siyasebenza. Amadrafti esiShona lesiNdebele ayatholakala ukubonwa kusahlolwa ngabakhulumi bendimi lezi.", icon: "language" },
+      { title: "Izindimi zalapha", description: "IsiNgisi, isiShona lesiNdebele kuyasebenza, kusetshenziswa izindlela ezijayelekileyo ezizwisiswa ngabanengi. IsiNgisi lulimi lokukhomba.", icon: "language" },
       { title: "Yakhelwe ukukhula", description: "Yehlukanisa imithetho yamazwe leplatfomu ukuze imakethe zakusasa zilungiswe ngokulomlandu.", icon: "growth" },
     ],
   },
@@ -137,11 +139,11 @@ export const HOME_ND: HomeOverride = {
   footer: {
     position: "Yaklanywa eZimbabwe. Yakhelwa i-Africa.",
     language: "Ulimi",
-    languageNotice: "IsiShona lesiNdebele kutshengiswa njengamadrafti kusahlolwa ngabakhulumi bendimi lezi. IsiNgisi yiso esilesigunyazo.",
+    languageNotice: "IsiShona lesiNdebele kusebenzisa izindlela ezijayelekileyo ezizwisiswa ngabanengi. IsiNgisi sihlala silulimi olukhulu lokukhomba.",
     languages: {
       english: "English",
-      shona: "ChiShona (idrafti)",
-      ndebele: "isiNdebele (idrafti)",
+      shona: "ChiShona",
+      ndebele: "isiNdebele",
     },
     product: "Umkhiqizo",
     company: "Inkampani",

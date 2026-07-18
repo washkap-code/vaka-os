@@ -41,7 +41,7 @@ export function UserMenu({ fullName, email, onSettings, onLogout }: {
             {LOCALE_LABELS[code]}
           </button>
         ))}
-        {getLocale() !== "en" && <small className="account-language-notice">{copy.languageDraftNotice}</small>}
+        {getLocale() !== "en" && <small className="account-language-notice">{copy.languageReferenceNotice}</small>}
       </div>
       <button type="button" onClick={() => choose(onLogout)}>{copy.signOut}</button>
     </div>}

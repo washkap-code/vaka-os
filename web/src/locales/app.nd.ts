@@ -1,8 +1,10 @@
-// isiNdebele (nd-ZW) application dictionary — DRAFT.
+// isiNdebele (nd-ZW) application dictionary — CERTIFIED.
 //
-// Status: machine-assisted draft pending certified review by a qualified
-// native-speaker translator (mission PI18N-003, gate P). English remains the
-// authoritative language until that review approves this file.
+// Status: CERTIFIED by owner self-certification on 2026-07-18
+// (Dr. Washington Kapapiro, Owner, VAKA OS). Given regional variation, VAKA
+// standardises on widely understood standard Zimbabwean isiNdebele. English
+// remains the authoritative reference language and runtime fallback. Record:
+// docs/engineering/mission-packs/PI18N-003/CERTIFICATION.md
 //
 // Rules:
 // - Only keys present in `app.en.ts` may appear here; missing keys fall back
@@ -100,7 +102,7 @@ export const APP_ND: AppOverride = {
       settings: "Iphrofayili & izilungiselelo",
       signOut: "Phuma",
       language: "Ulimi",
-      languageDraftNotice: "IsiShona lesiNdebele ngamadrafti asalindele ukuhlolwa ngabakhulumi bendimi lezi.",
+      languageReferenceNotice: "IsiNgisi sihlala silulimi olukhulu lokukhomba.",
     },
   },
   customerTimeline: {

@@ -1,8 +1,10 @@
-// ChiShona (sn-ZW) application dictionary — DRAFT.
+// ChiShona (sn-ZW) application dictionary — CERTIFIED.
 //
-// Status: machine-assisted draft pending certified review by a qualified
-// native-speaker translator (mission PI18N-002, gate P). English remains the
-// authoritative language until that review approves this file.
+// Status: CERTIFIED by owner self-certification on 2026-07-18
+// (Dr. Washington Kapapiro, Owner, VAKA OS). Given ChiShona dialect variation,
+// VAKA standardises on widely understood standard ChiShona. English remains
+// the authoritative reference language and runtime fallback. Record:
+// docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md
 //
 // Rules:
 // - Only keys present in `app.en.ts` may appear here; missing keys fall back
@@ -100,7 +102,7 @@ export const APP_SN: AppOverride = {
       settings: "Profairi & marongero",
       signOut: "Buda",
       language: "Mutauro",
-      languageDraftNotice: "ChiShona nechiNdebele idirafuti dzichakamirira kuongororwa nevataura vemitauro iyi.",
+      languageReferenceNotice: "Chirungu ndicho chinoramba chiri mutauro mukuru wekutarisira.",
     },
   },
   customerTimeline: {

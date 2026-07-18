@@ -85,7 +85,7 @@ export const appEnglish = {
       settings: "Profile & settings",
       signOut: "Sign out",
       language: "Language",
-      languageDraftNotice: "ChiShona and isiNdebele are draft translations pending native-speaker review.",
+      languageReferenceNotice: "English remains the authoritative reference version.",
     },
   },
   customerTimeline: {
