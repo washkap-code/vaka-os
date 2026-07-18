@@ -1,6 +1,51 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-18 (session 20, Codex event-platform lane, branch
+**Updated:** 2026-07-18 (session 21, Codex universal-audit lane, branch
+`feature/platform-universal-audit`, implementation commit `ba0e12b`:
+**owner-issued MISSION P1-006 Universal Audit & Timeline implemented and
+verified.** Migration `0051_platform_universal_audit.sql` adds the singular,
+tenant-scoped `audit_log` ledger without modifying the existing plural
+`audit_logs` finance evidence table. A same-transaction database trigger
+mirrors every authoritative legacy/finance append into the universal ledger;
+canonical Company, Customer, Supplier, Product and Employee create/update/
+delete paths additionally record metadata-registry-derived changed-field
+snapshots through a transaction-scoped helper. Per-tenant writers serialize on
+an advisory lock and SHA-256-chain `prev_hash + canonical record content`.
+UPDATE and DELETE are blocked by revoked public grants plus a database trigger.
+`GET /api/v1/objects/:type/:id/timeline` supports all eight canonical objects
+and merges universal audit entries, `platform_events`, `workflow_actions` and
+bounded notification facts in reverse chronology with pagination, tenant
+scope, object permissions and API-exposed-field filtering; Invoice/Payment
+history requires `accounting.read`. Platform staff with
+`platform.tenant_audit.read` can run
+`GET /api/v1/platform/audit/verify?tenantId=<uuid>`; the endpoint reports chain
+integrity without exposing hashes or record content. The guarded down migration
+was exercised on a disposable database and removed only `audit_log`, preserving
+legacy `audit_logs`; it correctly refuses to discard non-derived auto-audit
+evidence. Verification on isolated PostgreSQL 18: clean replay `0000`–`0051`
+with zero Drizzle drift; runtime-schema readiness; idempotent test-control
+installer; append-only/tamper, five-object CRUD diff, finance mirror, timeline
+merge/order/pagination/permission/cross-tenant tests; focused supplier/audit
+11/11; root server+web typecheck; web Vite production build; and exact final
+server suite 107/107 files, 523/523 tests (290.15s). Hosted PostgreSQL 17 remains
+the production-major gate. **DEPENDENCY TRUTH:** after a fresh fetch,
+`origin/main` remains `d473650` (P1-002); P1-003, P1-004 and P1-005 are verified
+local dependency commits but are not all present remotely. This branch is
+correctly stacked on local P1-005 handoff `da46507`. Push/merge/reconcile in
+strict order: P1-003, P1-004, P1-005, then P1-006. Production is applied through
+0047; apply 0048, 0049, 0050 and 0051 in order before deploying P1-006.
+**RISKS/NEXT:** tenant audit appends are intentionally serialized and can add
+latency for unusually high write volume; retention/legal hold/export,
+correlation IDs and integrity-failure alerting/recovery remain later work.
+Recommended next mission: audit operations hardening (scheduled verification,
+incident alerting, retention/legal-hold policy and governed export), after the
+P1 dependency stack is merged. No implementation blocker remains beyond owner
+push, strict dependency order and hosted gates. Stale/dependency branches to
+reconcile: local `feature/platform-workflow-engine` and
+`feature/platform-notification-service` are ahead of their remotes; local
+`feature/platform-event-bus` and this P1-006 branch have no remote branch tip.)
+
+**Previous:** 2026-07-18 (session 20, Codex event-platform lane, branch
 `feature/platform-event-bus`, implementation commit `ca467bf`: **owner-issued
 MISSION P1-005 Event Bus Hardening implemented and verified.** Migration
 `0050_platform_event_bus.sql` adds tenant-scoped `platform_events` facts and
@@ -115,8 +160,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the active event-platform branch:
-`0050_platform_event_bus.sql`. Production is currently applied through
+Highest migration in the active universal-audit branch:
+`0051_platform_universal_audit.sql`. Production is currently applied through
 `0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
@@ -145,14 +190,16 @@ again to the dedicated project.
 | 0048_platform_workflow_engine | P1-003 Workflow Engine | ⚠️ TAKEN on `feature/platform-workflow-engine`; NOT applied to production; apply before deploying this branch |
 | 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
 | 0050_platform_event_bus | P1-005 Event Bus Hardening | ⚠️ TAKEN on `feature/platform-event-bus`; NOT applied to production; apply after 0049 and before deploying this branch |
+| 0051_platform_universal_audit | P1-006 Universal Audit & Timeline | ⚠️ TAKEN on `feature/platform-universal-audit`; NOT applied to production; apply after 0050 and before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
 Migrations **0046 and 0047 are applied to production**. Migrations **0048**,
-**0049** and **0050** are taken by the owner-issued P1-003 Workflow Engine,
-P1-004 Notification Service and P1-005 Event Bus Hardening respectively; none
-is applied to production. Apply them in numeric order before deploying P1-005.
-New reservations continue from **0051**; coordinate them in this ledger before
+**0049**, **0050** and **0051** are taken by the owner-issued P1-003 Workflow
+Engine, P1-004 Notification Service, P1-005 Event Bus Hardening and P1-006
+Universal Audit & Timeline respectively; none is applied to production. Apply
+them in numeric order before deploying P1-006. New reservations continue from
+**0052**; coordinate them in this ledger before
 creating another migration.
 
 ## Part II verification lane
