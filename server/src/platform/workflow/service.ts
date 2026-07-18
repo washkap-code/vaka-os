@@ -33,13 +33,15 @@ function decimalGreaterThan(left: string, right: string): boolean {
   return scaledA > scaledB;
 }
 
-function validateDefinition(definition: WorkflowProcessDefinition): void {
+function validateDefinition(definition: WorkflowProcessDefinition, requireActive = true): void {
   if (!definition.name.trim()) throw new InvalidWorkflowDefinitionError("Workflow name is required");
   if (!Number.isInteger(definition.version) || definition.version < 1) {
     throw new InvalidWorkflowDefinitionError("Workflow version must be a positive integer");
   }
   if (!definition.objectType.trim()) throw new InvalidWorkflowDefinitionError("Workflow object type is required");
-  if (definition.active === false) throw new InvalidWorkflowDefinitionError("Inactive workflows cannot be started");
+  if (requireActive && definition.active === false) {
+    throw new InvalidWorkflowDefinitionError("Inactive workflows cannot be started");
+  }
   const names = new Set<string>();
   for (const step of definition.steps) {
     const name = step.name.trim();
@@ -216,7 +218,7 @@ export class WorkflowService implements WorkflowRunnerContract, WorkflowEngineCo
       objectType: snapshot.definition.objectType,
       steps: snapshot.definition.steps,
       active: snapshot.definition.active,
-    });
+    }, false);
     if (snapshot.instance.status !== "ACTIVE") {
       throw new WorkflowStateConflictError(`Workflow instance is already ${snapshot.instance.status}`);
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_REGISTRY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_REGISTRY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, WORKFLOW_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 import type { SearchApplicationAdapter } from "../src/search.js";
@@ -38,6 +38,8 @@ describe("platform runtime composition (P1-002)", () => {
     expect(one).not.toBe(two);
     expect(() => one.container.registerValue(AUDIT_SERVICE, {} as never))
       .toThrow(DuplicateServiceError);
+    expect(one.container.has(WORKFLOW_SERVICE)).toBe(true);
+    expect(one.container.get(WORKFLOW_SERVICE)).not.toBe(two.container.get(WORKFLOW_SERVICE));
   });
 
   it("composes isolated event buses and reports subscriber failures", async () => {

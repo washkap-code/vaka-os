@@ -4,7 +4,9 @@ import { InMemoryEventBus } from "../../../src/platform/events/service.js";
 import { IdentityService } from "../../../src/platform/identity/service.js";
 import {
   InvalidWorkflowDefinitionError, WorkflowConditionContextError,
-  WorkflowInstanceNotFoundError, WorkflowPermissionDeniedError,
+  WorkflowAlreadyRegisteredError, WorkflowEngineNotConfiguredError,
+  WorkflowIdentityMismatchError, WorkflowInstanceNotFoundError,
+  WorkflowNotFoundError, WorkflowPermissionDeniedError, WorkflowStateConflictError,
 } from "../../../src/platform/workflow/errors.js";
 import type {
   ApplyWorkflowTransitionRequest, CreateWorkflowInstanceRequest, WorkflowStoreContract,
@@ -167,6 +169,17 @@ describe("durable WorkflowService engine", () => {
     expect(store.actions.map((action) => action.step)).toEqual([0, 1]);
   });
 
+  it("lets an in-flight instance finish after its definition is deactivated", async () => {
+    const { context, service, store } = harness();
+    const started = await service.start(baseDefinition, { objectType: "Invoice", objectId: "deactivated" }, context);
+    const snapshot = store.snapshots.get(started.id)!;
+    store.snapshots.set(started.id, {
+      ...snapshot,
+      definition: { ...snapshot.definition, active: false },
+    });
+    await expect(service.approve(started.id, context)).resolves.toMatchObject({ status: "COMPLETED" });
+  });
+
   it("adds an amount-threshold step only when amount is strictly greater", async () => {
     const definition: WorkflowProcessDefinition = {
       ...baseDefinition,
@@ -246,5 +259,84 @@ describe("durable WorkflowService engine", () => {
       { objectType: "Payment", objectId: "payment-1" },
       context,
     )).rejects.toBeInstanceOf(InvalidWorkflowDefinitionError);
+  });
+
+  it("fails closed for malformed durable definitions and missing object identity", async () => {
+    const { context, service } = harness();
+    const invalid: WorkflowProcessDefinition[] = [
+      { ...baseDefinition, name: " " },
+      { ...baseDefinition, version: 0 },
+      { ...baseDefinition, objectType: " " },
+      { ...baseDefinition, active: false },
+      { ...baseDefinition, steps: [{ ...baseDefinition.steps[0], name: " " }] },
+      { ...baseDefinition, steps: [{ ...baseDefinition.steps[0], approver: { type: "role", role: " ", permission: "accounting.post" } }] },
+      { ...baseDefinition, steps: [{ ...baseDefinition.steps[0], approver: { type: "role", role: "Finance", permission: " " } }] },
+      { ...baseDefinition, steps: [{
+        ...baseDefinition.steps[0],
+        condition: { type: "unsupported", operator: "gt", amount: "10" },
+      }] } as unknown as WorkflowProcessDefinition,
+      { ...baseDefinition, steps: [{
+        ...baseDefinition.steps[0],
+        condition: { type: "amount-threshold", operator: "gt", amount: "not-money" },
+      }] },
+    ];
+    for (const [index, definition] of invalid.entries()) {
+      await expect(service.start(
+        definition,
+        { objectType: definition.objectType, objectId: `invalid-${index}` },
+        context,
+      )).rejects.toBeInstanceOf(InvalidWorkflowDefinitionError);
+    }
+    await expect(service.start(baseDefinition, { objectType: "Invoice", objectId: " " }, context))
+      .rejects.toBeInstanceOf(InvalidWorkflowDefinitionError);
+  });
+
+  it("rejects mismatched identities, terminal repeats, context drift and oversized comments", async () => {
+    const { context, service, store } = harness();
+    await expect(service.start(
+      baseDefinition,
+      { objectType: "Invoice", objectId: "identity-mismatch" },
+      { ...context, actorUserId: "different-user" },
+    )).rejects.toBeInstanceOf(WorkflowIdentityMismatchError);
+
+    const completed = await service.start(baseDefinition, { objectType: "Invoice", objectId: "completed" }, context);
+    await service.approve(completed.id, context);
+    await expect(service.approve(completed.id, context)).rejects.toBeInstanceOf(WorkflowStateConflictError);
+
+    const conditionalDefinition: WorkflowProcessDefinition = {
+      ...baseDefinition,
+      steps: [{
+        ...baseDefinition.steps[0],
+        condition: { type: "amount-threshold", operator: "gt", amount: "10.00" },
+      }],
+    };
+    const highContext = { ...context, amount: "10.01" };
+    const conditional = await service.start(
+      conditionalDefinition,
+      { objectType: "Invoice", objectId: "context-drift" },
+      highContext,
+    );
+    await expect(service.approve(conditional.id, { ...context, amount: "10.00" }))
+      .rejects.toBeInstanceOf(WorkflowStateConflictError);
+
+    const commentInstance = await service.start(
+      baseDefinition,
+      { objectType: "Invoice", objectId: "long-comment" },
+      context,
+    );
+    await expect(service.approve(commentInstance.id, context, "x".repeat(1001)))
+      .rejects.toBeInstanceOf(WorkflowStateConflictError);
+    expect(store.actions.filter((action) => action.instanceId === commentInstance.id)).toEqual([]);
+  });
+
+  it("preserves the reference runner errors and requires engine dependencies for durable calls", async () => {
+    const runner = new WorkflowService();
+    runner.register({ name: "once", run: () => "ok" });
+    expect(() => runner.register({ name: "once", run: () => "again" }))
+      .toThrow(WorkflowAlreadyRegisteredError);
+    await expect(runner.run("unknown", {}, { tenantId: "tenant-1", actorUserId: "user-1" }))
+      .rejects.toBeInstanceOf(WorkflowNotFoundError);
+    await expect(runner.start(baseDefinition, { objectType: "Invoice", objectId: "invoice" }, harness().context))
+      .rejects.toBeInstanceOf(WorkflowEngineNotConfiguredError);
   });
 });

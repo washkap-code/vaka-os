@@ -18,7 +18,7 @@ rewrite and not a claim that every service is live in production.
 | `identity` | actor, tenant, session, and permission context | adapter contract only |
 | `audit` | structured material-action evidence | injected sink contract |
 | `events` | tenant-aware domain events and subscriptions | P1-005 post-commit in-process adapter composed; durable delivery gated |
-| `workflow` | named orchestration handlers | in-process reference runner |
+| `workflow` | versioned, permission-aware orchestration | durable approval engine plus compatible in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
 | `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Supplier/Invoice/Product adapter plus PB-003 flag- and country-scoped Black Book projection composed; broader enterprise search gated |
@@ -90,6 +90,16 @@ instantiated by the existing application during this mission.
    retention, backup, and recovery controls are approved.
 6. Remove duplicate module infrastructure only after production evidence and a
    documented rollback window.
+
+## Workflow adoption seam (P1-003 Workflow Engine)
+
+`WORKFLOW_SERVICE` is composed with a PostgreSQL store, `AUDIT_SERVICE` and the
+shared `EVENT_BUS`. Definitions and instances are tenant-scoped; step authority
+is evaluated through a request-bound `IdentityService`. The existing invoice
+issue command is the first adopter and uses a transaction-scoped store/audit/
+event adapter so workflow evidence and all existing financial effects remain
+atomic. Other approval domains remain on the existing `ApprovalService` until
+separately migrated with parity tests.
 
 ## Notification adoption seam (P1-004)
 
