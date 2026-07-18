@@ -20,7 +20,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # LP-007: pinned to the production major version. Production is the
+        # dedicated Supabase project `vaka-os-prod` on PostgreSQL 17.x — CI
+        # must not drift from the production major.
+        image: postgres:17
         env:
           POSTGRES_USER: jonomi
           POSTGRES_PASSWORD: jonomi_ci
@@ -78,7 +81,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # LP-007: pinned to the production major version. Production is the
+        # dedicated Supabase project `vaka-os-prod` on PostgreSQL 17.x — CI
+        # must not drift from the production major.
+        image: postgres:17
         env:
           POSTGRES_USER: jonomi
           POSTGRES_PASSWORD: jonomi_ci
@@ -123,20 +129,24 @@ jobs:
         working-directory: web
         run: npm ci --workspaces=false --ignore-scripts
 
-      - name: Replay migrations and verify schema drift
+      # LP-007: the complete DB-backed suite is one documented command.
+      # test:full = migration-chain replay with schema-drift verification,
+      # reference-data seed, then the entire vitest suite (all DB-backed
+      # integration tests included, no mocked-DB shortcuts).
+      - name: Run the full DB-backed suite (test:full)
         working-directory: server
-        run: npm run test:db:migrations
+        run: npm run test:full
 
-      - name: Seed required reference data
-        working-directory: server
-        run: node --import tsx src/seed.ts
-
-      - name: Install PostgreSQL backup client tools
+      # The runner preinstalls postgresql-client 16, whose pg_dump aborts with
+      # "server version mismatch" against the pinned postgres:17 service.
+      # Install the matching v17 client from PGDG and put it first on PATH.
+      - name: Install PostgreSQL 17 client tools (match pinned server major)
         run: |
-          if ! command -v pg_dump >/dev/null || ! command -v pg_restore >/dev/null; then
-            sudo apt-get update
-            sudo apt-get install --yes postgresql-client
-          fi
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-common
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt-get install --yes postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
       - name: Verify backup round trip and production safety rail
         run: bash scripts/tests/backup-restore.test.sh
@@ -161,9 +171,6 @@ jobs:
 
       - name: Build web
         run: npm run build
-
-      - name: Run PostgreSQL and foundation tests
-        run: npm test
 
       - name: Generate intentionally gated evaluation example
         working-directory: server
