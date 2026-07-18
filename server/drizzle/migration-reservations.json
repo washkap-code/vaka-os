@@ -1,0 +1,14 @@
+{
+  "reserved": [
+    {
+      "prefix": 52,
+      "filename": "0052_business_network_directory.sql",
+      "mission": "P10-001 Business Directory Core"
+    },
+    {
+      "prefix": 53,
+      "filename": "0053_blackbook_core.sql",
+      "mission": "P11-001 Black Book Core"
+    }
+  ]
+}

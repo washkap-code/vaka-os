@@ -2132,6 +2132,68 @@ export const migrationOpenItems = pgTable("migration_open_items", {
 ]);
 
 // ---------------------------------------------------------------------------
+// P15-001 — registry-driven, staged CSV migration jobs. These deliberately
+// coexist with PM-001 projects/import batches: P15 owns the resumable
+// upload→map→validate→import→rollback pipeline for canonical master data.
+// ---------------------------------------------------------------------------
+export const migrationJobs = pgTable("migration_jobs", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  objectType: text("object_type").$type<"Customer" | "Supplier" | "Product">().notNull(),
+  sourceFilename: text("source_filename").notNull(),
+  status: text("status").$type<
+    "uploaded" | "mapped" | "validated" | "importing" | "completed" | "failed" | "rolled_back"
+  >().default("uploaded").notNull(),
+  duplicatePolicy: text("duplicate_policy").$type<"skip" | "update-existing" | "create-anyway">()
+    .default("skip").notNull(),
+  totalRows: integer("total_rows").default(0).notNull(),
+  validRows: integer("valid_rows").default(0).notNull(),
+  errorRows: integer("error_rows").default(0).notNull(),
+  importedRows: integer("imported_rows").default(0).notNull(),
+  mappingJson: jsonb("mapping_json").$type<Record<string, unknown>>(),
+  createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => [
+  index("migration_jobs_tenant_time").on(t.tenantId, t.createdAt),
+  index("migration_jobs_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  check("migration_jobs_object_type_check", sql`${t.objectType} IN ('Customer', 'Supplier', 'Product')`),
+  check("migration_jobs_status_check", sql`${t.status} IN
+    ('uploaded', 'mapped', 'validated', 'importing', 'completed', 'failed', 'rolled_back')`),
+  check("migration_jobs_duplicate_policy_check", sql`${t.duplicatePolicy} IN ('skip', 'update-existing', 'create-anyway')`),
+  check("migration_jobs_filename_check", sql`length(trim(${t.sourceFilename})) BETWEEN 1 AND 255`),
+  check("migration_jobs_counts_check", sql`
+    ${t.totalRows} >= 0 AND ${t.validRows} >= 0 AND ${t.errorRows} >= 0 AND ${t.importedRows} >= 0
+    AND ${t.validRows} <= ${t.totalRows} AND ${t.errorRows} <= ${t.totalRows}
+    AND ${t.importedRows} <= ${t.totalRows}`),
+]);
+
+export const migrationRows = pgTable("migration_rows", {
+  id: id(),
+  jobId: uuid("job_id").notNull().references(() => migrationJobs.id, { onDelete: "cascade" }),
+  rowNumber: integer("row_number").notNull(),
+  rawJson: jsonb("raw_json").$type<Record<string, string>>().notNull(),
+  mappedJson: jsonb("mapped_json").$type<Record<string, unknown>>(),
+  status: text("status").$type<"pending" | "valid" | "error" | "imported" | "skipped">()
+    .default("pending").notNull(),
+  errorsJson: jsonb("errors_json").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  createdRecordId: uuid("created_record_id"),
+  matchedRecordId: uuid("matched_record_id"),
+  importOperation: text("import_operation").$type<"created" | "updated">(),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown>>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown>>(),
+}, (t) => [
+  unique("migration_rows_job_row_unique").on(t.jobId, t.rowNumber),
+  index("migration_rows_job_status").on(t.jobId, t.status, t.rowNumber),
+  check("migration_rows_row_number_check", sql`${t.rowNumber} >= 2`),
+  check("migration_rows_status_check", sql`${t.status} IN ('pending', 'valid', 'error', 'imported', 'skipped')`),
+  check("migration_rows_operation_check", sql`${t.importOperation} IS NULL OR ${t.importOperation} IN ('created', 'updated')`),
+  check("migration_rows_import_evidence_check", sql`
+    (${t.status} <> 'imported') OR
+    (${t.createdRecordId} IS NOT NULL AND ${t.importOperation} IS NOT NULL AND ${t.afterJson} IS NOT NULL)`),
+]);
+
+// ---------------------------------------------------------------------------
 // PN-001 — Opt-in public business profile from the canonical Company (tenant).
 // Owner-controlled; nothing public by default. Publishing freezes an explicit
 // snapshot; the directory (PN-002) reads ONLY published snapshots.

@@ -92,6 +92,8 @@ const alwaysRequired = [
   ["platform_events", "retry_count"],
   ["processed_events", "handler_name"],
   ["processed_events", "event_id"],
+  ["migration_jobs", "duplicate_policy"],
+  ["migration_rows", "errors_json"],
 ];
 const gatedRequirements = {
   "migration.hub": [
