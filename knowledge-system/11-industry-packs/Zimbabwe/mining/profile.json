@@ -1,0 +1,68 @@
+[
+  {
+    "id": "zw-mining",
+    "name": "Mining (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses extracting and beneficiating minerals, from small-scale and artisanal operations to large mechanised mines, together with directly related contract mining services.",
+    "subSectors": [
+      {
+        "name": "Gold mining",
+        "description": "Primary and small-scale gold producers and custom millers."
+      },
+      {
+        "name": "Platinum group metals",
+        "description": "Large mechanised PGM producers."
+      },
+      {
+        "name": "Base metals and ferroalloys",
+        "description": "Nickel, chrome, and related smelting feed operations."
+      },
+      {
+        "name": "Coal and energy minerals",
+        "description": "Coal producers supplying power and industry."
+      },
+      {
+        "name": "Lithium and industrial minerals",
+        "description": "Lithium, quarrying and industrial-mineral operations."
+      },
+      {
+        "name": "Small-scale and artisanal mining",
+        "description": "Registered small-scale miners and custom milling."
+      },
+      {
+        "name": "Contract mining and drilling services",
+        "description": "Drilling, blasting, load-and-haul and exploration services."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Artisanal and small-scale workings, often seasonal."
+      },
+      {
+        "tier": "Small",
+        "description": "Registered small-scale mines with basic plant."
+      },
+      {
+        "tier": "Medium",
+        "description": "Established mines with formal payroll and processing plant."
+      },
+      {
+        "tier": "Large",
+        "description": "Mechanised corporate mines and multi-site producers."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Official small-scale/large-scale mining classifications were not verified from an official source in this revision; source the current Mines and Minerals framework definitions before product use."
+    },
+    "notes": "Descriptive segmentation for product design; not an official classification. Mineral marketing and royalty regimes vary by mineral and are declared as research gaps rather than described."
+  }
+]

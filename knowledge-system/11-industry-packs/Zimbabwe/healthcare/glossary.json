@@ -1,0 +1,143 @@
+[
+  {
+    "id": "zw-healthcare-term-mcaz-premises",
+    "name": "MCAZ premises licence",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/",
+      "https://onlineservices.mcaz.co.zw/onlineregister/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Licence for premises dealing in medicines, issued by the Medicines Control Authority of Zimbabwe; the public register is searchable online.",
+    "blackBook": {
+      "authorityIds": [
+        "mcaz"
+      ],
+      "licenceTypeIds": [
+        "mcaz-premises-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-term-central-hospital",
+    "name": "Central hospital",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Top-tier public referral hospitals listed in the Ministry of Health directory (for example Parirenyatwa Group of Hospitals).",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-health-child-care"
+      ],
+      "serviceIds": [
+        "mohcc-central-hospital-directory"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-term-funder",
+    "name": "Funder / medical aid",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A medical-aid society or insurer paying provider claims on behalf of members; regulation is a declared research gap."
+  },
+  {
+    "id": "zw-healthcare-term-shortfall",
+    "name": "Shortfall",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The gap between the provider's charge and the funder tariff, billed to the patient."
+  },
+  {
+    "id": "zw-healthcare-term-tariff",
+    "name": "Tariff",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "The negotiated or published price per service code used in funder claims."
+  },
+  {
+    "id": "zw-healthcare-term-locum",
+    "name": "Locum / sessional",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A professional engaged per session rather than salaried; paid through payroll or supplier billing by arrangement."
+  },
+  {
+    "id": "zw-healthcare-term-fefo",
+    "name": "FEFO",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "First-expiry-first-out stock rotation used for medicines."
+  },
+  {
+    "id": "zw-healthcare-term-dispensing",
+    "name": "Dispensing",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Supplying medicines against a prescription from licensed premises."
+  },
+  {
+    "id": "zw-healthcare-term-encounter",
+    "name": "Encounter",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A single patient visit or service episode; the billing unit for most practices."
+  },
+  {
+    "id": "zw-healthcare-term-panel",
+    "name": "Panel / corporate patient",
+    "category": "industry_term",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Patients billed to an employer or scheme under a bulk arrangement."
+  }
+]

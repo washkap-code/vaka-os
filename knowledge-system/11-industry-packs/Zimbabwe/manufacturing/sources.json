@@ -1,0 +1,163 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-company-incorporation"
+    ],
+    "note": "Statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-paye",
+      "zw-manufacturing-reg-vat",
+      "zw-manufacturing-reg-zimra-taxpayer"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-nssa"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-praz-org-zw",
+    "domain": "praz.org.zw",
+    "publisher": "Procurement Regulatory Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-praz-supplier"
+    ],
+    "note": "Supplier/bidder registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-egp-praz-org-zw",
+    "domain": "egp.praz.org.zw",
+    "publisher": "Zimbabwe eGP portal (PRAZ)",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-praz-supplier"
+    ],
+    "note": "Electronic tendering.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-ema-co-zw",
+    "domain": "ema.co.zw",
+    "publisher": "Environmental Management Agency",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-ema-effluent",
+      "zw-manufacturing-reg-ema-esia",
+      "zw-manufacturing-term-effluent-licence"
+    ],
+    "note": "Effluent licensing and ESIA certification.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mcaz-co-zw",
+    "domain": "mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-mcaz-premises"
+    ],
+    "note": "Medicines premises licensing.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-hararecity-co-zw",
+    "domain": "hararecity.co.zw",
+    "publisher": "City of Harare",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-local-authority-premises"
+    ],
+    "note": "Business licensing and health registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-citybyo-co-zw",
+    "domain": "citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-local-authority-premises"
+    ],
+    "note": "Premises registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-czi-co-zw",
+    "domain": "czi.co.zw",
+    "publisher": "Confederation of Zimbabwe Industries",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-associations",
+      "zw-manufacturing-term-czi"
+    ],
+    "note": "Industrial membership body.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zncc-co-zw",
+    "domain": "zncc.co.zw",
+    "publisher": "Zimbabwe National Chamber of Commerce",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-associations"
+    ],
+    "note": "Membership body.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-emcoz-co-zw",
+    "domain": "emcoz.co.zw",
+    "publisher": "Employers' Confederation of Zimbabwe",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-manufacturing-reg-associations"
+    ],
+    "note": "Employers' membership body.",
+    "lastChecked": "2026-07-15"
+  }
+]

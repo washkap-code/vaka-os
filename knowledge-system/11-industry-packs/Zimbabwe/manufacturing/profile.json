@@ -1,0 +1,68 @@
+[
+  {
+    "id": "zw-manufacturing",
+    "name": "Manufacturing (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses transforming materials into finished or intermediate goods: food and beverage processing, consumer goods, building materials, chemicals, metal fabrication, textiles and pharmaceutical manufacture.",
+    "subSectors": [
+      {
+        "name": "Food and beverage processing",
+        "description": "Milling, baking, dairy, beverages and agro-processing."
+      },
+      {
+        "name": "Consumer goods",
+        "description": "Household and personal-care products."
+      },
+      {
+        "name": "Building materials",
+        "description": "Cement products, bricks, timber and steel fabrication for construction."
+      },
+      {
+        "name": "Chemicals and plastics",
+        "description": "Industrial chemicals, paints, packaging and plastics."
+      },
+      {
+        "name": "Metal and engineering",
+        "description": "Foundries, fabrication and machine shops."
+      },
+      {
+        "name": "Textiles and clothing",
+        "description": "Fabric, garment and footwear manufacture."
+      },
+      {
+        "name": "Pharmaceutical manufacture",
+        "description": "Medicines manufacture in MCAZ-licensed premises."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Home and backyard industries and single-machine shops."
+      },
+      {
+        "tier": "Small",
+        "description": "Workshop-scale plants with a small workforce."
+      },
+      {
+        "tier": "Medium",
+        "description": "Factory operations with formal shifts and quality control."
+      },
+      {
+        "tier": "Large",
+        "description": "Industrial groups and multi-plant manufacturers."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Official MSME/industrial classification bands were not verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design; not an official statistical classification."
+  }
+]

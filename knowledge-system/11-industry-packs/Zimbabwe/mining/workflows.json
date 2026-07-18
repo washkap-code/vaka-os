@@ -1,0 +1,193 @@
+[
+  {
+    "id": "zw-mining-wf-production-recording",
+    "name": "Shift production recording",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Capture tonnes, grades and hours by shift and section, feeding production and cost reporting.",
+    "stages": [
+      "Record shift outputs and hours",
+      "Capture ore/waste movements",
+      "Record plant feed and product",
+      "Reconcile to survey/mill balance",
+      "Post period production report"
+    ],
+    "erpCapabilities": [
+      "Production records",
+      "Mobile capture",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-output-tonnes",
+      "zw-mining-kpi-grade-recovery"
+    ]
+  },
+  {
+    "id": "zw-mining-wf-cost-per-activity",
+    "name": "Activity-based mining cost control",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Collect costs by activity (development, stoping, load-and-haul, milling) against budget.",
+    "stages": [
+      "Set up activity cost codes",
+      "Commit costs via purchase orders",
+      "Capture stores issues, labour and plant",
+      "Review budget vs actual",
+      "Report unit costs"
+    ],
+    "erpCapabilities": [
+      "Cost centres",
+      "Procurement",
+      "Inventory issues",
+      "Payroll allocation"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-cash-cost",
+      "zw-mining-kpi-fuel-power-cost"
+    ]
+  },
+  {
+    "id": "zw-mining-wf-consumables-stores",
+    "name": "Mine stores and consumables",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Control explosives-adjacent consumables, spares, fuel and reagents from receipt to issue; statutory explosives controls are a declared gap.",
+    "stages": [
+      "Receive against purchase orders",
+      "Bin and control stock",
+      "Issue to sections/activities",
+      "Cycle count high-value items",
+      "Reorder against usage"
+    ],
+    "erpCapabilities": [
+      "Inventory",
+      "Procurement",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-cash-cost"
+    ]
+  },
+  {
+    "id": "zw-mining-wf-plant-maintenance",
+    "name": "Plant and mobile equipment maintenance",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Plan and record maintenance for fixed plant and mobile fleet with downtime capture.",
+    "stages": [
+      "Register equipment",
+      "Schedule preventive maintenance",
+      "Record breakdowns and downtime",
+      "Issue parts from stores",
+      "Analyse availability"
+    ],
+    "erpCapabilities": [
+      "Asset register",
+      "Maintenance scheduling",
+      "Inventory"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-plant-availability"
+    ]
+  },
+  {
+    "id": "zw-mining-wf-mineral-sales",
+    "name": "Mineral sales and settlement",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Record dispatches and settlements with buyers, including assay-based adjustments; statutory marketing channels are a declared gap.",
+    "stages": [
+      "Record dispatch and weights",
+      "Capture assay/grade results",
+      "Invoice or record settlement",
+      "Track adjustments and deductions",
+      "Reconcile to bank"
+    ],
+    "erpCapabilities": [
+      "Sales/invoicing",
+      "Receivables",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-debtor-days"
+    ]
+  },
+  {
+    "id": "zw-mining-wf-environmental-compliance",
+    "name": "Environmental compliance (EMA)",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track ESIA and effluent obligations from Black Book compliance events with evidence filing.",
+    "stages": [
+      "Register applicable EMA obligations",
+      "Schedule quarterly reports",
+      "Prepare and file returns",
+      "Track certificate/licence validity",
+      "Store evidence in document workspace"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace",
+      "Task automation"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-mining-wf-contractor-management",
+    "name": "Mining contractor management",
+    "category": "industry_workflow",
+    "industryId": "zw-mining",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Engage and control drilling, blasting and load-and-haul contractors with measured work and retention terms.",
+    "stages": [
+      "Onboard contractor and rates",
+      "Issue contract orders",
+      "Certify measured work",
+      "Apply retentions/deductions",
+      "Pay and reconcile"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Supplier bills",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-mining-kpi-cash-cost"
+    ]
+  }
+]

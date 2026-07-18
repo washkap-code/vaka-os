@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-healthcare",
+    "name": "Healthcare (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-healthcare",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Private and mission providers of health services and medicines retail/wholesale: clinics, surgeries, hospitals, laboratories, pharmacies and allied-health practices (public-sector facilities are directory context, not tenants of this pack).",
+    "subSectors": [
+      {
+        "name": "General practice and specialist surgeries",
+        "description": "Doctor-owned practices and specialist rooms."
+      },
+      {
+        "name": "Private and mission hospitals",
+        "description": "Inpatient facilities outside the public system."
+      },
+      {
+        "name": "Clinics and day facilities",
+        "description": "Outpatient, maternity and day-procedure facilities."
+      },
+      {
+        "name": "Pharmacies and medicines wholesale",
+        "description": "Retail pharmacies and wholesale dealers in MCAZ-licensed premises."
+      },
+      {
+        "name": "Laboratories and diagnostics",
+        "description": "Pathology and imaging providers."
+      },
+      {
+        "name": "Allied health",
+        "description": "Physiotherapy, dental, optometry and similar practices."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Single-practitioner surgeries and dispensaries."
+      },
+      {
+        "tier": "Small",
+        "description": "Group practices and single-branch pharmacies."
+      },
+      {
+        "tier": "Medium",
+        "description": "Multi-branch pharmacy groups, clinics and laboratories."
+      },
+      {
+        "tier": "Large",
+        "description": "Private hospital groups and integrated providers."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "No official facility-size classification was verified from an official source in this revision."
+    },
+    "notes": "Descriptive segmentation for product design. Professional and facility licensing regimes beyond MCAZ premises licensing are declared as research gaps rather than described."
+  }
+]

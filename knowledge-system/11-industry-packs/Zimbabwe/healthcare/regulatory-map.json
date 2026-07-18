@@ -1,0 +1,402 @@
+[
+  {
+    "id": "zw-healthcare-reg-company-incorporation",
+    "name": "Company or business entity incorporation (DCIP)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://eregulations.zidainvest.com/media/SI%202020-046%20Companies%20and%20Other%20Business%20Entities%20%28Pre-Formation%20and%20Post-Formation%20Formalities%29%20Regulations%2C%202020.pdf",
+      "https://www.justice.gov.zw/?service=business-consulting"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book licence record's applicability to formal business organisations. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Formal business entities register with the Department of Companies and Intellectual Property, and private companies file annual returns.",
+    "obligationKind": "FORMATION",
+    "appliesWhen": "On formation of a formal business entity, and annually thereafter for the annual return.",
+    "blackBook": {
+      "authorityIds": [
+        "dcip-zimbabwe"
+      ],
+      "licenceTypeIds": [
+        "dcip-company-incorporation"
+      ],
+      "complianceEventIds": [
+        "dcip-company-incorporation-event",
+        "dcip-company-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-dcip-company-incorporation"
+      ],
+      "serviceIds": [
+        "dcip-company-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-zimra-taxpayer",
+    "name": "ZIMRA taxpayer registration",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to individuals, companies, partnerships and cooperatives starting a business. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "New businesses register with ZIMRA through TaRMS within the period stated in ZIMRA's new-trader guidance.",
+    "obligationKind": "TAX",
+    "appliesWhen": "On starting the business.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-taxpayer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-taxpayer-registration-event"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-taxpayer-registration-obligation"
+      ],
+      "serviceIds": [
+        "zimra-taxpayer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-vat",
+    "name": "VAT registration and returns (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Applicability and return cadences per the Black Book records; the current registration threshold is deliberately not restated here — confirm with ZIMRA. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Persons trading in taxable supplies who meet the compulsory registration rules register for VAT and file returns for their assigned tax period.",
+    "obligationKind": "TAX",
+    "appliesWhen": "When the business meets the current compulsory VAT registration rules; returns per assigned tax period thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-vat-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-vat-registration-trigger",
+        "zimra-vat-return-monthly",
+        "zimra-vat-return-two-monthly"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-vat-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-paye",
+    "name": "Employer (PAYE) registration and remittance (ZIMRA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.zimra.co.zw/domestic-taxes/corporate/new-businesses",
+      "https://www.zimra.co.zw/frequently-asked-questions/1934-as-a-new-trader-what-are-my-obligations-to-zimra"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to businesses that become employers. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Businesses that become employers register for PAYE, remit monthly, and file the annual ITF 16 return.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer; monthly remittance and annual return thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "zimra"
+      ],
+      "licenceTypeIds": [
+        "zimra-paye-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "zimra-paye-employer-registration-event",
+        "zimra-paye-monthly-remittance",
+        "zimra-paye-itf16-annual-return"
+      ],
+      "complianceGuideIds": [
+        "guide-zimra-paye-registration-obligation"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-nssa",
+    "name": "NSSA employer registration and POBS contributions",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Supported by the Black Book record's applicability to employers of labour. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Employers of labour register with NSSA and remit Pensions and Other Benefits Scheme contributions monthly.",
+    "obligationKind": "EMPLOYER",
+    "appliesWhen": "On becoming an employer of labour; monthly remittance thereafter.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "licenceTypeIds": [
+        "nssa-employer-registration-obligation"
+      ],
+      "complianceEventIds": [
+        "nssa-employer-registration-event",
+        "nssa-pobs-monthly-remittance"
+      ],
+      "complianceGuideIds": [
+        "guide-nssa-employer-registration-obligation"
+      ],
+      "serviceIds": [
+        "nssa-employer-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-mcaz-premises",
+    "name": "Medicines premises licence (MCAZ)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.mcaz.co.zw/licensing-and-enforcement/licensing/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "The Black Book record covers medicines premises and business types subject to MCAZ licensing; the precise premises classes and any professional-registration prerequisites must be confirmed with MCAZ. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Premises dealing in medicines — including retail pharmacies and wholesale dealers — are subject to MCAZ premises licensing.",
+    "obligationKind": "SECTOR_LICENCE",
+    "appliesWhen": "Before operating medicines premises subject to MCAZ licensing.",
+    "blackBook": {
+      "authorityIds": [
+        "mcaz"
+      ],
+      "licenceTypeIds": [
+        "mcaz-premises-licence"
+      ],
+      "complianceGuideIds": [
+        "guide-mcaz-premises-licence"
+      ],
+      "serviceIds": [
+        "mcaz-register-search"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-harare-health-registration",
+    "name": "Harare health registration of premises",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.hararecity.co.zw/resources/of/business-licensing",
+      "https://www.hararecity.co.zw/resources/download/50"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific health facility type appears on the council's form must be confirmed with City Health. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Business premises of the types listed on Harare's Health Registration application form require council health registration.",
+    "obligationKind": "LOCAL_AUTHORITY",
+    "appliesWhen": "When operating premises of a listed type in the City of Harare.",
+    "blackBook": {
+      "authorityIds": [
+        "harare-city-council"
+      ],
+      "licenceTypeIds": [
+        "harare-health-registration"
+      ],
+      "complianceEventIds": [
+        "harare-health-registration-review"
+      ],
+      "complianceGuideIds": [
+        "guide-harare-health-registration"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-bulawayo-premises",
+    "name": "Bulawayo premises registration certificate",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.citybyo.co.zw/Health/Inspectorate"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific health facility type is on the Inspectorate's list must be confirmed with the council. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Premises listed by the Bulawayo Health Inspectorate require an annually renewed registration certificate.",
+    "obligationKind": "LOCAL_AUTHORITY",
+    "appliesWhen": "When operating listed premises types in Bulawayo; certificate valid to 31 December.",
+    "blackBook": {
+      "authorityIds": [
+        "bulawayo-city-council"
+      ],
+      "licenceTypeIds": [
+        "bulawayo-premises-registration-certificate"
+      ],
+      "complianceEventIds": [
+        "bulawayo-premises-registration-renewal"
+      ],
+      "complianceGuideIds": [
+        "guide-bulawayo-premises-registration-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-ema-esia",
+    "name": "ESIA certificate for facility projects (EMA)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Whether a specific facility project is in an EMA-listed category must be confirmed against EMA's current prescribed list. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "Construction or expansion projects in EMA-listed categories require an ESIA certificate before implementation.",
+    "obligationKind": "ENVIRONMENT",
+    "appliesWhen": "Before implementing a facility project in an EMA-listed category.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ],
+      "complianceEventIds": [
+        "ema-esia-before-project-implementation"
+      ],
+      "complianceGuideIds": [
+        "guide-ema-esia-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-reg-referral-directory",
+    "name": "Central hospital referral directory (context)",
+    "category": "industry_regulatory_link",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://www.mohcc.gov.zw/?page_id=7390"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Recorded as context, not an obligation. Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "obligation": "The Ministry of Health publishes a directory of central hospitals used for referral context.",
+    "obligationKind": "OVERSIGHT",
+    "appliesWhen": "Directory context for referrals; not an obligation on private providers.",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-health-child-care"
+      ],
+      "serviceIds": [
+        "mohcc-central-hospital-directory"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-gap-facility-licensing",
+    "name": "Health facility licensing",
+    "category": "industry_gap",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Licensing/registration of private hospitals, clinics and laboratories (health-facility regulator) is not yet evidenced by a Black Book record.",
+    "proposedBlackBookCategory": "licence_type",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-health-child-care"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-gap-practitioner-councils",
+    "name": "Professional practitioner registration councils",
+    "category": "industry_gap",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Registration of doctors, dentists, pharmacists, nurses and allied professionals with their statutory councils is not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "regulator",
+    "blackBook": {
+      "authorityIds": [
+        "ministry-health-child-care"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-gap-medical-aid",
+    "name": "Medical-aid society regulation and provider contracting",
+    "category": "industry_gap",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Regulation of medical-aid funders and the provider claims/tariff framework is not yet evidenced by Black Book records; no tariff is asserted.",
+    "proposedBlackBookCategory": "regulator"
+  },
+  {
+    "id": "zw-healthcare-gap-medical-waste",
+    "name": "Medical waste handling obligations",
+    "category": "industry_gap",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Specific EMA or council obligations for clinical/medical waste beyond general effluent licensing are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ]
+    }
+  },
+  {
+    "id": "zw-healthcare-gap-dangerous-drugs",
+    "name": "Controlled substances registers",
+    "category": "industry_gap",
+    "industryId": "zw-healthcare",
+    "assertionType": "external_fact",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Declared research gap: believed relevant from general industry knowledge but not yet evidenced by a Black Book record. No fee, form, or deadline is asserted. Candidate for a future PB content mission.",
+    "description": "Controlled/dangerous drugs registers and related MCAZ or police obligations are not yet evidenced by Black Book records.",
+    "proposedBlackBookCategory": "compliance_event",
+    "blackBook": {
+      "authorityIds": [
+        "mcaz"
+      ]
+    }
+  }
+]

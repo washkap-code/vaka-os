@@ -1,0 +1,194 @@
+[
+  {
+    "id": "zw-manufacturing-wf-production-orders",
+    "name": "Production orders and BOM consumption",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Plan and execute production orders consuming materials per bill of materials and receiving finished goods.",
+    "stages": [
+      "Plan production from demand",
+      "Release production order",
+      "Issue materials per BOM",
+      "Record output and scrap",
+      "Close and cost the order"
+    ],
+    "erpCapabilities": [
+      "BOM",
+      "Production orders",
+      "Inventory (append-only movements)",
+      "Costing"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-yield",
+      "zw-manufacturing-kpi-unit-cost"
+    ]
+  },
+  {
+    "id": "zw-manufacturing-wf-procurement-materials",
+    "name": "Materials procurement and stores",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Procure raw materials and packaging against production plans with GRN and three-way match.",
+    "stages": [
+      "Plan requirements (MRP-lite)",
+      "Order and receive (GRN)",
+      "Quality-check inbound",
+      "Store and issue to production",
+      "Match supplier bills"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Inventory",
+      "Supplier bills (three-way match)"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-inventory-cover"
+    ]
+  },
+  {
+    "id": "zw-manufacturing-wf-quality",
+    "name": "Quality control and non-conformance",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Inspect inbound, in-process and finished product; quarantine and disposition non-conforming stock.",
+    "stages": [
+      "Define inspection points",
+      "Record inspections",
+      "Quarantine non-conforming stock",
+      "Disposition: rework, concession, scrap",
+      "Trend defects"
+    ],
+    "erpCapabilities": [
+      "Quality records",
+      "Inventory quarantine",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-scrap-rate",
+      "zw-manufacturing-kpi-oee"
+    ]
+  },
+  {
+    "id": "zw-manufacturing-wf-maintenance",
+    "name": "Plant maintenance",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Preventive and breakdown maintenance with downtime capture per line.",
+    "stages": [
+      "Register equipment and schedules",
+      "Execute preventive tasks",
+      "Record breakdowns and downtime",
+      "Issue spares from stores",
+      "Analyse OEE losses"
+    ],
+    "erpCapabilities": [
+      "Asset register",
+      "Maintenance scheduling",
+      "Inventory"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-oee"
+    ]
+  },
+  {
+    "id": "zw-manufacturing-wf-sales-dispatch",
+    "name": "Sales orders and dispatch",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Take orders, allocate stock, dispatch with delivery notes and invoice.",
+    "stages": [
+      "Capture sales order",
+      "Allocate finished goods",
+      "Pick, pack and dispatch",
+      "Invoice against delivery",
+      "Track OTIF"
+    ],
+    "erpCapabilities": [
+      "Sales orders",
+      "Inventory allocation",
+      "Invoicing",
+      "Receivables"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-otif"
+    ]
+  },
+  {
+    "id": "zw-manufacturing-wf-compliance-calendar",
+    "name": "Plant compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track EMA licences, council registrations, MCAZ premises (where applicable) and declared-gap items against renewal cycles.",
+    "stages": [
+      "Register applicable obligations",
+      "Link Black Book compliance events",
+      "Schedule reminders",
+      "Prepare filings/renewals",
+      "Record outcomes and evidence"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Document workspace",
+      "Task automation"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-manufacturing-wf-costing-variances",
+    "name": "Standard costing and variance analysis",
+    "category": "industry_workflow",
+    "industryId": "zw-manufacturing",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Maintain standard costs and analyse material, labour and overhead variances per period.",
+    "stages": [
+      "Set standard costs",
+      "Capture actuals per order",
+      "Compute variances",
+      "Investigate and act",
+      "Update standards periodically"
+    ],
+    "erpCapabilities": [
+      "Costing",
+      "Reporting",
+      "Approvals"
+    ],
+    "relatedKpiIds": [
+      "zw-manufacturing-kpi-unit-cost"
+    ]
+  }
+]
