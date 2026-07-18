@@ -10,7 +10,7 @@
 // ============================================================================
 import { useCallback, useId, useRef, useState, type ReactNode } from "react";
 import { LegacyModal } from "../accessibility/legacy-modal";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 import { api } from "../api";
 import {
   createProofHolder, isStepUpMfaRequired, isStepUpRequired, stepUpHeaders,

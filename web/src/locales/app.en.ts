@@ -84,6 +84,8 @@ export const appEnglish = {
       open: "Open account menu",
       settings: "Profile & settings",
       signOut: "Sign out",
+      language: "Language",
+      languageDraftNotice: "ChiShona and isiNdebele are draft translations pending native-speaker review.",
     },
   },
   customerTimeline: {

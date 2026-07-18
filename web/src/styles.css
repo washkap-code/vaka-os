@@ -117,6 +117,11 @@ body { font-family: var(--vaka-workspace-font); background: var(--bg); color: va
 .account-panel button { background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text); cursor: pointer; display: block; padding: 11px 15px; text-align: left; width: 100%; }
 .account-panel button:last-child { border-bottom: 0; }
 .account-panel button:hover { background: var(--vaka-workspace-surface-hover); }
+.account-language { border-bottom: 1px solid var(--line); padding: 9px 15px 11px; }
+.account-language-label { color: var(--muted); display: block; font-size: 11px; letter-spacing: 0.04em; padding-bottom: 4px; text-transform: uppercase; }
+.account-language button { border: 0; border-radius: 6px; display: inline-block; font-size: 12px; margin: 2px 4px 2px 0; padding: 5px 9px; width: auto; }
+.account-language button[aria-pressed="true"] { background: var(--vaka-workspace-surface-hover); font-weight: 600; }
+.account-language-notice { color: var(--muted); display: block; font-size: 11px; line-height: 1.4; padding-top: 5px; }
 .mobile-menu-button, .mobile-drawer, .drawer-backdrop { display: none; }
 
 .main { grid-column: 2; grid-row: 2; min-width: 0; padding: var(--vaka-workspace-page-padding-block) var(--vaka-workspace-page-padding-inline); max-width: 1200px; width: 100%; }

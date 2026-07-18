@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish, getLocale, setLocale, LOCALE_LABELS, SUPPORTED_LOCALES } from "../locales";
 
 export function UserMenu({ fullName, email, onSettings, onLogout }: {
   fullName: string;
@@ -33,6 +33,16 @@ export function UserMenu({ fullName, email, onSettings, onLogout }: {
     {open && <div id="workspace-account-menu" className="shell-menu account-panel">
       <div className="account-identity"><strong>{fullName}</strong><span>{email}</span></div>
       <button type="button" onClick={() => choose(onSettings)}>{copy.settings}</button>
+      <div className="account-language" role="group" aria-label={copy.language}>
+        <span className="account-language-label">{copy.language}</span>
+        {SUPPORTED_LOCALES.map((code) => (
+          <button key={code} type="button" aria-pressed={getLocale() === code}
+            onClick={() => { setOpen(false); setLocale(code); }}>
+            {LOCALE_LABELS[code]}
+          </button>
+        ))}
+        {getLocale() !== "en" && <small className="account-language-notice">{copy.languageDraftNotice}</small>}
+      </div>
       <button type="button" onClick={() => choose(onLogout)}>{copy.signOut}</button>
     </div>}
   </div>;

@@ -2,7 +2,7 @@ import { Children, useCallback, useEffect, useMemo, useState } from "react";
 import { api, fmt } from "../api";
 import { LegacyField } from "../accessibility/legacy-field";
 import { LegacyModal } from "../accessibility/legacy-modal";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 
 type Currency = "USD" | "ZWG";
 type ReferenceData = {

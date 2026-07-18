@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useStat
 import type { ChangeEvent, CSSProperties, KeyboardEvent } from "react";
 import { api, fmt, getToken, setToken } from "./api";
 import { Landing } from "./landing";
-import { appEnglish } from "./locales/app.en";
+import { appStrings as appEnglish } from "./locales";
 import { PlatformAdminIcon, PlatformAdminShell, type PlatformAdminNavigationItem } from "./platform/platform-admin-shell";
 import { filterPlatformTenants, visiblePlatformAdminPages, type PlatformAdminPage } from "./platform/platform-admin-model";
 import { resolveWorkspacePage, visibleWorkspaceNavigation, type WorkspacePage } from "./shell/navigation";
@@ -382,7 +382,8 @@ type AgedReceivablesView = {
   currencies: CurrencyAgeingView[];
   items: AgedReceivableView[];
 };
-const AGEING_BUCKET_LABELS = Object.entries(appEnglish.dashboard.buckets) as Array<
+// Resolved lazily so bucket labels always reflect the active language.
+const ageingBucketLabels = () => Object.entries(appEnglish.dashboard.buckets) as Array<
   [AgeingBucketKey, string]
 >;
 const idempotencyKey = (scope: string): string => {
@@ -4254,7 +4255,7 @@ function Reports({ ccy, canClosePeriods, isTenantOwner }: {
         <div key={currency.currency}>
           <h3>{currency.currency}</h3>
           <div className="cards">
-            {AGEING_BUCKET_LABELS.map(([k, label]) => (
+            {ageingBucketLabels().map(([k, label]) => (
               <div className="card" key={k}><div className="k">{label}</div><div className={`v ${k === "current" ? "" : "bad"}`}>{fmt(currency.buckets[k], currency.currency)}</div></div>
             ))}
           </div>

@@ -71,7 +71,7 @@ test("homepage source protects access, interaction and honest availability contr
       '{ name: "Growth", price: "$69"',
       '{ name: "Business", price: "$249"',
       '{ name: "Enterprise", price: "$599+"',
-      "Verified ChiShona and isiNdebele translations are in review. Showing English for now.",
+      "ChiShona and isiNdebele are shown as draft translations while native-speaker review is completed. English remains authoritative.",
     ]),
     ...missingContracts("src/landing.css", styles, [
       "overflow-x: clip",

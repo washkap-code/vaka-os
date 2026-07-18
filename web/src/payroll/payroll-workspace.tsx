@@ -7,7 +7,7 @@
 // ============================================================================
 import { useCallback, useEffect, useState } from "react";
 import { api, fmt } from "../api";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 
 type Currency = "USD" | "ZWG";
 type Employee = {
