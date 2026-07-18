@@ -13,6 +13,7 @@
     "check:runtime-schema": "node scripts/check-runtime-schema.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --fileParallelism=false --testTimeout=15000",
+    "test:full": "npm run test:db:migrations && node --import tsx src/seed.ts && npm run test",
     "test:db:guard": "node --import tsx tests/finance/test-db-guard.ts",
     "test:db:migrations": "node scripts/verify-migration-chain.mjs",
     "test:db:prepare": "npm run test:db:guard && drizzle-kit push --force && node --import tsx scripts/apply-finance-integrity-controls.ts && node --import tsx scripts/apply-procurement-integrity-controls.ts && node --import tsx scripts/apply-finance-report-snapshot-controls.ts && node --import tsx src/seed.ts",

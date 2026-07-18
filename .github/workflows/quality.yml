@@ -20,7 +20,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # LP-007: pinned to the production major version. Production is the
+        # dedicated Supabase project `vaka-os-prod` on PostgreSQL 17.x — CI
+        # must not drift from the production major.
+        image: postgres:17
         env:
           POSTGRES_USER: jonomi
           POSTGRES_PASSWORD: jonomi_ci
@@ -78,7 +81,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # LP-007: pinned to the production major version. Production is the
+        # dedicated Supabase project `vaka-os-prod` on PostgreSQL 17.x — CI
+        # must not drift from the production major.
+        image: postgres:17
         env:
           POSTGRES_USER: jonomi
           POSTGRES_PASSWORD: jonomi_ci
@@ -123,13 +129,13 @@ jobs:
         working-directory: web
         run: npm ci --workspaces=false --ignore-scripts
 
-      - name: Replay migrations and verify schema drift
+      # LP-007: the complete DB-backed suite is one documented command.
+      # test:full = migration-chain replay with schema-drift verification,
+      # reference-data seed, then the entire vitest suite (all DB-backed
+      # integration tests included, no mocked-DB shortcuts).
+      - name: Run the full DB-backed suite (test:full)
         working-directory: server
-        run: npm run test:db:migrations
-
-      - name: Seed required reference data
-        working-directory: server
-        run: node --import tsx src/seed.ts
+        run: npm run test:full
 
       - name: Install PostgreSQL backup client tools
         run: |
@@ -161,9 +167,6 @@ jobs:
 
       - name: Build web
         run: npm run build
-
-      - name: Run PostgreSQL and foundation tests
-        run: npm test
 
       - name: Generate intentionally gated evaluation example
         working-directory: server
