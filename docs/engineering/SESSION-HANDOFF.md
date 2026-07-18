@@ -1,44 +1,44 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-18 (session 17, Codex metadata lane, branch
-`feature/platform-metadata-registry` at implementation commit `62a7deb`:
-**owner-issued MISSION P1-002 Metadata Registry implemented.** NOTE the mission
-ID collides with the repository's historical P1-002 Identity/Audit mission;
-this block and branch name are the authoritative identifiers for this newer
-owner-issued work. Added an immutable, schema-backed internal
-`METADATA_REGISTRY` for Company, Customer, Supplier, Invoice, Payment, Product,
-Employee and User. The registry exposes `getObject`, `getFields`,
-`getRelationships`, `listObjects` and pure `validate`; field names are pinned
-to the real Drizzle definitions, exact decimals stay strings, restricted
-fields are AI-unreadable, all AI writes remain closed, and metadata construction
-rejects duplicate/invalid shape. `validate` enforces required, type,
-max-length, format/range, unique-item and strict known-field rules without DB
-calls; persisted cross-record uniqueness remains enforced by existing
-services/indexes. `buildPlatformKernel` now registers the new typed container
-token. **Compatibility preserved:** the existing P1-008 `METADATA_SERVICE`,
-five-object authenticated `/metadata/objects` response, search adoption,
-database schema, migrations, API behaviour and UI are unchanged. Verification:
-server typecheck clean; focused metadata/runtime 3 files / 20 tests green;
-new registry suite 11/11 green; migrations 0000–0047 replayed transactionally
-with zero structural drift; aggregate `npm run test:full` completed migration
-and seed then passed 96/98 files and 475/482 tests, with seven unrelated
-15-second host timeouts confined to
-`finance/inventory-valuation.test.ts` and
-`finance/invoice-document-snapshots.test.ts`; isolated unchanged-limit rerun
-cleared five inventory timeouts (6/8 tests passed) while two tests still ended
-at 15.6s/15.2s; a 30-second diagnostic rerun passed both files 8/8. Hosted CI
-must therefore clear the unchanged 15-second aggregate gate before merge. No
-migration taken; production remains applied through 0047 and next free remains
-0048. **PROCESS INCIDENT:** GitHub Desktop externally committed and pushed the
-implementation mid-verification as `62a7deb` with message `push`; history was
-not rewritten. This handoff is the final local commit and still needs the owner
-to push. **RISK/NEXT:** two descriptive metadata contracts now coexist by
-design for API compatibility (P1-008 provider vs the richer internal schema
-registry); the recommended next mission is a versioned compatibility-adapter
-plan that converges their source definitions without broadening API output,
-permissions, search or write authority. Open the PR only after hosted CI is
-green. Migration ledger, blockers and stale-branch rules below are otherwise
-unchanged.)
+**Updated:** 2026-07-18 (session 18, Codex workflow lane, branch
+`feature/platform-workflow-engine` at implementation commits `4a3e12a` and
+`6d19d8e`, order-independent admin fixture fix `88c1073`, and reconciled
+`origin/main` merge `c4a7600`: **owner-issued MISSION P1-003 Workflow Engine
+implemented and fully verified.** NOTE the mission ID collides with the
+repository's historical P1-003 First Kernel Audit Adoption mission; this block
+and branch name identify the newer owner-issued work. Added additive migration
+`0048_platform_workflow_engine.sql` plus its explicit down migration, durable
+workflow definitions/instances/actions, a PostgreSQL workflow store, and real
+`WorkflowService.start/approve/reject` behaviour. The engine supports
+permission-gated single-role steps, sequential steps and exact-decimal
+amount-threshold conditions; each transition records an audit event and queues
+a typed EventBus event. The existing invoice `POST /invoices/:id/issue` path is
+the repository's approval-equivalent flow (there is no separate invoice
+approval endpoint); its request/response, permission and posting behaviour are
+unchanged, while authenticated requests now complete the seeded
+`invoice.issue.approval` workflow inside the existing invoice transaction.
+Workflow rows, audits and events therefore roll back with failed issue/posting
+operations. Payment and every other approval flow remain untouched. The
+platform container now initializes the database-backed workflow service.
+Verification is fully green: server typecheck; workflow/platform 27 tests;
+critical/events 13 tests; inventory valuation 7 tests; invoice snapshot and
+journal idempotency 5 tests; migration replay 0000–0048 with zero structural
+drift; 0048 down migration twice with invoice tables preserved; runtime-schema
+readiness; and exact `npm run test:full` at 100/100 files and 498/498 tests.
+Engine coverage is 100% lines, 99.12% statements, 98.92% branches and 94.11%
+functions. Migration 0048 is committed on this branch but is not applied to
+production; apply it before deploying this code because readiness now requires
+the workflow tables. **PROCESS INCIDENT:** GitHub Desktop externally committed
+and pushed the implementation mid-session with generic `Push` commits; history
+was preserved. The local fixture fix, main reconciliation and this mandatory
+handoff remain ahead of the remote workflow branch and require an owner push.
+**RISKS/NEXT:** events remain best-effort and process-local; future adopters
+that need atomic domain effects must use the transaction-scoped store/event
+queue pattern demonstrated by invoice issue; threshold context must continue
+to come from canonical protected object data. Recommended next mission:
+durable workflow outbox/idempotent delivery followed by migration of the next
+explicitly defined approval policy. No blocker remains for PR review beyond
+the owner push and normal hosted gates.)
 
 **Updated:** 2026-07-18 (session 16d, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `904cacb`: **PI18N-002 and PI18N-003 gates CLOSED by owner self-certification — ChiShona and isiNdebele are now certified, not draft.** Owner decision (Dr. Washington Kapapiro, 2026-07-18): given dialect variation across ChiShona varieties and regional isiNdebele, VAKA standardises on widely understood standard varieties and the owner certifies the four dictionary files himself, superseding the external-translator gate. Certification records: `docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md` and `.../PI18N-003/CERTIFICATION.md` — both records state honestly that the dictionaries were machine-drafted in-session and that this is owner-level product acceptance, NOT an independent professional translation review. Changes: four dictionary headers DRAFT→CERTIFIED; `languageDraftNotice` replaced by `languageReferenceNotice` ("English remains the authoritative reference version" in each language) in the account menu; landing language labels lose their draft suffixes; landing languageNotice, 'Local languages' capability and the Shona/Ndebele FAQ answer updated to certified phrasing; the pinned homepage-regression contract string updated to match. English remains the authoritative reference and runtime fallback (unchanged framework). Web-only; no server, schema or migration change; next free migration remains 0048. Verification: scoped typecheck over every file touched this round clean (full-project tsc and vite build could not complete inside the sandbox call limit this round — hosted CI remains the authoritative gate and must be green before merge); homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; runtime locale checks + override-key validation 10/10. SANDBOX NOTE: the main-checkout was switched to `test/full-suite-green` by a parallel lane mid-session, so this round was done in a dedicated worktree (`wt-pi18n`); stale unlink-blocked lock files now exist at `.git/worktrees/wt-pi18n/{HEAD.lock,index.lock}` in addition to any earlier tmp objects — the owner should delete all `.git/**/*.lock` and `.git/objects/**/tmp_obj_*` files from the host, plus the Jul-15 Finder artifacts `.git/{AUTO_MERGE 3,CHERRY_PICK_HEAD 3,MERGE_MSG 3}`. OWNER ACTIONS: (1) clean the stale git files above, (2) push `feature/pi18n-001-locale-framework` and open its PR — merge on green hosted gates, (3) prior queue unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS. RECONCILIATION: this branch was merged with origin/main (`fb91f6f`, LP-007 + PR #95) — the only conflict was this handoff file; main's session-16c LP-007 block is preserved below.)
 
@@ -115,9 +115,9 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the reconciled committed baseline:
-`0046_verification_vault.sql`. Production is currently applied through the
-effective `0045_schema_runtime_alignment.sql` baseline.
+Highest migration in the active workflow branch:
+`0048_platform_workflow_engine.sql`. Production is currently applied through
+`0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
 0042–0045 production debt; those migrations do not need to be hand-applied
@@ -141,25 +141,26 @@ again to the dedicated project.
 | 0044_document_approvals | PD-002 | ✅ 2026-07-16 dedicated-project baseline |
 | 0045_schema_runtime_alignment | LP-001 | ✅ 2026-07-16 dedicated-project baseline verified |
 | 0046_verification_vault | PV-001 | ✅ 2026-07-17 applied + verified on `vaka-os-prod` (table empty, 4 indexes, roles backfilled) |
-| 0047_verification_workflow | PV-002 | ⚠️ TAKEN on `feature/pv-002-verification-workflow` (`b3e26f4`) — NOT on `main`, NOT applied; apply to `vaka-os-prod` after 0046 and before enabling `verify.centre` |
+| 0047_verification_workflow | PV-002 | ✅ 2026-07-18 merged and applied to `vaka-os-prod` |
+| 0048_platform_workflow_engine | P1-003 Workflow Engine | ⚠️ TAKEN on `feature/platform-workflow-engine`; NOT applied to production; apply before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
-Migration **0046 belongs to PV-001** and is not yet applied to production.
-Migration **0047 is taken by PV-002** (committed on
-`feature/pv-002-verification-workflow` at `b3e26f4`; not yet on `main` or
-production). New reservations continue from **0048**; coordinate them in this
-ledger before creating another migration.
+Migrations **0046 and 0047 are applied to production**. Migration **0048 is
+taken by the owner-issued P1-003 Workflow Engine** on
+`feature/platform-workflow-engine`; it is not applied to production. New
+reservations continue from **0049**; coordinate them in this ledger before
+creating another migration.
 
 ## Part II verification lane
 
-- **PV-001 implemented and verified:** the verification evidence vault ships
+- **PV-001 implemented, merged and production-applied:** the verification evidence vault ships
   dark behind `verify.centre`; flag-off APIs fail closed and its table ships
   empty. Implementation commit `be455d4`, merged-baseline handoff `9a3b4ce`.
-  Migration `0046_verification_vault.sql` is taken and must be applied to
-  `vaka-os-prod` before enablement. Completion report:
+  Migration `0046_verification_vault.sql` is applied to `vaka-os-prod`.
+  Completion report:
   `docs/engineering/mission-packs/PV-001/COMPLETION.md`.
-- **PV-002 implemented and pushed (2026-07-17, session 14) — awaiting PR/CI:**
+- **PV-002 implemented, merged and production-applied:**
   business verification workflow on `feature/pv-002-verification-workflow`,
   implementation `b3e26f4` (sits on top of the two marketing-site commits now
   on `main`). Tenant request state machine DRAFT→SUBMITTED→IN_REVIEW→
@@ -170,11 +171,8 @@ ledger before creating another migration.
   enforced in service code and by a DB transition trigger. Reviewer-anonymous
   tenant status; tenant-isolated read model for later PV-003. Ships dark
   behind `verify.centre`; VERIFIED policy meaning stays behind the P-gate.
-  Migration `0047_verification_workflow.sql` is TAKEN on the branch, NOT on
-  `main` and NOT applied to production. Server+web typecheck clean; run the
-  DB-backed server suite under CI or a local test env before merge (the local
-  raw `npm run test` aborts without `DATABASE_URL`/encryption keys — not a
-  regression). Mission pack: `docs/engineering/mission-packs/PV-002/README.md`.
+  Migration `0047_verification_workflow.sql` is merged and applied to
+  production. Mission pack: `docs/engineering/mission-packs/PV-002/README.md`.
 - **Coordination:** PV-001 removed the tracked, unreferenced Finder artifact
   `server/src/platform/workflow/approvals 4.ts`. PB-003 Black Book UI was
   issued to the Codex lane with an explicit no-migration constraint. LP-007
@@ -393,6 +391,10 @@ their independent reviews and merges are complete. The
 `feature/pv-001-verification-vault` history is contained in this reconciled
 baseline; preserve its branch until the owner push is confirmed, then it is
 safe to delete after review.
+
+`feature/platform-metadata-registry` is contained in `origin/main` through PR
+#98 and is safe to delete after owner review. `feature/platform-workflow-engine`
+is the active session branch and must be preserved and pushed before PR review.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
