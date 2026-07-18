@@ -89,6 +89,7 @@ import {
   stepKindSchema as migrationStepKindSchema,
 } from "./migration-hub.js";
 import { projectReconciliation } from "./migration-accounting.js";
+import { migrationRouter } from "./modules/migration/index.js";
 import {
   trialBalance, profitAndLoss, balanceSheet, agedReceivables, dashboard,
   inventoryValuationReconciliation,
@@ -2298,6 +2299,8 @@ api.post("/network/enquiries/:id/dismiss", requireFeature("network.directory"),
 // rollback. Rollback and sign-off are OWNER actions; the reconciliation
 // report backs the PM-002 accountant gate. Dark behind `migration.hub`.
 // ---------------------------------------------------------------------------
+api.use("/migration", migrationRouter);
+
 api.get("/migration/projects", requireFeature("migration.hub"),
   requirePermission("imports.create"), wrap(async (req) =>
     listMigrationProjects(tenantId(req))));

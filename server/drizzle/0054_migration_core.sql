@@ -58,6 +58,82 @@ CREATE TABLE IF NOT EXISTS "migration_rows" (
 CREATE INDEX IF NOT EXISTS "migration_rows_job_status"
   ON "migration_rows" ("job_id", "status", "row_number");
 
+-- Preserve one universal-audit record per changed canonical object without a
+-- network round trip per CSV row. The tenant lock and explicit loop maintain
+-- exactly the same hash-chain contract as vaka_append_audit_log().
+CREATE OR REPLACE FUNCTION vaka_append_migration_audit_batch(
+  p_tenant_id uuid,
+  p_actor_id uuid,
+  p_ip text,
+  p_records jsonb
+) RETURNS integer
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_record jsonb;
+  v_id uuid;
+  v_occurred_at timestamptz;
+  v_prev_hash text;
+  v_hash text;
+  v_count integer := 0;
+BEGIN
+  IF p_tenant_id IS NULL OR p_actor_id IS NULL OR jsonb_typeof(p_records) <> 'array' THEN
+    RAISE EXCEPTION 'Invalid migration audit batch';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_tenant_id::text, 0));
+  SELECT parent."hash"
+    INTO v_prev_hash
+    FROM "audit_log" parent
+   WHERE parent."tenant_id" = p_tenant_id
+     AND NOT EXISTS (
+       SELECT 1 FROM "audit_log" child
+        WHERE child."tenant_id" = parent."tenant_id"
+          AND child."prev_hash" = parent."hash"
+     )
+   ORDER BY parent."occurred_at" DESC, parent."id" DESC
+   LIMIT 1;
+
+  FOR v_record IN
+    SELECT item.value
+      FROM jsonb_array_elements(p_records) WITH ORDINALITY AS item(value, position)
+     ORDER BY item.position
+  LOOP
+    IF length(trim(COALESCE(v_record->>'action', ''))) = 0
+       OR length(trim(COALESCE(v_record->>'objectType', ''))) = 0
+       OR length(trim(COALESCE(v_record->>'objectId', ''))) = 0
+       OR length(trim(COALESCE(v_record->>'source', ''))) = 0 THEN
+      RAISE EXCEPTION 'Invalid migration audit record';
+    END IF;
+    v_id := gen_random_uuid();
+    v_occurred_at := COALESCE((v_record->>'occurredAt')::timestamptz, now());
+    v_hash := encode(sha256(convert_to(
+      COALESCE(v_prev_hash, '') || vaka_audit_record_content(
+        v_id, p_tenant_id, p_actor_id, 'user', v_record->>'action',
+        v_record->>'objectType', v_record->>'objectId',
+        NULLIF(v_record->'beforeJson', 'null'::jsonb),
+        NULLIF(v_record->'afterJson', 'null'::jsonb),
+        v_record->>'source', p_ip, v_occurred_at
+      ), 'UTF8'
+    )), 'hex');
+    INSERT INTO "audit_log" (
+      "id", "tenant_id", "actor_id", "actor_type", "action", "object_type",
+      "object_id", "before_json", "after_json", "source", "ip",
+      "occurred_at", "hash", "prev_hash"
+    ) VALUES (
+      v_id, p_tenant_id, p_actor_id, 'user', v_record->>'action',
+      v_record->>'objectType', v_record->>'objectId',
+      NULLIF(v_record->'beforeJson', 'null'::jsonb),
+      NULLIF(v_record->'afterJson', 'null'::jsonb),
+      v_record->>'source', p_ip, v_occurred_at, v_hash, v_prev_hash
+    );
+    v_prev_hash := v_hash;
+    v_count := v_count + 1;
+  END LOOP;
+  RETURN v_count;
+END;
+$function$;
+
 -- Generic dependency discovery keeps rollback fail-closed as new foreign keys
 -- are added to contacts/products. Only direct single-column references to the
 -- canonical id are reported; a non-empty result blocks the whole rollback.

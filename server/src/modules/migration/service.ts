@@ -7,7 +7,7 @@ import { METADATA_REGISTRY, platformKernel } from "../../platform-runtime.js";
 import type { MetadataRegistryContract } from "../../platform/metadata/interfaces.js";
 import type { FieldDefinition } from "../../platform/metadata/types.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "../../platform/events/index.js";
-import { autoAuditContactRoles, autoAuditMutation } from "../../universal-audit.js";
+import { canonicalAuditDiff, type UniversalAuditObjectType } from "../../universal-audit.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "../../tax.js";
 import { decodeCsvInput, parseCsvDocument } from "./csv.js";
 import { importableFields, suggestMappings } from "./mapping.js";
@@ -49,6 +49,16 @@ interface ImportedEvidence {
   operation: "created" | "updated";
   before: Record<string, unknown> | null;
   after: Record<string, unknown>;
+}
+
+interface PendingUniversalAudit {
+  action: string;
+  objectType: UniversalAuditObjectType;
+  objectId: string;
+  beforeJson: Record<string, unknown> | null;
+  afterJson: Record<string, unknown> | null;
+  source: "migration";
+  occurredAt: string;
 }
 
 function chunks<T>(values: readonly T[], size = WRITE_CHUNK_SIZE): T[][] {
@@ -96,6 +106,60 @@ function recordJson(row: CanonicalRow): Record<string, unknown> {
 
 function recordsEqual(left: unknown, right: unknown): boolean {
   return JSON.stringify(normaliseJson(left)) === JSON.stringify(normaliseJson(right));
+}
+
+function migrationAudit(
+  action: string,
+  objectType: UniversalAuditObjectType,
+  objectId: string,
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): PendingUniversalAudit | null {
+  const diff = canonicalAuditDiff(objectType, before, after);
+  if (!diff.changedFields.length) return null;
+  return {
+    action,
+    objectType,
+    objectId,
+    beforeJson: diff.before,
+    afterJson: diff.after,
+    source: "migration",
+    occurredAt: new Date().toISOString(),
+  };
+}
+
+function contactMigrationAudits(
+  action: "created" | "updated" | "deleted",
+  objectId: string,
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): PendingUniversalAudit[] {
+  const customer = before?.isCustomer === true || after?.isCustomer === true;
+  const supplier = before?.isVendor === true || after?.isVendor === true;
+  return ([customer ? "Customer" : null, supplier ? "Supplier" : null] as const)
+    .flatMap((objectType) => {
+      if (!objectType) return [];
+      const pending = migrationAudit(`${objectType.toLowerCase()}.${action}`, objectType, objectId, before, after);
+      return pending ? [pending] : [];
+    });
+}
+
+async function appendMigrationAudits(
+  tx: DB,
+  tenantId: string,
+  actorUserId: string,
+  ip: string | null | undefined,
+  pending: PendingUniversalAudit[],
+): Promise<void> {
+  if (!pending.length) return;
+  await tx.execute(sql`
+    SELECT vaka_append_migration_audit_batch(
+      ${tenantId}::uuid,
+      ${actorUserId}::uuid,
+      ${ip ?? null}::text,
+      ${JSON.stringify(pending)}::jsonb
+    )
+  `);
 }
 
 async function requireJob(tenantId: string, jobId: string): Promise<JobRow> {
@@ -208,7 +272,7 @@ export async function uploadJob(input: {
       sourceFilename: input.sourceFilename.trim(),
       duplicatePolicy: input.duplicatePolicy,
       totalRows: parsed.rows.length,
-      mappingJson: state,
+      mappingJson: normaliseJson(state) as Record<string, unknown>,
       createdBy: input.actorUserId,
     }).returning();
     for (const batch of chunks(parsed.rows, 1_000)) {
@@ -313,7 +377,7 @@ export async function mapJob(input: {
     const [updated] = await tx.update(schema.migrationJobs).set({
       status: "mapped",
       duplicatePolicy: input.duplicatePolicy ?? job.duplicatePolicy,
-      mappingJson: nextState,
+      mappingJson: normaliseJson(nextState) as Record<string, unknown>,
       validRows: 0,
       errorRows: 0,
       importedRows: 0,
@@ -597,7 +661,6 @@ export async function importJob(input: {
       if (!(["validated", "failed"] as string[]).includes(job.status)) {
         throw conflict("Migration job must be validated before import");
       }
-      if (!job.validRows) throw badRequest("Migration job has no valid rows to import");
       const state = mappingState(job);
       const mappedFields = new Set(Object.values(state.columns));
       await tx.update(schema.migrationJobs).set({ status: "importing" })
@@ -607,6 +670,7 @@ export async function importJob(input: {
       )).orderBy(asc(schema.migrationRows.rowNumber));
       const evidence: ImportedEvidence[] = [];
       const runtimeSkipped: Array<{ id: string; issue: MigrationRowIssue }> = [];
+      const universalAudits: PendingUniversalAudit[] = [];
 
       for (const row of rows.filter((value) => value.matchedRecordId)) {
         const current = await currentCanonical(tx, input.tenantId, job.objectType, row.matchedRecordId!);
@@ -619,21 +683,15 @@ export async function importJob(input: {
             .where(and(eq(schema.products.id, current.id), eq(schema.products.tenantId, input.tenantId)))
             .returning();
           updated = result;
-          await autoAuditMutation(tx, {
-            tenantId: input.tenantId, actorId: input.actorUserId, actorType: "user",
-            action: "product.updated", objectType: "Product", objectId: result.id,
-            before: current, after: result, ip: input.ip,
-          });
+          const pending = migrationAudit("product.updated", "Product", result.id, current, result);
+          if (pending) universalAudits.push(pending);
         } else {
           const [result] = await tx.update(schema.contacts)
             .set(contactPatch(row.mappedJson!, mappedFields, job.objectType))
             .where(and(eq(schema.contacts.id, current.id), eq(schema.contacts.tenantId, input.tenantId)))
             .returning();
           updated = result;
-          await autoAuditContactRoles(tx, {
-            tenantId: input.tenantId, actorId: input.actorUserId, action: "updated",
-            objectId: result.id, before: current, after: result, ip: input.ip,
-          });
+          universalAudits.push(...contactMigrationAudits("updated", result.id, current, result));
         }
         evidence.push({ rowId: row.id, recordId: updated.id, operation: "updated", before, after: recordJson(updated) });
       }
@@ -664,29 +722,55 @@ export async function importJob(input: {
           for (const entry of batch) {
             const record = byId.get(entry.value.id!);
             if (!record) throw conflict("Product import result could not be reconciled to its CSV row");
-            await autoAuditMutation(tx, {
-              tenantId: input.tenantId, actorId: input.actorUserId, actorType: "user",
-              action: "product.created", objectType: "Product", objectId: record.id,
-              before: null, after: record, ip: input.ip,
-            });
+            const pending = migrationAudit("product.created", "Product", record.id, null, record);
+            if (pending) universalAudits.push(pending);
             evidence.push({ rowId: entry.row.id, recordId: record.id, operation: "created", before: null, after: recordJson(record) });
           }
         }
       } else {
-        const inserts = createRows.map((row) => ({
-          row,
-          value: contactValues(row.mappedJson!, input.tenantId, input.actorUserId, job.objectType),
-        }));
+        const existing = await tx.select({
+          id: schema.contacts.id,
+          email: schema.contacts.email,
+          taxNumber: schema.contacts.taxNumber,
+        }).from(schema.contacts).where(and(
+          eq(schema.contacts.tenantId, input.tenantId),
+          sql`${schema.contacts.deletedAt} IS NULL`,
+        ));
+        const byNaturalKey = new Map<string, Set<string>>();
+        for (const record of existing) {
+          for (const key of contactNaturalKeys(record)) {
+            const ids = byNaturalKey.get(key) ?? new Set<string>();
+            ids.add(record.id);
+            byNaturalKey.set(key, ids);
+          }
+        }
+        const inserts: Array<{ row: StagedRow; value: typeof schema.contacts.$inferInsert }> = [];
+        for (const row of createRows) {
+          const keys = contactNaturalKeys(row.mappedJson!);
+          const duplicateIds = new Set(keys.flatMap((key) => [...(byNaturalKey.get(key) ?? [])]));
+          if (duplicateIds.size && job.duplicatePolicy !== "create-anyway") {
+            if (job.duplicatePolicy === "update-existing") {
+              throw conflict(`Contact duplicate changed after validation at CSV row ${row.rowNumber}; validate again`);
+            }
+            runtimeSkipped.push({ id: row.id, issue: duplicateIssue(
+              "Contact natural key became unavailable before import",
+              { recordIds: [...duplicateIds] },
+            ) });
+            continue;
+          }
+          const value = contactValues(row.mappedJson!, input.tenantId, input.actorUserId, job.objectType);
+          inserts.push({ row, value });
+          if (job.duplicatePolicy !== "create-anyway") {
+            for (const key of keys) byNaturalKey.set(key, new Set([value.id!]));
+          }
+        }
         for (const batch of chunks(inserts)) {
           const created = await tx.insert(schema.contacts).values(batch.map((entry) => entry.value)).returning();
           const byId = new Map(created.map((record) => [record.id, record]));
           for (const entry of batch) {
             const record = byId.get(entry.value.id!);
             if (!record) throw conflict("Contact import result could not be reconciled to its CSV row");
-            await autoAuditContactRoles(tx, {
-              tenantId: input.tenantId, actorId: input.actorUserId, action: "created",
-              objectId: record.id, before: null, after: record, ip: input.ip,
-            });
+            universalAudits.push(...contactMigrationAudits("created", record.id, null, record));
             evidence.push({ rowId: entry.row.id, recordId: record.id, operation: "created", before: null, after: recordJson(record) });
           }
         }
@@ -694,6 +778,7 @@ export async function importJob(input: {
 
       await updateImportedEvidence(tx, evidence);
       await writeRuntimeSkipped(tx, runtimeSkipped);
+      await appendMigrationAudits(tx, input.tenantId, input.actorUserId, input.ip, universalAudits);
       const errorRows = job.errorRows;
       const [completed] = await tx.update(schema.migrationJobs).set({
         status: "completed",
@@ -786,6 +871,7 @@ export async function rollbackJob(input: {
     )).orderBy(asc(schema.migrationRows.rowNumber));
     const blockers: Array<{ rowId: string; rowNumber: number; issue: MigrationRowIssue }> = [];
     const currentByRow = new Map<string, CanonicalRow>();
+    const universalAudits: PendingUniversalAudit[] = [];
     for (const row of rows) {
       if (!row.createdRecordId || !row.afterJson || !row.importOperation) {
         blockers.push({ rowId: row.id, rowNumber: row.rowNumber, issue: {
@@ -840,18 +926,12 @@ export async function rollbackJob(input: {
       if (job.objectType === "Product") {
         const [restored] = await tx.update(schema.products).set(restoreProduct(row.beforeJson))
           .where(and(eq(schema.products.id, current.id), eq(schema.products.tenantId, input.tenantId))).returning();
-        await autoAuditMutation(tx, {
-          tenantId: input.tenantId, actorId: input.actorUserId, actorType: "user",
-          action: "product.updated", objectType: "Product", objectId: restored.id,
-          before: current, after: restored, ip: input.ip,
-        });
+        const pending = migrationAudit("product.updated", "Product", restored.id, current, restored);
+        if (pending) universalAudits.push(pending);
       } else {
         const [restored] = await tx.update(schema.contacts).set(restoreContact(row.beforeJson))
           .where(and(eq(schema.contacts.id, current.id), eq(schema.contacts.tenantId, input.tenantId))).returning();
-        await autoAuditContactRoles(tx, {
-          tenantId: input.tenantId, actorId: input.actorUserId, action: "updated",
-          objectId: restored.id, before: current, after: restored, ip: input.ip,
-        });
+        universalAudits.push(...contactMigrationAudits("updated", restored.id, current, restored));
       }
     }
 
@@ -860,16 +940,10 @@ export async function rollbackJob(input: {
       const current = currentByRow.get(row.id);
       if (!current) continue;
       if (job.objectType === "Product") {
-        await autoAuditMutation(tx, {
-          tenantId: input.tenantId, actorId: input.actorUserId, actorType: "user",
-          action: "product.deleted", objectType: "Product", objectId: current.id,
-          before: current, after: null, ip: input.ip,
-        });
+        const pending = migrationAudit("product.deleted", "Product", current.id, current, null);
+        if (pending) universalAudits.push(pending);
       } else {
-        await autoAuditContactRoles(tx, {
-          tenantId: input.tenantId, actorId: input.actorUserId, action: "deleted",
-          objectId: current.id, before: current, after: null, ip: input.ip,
-        });
+        universalAudits.push(...contactMigrationAudits("deleted", current.id, current, null));
       }
     }
     const createdIds = createdRows.map((row) => row.createdRecordId!).filter(Boolean);
@@ -884,6 +958,7 @@ export async function rollbackJob(input: {
         ));
       }
     }
+    await appendMigrationAudits(tx, input.tenantId, input.actorUserId, input.ip, universalAudits);
     await tx.update(schema.migrationRows).set({
       status: "skipped",
       errorsJson: sql`${schema.migrationRows.errorsJson} || ${JSON.stringify([{

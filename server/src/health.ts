@@ -38,6 +38,8 @@ const migrationStatusSql = `
     AND to_regclass('public.processed_events') IS NOT NULL
     AND to_regclass('public.migration_jobs') IS NOT NULL
     AND to_regclass('public.migration_rows') IS NOT NULL
+    AND to_regprocedure('public.vaka_append_migration_audit_batch(uuid,uuid,text,jsonb)') IS NOT NULL
+    AND to_regprocedure('public.vaka_migration_record_dependencies(regclass,uuid)') IS NOT NULL
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'notifications'
