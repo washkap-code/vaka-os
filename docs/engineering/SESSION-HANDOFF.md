@@ -1,44 +1,48 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-18 (session 18, Codex workflow lane, branch
-`feature/platform-workflow-engine` at implementation commits `4a3e12a` and
-`6d19d8e`, order-independent admin fixture fix `88c1073`, and reconciled
-`origin/main` merge `c4a7600`: **owner-issued MISSION P1-003 Workflow Engine
-implemented and fully verified.** NOTE the mission ID collides with the
-repository's historical P1-003 First Kernel Audit Adoption mission; this block
-and branch name identify the newer owner-issued work. Added additive migration
-`0048_platform_workflow_engine.sql` plus its explicit down migration, durable
-workflow definitions/instances/actions, a PostgreSQL workflow store, and real
-`WorkflowService.start/approve/reject` behaviour. The engine supports
-permission-gated single-role steps, sequential steps and exact-decimal
-amount-threshold conditions; each transition records an audit event and queues
-a typed EventBus event. The existing invoice `POST /invoices/:id/issue` path is
-the repository's approval-equivalent flow (there is no separate invoice
-approval endpoint); its request/response, permission and posting behaviour are
-unchanged, while authenticated requests now complete the seeded
-`invoice.issue.approval` workflow inside the existing invoice transaction.
-Workflow rows, audits and events therefore roll back with failed issue/posting
-operations. Payment and every other approval flow remain untouched. The
-platform container now initializes the database-backed workflow service.
-Verification is fully green: server typecheck; workflow/platform 27 tests;
-critical/events 13 tests; inventory valuation 7 tests; invoice snapshot and
-journal idempotency 5 tests; migration replay 0000–0048 with zero structural
-drift; 0048 down migration twice with invoice tables preserved; runtime-schema
-readiness; and exact `npm run test:full` at 100/100 files and 498/498 tests.
-Engine coverage is 100% lines, 99.12% statements, 98.92% branches and 94.11%
-functions. Migration 0048 is committed on this branch but is not applied to
-production; apply it before deploying this code because readiness now requires
-the workflow tables. **PROCESS INCIDENT:** GitHub Desktop externally committed
-and pushed the implementation mid-session with generic `Push` commits; history
-was preserved. The local fixture fix, main reconciliation and this mandatory
-handoff remain ahead of the remote workflow branch and require an owner push.
-**RISKS/NEXT:** events remain best-effort and process-local; future adopters
-that need atomic domain effects must use the transaction-scoped store/event
-queue pattern demonstrated by invoice issue; threshold context must continue
-to come from canonical protected object data. Recommended next mission:
-durable workflow outbox/idempotent delivery followed by migration of the next
-explicitly defined approval policy. No blocker remains for PR review beyond
-the owner push and normal hosted gates.)
+**Updated:** 2026-07-18 (session 19, Codex notification lane, branch
+`feature/platform-notification-service` at externally pushed implementation
+commit `dd9e220` and local test-hardening commit `f94470f`: **owner-issued
+MISSION P1-004 Notification Service implemented and fully verified.** NOTE the
+mission ID collides with the repository's historical P1-004 notification
+adapter mission; this block and branch identify the newer owner-issued work.
+The existing 0014 delivery-evidence table is extended additively by
+`0049_platform_notification_service.sql` with tenant-bound user, priority,
+title/body, link, object reference and read state; new
+`notification_preferences` rows are user/category/channel scoped and missing
+rows mean enabled. `NotificationService.send` now accepts the normalised
+channel/template/to/data/priority/object-reference command while retaining
+legacy input compatibility. Every existing product email call site uses this
+service; the Nodemailer provider call exists only inside the injected transport.
+The SMTP provider, sender configuration and template renderer are unchanged,
+and a parity test proves legacy/normalised requests render identically. Internal
+notifications persist; SMS and Push are non-transmitting stubs. Authenticated
+inbox APIs provide paginated/unread current-user reads, idempotent single read
+and read-all with tenant/user predicates. A workflow subscriber resolves the
+stored active-step permission and sends preference-aware, deduplicated internal
+notifications to active users whose tenant role carries it; terminal events
+have no pending recipient. Verification is green: server typecheck; focused
+unit/API/email/workflow tests; authenticated and cross-tenant proofs; runtime
+schema readiness; migration 0000–0049 replay with zero structural drift; 0049
+down/reapply with workflow tables preserved; direct-mailer and direct-table-write
+grep invariants; and exact `npm run test:full` at 102/102 files and 506/506
+tests. **DEPENDENCY TRUTH:** despite the kickoff saying P1-003 was merged, a
+fresh `git fetch origin --prune` showed `origin/main` still at PR #98 without
+P1-003. This branch was therefore created from the verified local P1-003 tip
+`ab98a30`; it intentionally contains 0048 and must merge only after P1-003 is
+pushed and merged, then be reconciled with current main. Production remains at
+0047; apply 0048 then 0049 before deploying this branch because readiness now
+requires both. **PROCESS INCIDENT:** GitHub Desktop externally committed and
+pushed most P1-004 work as `dd9e220` while verification was running; history
+was preserved. `f94470f` and this mandatory handoff still require owner push.
+**RISKS/NEXT:** workflow/event delivery is best-effort and process-local, so a
+process crash can miss an inbox notification; invoice issue currently starts
+and completes its one-step workflow in one request, so its notification proves
+the started transition rather than a long-lived waiting state; preference
+management endpoints/UI are not part of this mission. Recommended next mission:
+a transactional event outbox with idempotent notification consumption, followed
+by preference-management API/UI. No implementation blocker remains beyond
+dependency merge order, the owner push and normal hosted gates.)
 
 **Updated:** 2026-07-18 (session 16d, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `904cacb`: **PI18N-002 and PI18N-003 gates CLOSED by owner self-certification — ChiShona and isiNdebele are now certified, not draft.** Owner decision (Dr. Washington Kapapiro, 2026-07-18): given dialect variation across ChiShona varieties and regional isiNdebele, VAKA standardises on widely understood standard varieties and the owner certifies the four dictionary files himself, superseding the external-translator gate. Certification records: `docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md` and `.../PI18N-003/CERTIFICATION.md` — both records state honestly that the dictionaries were machine-drafted in-session and that this is owner-level product acceptance, NOT an independent professional translation review. Changes: four dictionary headers DRAFT→CERTIFIED; `languageDraftNotice` replaced by `languageReferenceNotice` ("English remains the authoritative reference version" in each language) in the account menu; landing language labels lose their draft suffixes; landing languageNotice, 'Local languages' capability and the Shona/Ndebele FAQ answer updated to certified phrasing; the pinned homepage-regression contract string updated to match. English remains the authoritative reference and runtime fallback (unchanged framework). Web-only; no server, schema or migration change; next free migration remains 0048. Verification: scoped typecheck over every file touched this round clean (full-project tsc and vite build could not complete inside the sandbox call limit this round — hosted CI remains the authoritative gate and must be green before merge); homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; runtime locale checks + override-key validation 10/10. SANDBOX NOTE: the main-checkout was switched to `test/full-suite-green` by a parallel lane mid-session, so this round was done in a dedicated worktree (`wt-pi18n`); stale unlink-blocked lock files now exist at `.git/worktrees/wt-pi18n/{HEAD.lock,index.lock}` in addition to any earlier tmp objects — the owner should delete all `.git/**/*.lock` and `.git/objects/**/tmp_obj_*` files from the host, plus the Jul-15 Finder artifacts `.git/{AUTO_MERGE 3,CHERRY_PICK_HEAD 3,MERGE_MSG 3}`. OWNER ACTIONS: (1) clean the stale git files above, (2) push `feature/pi18n-001-locale-framework` and open its PR — merge on green hosted gates, (3) prior queue unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS. RECONCILIATION: this branch was merged with origin/main (`fb91f6f`, LP-007 + PR #95) — the only conflict was this handoff file; main's session-16c LP-007 block is preserved below.)
 
@@ -115,8 +119,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the active workflow branch:
-`0048_platform_workflow_engine.sql`. Production is currently applied through
+Highest migration in the active notification branch:
+`0049_platform_notification_service.sql`. Production is currently applied through
 `0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
@@ -143,13 +147,15 @@ again to the dedicated project.
 | 0046_verification_vault | PV-001 | ✅ 2026-07-17 applied + verified on `vaka-os-prod` (table empty, 4 indexes, roles backfilled) |
 | 0047_verification_workflow | PV-002 | ✅ 2026-07-18 merged and applied to `vaka-os-prod` |
 | 0048_platform_workflow_engine | P1-003 Workflow Engine | ⚠️ TAKEN on `feature/platform-workflow-engine`; NOT applied to production; apply before deploying this branch |
+| 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
 Migrations **0046 and 0047 are applied to production**. Migration **0048 is
-taken by the owner-issued P1-003 Workflow Engine** on
-`feature/platform-workflow-engine`; it is not applied to production. New
-reservations continue from **0049**; coordinate them in this ledger before
+taken by the owner-issued P1-003 Workflow Engine** and migration **0049 is
+taken by the owner-issued P1-004 Notification Service**; neither is applied to
+production. Apply them in numeric order before deploying P1-004. New
+reservations continue from **0050**; coordinate them in this ledger before
 creating another migration.
 
 ## Part II verification lane
@@ -394,7 +400,9 @@ safe to delete after review.
 
 `feature/platform-metadata-registry` is contained in `origin/main` through PR
 #98 and is safe to delete after owner review. `feature/platform-workflow-engine`
-is the active session branch and must be preserved and pushed before PR review.
+is not yet contained in `origin/main` and must be pushed/merged first.
+`feature/platform-notification-service` is the active stacked branch; preserve
+it, push its two local commits, and merge it only after P1-003.
 
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
