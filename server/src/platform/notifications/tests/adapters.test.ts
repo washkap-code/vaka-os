@@ -79,6 +79,8 @@ describe("notification channel adapters", () => {
       .resolves.toMatchObject({ status: "accepted", transmitted: false });
     await expect(noopGateway("SMS", persist).deliver(request("SMS")))
       .resolves.toMatchObject({ status: "accepted", transmitted: false });
+    await expect(noopGateway("PUSH", persist).deliver(request("PUSH")))
+      .resolves.toMatchObject({ status: "accepted", transmitted: false });
     await expect(noopGateway("WHATSAPP", persist).deliver(request("WHATSAPP")))
       .resolves.toMatchObject({ status: "accepted", transmitted: false });
   });

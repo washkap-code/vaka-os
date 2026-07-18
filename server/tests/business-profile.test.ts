@@ -31,7 +31,7 @@ async function makeTenant(n: string) {
 const validProfile = {
   displayName: "Kapiro Engineering",
   tagline: "Precision steel fabrication in Harare",
-  description: "Family-run fabrication workshop serving mining and agriculture.",
+  description: "Family-run fabrication workshop serving mining and agriculture businesses across Zimbabwe with dependable design, production, delivery, and after-sales support.",
   categories: ["manufacturing", "mining"],
   city: "Harare",
   countryCode: "ZW",
@@ -67,7 +67,7 @@ describe("draft profile (private)", () => {
     const res = await request(app).get("/api/v1/network/profile").set(auth(A.token));
     expect(res.status).toBe(200);
     expect(res.body.exists).toBe(false);
-    expect(res.body.status).toBe("DRAFT");
+    expect(res.body.status).toBe("draft");
     expect(res.body.publishedSnapshot).toBeNull();
     expect(res.body.draft.displayName).toContain("Network Co a");
     expect(res.body.draft.countryCode).toBe("ZW");
@@ -86,7 +86,7 @@ describe("draft profile (private)", () => {
   it("saves the draft, audited, still nothing public", async () => {
     const res = await request(app).put("/api/v1/network/profile").set(auth(A.token)).send(validProfile);
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("DRAFT");
+    expect(res.body.status).toBe("draft");
     expect(res.body.publishedSnapshot).toBeNull();
     const [auditRow] = await db.select().from(schema.auditLogs)
       .where(eq(schema.auditLogs.action, "business_profile.created"))
@@ -99,7 +99,7 @@ describe("publish (owner-only, snapshot semantics)", () => {
   it("publishes and freezes a snapshot without contact details (showContact=false)", async () => {
     const res = await request(app).post("/api/v1/network/profile/publish").set(auth(A.token));
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("PUBLISHED");
+    expect(res.body.status).toBe("published");
     expect(res.body.publishedSnapshot.displayName).toBe("Kapiro Engineering");
     expect(res.body.publishedSnapshot.contactEmail).toBeUndefined();
     expect(res.body.publishedSnapshot.contactPhone).toBeUndefined();
@@ -252,7 +252,7 @@ describe("unpublish + tenant isolation", () => {
   it("unpublish removes the snapshot immediately", async () => {
     const res = await request(app).post("/api/v1/network/profile/unpublish").set(auth(A.token));
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("UNPUBLISHED");
+    expect(res.body.status).toBe("draft");
     expect(res.body.publishedSnapshot).toBeNull();
     const again = await request(app).post("/api/v1/network/profile/unpublish").set(auth(A.token));
     expect(again.status).toBe(409);

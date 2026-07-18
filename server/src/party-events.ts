@@ -27,6 +27,15 @@ export function queuePartyRoleEvents(
       actorUserId: opts.actorUserId,
       payload: { customerId: opts.contactId, change: opts.change },
     });
+    if ((opts.change === "created" || opts.change === "imported") && opts.after?.isCustomer) {
+      queue({
+        id: `${DOMAIN_EVENTS.CUSTOMER_CREATED}:${opts.contactId}`,
+        type: DOMAIN_EVENTS.CUSTOMER_CREATED,
+        tenantId: opts.tenantId,
+        actorUserId: opts.actorUserId,
+        payload: { customerId: opts.contactId },
+      });
+    }
   }
   if (supplierAffected) {
     queue({

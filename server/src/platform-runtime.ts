@@ -26,14 +26,18 @@ import { emailGateway } from "./platform/notifications/adapters/email-gateway.js
 import { inAppGateway } from "./platform/notifications/adapters/in-app-gateway.js";
 import { noopGateway } from "./platform/notifications/adapters/noop-gateway.js";
 import type {
-  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup, NotificationWriter,
+  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup,
+  NotificationPreferenceLookup, NotificationWriter,
 } from "./platform/notifications/index.js";
 import {
-  findNotificationDuplicate, persistNotification, PLATFORM_NOTIFICATION_SCOPE,
+  findNotificationDuplicate, notificationPreferenceEnabled, persistNotification,
+  PLATFORM_NOTIFICATION_SCOPE,
 } from "./notifications.js";
 import { createConfiguredEmailTransport } from "./email-transport.js";
 import { applicationLogger, logEvent } from "./observability.js";
-import { InMemoryEventBus } from "./platform/events/service.js";
+import { ReliableEventBus } from "./platform/events/service.js";
+import type { EventStoreContract } from "./platform/events/interfaces.js";
+import { PostgresEventStore } from "./platform-events.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
 import { MetadataService } from "./platform/metadata/service.js";
@@ -50,10 +54,19 @@ import {
   type ProcurementApprovalNotifierContract,
 } from "./procurement-notifications.js";
 import { ApprovalService } from "./platform/workflow/approvals.js";
+import { WorkflowService } from "./platform/workflow/service.js";
+import type { WorkflowStoreContract } from "./platform/workflow/interfaces.js";
+import { PostgresWorkflowStore } from "./workflow-store.js";
 import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
 import { subscribeTaskAutomation } from "./tasks.js";
+import {
+  subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
+  type WorkflowNotificationCoordinatorContract,
+} from "./workflow-notifications.js";
+import { networkProfileAutoApprove } from "./config.js";
+import { NetworkService, PostgresNetworkStore } from "./modules/network/index.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -72,7 +85,7 @@ export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
 export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
   createServiceToken("platform.notifications.service");
 
-export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
+export const EVENT_BUS: ServiceToken<ReliableEventBus> =
   createServiceToken("platform.events.bus");
 
 export const SEARCH_SERVICE: ServiceToken<SearchService> =
@@ -93,6 +106,12 @@ export const FEATURE_FLAG_SERVICE: ServiceToken<FeatureFlagService> =
 export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
   createServiceToken("platform.workflow.approvals");
 
+export const WORKFLOW_SERVICE: ServiceToken<WorkflowService> =
+  createServiceToken("platform.workflow.service");
+
+export const NETWORK_SERVICE: ServiceToken<NetworkService> =
+  createServiceToken("modules.network.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -106,7 +125,12 @@ export interface PlatformKernelOptions {
   notificationWriter?: NotificationWriter;
   notificationDedupeLookup?: NotificationDedupeLookup;
   notificationAuditRecorder?: NotificationAuditRecorder;
+  notificationPreferenceLookup?: NotificationPreferenceLookup;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
+  /** Override durable event persistence (tests). Defaults to PostgreSQL. */
+  eventStore?: EventStoreContract;
+  eventRetryBackoffMs?: readonly [number, number, number];
+  eventRetrySleep?: (milliseconds: number) => Promise<void>;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
   /** Override the canonical schema registry (tests or a future composition root). */
@@ -118,6 +142,11 @@ export interface PlatformKernelOptions {
   /** Override the feature-flag store/audit (tests). Defaults to Postgres + audit_logs. */
   featureFlagStore?: FeatureFlagStore;
   featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
+  /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
+  workflowStore?: WorkflowStoreContract;
+  workflowNotificationCoordinator?: WorkflowNotificationCoordinatorContract;
+  networkStore?: PostgresNetworkStore;
+  networkAutoApprove?: boolean;
 }
 
 /**
@@ -158,7 +187,9 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     const persist = options.notificationWriter ?? persistNotification;
     const recordAudit: NotificationAuditRecorder = options.notificationAuditRecorder
       ?? (async (request, delivery) => {
-        const action = delivery.status === "failed"
+        const action = delivery.suppressed
+          ? "notification.suppressed"
+          : delivery.status === "failed"
           ? "notification.failed"
           : delivery.transmitted ? "notification.sent" : "notification.accepted";
         const metadata = {
@@ -190,25 +221,53 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       EMAIL: emailGateway(options.emailTransport ?? createConfiguredEmailTransport(), persist),
       IN_APP: inAppGateway(persist),
       SMS: noopGateway("SMS", persist),
+      PUSH: noopGateway("PUSH", persist),
       WHATSAPP: noopGateway("WHATSAPP", persist),
-    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit);
+    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit,
+    options.notificationPreferenceLookup
+      ?? (options.notificationWriter ? async () => true : notificationPreferenceEnabled));
   });
 
-  kernel.container.registerFactory(EVENT_BUS, () => new InMemoryEventBus((error, event) => {
-    if (options.eventSubscriberError) {
-      options.eventSubscriberError(error, event.type);
-      return;
-    }
-    logEvent("event.subscriber_failed", {
-      eventType: event.type,
-      errorType: error instanceof Error ? error.name : "UnknownError",
-    }, "error", applicationLogger);
+  kernel.container.registerFactory(EVENT_BUS, () => new ReliableEventBus(
+    options.eventStore ?? new PostgresEventStore(),
+    {
+      retryBackoffMs: options.eventRetryBackoffMs,
+      sleep: options.eventRetrySleep,
+      onSubscriberError: (error, event, handlerName, retryCount) => {
+        if (options.eventSubscriberError) {
+          options.eventSubscriberError(error, event.type);
+          return;
+        }
+        logEvent("event.subscriber_failed", {
+          eventType: event.type,
+          eventId: event.id,
+          handlerName,
+          retryCount,
+          errorType: error instanceof Error ? error.name : "UnknownError",
+        }, "error", applicationLogger);
+      },
+    },
+  ));
+
+  kernel.container.registerFactory(WORKFLOW_SERVICE, () => new WorkflowService({
+    store: options.workflowStore ?? new PostgresWorkflowStore(),
+    audit: kernel.container.get(AUDIT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
   }));
 
   kernel.container.registerValue(
     METADATA_REGISTRY,
     options.metadataRegistry ?? new MetadataRegistry(),
   );
+
+  kernel.container.registerFactory(NETWORK_SERVICE, () => new NetworkService({
+    store: options.networkStore ?? new PostgresNetworkStore(),
+    metadata: kernel.container.get(METADATA_REGISTRY),
+    workflow: kernel.container.get(WORKFLOW_SERVICE),
+    audit: kernel.container.get(AUDIT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
+    autoApprove: options.networkAutoApprove ?? networkProfileAutoApprove(),
+  }));
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
   kernel.container.registerValue(METADATA_SERVICE, metadataService);
@@ -228,6 +287,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   subscribeProcurementApprovalNotifications(
     kernel.container.get(EVENT_BUS),
     options.procurementApprovalNotifier ?? new ProcurementApprovalNotifier(kernel.container.get(NOTIFICATION_SERVICE)),
+  );
+  subscribeWorkflowNotifications(
+    kernel.container.get(EVENT_BUS),
+    options.workflowNotificationCoordinator
+      ?? new WorkflowNotificationCoordinator(kernel.container.get(NOTIFICATION_SERVICE)),
   );
   // PW-003: opt-in task automation (no rule row = disabled; never financial).
   subscribeTaskAutomation(kernel.container.get(EVENT_BUS));

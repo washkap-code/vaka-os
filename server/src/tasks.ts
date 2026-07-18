@@ -169,6 +169,7 @@ export function subscribeTaskAutomation(bus: EventBusContract) {
         subjectId: event.payload.entityId,
       });
     },
+    { handlerName: "tasks.procurement.approval-requested" },
   );
 
   bus.subscribe<DomainEventPayloads["supplier_bill.posted"]>(
@@ -186,5 +187,6 @@ export function subscribeTaskAutomation(bus: EventBusContract) {
         subjectId: event.payload.supplierBillId,
       });
     },
+    { handlerName: "tasks.supplier-bill.posted" },
   );
 }

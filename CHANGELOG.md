@@ -4,6 +4,17 @@
 
 ### Added
 
+- **P1-004 — Notification Service.** `NotificationService` is the single
+  outbound notification path with preference-aware email, internal, SMS and
+  push routing. Existing SMTP provider/template rendering is unchanged;
+  internal notifications now carry user, priority, title/body, link, object
+  reference and read state in the tenant-scoped inbox. Authenticated APIs add
+  pagination, unread filtering, individual read and read-all operations.
+  Workflow transition subscribers notify active users whose tenant roles hold
+  the pending step permission. Migration 0049 additively extends the existing
+  delivery-evidence table and adds per-user notification preferences; missing
+  preference rows mean enabled.
+
 - **PW-004 — Task centre surface (first build-dark consumer).** The task
   centre is now a product surface governed end-to-end by the
   `workflow.centre` tenant flag: the tasks and automation-rules APIs fail

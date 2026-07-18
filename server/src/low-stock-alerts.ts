@@ -161,10 +161,10 @@ export function subscribeLowStockAlerts(bus: EventBusContract, coordinator: LowS
     }
   };
   bus.subscribe<DomainEventPayloads["stock.moved"]>(DOMAIN_EVENTS.STOCK_MOVED, (event) =>
-    evaluate(event, event.payload.productId));
+    evaluate(event, event.payload.productId), { handlerName: "low-stock.stock.moved" });
   bus.subscribe<DomainEventPayloads["stock.adjusted"]>(DOMAIN_EVENTS.STOCK_ADJUSTED, (event) =>
-    evaluate(event, event.payload.productId));
+    evaluate(event, event.payload.productId), { handlerName: "low-stock.stock.adjusted" });
   bus.subscribe<DomainEventPayloads["product.changed"]>(DOMAIN_EVENTS.PRODUCT_CHANGED, (event) => {
     return evaluate(event, event.payload.productId);
-  });
+  }, { handlerName: "low-stock.product.changed" });
 }
