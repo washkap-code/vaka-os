@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_REGISTRY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 import type { SearchApplicationAdapter } from "../src/search.js";
@@ -121,12 +121,15 @@ describe("platform runtime composition (P1-002)", () => {
   });
 
   it("resolves the canonical metadata registry behind the kernel contract", async () => {
-    const metadata = buildPlatformKernel({ auditWriter: () => {} }).container.get(METADATA_SERVICE);
+    const kernel = buildPlatformKernel({ auditWriter: () => {} });
+    const metadata = kernel.container.get(METADATA_SERVICE);
     await expect(metadata.object("invoice", "tenant-1")).resolves.toMatchObject({
       key: "invoice",
       canonicalName: "Invoice",
       readPermission: "accounting.read",
     });
+    expect(kernel.container.has(METADATA_REGISTRY)).toBe(true);
+    expect(kernel.container.get(METADATA_REGISTRY).getObject("Company").name).toBe("Company");
   });
 
   it("resolves documents through an injected tenant-aware store", async () => {
