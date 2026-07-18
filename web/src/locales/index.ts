@@ -68,11 +68,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// Defence in depth: dictionary keys are static, but guard traversals against
+// prototype-polluting key names anyway (CodeQL js/prototype-pollution).
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function safeKeys(record: Record<string, unknown>): string[] {
+  return Object.keys(record).filter((key) => !UNSAFE_KEYS.has(key));
+}
+
 function clone<T>(value: T): T {
   if (Array.isArray(value)) return value.map((item) => clone(item)) as unknown as T;
   if (isRecord(value)) {
-    const out: Record<string, unknown> = {};
-    for (const key of Object.keys(value)) out[key] = clone(value[key]);
+    const out: Record<string, unknown> = Object.create(null);
+    for (const key of safeKeys(value)) out[key] = clone(value[key]);
     return out as T;
   }
   return value;
@@ -82,8 +90,8 @@ function clone<T>(value: T): T {
 function merge(base: unknown, override: unknown): unknown {
   if (override === undefined) return clone(base);
   if (isRecord(base) && isRecord(override)) {
-    const out: Record<string, unknown> = {};
-    for (const key of Object.keys(base)) out[key] = merge(base[key], override[key]);
+    const out: Record<string, unknown> = Object.create(null);
+    for (const key of safeKeys(base)) out[key] = merge(base[key], override[key]);
     return out;
   }
   return clone(override);
@@ -94,7 +102,8 @@ function merge(base: unknown, override: unknown): unknown {
  * every level so module-scope subtree captures stay live.
  */
 function overwriteInPlace(target: Record<string, unknown>, source: Record<string, unknown>): void {
-  for (const key of Object.keys(source)) {
+  for (const key of safeKeys(source)) {
+    if (!Object.prototype.hasOwnProperty.call(target, key)) continue;
     const next = source[key];
     const existing = target[key];
     if (isRecord(next) && isRecord(existing)) overwriteInPlace(existing, next);
