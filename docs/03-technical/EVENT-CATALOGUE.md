@@ -34,6 +34,10 @@ originating request or prevent sibling subscribers from receiving the event.
 | `activity.recorded` | Manual CRM activity creation | `activityId`, `customerId` |
 | `procurement.approval_requested` | Submitted requisition or draft purchase order | `kind`, `entityId`, `number`, `requesterUserId` |
 | `supplier_bill.posted` | Matched supplier bill accepted into Accounts Payable | `supplierBillId`, `purchaseOrderId`, `supplierId`, `number`, `currency`, `totalCents` |
+| `workflow.started` | Durable workflow instance created | `instanceId`, `definitionId`, `workflowName`, `objectType`, `objectId`, `currentStep`, `status` |
+| `workflow.approved` | Active workflow step approved | identifiers above plus `step`, `stepName`, resulting `currentStep`, `status` |
+| `workflow.rejected` | Active workflow step rejected and instance terminated | identifiers above plus `step`, `stepName`, `currentStep`, `REJECTED` status |
+| `workflow.completed` | Final applicable step approved (or no step applicable) | `instanceId`, `definitionId`, `workflowName`, `objectType`, `objectId`, `currentStep`, `COMPLETED` status |
 
 Money values use integer-cent strings. Quantity deltas remain exact decimal
 strings. Stable event identifiers are derived from the event type and committed
@@ -44,6 +48,14 @@ entry. The three `*.changed` index-refresh facts contain identifiers and bounded
 change labels; `activity.recorded` contains identifiers only. Consumers always
 re-read the canonical tenant-owned record rather than treating an event payload
 as business-record authority.
+
+Workflow event payloads likewise contain routing identifiers and transition
+facts only. They never copy invoice lines, comments, permissions or other
+sensitive object data. The invoice adopter queues workflow events inside the
+invoice transaction and releases them only after the financial commit.
+The notification subscriber resolves the stored definition and tenant roles
+from these identifiers; it never treats payload data as permission authority.
+Only started or still-active approved transitions notify pending approvers.
 
 ## Operational boundary
 

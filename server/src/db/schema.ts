@@ -9,6 +9,7 @@ import {
   pgEnum, unique, uniqueIndex, index, check, foreignKey, bigint as pgBigint,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { WorkflowStepDefinition } from "../platform/workflow/types.js";
 
 // ---------- enums ----------
 export const tenantStatus = pgEnum("tenant_status", ["TRIAL", "ACTIVE", "PAST_DUE", "SUSPENDED", "CLOSED"]);
@@ -393,21 +394,57 @@ export const auditLogs = pgTable("audit_logs", {
 export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id"),
   recipient: text("recipient").notNull(),
   channel: text("channel").notNull(),
   template: text("template").notNull(),
   locale: text("locale").notNull(),
   variables: jsonb("variables").notNull(),
+  priority: text("priority").default("normal").notNull(),
+  title: text("title"),
+  body: text("body"),
+  link: text("link"),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
   status: text("status").notNull(),
   transmitted: boolean("transmitted").default(false).notNull(),
   providerMessageId: text("provider_message_id"),
   dedupeKey: text("dedupe_key"),
   createdAt: createdAt(),
+  readAt: timestamp("read_at", { withTimezone: true }),
 }, (t) => [
   index("notifications_tenant_time").on(t.tenantId, t.createdAt),
+  index("notifications_user_inbox").on(t.tenantId, t.userId, t.readAt, t.createdAt),
   uniqueIndex("notifications_tenant_dedupe").on(t.tenantId, t.dedupeKey),
-  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'WHATSAPP')`),
+  foreignKey({
+    name: "notifications_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
+  check("notifications_priority_check", sql`${t.priority} IN ('low', 'normal', 'high', 'urgent')`),
   check("notifications_status_check", sql`${t.status} IN ('accepted', 'sent', 'failed')`),
+]);
+
+// Missing preference rows mean enabled. Explicit rows are tenant/user/channel
+// scoped and cannot reference a user from another workspace.
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id").notNull(),
+  category: text("category").notNull(),
+  channel: text("channel").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+}, (t) => [
+  unique("notification_preferences_scope_unique").on(t.tenantId, t.userId, t.category, t.channel),
+  foreignKey({
+    name: "notification_preferences_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("notification_preferences_user").on(t.tenantId, t.userId),
+  check("notification_preferences_category_check", sql`length(trim(${t.category})) > 0`),
+  check("notification_preferences_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
 ]);
 
 // Platform-level acquisition records. Referral attribution never grants access
@@ -1412,6 +1449,82 @@ export const approvalPolicies = pgTable("approval_policies", {
   uniqueIndex("approval_policies_tenant_subject").on(t.tenantId, t.subjectType),
   check("approval_policies_subject_check", sql`${t.subjectType} IN ('purchase_order', 'payroll_run')`),
   check("approval_policies_threshold_check", sql`${t.thresholdAmount} >= 0`),
+]);
+
+// ---------------------------------------------------------------------------
+// P1-003 — Durable, tenant-scoped workflow definitions and execution history.
+// Financial effects remain domain-owned; these tables record orchestration,
+// decisions and actor evidence only.
+// ---------------------------------------------------------------------------
+export const workflowDefinitions = pgTable("workflow_definitions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  version: integer("version").notNull(),
+  objectType: text("object_type").notNull(),
+  stepsJson: jsonb("steps_json").$type<WorkflowStepDefinition[]>().notNull(),
+  active: boolean("active").default(true).notNull(),
+}, (t) => [
+  unique("workflow_definitions_id_tenant_unique").on(t.id, t.tenantId),
+  unique("workflow_definitions_tenant_name_version_unique").on(t.tenantId, t.name, t.version),
+  index("workflow_definitions_tenant_object_active").on(t.tenantId, t.objectType, t.active),
+  check("workflow_definitions_name_check", sql`length(trim(${t.name})) > 0`),
+  check("workflow_definitions_version_check", sql`${t.version} >= 1`),
+  check("workflow_definitions_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_definitions_steps_check", sql`jsonb_typeof(${t.stepsJson}) = 'array'`),
+]);
+
+export const workflowInstances = pgTable("workflow_instances", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  definitionId: uuid("definition_id").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  status: text("status").default("ACTIVE").notNull(),
+  currentStep: integer("current_step").default(0).notNull(),
+  startedBy: uuid("started_by").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => [
+  unique("workflow_instances_id_tenant_unique").on(t.id, t.tenantId),
+  foreignKey({
+    name: "workflow_instances_definition_tenant_fk",
+    columns: [t.definitionId, t.tenantId],
+    foreignColumns: [workflowDefinitions.id, workflowDefinitions.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "workflow_instances_actor_tenant_fk",
+    columns: [t.startedBy, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("workflow_instances_tenant_object").on(t.tenantId, t.objectType, t.objectId),
+  uniqueIndex("workflow_instances_one_active_object")
+    .on(t.tenantId, t.definitionId, t.objectType, t.objectId)
+    .where(sql`${t.status} = 'ACTIVE'`),
+  check("workflow_instances_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_instances_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+  check("workflow_instances_status_check", sql`${t.status} IN ('ACTIVE', 'COMPLETED', 'REJECTED')`),
+  check("workflow_instances_current_step_check", sql`${t.currentStep} >= 0`),
+  check("workflow_instances_completion_check", sql`
+    (${t.status} = 'ACTIVE' AND ${t.completedAt} IS NULL)
+    OR (${t.status} IN ('COMPLETED', 'REJECTED') AND ${t.completedAt} IS NOT NULL)
+  `),
+]);
+
+export const workflowActions = pgTable("workflow_actions", {
+  id: id(),
+  instanceId: uuid("instance_id").notNull().references(() => workflowInstances.id, { onDelete: "restrict" }),
+  step: integer("step").notNull(),
+  actorId: uuid("actor_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  action: text("action").notNull(),
+  comment: text("comment"),
+  actedAt: timestamp("acted_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("workflow_actions_instance_step_unique").on(t.instanceId, t.step),
+  index("workflow_actions_instance_time").on(t.instanceId, t.actedAt),
+  check("workflow_actions_step_check", sql`${t.step} >= 0`),
+  check("workflow_actions_action_check", sql`${t.action} IN ('APPROVE', 'REJECT')`),
+  check("workflow_actions_comment_check", sql`${t.comment} IS NULL OR length(${t.comment}) <= 1000`),
 ]);
 
 // ---------------------------------------------------------------------------

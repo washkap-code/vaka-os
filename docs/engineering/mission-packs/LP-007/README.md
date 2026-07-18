@@ -25,7 +25,7 @@ npm run test:full
 `test:full` chains, in order:
 
 1. `test:db:migrations` — replays the complete migration chain
-   (`0000`–`0047`) into the target database and fails on any structural drift
+   (`0000`–`0049`) into the target database and fails on any structural drift
    against the current Drizzle model (LP-001 gate).
 2. Reference-data seed (`src/seed.ts`).
 3. The entire vitest suite (`npm run test`) with `--fileParallelism=false` —
