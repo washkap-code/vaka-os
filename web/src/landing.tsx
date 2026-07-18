@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { HOME_EN, type HomeCopy } from "./locales/home.en";
+import { type HomeCopy } from "./locales/home.en";
+import { homeCopyFor, setLocale as setSharedLocale } from "./locales";
 import { VakaLogo } from "./design-system/Logo";
 import { HOME_NAVIGATION_IDS, nextHomepageTabIndex, resolveHomeLocale, type HomeLocale } from "./landing-model";
 
@@ -232,12 +233,14 @@ export function Landing({ onLogin, onSignup }: LandingProps) {
   const [locale, setLocale] = useState<HomeLocale>(() => resolveHomeLocale(storedLocale, browserLocale));
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroVideo, setHeroVideo] = useState(false);
-  const copy = useMemo(() => HOME_EN, []);
+  const copy = useMemo(() => homeCopyFor(locale), [locale]);
   const languageNotice = locale !== "en";
 
   useEffect(() => {
     localStorage.setItem(LANGUAGE_KEY, locale);
-    document.documentElement.lang = "en";
+    // Keep the shared workspace locale store in step with the public choice.
+    setSharedLocale(locale);
+    document.documentElement.lang = locale;
     document.documentElement.dataset.preferredLanguage = locale;
   }, [locale]);
 

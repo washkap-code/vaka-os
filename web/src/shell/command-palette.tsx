@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { api, fmt } from "../api";
 import { Dialog } from "../design-system";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 import {
   isEditableSearchShortcutTarget,
   parseWorkspaceSearchResponse,

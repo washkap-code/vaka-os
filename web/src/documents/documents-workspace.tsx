@@ -7,7 +7,7 @@
 // ============================================================================
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { api } from "../api";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 
 type DocumentStatus = "ACTIVE" | "ARCHIVED";
 type Classification = keyof typeof appEnglish.documents.classification;

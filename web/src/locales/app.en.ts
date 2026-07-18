@@ -84,6 +84,8 @@ export const appEnglish = {
       open: "Open account menu",
       settings: "Profile & settings",
       signOut: "Sign out",
+      language: "Language",
+      languageReferenceNotice: "English remains the authoritative reference version.",
     },
   },
   customerTimeline: {

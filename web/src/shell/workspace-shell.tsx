@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 import type { WorkspaceNavigationItem, WorkspacePage } from "./navigation";
 import type { WorkspaceSearchTarget } from "./command-search-model";
 import { CommandPalette } from "./command-palette";

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 import { notificationCopy, type NotificationItem } from "./notification-copy";
 
 export function NotificationMenu() {

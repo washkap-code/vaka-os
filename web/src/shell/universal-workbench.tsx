@@ -1,5 +1,5 @@
 import { fmt } from "../api";
-import { appEnglish } from "../locales/app.en";
+import { appStrings as appEnglish } from "../locales";
 import type { WorkspaceNavigationItem, WorkspacePage } from "./navigation";
 import { openPipelineDeals, safeChartPercent, visibleWorkbenchActions } from "./workbench-model";
 
