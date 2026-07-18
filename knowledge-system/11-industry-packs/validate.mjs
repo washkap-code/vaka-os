@@ -139,6 +139,42 @@ for (const [ind, records] of allRecordsByIndustry) {
       if (!kpis.has(k)) fail(`${ind}#${r.id}: relatedKpiId '${k}' does not resolve`);
 }
 
+// --- Content-review register ---------------------------------------------
+{
+  const regPath = join(here, "content-review-register.json");
+  if (!existsSync(regPath)) fail("content-review-register.json: missing");
+  else {
+    let reg;
+    try { reg = JSON.parse(readFileSync(regPath, "utf8")); }
+    catch (e) { fail(`content-review-register.json: JSON parse error: ${e.message}`); reg = null; }
+    if (reg) {
+      const statuses = ["READY", "PARTIAL", "DESIGN_ONLY"];
+      const tracks = ["REGULATORY_LINK", "RESEARCH_GAP", "TERMINOLOGY", "PRODUCT_DESIGN"];
+      const human = ["PENDING", "APPROVED", "NEEDS_CHANGES", "REJECTED"];
+      const datasetIds = new Set();
+      for (const records of allRecordsByIndustry.values()) for (const r of records) datasetIds.add(r.id);
+      const regIds = new Set();
+      for (const e of reg.records ?? []) {
+        const where = `register#${e.recordId ?? "?"}`;
+        if (regIds.has(e.recordId)) fail(`${where}: duplicate register entry`);
+        regIds.add(e.recordId);
+        if (!datasetIds.has(e.recordId)) fail(`${where}: no matching dataset record`);
+        if (!statuses.includes(e.evidenceStatus)) fail(`${where}: bad evidenceStatus`);
+        if (!tracks.includes(e.reviewTrack)) fail(`${where}: bad reviewTrack`);
+        if (!human.includes(e.humanReviewStatus)) fail(`${where}: bad humanReviewStatus`);
+        if (e.humanReviewStatus === "PENDING" && (e.reviewer !== null || e.reviewedAt !== null))
+          fail(`${where}: PENDING entry must not carry reviewer/reviewedAt`);
+        if (e.humanReviewStatus !== "PENDING" && (!e.reviewer || !e.reviewedAt))
+          fail(`${where}: decided entry requires reviewer and reviewedAt`);
+      }
+      for (const id of datasetIds) if (!regIds.has(id)) fail(`register: dataset record '${id}' has no register entry`);
+      if (reg.gateStatus === "PENDING_HUMAN_REVIEW" && reg.approval?.status !== "PENDING")
+        fail("register: gate pending but approval block not PENDING");
+      console.log(`register: ${regIds.size} entries, gate ${reg.gateStatus}`);
+    }
+  }
+}
+
 // --- Report --------------------------------------------------------------
 let total = 0, verified = 0, design = 0, gaps = 0, factUnverified = 0;
 for (const records of allRecordsByIndustry.values()) for (const r of records) {

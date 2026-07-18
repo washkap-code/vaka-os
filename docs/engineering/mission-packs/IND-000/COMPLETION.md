@@ -11,7 +11,8 @@ the PB-002 precedent.
 | Path | Change |
 | --- | --- |
 | `knowledge-system/11-industry-packs/schema.md` | Industry Pack data contract: record categories, evidence rules, source-inheritance rule, validation gates |
-| `knowledge-system/11-industry-packs/validate.mjs` | Validation script adapted from the PB-001 import checks |
+| `knowledge-system/11-industry-packs/validate.mjs` | Validation script adapted from the PB-001 import checks, including register-consistency checks |
+| `knowledge-system/11-industry-packs/content-review-register.json` | P-gate review register (PB-002 pattern): 133 entries — 41 READY, 14 PARTIAL, 78 DESIGN_ONLY across tracks REGULATORY_LINK (32), RESEARCH_GAP (13), TERMINOLOGY (10), PRODUCT_DESIGN (78); every human decision PENDING — nothing approved by this session |
 | `knowledge-system/11-industry-packs/INDEX.md` | Directory index (updated) |
 | `knowledge-system/11-industry-packs/README.md` | Directory purpose (updated) |
 | `knowledge-system/11-industry-packs/Zimbabwe/README.md` | Zimbabwe pack overview and evidence rules |
@@ -52,7 +53,7 @@ file was changed. No root `package-lock.json` was created.
 
 ## P-gate (content review) — OPEN
 
-Before any tenant-facing use, a human reviewer must certify: (1) the 41
+The review register (`content-review-register.json`) enumerates every record with its evidence status, review track and required reviewer role; all 133 human decisions are PENDING — this session recorded no approvals (PB-002 precedent). Before any tenant-facing use, a human reviewer must certify: (1) the 41
 verified regulatory linkages, (2) the 13 declared gaps (research and, where
 confirmed, promotion into Black Book records via a future PB mission), (3) the
 sub-sector segmentation and terminology for market fit. Industry-pack content
