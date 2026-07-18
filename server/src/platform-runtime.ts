@@ -37,7 +37,8 @@ import { InMemoryEventBus } from "./platform/events/service.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
 import { MetadataService } from "./platform/metadata/service.js";
-import type { MetadataProvider } from "./platform/metadata/interfaces.js";
+import { MetadataRegistry } from "./platform/metadata/registry.js";
+import type { MetadataProvider, MetadataRegistryContract } from "./platform/metadata/interfaces.js";
 import { CanonicalMetadataProvider } from "./metadata.js";
 import { CustomerTimelineProjector, subscribeCustomerTimeline, type CustomerTimelineProjectorContract } from "./customer-timeline.js";
 import { LowStockAlertCoordinator, subscribeLowStockAlerts, type LowStockAlertCoordinatorContract } from "./low-stock-alerts.js";
@@ -80,6 +81,9 @@ export const SEARCH_SERVICE: ServiceToken<SearchService> =
 export const METADATA_SERVICE: ServiceToken<MetadataService> =
   createServiceToken("platform.metadata.service");
 
+export const METADATA_REGISTRY: ServiceToken<MetadataRegistryContract> =
+  createServiceToken("platform.metadata.registry");
+
 export const DOCUMENT_SERVICE: ServiceToken<DocumentServiceContract> =
   createServiceToken("platform.documents.service");
 
@@ -105,6 +109,8 @@ export interface PlatformKernelOptions {
   eventSubscriberError?: (error: unknown, eventType: string) => void;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
+  /** Override the canonical schema registry (tests or a future composition root). */
+  metadataRegistry?: MetadataRegistryContract;
   customerTimelineProjector?: CustomerTimelineProjectorContract;
   lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
   documentStore?: DocumentStore;
@@ -198,6 +204,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       errorType: error instanceof Error ? error.name : "UnknownError",
     }, "error", applicationLogger);
   }));
+
+  kernel.container.registerValue(
+    METADATA_REGISTRY,
+    options.metadataRegistry ?? new MetadataRegistry(),
+  );
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
   kernel.container.registerValue(METADATA_SERVICE, metadataService);

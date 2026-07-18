@@ -22,7 +22,7 @@ rewrite and not a claim that every service is live in production.
 | `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
 | `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Supplier/Invoice/Product adapter plus PB-003 flag- and country-scoped Black Book projection composed; broader enterprise search gated |
-| `metadata` | extensible typed entity metadata | P1-008 immutable canonical registry composed; dynamic values and broad adoption gated |
+| `metadata` | extensible typed entity metadata | P1-008 compatibility provider plus eight-object schema registry composed; dynamic values and broad adoption gated |
 | `shared` | clocks, identifiers, logging, JSON-safe values | injected runtime helpers |
 | `types` | reusable type helpers and tenant-scope assertions | small contract utility |
 | `container` | explicit constructor dependency injection | memoised value/factory container |
@@ -136,15 +136,23 @@ gated.
 ## Metadata adoption seam (P1-008)
 
 The composition root exposes `METADATA_SERVICE` backed by an immutable,
-code-seeded provider. Company, Customer, Invoice and Product definitions record
-their current physical lineage, permissions, localisation keys, navigation,
-search/result fields and fail-closed future-AI exposure. `/metadata/objects`
-derives tenant and permissions from verified authentication and returns no
-record values. P1-006 now obtains searchable-object permissions, searchable
-fields and result descriptors from this registry while retaining explicit,
-tenant-safe canonical queries. Metadata cannot select arbitrary tables, execute
-rules or grant data access. Custom metadata writes, the target
+code-seeded provider. Company, Customer, Supplier, Invoice and Product
+definitions record their current physical lineage, permissions, localisation
+keys, navigation, search/result fields and fail-closed future-AI exposure.
+`/metadata/objects` derives tenant and permissions from verified authentication
+and returns no record values. P1-006 now obtains searchable-object permissions,
+searchable fields and result descriptors from this registry while retaining
+explicit, tenant-safe canonical queries. Metadata cannot select arbitrary
+tables, execute rules or grant data access. Custom metadata writes, the target
 Party/Organisation/LegalEntity model and any AI context builder remain gated.
+
+The same composition root also exposes `METADATA_REGISTRY`, an immutable
+schema-shape registry for Company, Customer, Supplier, Invoice, Payment,
+Product, Employee and User. Its queries and strict payload validation are pure
+and make no database calls. Field names are regression-pinned to the current
+Drizzle definitions; exact decimal values remain strings. The registry is an
+internal contract only: it does not alter `/metadata/objects`, search, existing
+write validation, permissions, audit behaviour or UI generation.
 
 ## Document adoption seam (P1-007)
 
