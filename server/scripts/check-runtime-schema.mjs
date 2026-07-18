@@ -86,6 +86,12 @@ const alwaysRequired = [
   ["notifications", "read_at"],
   ["notification_preferences", "user_id"],
   ["notification_preferences", "enabled"],
+  ["platform_events", "event_type"],
+  ["platform_events", "payload_json"],
+  ["platform_events", "status"],
+  ["platform_events", "retry_count"],
+  ["processed_events", "handler_name"],
+  ["processed_events", "event_id"],
 ];
 const gatedRequirements = {
   "migration.hub": [

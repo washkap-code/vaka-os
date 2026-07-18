@@ -258,6 +258,7 @@ export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "POST", path: "/api/v1/platform/staff/:id/temporary-password", access: "platform", vector: "platform-denial" },
   { method: "GET", path: "/api/v1/platform/analytics", access: "platform", vector: "platform-denial" },
   { method: "GET", path: "/api/v1/platform/control-center", access: "platform", vector: "platform-denial" },
+  { method: "GET", path: "/api/v1/platform/events", access: "platform", vector: "platform-denial" },
   { method: "GET", path: "/api/v1/platform/operations/email-failures/today", access: "platform", vector: "platform-denial" },
   { method: "GET", path: "/api/v1/platform/backup-manifests", access: "platform", vector: "platform-denial" },
   { method: "POST", path: "/api/v1/platform/backup-manifests", access: "platform", vector: "platform-denial" },

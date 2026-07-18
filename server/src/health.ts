@@ -1,7 +1,7 @@
 import { emailDeliveryConfig, type EmailDeliveryConfig } from "./config.js";
 import { pool } from "./lib.js";
 
-export const EXPECTED_MIGRATION = "0049_platform_notification_service";
+export const EXPECTED_MIGRATION = "0050_platform_event_bus";
 
 export interface ReadinessCheck {
   status: "pass" | "fail" | "not_required";
@@ -34,6 +34,8 @@ const migrationStatusSql = `
     AND to_regclass('public.workflow_instances') IS NOT NULL
     AND to_regclass('public.workflow_actions') IS NOT NULL
     AND to_regclass('public.notification_preferences') IS NOT NULL
+    AND to_regclass('public.platform_events') IS NOT NULL
+    AND to_regclass('public.processed_events') IS NOT NULL
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'notifications'

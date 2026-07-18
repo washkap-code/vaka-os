@@ -174,6 +174,9 @@ export class WorkflowService implements WorkflowRunnerContract, WorkflowEngineCo
         currentStep: instance.currentStep,
       },
     });
+    if (instance.status === "REJECTED") {
+      throw new WorkflowStateConflictError("A newly started workflow cannot be rejected");
+    }
     await dependencies.events.publish({
       id: `workflow.started:${instance.id}`,
       type: "workflow.started",
@@ -311,6 +314,9 @@ export class WorkflowService implements WorkflowRunnerContract, WorkflowEngineCo
         currentStep: instance.currentStep,
       },
     });
+    if (instance.status !== "COMPLETED") {
+      throw new WorkflowStateConflictError("Only a completed workflow can publish workflow.completed");
+    }
     await dependencies.events.publish({
       id: `workflow.completed:${instance.id}`,
       type: "workflow.completed",

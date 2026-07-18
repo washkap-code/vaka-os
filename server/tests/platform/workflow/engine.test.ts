@@ -107,7 +107,7 @@ function harness(permissions = ["accounting.post", "settings.manage"]) {
   const auditActions: string[] = [];
   const eventTypes: string[] = [];
   const events = new InMemoryEventBus();
-  for (const type of ["workflow.started", "workflow.approved", "workflow.rejected", "workflow.completed"]) {
+  for (const type of ["workflow.started", "workflow.approved", "workflow.rejected", "workflow.completed"] as const) {
     events.subscribe(type, () => { eventTypes.push(type); });
   }
   let tick = 0;

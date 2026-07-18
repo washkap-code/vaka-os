@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { WorkflowStepDefinition } from "../platform/workflow/types.js";
+import type { DomainEventPayloads, EventType } from "../platform/events/registry.js";
 
 // ---------- enums ----------
 export const tenantStatus = pgEnum("tenant_status", ["TRIAL", "ACTIVE", "PAST_DUE", "SUSPENDED", "CLOSED"]);
@@ -388,6 +389,39 @@ export const auditLogs = pgTable("audit_logs", {
   metadata: jsonb("metadata"),
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
+
+// P1-005 — persist-first event facts and per-handler idempotency evidence.
+// Payloads contain closed-catalogue identifiers/minimal data only.
+export const platformEvents = pgTable("platform_events", {
+  id: text("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "restrict" }),
+  eventType: text("event_type").$type<EventType>().notNull(),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
+  actorId: uuid("actor_id"),
+  payloadJson: jsonb("payload_json").$type<DomainEventPayloads[EventType]>().notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  status: text("status").default("pending").notNull(),
+  retryCount: integer("retry_count").default(0).notNull(),
+}, (t) => [
+  index("platform_events_tenant_time").on(t.tenantId, t.occurredAt),
+  index("platform_events_tenant_status").on(t.tenantId, t.status, t.occurredAt),
+  check("platform_events_event_type_check", sql`length(trim(${t.eventType})) > 0`),
+  check("platform_events_status_check", sql`${t.status} IN ('pending', 'processing', 'retrying', 'processed', 'failed')`),
+  check("platform_events_retry_count_check", sql`${t.retryCount} BETWEEN 0 AND 3`),
+]);
+
+export const processedEvents = pgTable("processed_events", {
+  id: id(),
+  handlerName: text("handler_name").notNull(),
+  eventId: text("event_id").notNull().references(() => platformEvents.id, { onDelete: "restrict" }),
+  processedAt: timestamp("processed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("processed_events_handler_event_unique").on(t.handlerName, t.eventId),
+  index("processed_events_event").on(t.eventId),
+  check("processed_events_handler_name_check", sql`length(trim(${t.handlerName})) > 0`),
+]);
 
 // Tenant-scoped notification intent and delivery evidence. Records are never
 // deleted through the notification service; only delivery status may advance.

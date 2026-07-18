@@ -36,6 +36,7 @@ describe("invoice issue workflow adoption", () => {
       DOMAIN_EVENTS.WORKFLOW_STARTED,
       DOMAIN_EVENTS.WORKFLOW_APPROVED,
       DOMAIN_EVENTS.WORKFLOW_COMPLETED,
+      DOMAIN_EVENTS.INVOICE_APPROVED,
     ].map((type) => eventBus.subscribe(type, () => { eventTypes.push(type); }));
 
     const response = await request(app)
@@ -99,7 +100,19 @@ describe("invoice issue workflow adoption", () => {
       DOMAIN_EVENTS.WORKFLOW_STARTED,
       DOMAIN_EVENTS.WORKFLOW_APPROVED,
       DOMAIN_EVENTS.WORKFLOW_COMPLETED,
+      DOMAIN_EVENTS.INVOICE_APPROVED,
     ]);
+    const [approvedEvent] = await db.select().from(schema.platformEvents).where(and(
+      eq(schema.platformEvents.tenantId, tenant.tenantId),
+      eq(schema.platformEvents.eventType, DOMAIN_EVENTS.INVOICE_APPROVED),
+      eq(schema.platformEvents.objectId, draft.id),
+    ));
+    expect(approvedEvent).toMatchObject({
+      objectType: "Invoice",
+      status: "processed",
+      retryCount: 0,
+      payloadJson: { invoiceId: draft.id },
+    });
   });
 
   it("rolls workflow evidence back when invoice posting fails", async () => {

@@ -114,7 +114,10 @@ import { backupManifestInputSchema } from "./platform/admin/backup-manifests.js"
 import {
   listRestoreDrills, recordRestoreDrill, reviewRestoreDrill,
 } from "./platform/admin/restore-drills.js";
-import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import {
+  DOMAIN_EVENTS, EVENT_TYPES, runWithPostCommitEvents, type EventType,
+} from "./platform/events/index.js";
+import { listPlatformEvents } from "./platform-events.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
 import { getVatTechnicalReport, vatReportPeriodSchema } from "./vat-return-report.js";
 import { renderVatReportCsv, renderVatReportPdf } from "./vat-return-exports.js";
@@ -1531,6 +1534,8 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
     });
     queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${p.id}:created`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
       tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id, change: "created" } });
+    queue({ id: `${DOMAIN_EVENTS.PRODUCT_CREATED}:${p.id}`, type: DOMAIN_EVENTS.PRODUCT_CREATED,
+      tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id } });
     if (openingStock) {
       const opening = await recordOpeningStock(tx, {
         tenantId: tid,
@@ -2729,6 +2734,17 @@ api.get("/platform/control-center", requirePlatformPermission("platform.operatio
     suspendedTenants: row.suspended_tenants,
     acceptedRestoreDrills: row.accepted_restore_drills,
   });
+}));
+const platformEventQuerySchema = z.object({
+  tenantId: z.string().uuid(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  status: z.enum(["pending", "processing", "retrying", "processed", "failed"]).optional(),
+  eventType: z.enum(EVENT_TYPES as [EventType, ...EventType[]]).optional(),
+}).strict();
+api.get("/platform/events", requirePlatformPermission("platform.operations.read"), wrap(async (req) => {
+  const query = platformEventQuerySchema.parse(req.query);
+  return listPlatformEvents(query.tenantId, query);
 }));
 api.get("/platform/operations/email-failures/today",
   requirePlatformPermission("platform.operations.read"),

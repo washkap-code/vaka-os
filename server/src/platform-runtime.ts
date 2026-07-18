@@ -35,7 +35,9 @@ import {
 } from "./notifications.js";
 import { createConfiguredEmailTransport } from "./email-transport.js";
 import { applicationLogger, logEvent } from "./observability.js";
-import { InMemoryEventBus } from "./platform/events/service.js";
+import { ReliableEventBus } from "./platform/events/service.js";
+import type { EventStoreContract } from "./platform/events/interfaces.js";
+import { PostgresEventStore } from "./platform-events.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
 import { MetadataService } from "./platform/metadata/service.js";
@@ -81,7 +83,7 @@ export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
 export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
   createServiceToken("platform.notifications.service");
 
-export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
+export const EVENT_BUS: ServiceToken<ReliableEventBus> =
   createServiceToken("platform.events.bus");
 
 export const SEARCH_SERVICE: ServiceToken<SearchService> =
@@ -120,6 +122,10 @@ export interface PlatformKernelOptions {
   notificationAuditRecorder?: NotificationAuditRecorder;
   notificationPreferenceLookup?: NotificationPreferenceLookup;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
+  /** Override durable event persistence (tests). Defaults to PostgreSQL. */
+  eventStore?: EventStoreContract;
+  eventRetryBackoffMs?: readonly [number, number, number];
+  eventRetrySleep?: (milliseconds: number) => Promise<void>;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
   /** Override the canonical schema registry (tests or a future composition root). */
@@ -215,16 +221,26 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       ?? (options.notificationWriter ? async () => true : notificationPreferenceEnabled));
   });
 
-  kernel.container.registerFactory(EVENT_BUS, () => new InMemoryEventBus((error, event) => {
-    if (options.eventSubscriberError) {
-      options.eventSubscriberError(error, event.type);
-      return;
-    }
-    logEvent("event.subscriber_failed", {
-      eventType: event.type,
-      errorType: error instanceof Error ? error.name : "UnknownError",
-    }, "error", applicationLogger);
-  }));
+  kernel.container.registerFactory(EVENT_BUS, () => new ReliableEventBus(
+    options.eventStore ?? new PostgresEventStore(),
+    {
+      retryBackoffMs: options.eventRetryBackoffMs,
+      sleep: options.eventRetrySleep,
+      onSubscriberError: (error, event, handlerName, retryCount) => {
+        if (options.eventSubscriberError) {
+          options.eventSubscriberError(error, event.type);
+          return;
+        }
+        logEvent("event.subscriber_failed", {
+          eventType: event.type,
+          eventId: event.id,
+          handlerName,
+          retryCount,
+          errorType: error instanceof Error ? error.name : "UnknownError",
+        }, "error", applicationLogger);
+      },
+    },
+  ));
 
   kernel.container.registerFactory(WORKFLOW_SERVICE, () => new WorkflowService({
     store: options.workflowStore ?? new PostgresWorkflowStore(),

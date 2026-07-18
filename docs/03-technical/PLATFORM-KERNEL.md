@@ -17,7 +17,7 @@ rewrite and not a claim that every service is live in production.
 |---|---|---|
 | `identity` | actor, tenant, session, and permission context | adapter contract only |
 | `audit` | structured material-action evidence | injected sink contract |
-| `events` | tenant-aware domain events and subscriptions | P1-005 post-commit in-process adapter composed; durable delivery gated |
+| `events` | tenant-aware domain events and subscriptions | P1-005 persisted post-commit bus composed with retries and handler idempotency |
 | `workflow` | versioned, permission-aware orchestration | durable approval engine plus compatible in-process reference runner |
 | `notifications` | locale-aware delivery requests | P1-004 email/internal adapters composed; SMS/Push are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
@@ -40,9 +40,9 @@ Every namespace contains `README.md`, `index.ts`, `interfaces.ts`, `types.ts`,
    metadata, notification, workflow, and event contracts.
 5. No Platform service writes directly to ERP tables or bypasses domain
    services, permissions, audit, or financial invariants.
-6. Events used for durable cross-module work require a transactional outbox,
-   idempotent consumers, retry policy, and dead-letter handling before
-   production adoption.
+6. Event facts persist before subscriber dispatch. Business publishers release
+   them only after the owning transaction commits; named handlers have durable
+   idempotency evidence and bounded retries.
 
 ## Compatibility boundary
 
@@ -85,7 +85,8 @@ instantiated by the existing application during this mission.
 1. Add composition-root registration without changing call sites.
 2. Wrap the existing audit writer and identity context behind adapters.
 3. Add parity tests for each migrated service and tenant boundary.
-4. Introduce an outbox-backed event adapter before asynchronous workflows.
+4. Add a worker/lease recovery loop before multi-process or long-running
+   asynchronous delivery is claimed; P1-005 retries are process-local.
 5. Migrate to external object storage only after encryption, malware scanning,
    retention, backup, and recovery controls are approved.
 6. Remove duplicate module infrastructure only after production evidence and a

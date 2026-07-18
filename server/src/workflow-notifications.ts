@@ -89,17 +89,19 @@ export function subscribeWorkflowNotifications(
         tenantId: event.tenantId,
         actorUserId: event.actorUserId ?? null,
         payload: event.payload,
-      }) : undefined),
+      }) : undefined, { handlerName: "notifications.workflow.started" }),
     bus.subscribe<DomainEventPayloads["workflow.approved"]>(DOMAIN_EVENTS.WORKFLOW_APPROVED, (event) =>
       event.tenantId ? coordinator.notifyPending({
         tenantId: event.tenantId,
         actorUserId: event.actorUserId ?? null,
         payload: event.payload,
-      }) : undefined),
+      }) : undefined, { handlerName: "notifications.workflow.approved" }),
     // Terminal events have no pending approver. Explicit subscriptions keep
     // the workflow.* contract complete and provide a seam for future outcomes.
-    bus.subscribe(DOMAIN_EVENTS.WORKFLOW_REJECTED, () => undefined),
-    bus.subscribe(DOMAIN_EVENTS.WORKFLOW_COMPLETED, () => undefined),
+    bus.subscribe(DOMAIN_EVENTS.WORKFLOW_REJECTED, () => undefined,
+      { handlerName: "notifications.workflow.rejected" }),
+    bus.subscribe(DOMAIN_EVENTS.WORKFLOW_COMPLETED, () => undefined,
+      { handlerName: "notifications.workflow.completed" }),
   ];
   return { unsubscribe: () => subscriptions.forEach((subscription) => subscription.unsubscribe()) };
 }

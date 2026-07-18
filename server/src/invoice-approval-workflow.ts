@@ -10,7 +10,10 @@ import type { DB } from "./lib.js";
 import { schema } from "./lib.js";
 import { AuditService } from "./platform/audit/service.js";
 import { createAuditSink } from "./platform/audit/adapters/audit-sink.js";
-import type { EventBusContract } from "./platform/events/interfaces.js";
+import type {
+  EventBusContract, EventSubscriptionOptions,
+} from "./platform/events/interfaces.js";
+import type { DomainEventPayloads, EventType } from "./platform/events/registry.js";
 import type { QueuePlatformEvent } from "./platform/events/adapters/publisher.js";
 import type { EventHandler, EventSubscription, PlatformEvent } from "./platform/events/types.js";
 import type { IdentityServiceContract } from "./platform/identity/interfaces.js";
@@ -37,13 +40,21 @@ export const INVOICE_APPROVAL_WORKFLOW = {
 class PostCommitWorkflowEventBus implements EventBusContract {
   constructor(private readonly queue: QueuePlatformEvent) {}
 
-  async publish<TPayload>(event: PlatformEvent<TPayload>): Promise<void> {
+  async publish<K extends EventType>(
+    event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+  ): Promise<void> {
     this.queue(event);
   }
 
-  subscribe<TPayload>(_type: string, _handler: EventHandler<TPayload>): EventSubscription {
+  subscribe<TPayload>(
+    _type: EventType,
+    _handler: EventHandler<TPayload>,
+    _options?: EventSubscriptionOptions,
+  ): EventSubscription {
     throw new Error("The transaction-scoped workflow event bus does not accept subscriptions");
   }
+
+  async hasProcessed(): Promise<boolean> { return false; }
 }
 
 export async function approveInvoiceForIssue(options: {

@@ -61,5 +61,6 @@ export function subscribeProcurementApprovalNotifications(
       actorUserId: event.actorUserId ?? null,
       payload: event.payload,
     }) : undefined,
+    { handlerName: "notifications.procurement.approval-requested" },
   );
 }

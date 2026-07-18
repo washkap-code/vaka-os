@@ -1,13 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { EVENT_BUS, platformKernel } from "../../../platform-runtime.js";
-import type { DomainEventInput, DomainEventType } from "../registry.js";
+import type {
+  DomainEventInput, DomainEventPayloads, DomainEventType, EventType,
+} from "../registry.js";
 import type { PlatformEvent } from "../types.js";
 import { logEvent } from "../../../observability.js";
 
 export type QueueDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => void;
 export type PublishDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => Promise<void>;
-export type QueuePlatformEvent = (event: PlatformEvent) => void;
-export type PublishPlatformEvent = (event: PlatformEvent) => Promise<void>;
+export type QueuePlatformEvent = <K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+) => void;
+export type PublishPlatformEvent = <K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+) => Promise<void>;
 
 export async function emitDomainEvent<K extends DomainEventType>(event: DomainEventInput<K>): Promise<void> {
   await platformKernel().container.get(EVENT_BUS).publish({
@@ -17,7 +23,9 @@ export async function emitDomainEvent<K extends DomainEventType>(event: DomainEv
   });
 }
 
-export async function emitPlatformEvent(event: PlatformEvent): Promise<void> {
+export async function emitPlatformEvent<K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+): Promise<void> {
   await platformKernel().container.get(EVENT_BUS).publish(event);
 }
 
@@ -33,7 +41,7 @@ export async function runWithPostCommitEvents<T>(
   > = [];
   const result = await work(
     (event) => { pending.push({ kind: "domain", event: event as DomainEventInput }); },
-    (event) => { pending.push({ kind: "platform", event }); },
+    (event) => { pending.push({ kind: "platform", event: event as PlatformEvent }); },
   );
   for (const pendingEvent of pending) {
     try {
