@@ -1,0 +1,224 @@
+[
+  {
+    "id": "zw-retail-wf-daily-sales-cashup",
+    "name": "Daily sales and cash-up",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Capture sales through the day and reconcile takings to recorded sales per till, branch and currency.",
+    "stages": [
+      "Record sales (cash, mobile money, card, credit)",
+      "Close till and count takings per currency",
+      "Reconcile takings to recorded sales",
+      "Bank and record deposits",
+      "Post daily summary to the ledger"
+    ],
+    "erpCapabilities": [
+      "Invoicing",
+      "Multi-currency finance",
+      "Bank reconciliation",
+      "Audit trail"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-basket-value",
+      "zw-retail-kpi-sales-by-currency"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-replenishment",
+    "name": "Inventory replenishment",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Reorder stock from reorder rules and supplier lead times before stockouts occur.",
+    "stages": [
+      "Monitor stock levels against reorder points",
+      "Raise purchase requisition",
+      "Approve and issue purchase order",
+      "Receive goods (GRN)",
+      "Update stock and supplier performance"
+    ],
+    "erpCapabilities": [
+      "Inventory",
+      "Procurement",
+      "Approvals",
+      "Supplier management"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-stockout-rate",
+      "zw-retail-kpi-stock-turnover"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-goods-receiving",
+    "name": "Goods receiving and GRN control",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Receive supplier deliveries against purchase orders with quantity and price checks before stock and supplier bills post.",
+    "stages": [
+      "Match delivery to purchase order",
+      "Inspect and count",
+      "Post goods received note",
+      "Resolve discrepancies with supplier",
+      "Three-way match to supplier bill"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Inventory",
+      "Supplier bills (three-way match)"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-gross-margin"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-stock-count",
+    "name": "Cycle counting and shrinkage control",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Count stock on a rolling schedule, post adjustments with approval, and track shrinkage causes.",
+    "stages": [
+      "Plan count schedule",
+      "Count and record variances",
+      "Approve adjustments",
+      "Post stock adjustments",
+      "Review shrinkage trends"
+    ],
+    "erpCapabilities": [
+      "Inventory adjustments",
+      "Approvals",
+      "Audit trail",
+      "Mobile stock capture"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-shrinkage-rate"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-pricing-multicurrency",
+    "name": "Multi-currency pricing and repricing",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Maintain USD/ZWG price lists and reprice against cost and exchange-rate movements with snapshotted rates on documents.",
+    "stages": [
+      "Maintain price lists per currency",
+      "Monitor cost and rate movements",
+      "Approve repricing",
+      "Apply new prices",
+      "Snapshot rates on each document"
+    ],
+    "erpCapabilities": [
+      "Multi-currency finance",
+      "Exchange-rate snapshots",
+      "Price management"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-gross-margin",
+      "zw-retail-kpi-sales-by-currency"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-vat-cycle",
+    "name": "VAT return preparation",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Assemble output and input VAT for the assigned tax period and prepare the return for filing.",
+    "stages": [
+      "Accumulate output VAT on sales",
+      "Capture input VAT on purchases",
+      "Reconcile to ledger",
+      "Prepare return for assigned tax period",
+      "Record filing and payment"
+    ],
+    "erpCapabilities": [
+      "Tax codes and VAT treatment",
+      "VAT return report",
+      "Compliance calendar"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-vat-accrued"
+    ]
+  },
+  {
+    "id": "zw-retail-wf-licence-calendar",
+    "name": "Licence and registration renewal calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track municipal licences, sector licences and statutory registrations against their renewal cycles from Black Book compliance events.",
+    "stages": [
+      "Register applicable licences",
+      "Link Black Book compliance events",
+      "Schedule renewal reminders",
+      "Prepare renewal documents",
+      "Record renewal outcome"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Task automation",
+      "Document workspace"
+    ],
+    "relatedKpiIds": []
+  },
+  {
+    "id": "zw-retail-wf-supplier-credit",
+    "name": "Supplier and customer credit management",
+    "category": "industry_workflow",
+    "industryId": "zw-retail",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Manage supplier terms and customer credit accounts, including statements and collections.",
+    "stages": [
+      "Set credit terms and limits",
+      "Issue statements",
+      "Track ageing",
+      "Follow up collections",
+      "Escalate or suspend accounts"
+    ],
+    "erpCapabilities": [
+      "Accounts receivable",
+      "Accounts payable",
+      "Customer statements",
+      "Payment reminders"
+    ],
+    "relatedKpiIds": [
+      "zw-retail-kpi-debtor-days"
+    ]
+  }
+]

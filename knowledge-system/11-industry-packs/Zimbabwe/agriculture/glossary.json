@@ -1,0 +1,189 @@
+[
+  {
+    "id": "zw-agriculture-term-effluent-licence",
+    "name": "Effluent licence",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/water-and-effluent/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "EMA licence for enterprises discharging effluent, with quarterly waste-management reporting for licensed industrial dischargers.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-effluent-licence"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-term-esia",
+    "name": "ESIA certificate",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://ema.co.zw/eia/"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "Environmental and Social Impact Assessment certificate issued by EMA, required before implementing projects in EMA-listed categories.",
+    "blackBook": {
+      "authorityIds": [
+        "ema"
+      ],
+      "licenceTypeIds": [
+        "ema-esia-certificate"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-term-pobs",
+    "name": "POBS",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "external_fact",
+    "verified": true,
+    "sources": [
+      "https://selfservice.nssa.org.zw/RegisterEmployer/MainDetails",
+      "https://selfservice.nssa.org.zw/theme/dist/employers%20guide.pdf"
+    ],
+    "lastReviewed": "2026-07-18",
+    "notes": "Source URLs inherited from the Zimbabwe Black Book dataset (record lastReviewed 2026-07-15); not independently re-fetched in this revision.",
+    "definition": "NSSA's Pensions and Other Benefits Scheme, to which employers, including farm employers, remit monthly contributions.",
+    "blackBook": {
+      "authorityIds": [
+        "nssa"
+      ],
+      "complianceEventIds": [
+        "nssa-pobs-monthly-remittance"
+      ]
+    }
+  },
+  {
+    "id": "zw-agriculture-term-enterprise",
+    "name": "Enterprise (farm accounting)",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A distinct production activity (for example maize, broilers, dairy) to which revenue and costs are allocated for gross-margin analysis."
+  },
+  {
+    "id": "zw-agriculture-term-offtake",
+    "name": "Offtake agreement",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A contract where a buyer commits to purchase future production, often with input support and price or deduction terms."
+  },
+  {
+    "id": "zw-agriculture-term-contract-farming",
+    "name": "Contract farming / outgrower scheme",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Production under contract to a sponsor who typically supplies inputs and recovers their cost from deliveries."
+  },
+  {
+    "id": "zw-agriculture-term-inputs-scheme",
+    "name": "Inputs scheme",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "An arrangement supplying seed, fertiliser or chemicals on credit against future deliveries."
+  },
+  {
+    "id": "zw-agriculture-term-a1-a2",
+    "name": "A1 / A2 farms",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common usage of land-reform terminology recorded for product design; the official model definitions were not verified from an official source in this revision.",
+    "definition": "Common shorthand for Zimbabwe's smallholder (A1) and medium/large-scale (A2) resettlement farm models."
+  },
+  {
+    "id": "zw-agriculture-term-communal",
+    "name": "Communal area farming",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Smallholder production on communal land under traditional tenure."
+  },
+  {
+    "id": "zw-agriculture-term-doc",
+    "name": "DOC (day-old chicks)",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Day-old chicks purchased as the starting point of a broiler or layer batch."
+  },
+  {
+    "id": "zw-agriculture-term-dipping",
+    "name": "Dipping",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Routine immersion or spraying of livestock for tick control; a recurring herd-management activity."
+  },
+  {
+    "id": "zw-agriculture-term-auction-floor",
+    "name": "Auction floor",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "A licensed marketplace where crops such as tobacco are sold by auction; licensing is a declared research gap in this seed."
+  },
+  {
+    "id": "zw-agriculture-term-grading",
+    "name": "Grading",
+    "category": "industry_term",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Common trade usage recorded for product design; not sourced from an official publication.",
+    "definition": "Sorting produce into quality classes that determine price; grade attributes should follow the product record."
+  }
+]

@@ -1,0 +1,64 @@
+[
+  {
+    "id": "zw-construction",
+    "name": "Construction (Zimbabwe)",
+    "category": "industry_profile",
+    "industryId": "zw-construction",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "definition": "Businesses that construct, alter or maintain buildings and civil infrastructure, including contractors, specialist trades and property developers.",
+    "subSectors": [
+      {
+        "name": "Building construction",
+        "description": "Residential, commercial and institutional buildings."
+      },
+      {
+        "name": "Civil engineering",
+        "description": "Roads, bridges, dams, water and sanitation works."
+      },
+      {
+        "name": "Electrical and mechanical installation",
+        "description": "Building services installation and maintenance."
+      },
+      {
+        "name": "Specialist trades",
+        "description": "Plumbing, roofing, tiling, painting and similar subcontract trades."
+      },
+      {
+        "name": "Property development",
+        "description": "Developers financing and delivering land and building projects."
+      },
+      {
+        "name": "Built-environment consultancies",
+        "description": "Quantity surveying, architecture and engineering practices serving projects (professional registration regimes not covered in this seed)."
+      }
+    ],
+    "typicalBusinessSizes": [
+      {
+        "tier": "Micro",
+        "description": "Informal builders and single-trade artisans."
+      },
+      {
+        "tier": "Small",
+        "description": "Small contractors handling minor works and subcontracts."
+      },
+      {
+        "tier": "Medium",
+        "description": "Registered contractors delivering full building or civils contracts."
+      },
+      {
+        "tier": "Large",
+        "description": "National and regional contractors on major public and private works."
+      }
+    ],
+    "officialSizeThresholds": {
+      "status": "unverified",
+      "value": null,
+      "sources": [],
+      "note": "Official contractor categorisation bands and MSME thresholds were not verified from an official source in this revision; source the current classification before product use."
+    },
+    "notes": "Descriptive segmentation for product design; not an official statistical classification. Brickmaking and aggregates supply sit between manufacturing/mining and construction and are excluded from this seed."
+  }
+]

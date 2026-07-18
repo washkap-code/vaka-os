@@ -1,0 +1,222 @@
+[
+  {
+    "id": "zw-agriculture-wf-season-planning",
+    "name": "Season and enterprise planning",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Plan crop and livestock enterprises for the season with budgets per hectare or head.",
+    "stages": [
+      "Define enterprises and fields/units",
+      "Budget inputs, labour and machinery",
+      "Approve season budget",
+      "Track plan vs actual through the season",
+      "Review at season close"
+    ],
+    "erpCapabilities": [
+      "Enterprise budgeting",
+      "Project-style costing",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-cost-per-hectare",
+      "zw-agriculture-kpi-gross-margin-enterprise"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-input-procurement",
+    "name": "Input procurement and stores",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Procure seed, fertiliser, chemicals and feed, and issue from stores to enterprises.",
+    "stages": [
+      "Plan input requirements from budgets",
+      "Order and receive inputs (GRN)",
+      "Store and control stock",
+      "Issue to fields/enterprises",
+      "Reconcile stores"
+    ],
+    "erpCapabilities": [
+      "Procurement",
+      "Inventory",
+      "Stores issues to cost centres"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-input-cost-ratio"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-field-operations",
+    "name": "Field operations and activity costing",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Record land preparation, planting, spraying, irrigation and harvesting activities against enterprises.",
+    "stages": [
+      "Schedule operations",
+      "Capture activity, labour and machinery use",
+      "Allocate costs to enterprises",
+      "Monitor progress vs plan",
+      "Close activities at harvest"
+    ],
+    "erpCapabilities": [
+      "Activity costing",
+      "Mobile capture",
+      "Payroll allocation"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-cost-per-hectare",
+      "zw-agriculture-kpi-seasonal-labour-cost"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-harvest-yield",
+    "name": "Harvest and yield recording",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Record harvested quantities by field and enterprise, into on-farm storage or direct dispatch.",
+    "stages": [
+      "Record harvest quantities",
+      "Weigh and grade",
+      "Book into storage or dispatch",
+      "Update yield per field",
+      "Reconcile to sales"
+    ],
+    "erpCapabilities": [
+      "Inventory (produce)",
+      "Quality/grade attributes",
+      "Reporting"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-yield-per-hectare"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-livestock-register",
+    "name": "Livestock register and movements",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Maintain herd/flock registers with births, deaths, purchases, sales and transfers, flagging movement-permit requirements for review.",
+    "stages": [
+      "Register animals/batches",
+      "Record births, deaths and treatments",
+      "Record purchases, sales and transfers",
+      "Flag statutory movement requirements",
+      "Reconcile head counts"
+    ],
+    "erpCapabilities": [
+      "Herd/flock register",
+      "Stock movements (append-only)",
+      "Compliance flags"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-mortality-rate",
+      "zw-agriculture-kpi-fcr"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-produce-sales",
+    "name": "Produce sales and offtake contracts",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Sell produce through contracts, offtakers, auctions or direct buyers, tracking deliveries against contract terms.",
+    "stages": [
+      "Register buyer/offtake contract",
+      "Dispatch and delivery notes",
+      "Invoice against deliveries",
+      "Track payments and deductions",
+      "Close contract and reconcile"
+    ],
+    "erpCapabilities": [
+      "Sales contracts",
+      "Invoicing",
+      "Receivables",
+      "Multi-currency finance"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-debtor-days-offtake",
+      "zw-agriculture-kpi-gross-margin-enterprise"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-seasonal-payroll",
+    "name": "Seasonal and permanent labour payroll",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Run payroll for permanent and seasonal workers with statutory deductions and enterprise allocation.",
+    "stages": [
+      "Register workers and contracts",
+      "Capture time/piecework",
+      "Run payroll with statutory deductions",
+      "Allocate cost to enterprises",
+      "Remit statutory payments"
+    ],
+    "erpCapabilities": [
+      "Payroll (Zimbabwe)",
+      "Cost allocation",
+      "Compliance calendar"
+    ],
+    "relatedKpiIds": [
+      "zw-agriculture-kpi-seasonal-labour-cost"
+    ]
+  },
+  {
+    "id": "zw-agriculture-wf-compliance-calendar",
+    "name": "Farm compliance calendar",
+    "category": "industry_workflow",
+    "industryId": "zw-agriculture",
+    "assertionType": "product_design",
+    "verified": false,
+    "sources": [],
+    "lastReviewed": "2026-07-18",
+    "notes": "Product-design assertion for the VAKA ERP; not an external factual claim.",
+    "description": "Track statutory registrations, environmental licences and declared research gaps against renewal cycles from Black Book compliance events.",
+    "stages": [
+      "Register applicable obligations",
+      "Link Black Book compliance events",
+      "Schedule reminders",
+      "Prepare filings/renewals",
+      "Record outcomes and evidence"
+    ],
+    "erpCapabilities": [
+      "Compliance calendar",
+      "Black Book directory",
+      "Task automation",
+      "Document workspace"
+    ],
+    "relatedKpiIds": []
+  }
+]

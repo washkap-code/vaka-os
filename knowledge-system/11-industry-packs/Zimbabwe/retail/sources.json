@@ -1,0 +1,144 @@
+[
+  {
+    "id": "source-justice-gov-zw",
+    "domain": "justice.gov.zw",
+    "publisher": "Ministry of Justice, Legal and Parliamentary Affairs (DCIP pages)",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-company-incorporation"
+    ],
+    "note": "Company registration guidance.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-eregulations-zidainvest-com",
+    "domain": "eregulations.zidainvest.com",
+    "publisher": "ZIDA eRegulations portal",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-company-incorporation",
+      "zw-retail-reg-liquor-licence"
+    ],
+    "note": "Procedure and statutory-instrument references.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zimra-co-zw",
+    "domain": "zimra.co.zw",
+    "publisher": "Zimbabwe Revenue Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-paye",
+      "zw-retail-reg-vat",
+      "zw-retail-reg-zimra-taxpayer",
+      "zw-retail-term-itf16",
+      "zw-retail-term-tarms",
+      "zw-retail-term-vat-operator"
+    ],
+    "note": "Tax registration and return obligations.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-selfservice-nssa-org-zw",
+    "domain": "selfservice.nssa.org.zw",
+    "publisher": "National Social Security Authority self-service",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-nssa",
+      "zw-retail-term-pobs"
+    ],
+    "note": "Employer registration and employers' guide.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-hararecity-co-zw",
+    "domain": "hararecity.co.zw",
+    "publisher": "City of Harare",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-harare-business-licence",
+      "zw-retail-reg-harare-health-registration"
+    ],
+    "note": "Business licensing and health registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-citybyo-co-zw",
+    "domain": "citybyo.co.zw",
+    "publisher": "City of Bulawayo",
+    "publisherType": "local_authority",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-bulawayo-premises-registration",
+      "zw-retail-reg-bulawayo-shop-licence"
+    ],
+    "note": "Shop licensing and premises registration.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mlg-gov-zw",
+    "domain": "mlg.gov.zw",
+    "publisher": "Ministry of Local Government and Public Works",
+    "publisherType": "government",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-liquor-licence"
+    ],
+    "note": "Liquor licensing service pages.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zera-co-zw",
+    "domain": "zera.co.zw",
+    "publisher": "Zimbabwe Energy Regulatory Authority",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-zera-lpg-retail",
+      "zw-retail-reg-zera-petroleum-retail"
+    ],
+    "note": "Petroleum and LPG retail licensing.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-mcaz-co-zw",
+    "domain": "mcaz.co.zw",
+    "publisher": "Medicines Control Authority of Zimbabwe",
+    "publisherType": "regulator",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-mcaz-premises"
+    ],
+    "note": "Medicines premises licensing.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-zncc-co-zw",
+    "domain": "zncc.co.zw",
+    "publisher": "Zimbabwe National Chamber of Commerce",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-associations"
+    ],
+    "note": "Membership body.",
+    "lastChecked": "2026-07-15"
+  },
+  {
+    "id": "source-smeaz-org-zw",
+    "domain": "smeaz.org.zw",
+    "publisher": "SME Association of Zimbabwe",
+    "publisherType": "business_association",
+    "inheritedFromBlackBook": true,
+    "usedByRecordIds": [
+      "zw-retail-reg-associations"
+    ],
+    "note": "Membership body.",
+    "lastChecked": "2026-07-15"
+  }
+]
