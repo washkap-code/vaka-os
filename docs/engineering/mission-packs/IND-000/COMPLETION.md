@@ -80,6 +80,19 @@ registration and excise duties. The content-review register was regenerated
 against data commit `f0681b2` with every human decision PENDING; the P-gate
 (content review) remains OPEN and now covers all six packs.
 
+## IND-000C extension (same session, same branch)
+
+Commits `4807127` (data) and the register-update commit that follows complete
+the Blueprint's initial thirteen-industry list: hospitality (34 records),
+education (33), professional services (32), financial services (34),
+logistics (35), NGO (27) and public sector (26). NGO and public-sector packs
+use tailored obligation sets — incorporation and VAT links are not asserted
+where inapplicable; non-profit tax treatment is a declared gap. Financial-
+services oversight links rest on the RBZ/IPEC/SECZim regulator records;
+institution licence classes, capital thresholds and AML obligations are
+declared gaps, never restated. The content-review register was regenerated
+against data commit `4807127` with every human decision PENDING.
+
 ## Known limitations / follow-ups
 
 - Local-authority licensing is evidenced for Harare and Bulawayo only; other
