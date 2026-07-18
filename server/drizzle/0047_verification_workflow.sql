@@ -4,13 +4,24 @@
 -- permission backfill change no tenant behaviour. Additive and idempotent.
 
 -- Composite uniqueness supports tenant-consistent foreign keys in the frozen
--- submission snapshot without replacing the existing primary keys.
-CREATE UNIQUE INDEX IF NOT EXISTS "workspace_documents_id_tenant_unique"
-  ON "workspace_documents" ("id", "tenant_id");
-CREATE UNIQUE INDEX IF NOT EXISTS "workspace_document_versions_doc_version_tenant_unique"
-  ON "workspace_document_versions" ("document_id", "version", "tenant_id");
-CREATE UNIQUE INDEX IF NOT EXISTS "verification_evidence_id_tenant_unique"
-  ON "verification_evidence" ("id", "tenant_id");
+-- submission snapshot without replacing the existing primary keys. These are
+-- UNIQUE CONSTRAINTS (not bare indexes) so that the Drizzle model and
+-- `drizzle-kit push` create them before dependent foreign keys — a bare
+-- uniqueIndex is emitted after FKs by push and breaks the reference build.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workspace_documents_id_tenant_unique') THEN
+    ALTER TABLE "workspace_documents"
+      ADD CONSTRAINT "workspace_documents_id_tenant_unique" UNIQUE ("id", "tenant_id");
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workspace_document_versions_doc_version_tenant_unique') THEN
+    ALTER TABLE "workspace_document_versions"
+      ADD CONSTRAINT "workspace_document_versions_doc_version_tenant_unique" UNIQUE ("document_id", "version", "tenant_id");
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'verification_evidence_id_tenant_unique') THEN
+    ALTER TABLE "verification_evidence"
+      ADD CONSTRAINT "verification_evidence_id_tenant_unique" UNIQUE ("id", "tenant_id");
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "verification_requests" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

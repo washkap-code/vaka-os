@@ -1576,7 +1576,7 @@ export const workspaceDocuments = pgTable("workspace_documents", {
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
-  uniqueIndex("workspace_documents_id_tenant_unique").on(t.id, t.tenantId),
+  unique("workspace_documents_id_tenant_unique").on(t.id, t.tenantId),
   index("workspace_documents_tenant_status").on(t.tenantId, t.status, t.createdAt),
   index("workspace_documents_tenant_folder").on(t.tenantId, t.folderId),
   check("workspace_documents_classification_check", sql`${t.classification} IN
@@ -1600,7 +1600,7 @@ export const workspaceDocumentVersions = pgTable("workspace_document_versions", 
   createdAt: createdAt(),
 }, (t) => [
   uniqueIndex("workspace_document_versions_doc_version").on(t.documentId, t.version),
-  uniqueIndex("workspace_document_versions_doc_version_tenant_unique")
+  unique("workspace_document_versions_doc_version_tenant_unique")
     .on(t.documentId, t.version, t.tenantId),
   index("workspace_document_versions_tenant_doc").on(t.tenantId, t.documentId),
   check("workspace_document_versions_version_check", sql`${t.version} >= 1`),
@@ -1638,7 +1638,7 @@ export const verificationEvidence = pgTable("verification_evidence", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   foreignKey({ columns: [t.supersededBy], foreignColumns: [t.id], name: "verification_evidence_superseded_by_verification_evidence_id_fk" }),
-  uniqueIndex("verification_evidence_id_tenant_unique").on(t.id, t.tenantId),
+  unique("verification_evidence_id_tenant_unique").on(t.id, t.tenantId),
   uniqueIndex("verification_evidence_singleton_active")
     .on(t.tenantId, t.evidenceType)
     .where(sql`${t.status} = 'ACTIVE' AND ${t.evidenceType} IN
