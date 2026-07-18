@@ -49,6 +49,8 @@ export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "GET", path: "/api/v1/security/my-sessions", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "POST", path: "/api/v1/security/my-sessions/:id/revoke", access: "tenant", vector: "tenant-object-mutation" },
   { method: "GET", path: "/api/v1/notifications", access: "tenant", vector: "tenant-list-or-aggregate" },
+  { method: "POST", path: "/api/v1/notifications/:id/read", access: "tenant", vector: "tenant-object-mutation" },
+  { method: "POST", path: "/api/v1/notifications/read-all", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "GET", path: "/api/v1/security/activity", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "POST", path: "/api/v1/security/users", access: "tenant", vector: "tenant-create-or-action" },
   { method: "POST", path: "/api/v1/security/users/:id/:status", access: "tenant", vector: "tenant-object-mutation" },

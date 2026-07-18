@@ -19,7 +19,7 @@ rewrite and not a claim that every service is live in production.
 | `audit` | structured material-action evidence | injected sink contract |
 | `events` | tenant-aware domain events and subscriptions | P1-005 post-commit in-process adapter composed; durable delivery gated |
 | `workflow` | versioned, permission-aware orchestration | durable approval engine plus compatible in-process reference runner |
-| `notifications` | locale-aware delivery requests | P1-004 email/in-app adapters composed; SMS/WhatsApp are non-transmitting placeholders |
+| `notifications` | locale-aware delivery requests | P1-004 email/internal adapters composed; SMS/Push are non-transmitting placeholders |
 | `documents` | tenant-scoped document storage/retrieval | P1-007 invoice-PDF/capture adapter composed |
 | `search` | tenant- and actor-scoped discovery | P1-006 PostgreSQL Customer/Supplier/Invoice/Product adapter plus PB-003 flag- and country-scoped Black Book projection composed; broader enterprise search gated |
 | `metadata` | extensible typed entity metadata | P1-008 compatibility provider plus eight-object schema registry composed; dynamic values and broad adoption gated |
@@ -103,11 +103,16 @@ separately migrated with parity tests.
 
 ## Notification adoption seam (P1-004)
 
-The composition root exposes `NOTIFICATION_SERVICE`. New notification-producing
-modules resolve or receive this service rather than importing provider code.
-Email delivery uses an injected, provider-neutral HTTPS transport; in-app
-notifications are persisted; SMS and WhatsApp record non-transmitted intent
-only. P7-001 adopts email/in-app delivery for explicitly confirmed, consented
+The composition root exposes `NOTIFICATION_SERVICE`, the single path for
+outbound notification intent. Application callers use the normalised
+channel/template/to/data/priority/object-reference command; compatibility
+inputs are normalised before provider dispatch. Email delivery retains the
+existing injected SMTP transport and byte-identical templates. Internal
+notifications persist a tenant-bound user, priority, title/body, link, object
+reference and read timestamp; SMS and Push record non-transmitted intent only.
+Per-user category/channel preferences default enabled when no row exists.
+Authenticated inbox endpoints enforce tenant and current-user scope for list,
+unread, read and read-all operations. P7-001 adopts email/in-app delivery for explicitly confirmed, consented
 invoice, customer-statement summary and payment-reminder commands. Typed
 finance templates, idempotent domain claims and provider-only variable
 redaction sit in the application adapter; the Platform namespace remains
@@ -117,6 +122,12 @@ Tenant-scoped dedupe and read helpers live in the application adapter.
 P5-004 is the first inventory adoption: low-stock breach generations are sent
 as persisted `IN_APP` requests through this service. It does not activate
 external email, SMS, WhatsApp or push delivery.
+
+P1-003 workflow transition facts are subscribed in process. A started workflow
+or an approved transition that leaves another active step resolves the stored
+step permission and sends one deduplicated internal notification to each active
+tenant user whose role carries it. Terminal workflow events have no pending
+approver and intentionally create no inbox record.
 
 ## Event adoption seam (P1-005)
 

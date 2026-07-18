@@ -26,10 +26,12 @@ import { emailGateway } from "./platform/notifications/adapters/email-gateway.js
 import { inAppGateway } from "./platform/notifications/adapters/in-app-gateway.js";
 import { noopGateway } from "./platform/notifications/adapters/noop-gateway.js";
 import type {
-  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup, NotificationWriter,
+  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup,
+  NotificationPreferenceLookup, NotificationWriter,
 } from "./platform/notifications/index.js";
 import {
-  findNotificationDuplicate, persistNotification, PLATFORM_NOTIFICATION_SCOPE,
+  findNotificationDuplicate, notificationPreferenceEnabled, persistNotification,
+  PLATFORM_NOTIFICATION_SCOPE,
 } from "./notifications.js";
 import { createConfiguredEmailTransport } from "./email-transport.js";
 import { applicationLogger, logEvent } from "./observability.js";
@@ -57,6 +59,10 @@ import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
 import { subscribeTaskAutomation } from "./tasks.js";
+import {
+  subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
+  type WorkflowNotificationCoordinatorContract,
+} from "./workflow-notifications.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -112,6 +118,7 @@ export interface PlatformKernelOptions {
   notificationWriter?: NotificationWriter;
   notificationDedupeLookup?: NotificationDedupeLookup;
   notificationAuditRecorder?: NotificationAuditRecorder;
+  notificationPreferenceLookup?: NotificationPreferenceLookup;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
@@ -126,6 +133,7 @@ export interface PlatformKernelOptions {
   featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
   /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
   workflowStore?: WorkflowStoreContract;
+  workflowNotificationCoordinator?: WorkflowNotificationCoordinatorContract;
 }
 
 /**
@@ -166,7 +174,9 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     const persist = options.notificationWriter ?? persistNotification;
     const recordAudit: NotificationAuditRecorder = options.notificationAuditRecorder
       ?? (async (request, delivery) => {
-        const action = delivery.status === "failed"
+        const action = delivery.suppressed
+          ? "notification.suppressed"
+          : delivery.status === "failed"
           ? "notification.failed"
           : delivery.transmitted ? "notification.sent" : "notification.accepted";
         const metadata = {
@@ -198,8 +208,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       EMAIL: emailGateway(options.emailTransport ?? createConfiguredEmailTransport(), persist),
       IN_APP: inAppGateway(persist),
       SMS: noopGateway("SMS", persist),
+      PUSH: noopGateway("PUSH", persist),
       WHATSAPP: noopGateway("WHATSAPP", persist),
-    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit);
+    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit,
+    options.notificationPreferenceLookup
+      ?? (options.notificationWriter ? async () => true : notificationPreferenceEnabled));
   });
 
   kernel.container.registerFactory(EVENT_BUS, () => new InMemoryEventBus((error, event) => {
@@ -242,6 +255,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   subscribeProcurementApprovalNotifications(
     kernel.container.get(EVENT_BUS),
     options.procurementApprovalNotifier ?? new ProcurementApprovalNotifier(kernel.container.get(NOTIFICATION_SERVICE)),
+  );
+  subscribeWorkflowNotifications(
+    kernel.container.get(EVENT_BUS),
+    options.workflowNotificationCoordinator
+      ?? new WorkflowNotificationCoordinator(kernel.container.get(NOTIFICATION_SERVICE)),
   );
   // PW-003: opt-in task automation (no rule row = disabled; never financial).
   subscribeTaskAutomation(kernel.container.get(EVENT_BUS));

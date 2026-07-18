@@ -81,6 +81,11 @@ const alwaysRequired = [
   ["workflow_definitions", "steps_json"],
   ["workflow_instances", "current_step"],
   ["workflow_actions", "action"],
+  ["notifications", "user_id"],
+  ["notifications", "priority"],
+  ["notifications", "read_at"],
+  ["notification_preferences", "user_id"],
+  ["notification_preferences", "enabled"],
 ];
 const gatedRequirements = {
   "migration.hub": [

@@ -53,6 +53,9 @@ Workflow event payloads likewise contain routing identifiers and transition
 facts only. They never copy invoice lines, comments, permissions or other
 sensitive object data. The invoice adopter queues workflow events inside the
 invoice transaction and releases them only after the financial commit.
+The notification subscriber resolves the stored definition and tenant roles
+from these identifiers; it never treats payload data as permission authority.
+Only started or still-active approved transitions notify pending approvers.
 
 ## Operational boundary
 

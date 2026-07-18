@@ -3,7 +3,7 @@ import type { NotificationGateway, NotificationWriter } from "../interfaces.js";
 import type { NotificationChannel } from "../types.js";
 
 export function noopGateway(
-  channel: Extract<NotificationChannel, "SMS" | "WHATSAPP">,
+  channel: Extract<NotificationChannel, "SMS" | "PUSH" | "WHATSAPP">,
   persist: NotificationWriter,
 ): NotificationGateway {
   return {
