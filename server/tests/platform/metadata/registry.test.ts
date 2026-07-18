@@ -11,10 +11,11 @@ import { MetadataRegistry } from "../../../src/platform/metadata/registry.js";
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 
 describe("MetadataRegistry registration and retrieval", () => {
-  it("registers all eight canonical business objects with real Drizzle field names", () => {
+  it("registers canonical business and Mail objects with real Drizzle field names", () => {
     const registry = new MetadataRegistry();
     expect(registry.listObjects().map((definition) => definition.name)).toEqual([
       "Company", "Customer", "Supplier", "Invoice", "Payment", "Product", "Employee", "User",
+      "MailAccount", "MailFolder", "MailThread", "MailMessage", "MailAttachment", "MailObjectLink",
     ]);
     expect(registry.getFields("Company").map((field) => field.name))
       .toEqual(Object.keys(getTableColumns(schema.tenants)));
@@ -32,6 +33,18 @@ describe("MetadataRegistry registration and retrieval", () => {
       .toEqual(Object.keys(getTableColumns(schema.employees)));
     expect(registry.getFields("User").map((field) => field.name))
       .toEqual(Object.keys(getTableColumns(schema.users)));
+    expect(registry.getFields("MailAccount").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailAccounts)));
+    expect(registry.getFields("MailFolder").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailFolders)));
+    expect(registry.getFields("MailThread").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailThreads)));
+    expect(registry.getFields("MailMessage").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailMessages)));
+    expect(registry.getFields("MailAttachment").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailAttachments)));
+    expect(registry.getFields("MailObjectLink").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.mailObjectLinks)));
   });
 
   it("retrieves immutable objects, fields, relationships and domain lists", () => {
@@ -66,6 +79,7 @@ describe("MetadataRegistry registration and retrieval", () => {
       .every((field) => field.aiReadable === false)).toBe(true);
     expect(registry.getObject("Employee").aiVisible).toBe(false);
     expect(registry.getObject("User").aiVisible).toBe(false);
+    expect(registry.listObjects("communications").every((object) => object.aiVisible === false)).toBe(true);
   });
 
   it("fails construction for duplicate metadata shape", () => {
@@ -100,6 +114,12 @@ describe("MetadataRegistry validation", () => {
       Product: { sku: "VAKA-001", name: "Ledger Book", salePrice: "5.50", reorderLevel: 10, trackStock: true },
       Employee: { employeeNumber: "EMP-001", firstName: "Tariro", lastName: "Moyo", currency: "USD", basicSalary: "850.00" },
       User: { email: "owner@vaka.example", fullName: "VAKA Owner", status: "active" },
+      MailAccount: { ownerUserId: UUID_A, type: "imap", emailAddress: "mail@vaka.example", displayName: "VAKA Mail", imapConfigEncrypted: "v1.secret", smtpConfigEncrypted: "v1.secret" },
+      MailFolder: { accountId: UUID_A, name: "Inbox", remoteRef: "INBOX", type: "INBOX", lastUid: 0 },
+      MailThread: { accountId: UUID_A, subjectNormalized: "hello", lastMessageAt: "2026-07-18T10:30:00.000Z", messageCount: 1 },
+      MailMessage: { accountId: UUID_A, threadId: UUID_A, folderId: UUID_A, messageIdHdr: "<one@vaka.example>", fromJson: [{ address: "one@vaka.example" }], toJson: [{ address: "two@vaka.example" }], ccJson: [], referencesJson: [], subject: "Hello", receivedAt: "2026-07-18T10:30:00.000Z", isRead: false, isDraft: false, direction: "inbound" },
+      MailAttachment: { accountId: UUID_A, messageId: UUID_A, filename: "note.txt", mimeType: "text/plain", size: 4, documentId: "mail-attachment:test" },
+      MailObjectLink: { accountId: UUID_A, messageId: UUID_A, objectType: "Customer", objectId: UUID_A, linkedBy: UUID_A, method: "auto" },
     };
     for (const [objectName, payload] of Object.entries(payloads)) {
       expect(registry.validate(objectName, payload), objectName).toEqual({ valid: true, errors: [] });

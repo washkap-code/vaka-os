@@ -23,6 +23,8 @@ export const DOMAIN_EVENTS = {
   WORKFLOW_APPROVED: "workflow.approved",
   WORKFLOW_REJECTED: "workflow.rejected",
   WORKFLOW_COMPLETED: "workflow.completed",
+  MAIL_SENT: "mail.sent",
+  MAIL_RECEIVED: "mail.received",
 } as const;
 
 export type DomainEventPayloads = {
@@ -98,6 +100,8 @@ export type DomainEventPayloads = {
     currentStep: number;
     status: "COMPLETED";
   };
+  "mail.sent": { accountId: string; messageId: string; threadId: string };
+  "mail.received": { accountId: string; messageId: string; threadId: string };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;
@@ -139,5 +143,6 @@ export function eventObjectReference<K extends EventType>(
   if (type.startsWith("workflow.")) {
     return { objectType: typeof value.objectType === "string" ? value.objectType : "Workflow", objectId: id("objectId") };
   }
+  if (type.startsWith("mail.")) return { objectType: "MailMessage", objectId: id("messageId") };
   return { objectType: null, objectId: null };
 }

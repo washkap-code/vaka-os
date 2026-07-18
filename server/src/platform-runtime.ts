@@ -65,6 +65,12 @@ import {
   subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
   type WorkflowNotificationCoordinatorContract,
 } from "./workflow-notifications.js";
+import { mailSyncIntervalMs } from "./config.js";
+import { MailService } from "./modules/mail/service.js";
+import { NodeImapConnector, NodemailerMailSender } from "./modules/mail/providers.js";
+import type { MailImapConnector, MailSmtpSender } from "./modules/mail/types.js";
+import { MailSyncScheduler } from "./modules/mail/scheduler.js";
+import { MailCredentialCipher } from "./modules/mail/secrets.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -107,6 +113,12 @@ export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
 export const WORKFLOW_SERVICE: ServiceToken<WorkflowService> =
   createServiceToken("platform.workflow.service");
 
+export const MAIL_SERVICE: ServiceToken<MailService> =
+  createServiceToken("modules.mail.service");
+
+export const MAIL_SYNC_SCHEDULER: ServiceToken<MailSyncScheduler> =
+  createServiceToken("modules.mail.scheduler");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -140,6 +152,10 @@ export interface PlatformKernelOptions {
   /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
   workflowStore?: WorkflowStoreContract;
   workflowNotificationCoordinator?: WorkflowNotificationCoordinatorContract;
+  mailImapConnector?: MailImapConnector;
+  mailSmtpSender?: MailSmtpSender;
+  mailCredentialCipher?: MailCredentialCipher;
+  mailSyncIntervalMs?: number;
 }
 
 /**
@@ -259,6 +275,23 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   kernel.container.registerFactory(DOCUMENT_SERVICE, () =>
     new DocumentService(options.documentStore ?? new PostgresDocumentStore()),
   );
+
+  kernel.container.registerFactory(MAIL_SERVICE, () => new MailService({
+    imap: options.mailImapConnector ?? new NodeImapConnector(),
+    smtp: options.mailSmtpSender ?? new NodemailerMailSender(),
+    documents: kernel.container.get(DOCUMENT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
+    cipher: options.mailCredentialCipher,
+    recordAuditInTransaction: async (tx, event) => {
+      const service = new AuditService(createAuditSink(async (row) => {
+        await tx.insert(schema.auditLogs).values(row);
+      }));
+      await service.record(event);
+    },
+  }));
+  kernel.container.registerFactory(MAIL_SYNC_SCHEDULER, () => new MailSyncScheduler(
+    kernel.container.get(MAIL_SERVICE), options.mailSyncIntervalMs ?? mailSyncIntervalMs(),
+  ));
 
   const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService, featureFlagService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));

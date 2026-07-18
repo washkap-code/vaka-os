@@ -515,6 +515,200 @@ export const notificationPreferences = pgTable("notification_preferences", {
   check("notification_preferences_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
 ]);
 
+// ---------------------------------------------------------------------------
+// P9-001 — VAKA Mail Core. Provider identifiers are adapter metadata; every
+// child row repeats tenant/account scope so the database can reject cross-
+// tenant or cross-mailbox references independently of application checks.
+// ---------------------------------------------------------------------------
+export const mailAccounts = pgTable("mail_accounts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  ownerUserId: uuid("owner_user_id").notNull(),
+  type: text("type").$type<"imap" | "shared">().notNull(),
+  emailAddress: text("email_address").notNull(),
+  displayName: text("display_name").notNull(),
+  imapConfigEncrypted: text("imap_config_encrypted").notNull(),
+  smtpConfigEncrypted: text("smtp_config_encrypted").notNull(),
+  syncStatus: text("sync_status").default("IDLE").notNull(),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("mail_accounts_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_accounts_id_tenant_owner_unique").on(t.id, t.tenantId, t.ownerUserId),
+  uniqueIndex("mail_accounts_tenant_address_unique").on(t.tenantId, sql`lower(${t.emailAddress})`),
+  foreignKey({
+    name: "mail_accounts_owner_tenant_fk",
+    columns: [t.ownerUserId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("mail_accounts_tenant_owner").on(t.tenantId, t.ownerUserId),
+  index("mail_accounts_tenant_sync").on(t.tenantId, t.syncStatus, t.lastSyncAt),
+  check("mail_accounts_type_check", sql`${t.type} IN ('imap', 'shared')`),
+  check("mail_accounts_address_check", sql`length(trim(${t.emailAddress})) BETWEEN 3 AND 254`),
+  check("mail_accounts_display_name_check", sql`length(trim(${t.displayName})) BETWEEN 1 AND 160`),
+  check("mail_accounts_sync_status_check", sql`${t.syncStatus} IN ('IDLE', 'SYNCING', 'ERROR', 'DISABLED')`),
+]);
+
+export const mailFolders = pgTable("mail_folders", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  name: text("name").notNull(),
+  remoteRef: text("remote_ref").notNull(),
+  type: text("type").notNull(),
+  uidValidity: text("uid_validity"),
+  lastUid: pgBigint("last_uid", { mode: "number" }).default(0).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_folders_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_folders_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  unique("mail_folders_account_remote_unique").on(t.accountId, t.remoteRef),
+  foreignKey({
+    name: "mail_folders_account_tenant_fk",
+    columns: [t.accountId, t.tenantId],
+    foreignColumns: [mailAccounts.id, mailAccounts.tenantId],
+  }).onDelete("restrict"),
+  index("mail_folders_tenant_account_type").on(t.tenantId, t.accountId, t.type),
+  check("mail_folders_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 255`),
+  check("mail_folders_remote_ref_check", sql`length(trim(${t.remoteRef})) BETWEEN 1 AND 1000`),
+  check("mail_folders_type_check", sql`${t.type} IN ('INBOX', 'SENT', 'DRAFTS', 'TRASH', 'ARCHIVE', 'CUSTOM')`),
+  check("mail_folders_last_uid_check", sql`${t.lastUid} >= 0`),
+]);
+
+export const mailThreads = pgTable("mail_threads", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  subjectNormalized: text("subject_normalized").notNull(),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull(),
+  messageCount: integer("message_count").default(0).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_threads_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_threads_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  foreignKey({
+    name: "mail_threads_account_tenant_fk",
+    columns: [t.accountId, t.tenantId],
+    foreignColumns: [mailAccounts.id, mailAccounts.tenantId],
+  }).onDelete("restrict"),
+  index("mail_threads_tenant_account_time").on(t.tenantId, t.accountId, t.lastMessageAt),
+  index("mail_threads_tenant_subject").on(t.tenantId, t.accountId, t.subjectNormalized),
+  check("mail_threads_subject_check", sql`length(${t.subjectNormalized}) <= 998`),
+  check("mail_threads_message_count_check", sql`${t.messageCount} >= 0`),
+]);
+
+export const mailMessages = pgTable("mail_messages", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  threadId: uuid("thread_id").notNull(),
+  folderId: uuid("folder_id").notNull(),
+  remoteUid: pgBigint("remote_uid", { mode: "number" }),
+  remoteUidValidity: text("remote_uid_validity"),
+  messageIdHdr: text("message_id_hdr").notNull(),
+  inReplyTo: text("in_reply_to"),
+  referencesJson: jsonb("references_json").$type<string[]>().default([]).notNull(),
+  fromJson: jsonb("from_json").$type<Array<{ address: string; name?: string }>>().notNull(),
+  toJson: jsonb("to_json").$type<Array<{ address: string; name?: string }>>().notNull(),
+  ccJson: jsonb("cc_json").$type<Array<{ address: string; name?: string }>>().default([]).notNull(),
+  subject: text("subject").notNull(),
+  bodyText: text("body_text"),
+  bodyHtmlSanitized: text("body_html_sanitized"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  receivedAt: timestamp("received_at", { withTimezone: true }),
+  isRead: boolean("is_read").default(false).notNull(),
+  isDraft: boolean("is_draft").default(false).notNull(),
+  direction: text("direction").$type<"inbound" | "outbound">().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_messages_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_messages_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  foreignKey({
+    name: "mail_messages_thread_account_tenant_fk",
+    columns: [t.threadId, t.accountId, t.tenantId],
+    foreignColumns: [mailThreads.id, mailThreads.accountId, mailThreads.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_messages_folder_account_tenant_fk",
+    columns: [t.folderId, t.accountId, t.tenantId],
+    foreignColumns: [mailFolders.id, mailFolders.accountId, mailFolders.tenantId],
+  }).onDelete("restrict"),
+  uniqueIndex("mail_messages_account_message_id_unique").on(t.accountId, t.messageIdHdr),
+  uniqueIndex("mail_messages_remote_uid_unique")
+    .on(t.folderId, t.remoteUidValidity, t.remoteUid)
+    .where(sql`${t.remoteUid} IS NOT NULL`),
+  index("mail_messages_tenant_thread_time").on(t.tenantId, t.threadId, t.receivedAt, t.sentAt),
+  index("mail_messages_tenant_account_folder").on(t.tenantId, t.accountId, t.folderId),
+  check("mail_messages_message_id_check", sql`length(trim(${t.messageIdHdr})) BETWEEN 3 AND 998`),
+  check("mail_messages_subject_check", sql`length(${t.subject}) <= 998`),
+  check("mail_messages_direction_check", sql`${t.direction} IN ('inbound', 'outbound')`),
+  check("mail_messages_timestamp_check", sql`${t.sentAt} IS NOT NULL OR ${t.receivedAt} IS NOT NULL`),
+]);
+
+export const mailAttachments = pgTable("mail_attachments", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  messageId: uuid("message_id").notNull(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  documentId: text("document_id").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({
+    name: "mail_attachments_message_account_tenant_fk",
+    columns: [t.messageId, t.accountId, t.tenantId],
+    foreignColumns: [mailMessages.id, mailMessages.accountId, mailMessages.tenantId],
+  }).onDelete("restrict"),
+  index("mail_attachments_tenant_message").on(t.tenantId, t.messageId),
+  check("mail_attachments_filename_check", sql`length(trim(${t.filename})) BETWEEN 1 AND 255`),
+  check("mail_attachments_mime_type_check", sql`length(trim(${t.mimeType})) BETWEEN 1 AND 255`),
+  check("mail_attachments_size_check", sql`${t.size} > 0 AND ${t.size} <= 1500000`),
+  check("mail_attachments_document_id_check", sql`length(trim(${t.documentId})) > 0`),
+]);
+
+export const mailObjectLinks = pgTable("mail_object_links", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  messageId: uuid("message_id"),
+  threadId: uuid("thread_id"),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  linkedBy: uuid("linked_by").notNull(),
+  method: text("method").$type<"manual" | "auto">().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({
+    name: "mail_object_links_message_account_tenant_fk",
+    columns: [t.messageId, t.accountId, t.tenantId],
+    foreignColumns: [mailMessages.id, mailMessages.accountId, mailMessages.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_object_links_thread_account_tenant_fk",
+    columns: [t.threadId, t.accountId, t.tenantId],
+    foreignColumns: [mailThreads.id, mailThreads.accountId, mailThreads.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_object_links_actor_tenant_fk",
+    columns: [t.linkedBy, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  uniqueIndex("mail_object_links_message_object_unique")
+    .on(t.tenantId, t.messageId, t.objectType, t.objectId)
+    .where(sql`${t.messageId} IS NOT NULL`),
+  uniqueIndex("mail_object_links_thread_object_unique")
+    .on(t.tenantId, t.threadId, t.objectType, t.objectId)
+    .where(sql`${t.threadId} IS NOT NULL`),
+  index("mail_object_links_tenant_object").on(t.tenantId, t.objectType, t.objectId, t.createdAt),
+  check("mail_object_links_subject_check", sql`(${t.messageId} IS NOT NULL) <> (${t.threadId} IS NOT NULL)`),
+  check("mail_object_links_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("mail_object_links_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+  check("mail_object_links_method_check", sql`${t.method} IN ('manual', 'auto')`),
+]);
+
 // Platform-level acquisition records. Referral attribution never grants access
 // to the referred tenant and is intentionally separate from client permissions.
 export const referralCodes = pgTable("referral_codes", {

@@ -32,6 +32,8 @@ sensitive field values.
 | `workflow.approved` | `{ instanceId; definitionId; workflowName; objectType; objectId; step; stepName; currentStep; status: "ACTIVE" \| "COMPLETED" }` | `WorkflowService.approve` | Workflow notification coordinator |
 | `workflow.rejected` | `{ instanceId; definitionId; workflowName; objectType; objectId; step; stepName; currentStep; status: "REJECTED" }` | `WorkflowService.reject` | Workflow notification coordinator (terminal no-op) |
 | `workflow.completed` | `{ instanceId; definitionId; workflowName; objectType; objectId; currentStep; status: "COMPLETED" }` | `WorkflowService.start/approve` | Workflow notification coordinator (terminal no-op) |
+| `mail.sent` | `{ accountId: string; messageId: string; threadId: string }` | `MailService.send/reply` after SMTP acceptance and local commit | None |
+| `mail.received` | `{ accountId: string; messageId: string; threadId: string }` | `MailService` after an inbound IMAP message commits | None |
 
 ## Delivery contract
 

@@ -50,11 +50,16 @@ are reverse chronological and merge:
 - persisted platform events;
 - workflow actions joined through their tenant-scoped instance;
 - notification facts for the same object reference.
+- linked mail messages, but only when the caller also holds `mail.read` (or
+  `mail.manage`) and can access the owning mailbox.
 
 Notification bodies, variables and recipients are not returned. Audit
 before/after data is restricted to fields the metadata registry marks as API
 exposed. Event payloads are reduced to approved identifiers and minimal status,
 amount, currency, step, quantity and change facts.
+Mail entries expose the subject, direction, read state and internal
+thread/account identifiers; message bodies, addresses and attachments remain
+behind the mailbox endpoints.
 
 ## Permission matrix
 

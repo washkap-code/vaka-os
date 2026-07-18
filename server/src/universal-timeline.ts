@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import {
   badRequest, db, forbidden, notFound, schema, type Permission,
 } from "./lib.js";
@@ -15,7 +15,7 @@ export interface UniversalTimelineQuery {
 
 export interface UniversalTimelineEntry {
   id: string;
-  kind: "audit" | "event" | "workflow" | "notification";
+  kind: "audit" | "event" | "workflow" | "notification" | "mail";
   action: string;
   actorId: string | null;
   occurredAt: Date;
@@ -133,6 +133,7 @@ export async function getUniversalTimeline(
   objectType: UniversalAuditObjectType,
   objectId: string,
   query: UniversalTimelineQuery,
+  viewer?: { userId: string; permissions: readonly string[] },
 ): Promise<{
   object: { type: UniversalAuditObjectType; id: string };
   entries: UniversalTimelineEntry[];
@@ -166,8 +167,27 @@ export async function getUniversalTimeline(
     eq(schema.notifications.objectType, objectType),
     eq(schema.notifications.objectId, objectId),
   );
+  const mailVisible = Boolean(viewer && (
+    viewer.permissions.includes("mail.read") || viewer.permissions.includes("mail.manage")
+  ));
+  const mailWhere = mailVisible ? and(
+    eq(schema.mailMessages.tenantId, tenantId),
+    sql`EXISTS (
+      SELECT 1 FROM mail_object_links link
+       WHERE link.tenant_id = ${tenantId}
+         AND link.object_type = ${objectType}
+         AND link.object_id = ${objectId}
+         AND (link.message_id = ${schema.mailMessages.id} OR link.thread_id = ${schema.mailMessages.threadId})
+    )`,
+    viewer!.permissions.includes("mail.manage") ? undefined : or(
+      eq(schema.mailAccounts.ownerUserId, viewer!.userId), eq(schema.mailAccounts.type, "shared"),
+    ),
+  ) : undefined;
 
-  const [audits, events, actions, notifications, auditCount, eventCount, actionCount, notificationCount] = await Promise.all([
+  const [
+    audits, events, actions, notifications,
+    auditCount, eventCount, actionCount, notificationCount, mailMessages, mailCount,
+  ] = await Promise.all([
     db.select({
       id: schema.auditLog.id,
       actorId: schema.auditLog.actorId,
@@ -216,6 +236,28 @@ export async function getUniversalTimeline(
       .innerJoin(schema.workflowInstances, eq(schema.workflowInstances.id, schema.workflowActions.instanceId))
       .where(workflowWhere),
     db.select({ count: sql<number>`count(*)::int` }).from(schema.notifications).where(notificationWhere),
+    mailVisible ? db.select({
+      id: schema.mailMessages.id,
+      threadId: schema.mailMessages.threadId,
+      accountId: schema.mailMessages.accountId,
+      subject: schema.mailMessages.subject,
+      direction: schema.mailMessages.direction,
+      isRead: schema.mailMessages.isRead,
+      receivedAt: schema.mailMessages.receivedAt,
+      sentAt: schema.mailMessages.sentAt,
+      createdAt: schema.mailMessages.createdAt,
+    }).from(schema.mailMessages)
+      .innerJoin(schema.mailAccounts, and(
+        eq(schema.mailAccounts.id, schema.mailMessages.accountId),
+        eq(schema.mailAccounts.tenantId, schema.mailMessages.tenantId),
+      )).where(mailWhere)
+      .orderBy(desc(sql`COALESCE(${schema.mailMessages.receivedAt}, ${schema.mailMessages.sentAt}, ${schema.mailMessages.createdAt})`), desc(schema.mailMessages.id))
+      .limit(sourceLimit) : Promise.resolve([]),
+    mailVisible ? db.select({ count: sql<number>`count(*)::int` }).from(schema.mailMessages)
+      .innerJoin(schema.mailAccounts, and(
+        eq(schema.mailAccounts.id, schema.mailMessages.accountId),
+        eq(schema.mailAccounts.tenantId, schema.mailMessages.tenantId),
+      )).where(mailWhere) : Promise.resolve([{ count: 0 }]),
   ]);
 
   const merged: UniversalTimelineEntry[] = [
@@ -259,13 +301,28 @@ export async function getUniversalTimeline(
         status: entry.status, readAt: entry.readAt,
       },
     })),
+    ...mailMessages.map((entry) => ({
+      id: entry.id,
+      kind: "mail" as const,
+      action: entry.direction === "inbound" ? "mail.received" : "mail.sent",
+      actorId: null,
+      occurredAt: entry.receivedAt ?? entry.sentAt ?? entry.createdAt,
+      details: {
+        threadId: entry.threadId,
+        accountId: entry.accountId,
+        subject: entry.subject,
+        direction: entry.direction,
+        isRead: entry.isRead,
+      },
+    })),
   ].sort((left, right) => {
     const byTime = right.occurredAt.getTime() - left.occurredAt.getTime();
     return byTime || `${right.kind}:${right.id}`.localeCompare(`${left.kind}:${left.id}`);
   });
 
   const total = (auditCount[0]?.count ?? 0) + (eventCount[0]?.count ?? 0)
-    + (actionCount[0]?.count ?? 0) + (notificationCount[0]?.count ?? 0);
+    + (actionCount[0]?.count ?? 0) + (notificationCount[0]?.count ?? 0)
+    + (mailCount[0]?.count ?? 0);
   return {
     object: { type: objectType, id: objectId },
     entries: merged.slice(offset, offset + query.pageSize),

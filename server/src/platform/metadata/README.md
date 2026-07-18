@@ -14,8 +14,11 @@ Organisation/LegalEntity surrogate; Customer and Supplier are roles on
 
 The schema-backed `METADATA_REGISTRY` is a separate internal kernel contract
 for canonical object shape and pure payload validation. It registers Company,
-Customer, Supplier, Invoice, Payment, Product, Employee and User, with field
-names pinned by tests to the current Drizzle tables. It provides `getObject`,
+Customer, Supplier, Invoice, Payment, Product, Employee and User plus the
+internal MailAccount, MailFolder, MailThread, MailMessage, MailAttachment and
+MailObjectLink objects, with field names pinned by tests to the current Drizzle
+tables. Mail bodies, address JSON and credential envelopes are restricted and
+AI-hidden. It provides `getObject`,
 `getFields`, `getRelationships`, `listObjects` and `validate`; it does not read
 or write the database. `required` describes caller-supplied create shape,
 while system-derived tenant, identity, lifecycle and timestamp fields remain

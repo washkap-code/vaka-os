@@ -117,6 +117,7 @@ export const PERMISSIONS = [
   "payroll.read", "payroll.manage", "payroll.post",
   "documents.read", "documents.manage",
   "verify.read", "verify.manage",
+  "mail.read", "mail.send", "mail.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

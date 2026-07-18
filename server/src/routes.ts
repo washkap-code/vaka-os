@@ -182,6 +182,7 @@ import {
 import {
   autoAuditContactRoles, autoAuditMutation, verifyAuditChain,
 } from "./universal-audit.js";
+import { mailRouter } from "./modules/mail/routes.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -493,7 +494,10 @@ api.get("/objects/:type/:id/timeline", wrap(async (req, res) => {
   assertUniversalTimelinePermission(objectType, req.auth!.permissions);
   const objectId = z.string().uuid().parse(routeParam(req, "id"));
   const result = await getUniversalTimeline(
-    tenantId(req), objectType, objectId, universalTimelineQuerySchema.parse(req.query),
+    tenantId(req), objectType, objectId, universalTimelineQuerySchema.parse(req.query), {
+      userId: req.auth!.userId,
+      permissions: req.auth!.permissions,
+    },
   );
   res.setHeader("Cache-Control", "private, no-store");
   return result;
@@ -537,6 +541,7 @@ api.post("/auth/logout", wrap(async (req, res) => {
 }));
 
 api.use(requireCompletedPasswordChange as any);
+api.use("/mail", mailRouter);
 
 api.patch("/me/profile", wrap(async (req) => {
   const body = z.object({

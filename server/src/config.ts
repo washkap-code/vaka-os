@@ -185,6 +185,24 @@ export function paynowEncryptionSecret(env: RuntimeEnvironment = process.env): s
     : assertNotPlaceholder("PAYNOW_ENCRYPTION_KEY", configured);
 }
 
+/** Dedicated mailbox credential material; never falls back to another key. */
+export function mailEncryptionSecret(env: RuntimeEnvironment = process.env): string {
+  const configured = valueOf(env, "MAIL_ENCRYPTION_KEY");
+  if (!configured) throw new Error("MAIL_ENCRYPTION_KEY is required");
+  return isProduction(env)
+    ? assertSafeSecret("MAIL_ENCRYPTION_KEY", configured, 32)
+    : assertNotPlaceholder("MAIL_ENCRYPTION_KEY", configured);
+}
+
+export function mailSyncIntervalMs(env: RuntimeEnvironment = process.env): number {
+  const raw = valueOf(env, "MAIL_SYNC_INTERVAL_MS") ?? "300000";
+  const milliseconds = Number(raw);
+  if (!Number.isInteger(milliseconds) || milliseconds < 30_000 || milliseconds > 86_400_000) {
+    throw new Error("MAIL_SYNC_INTERVAL_MS must be an integer between 30000 and 86400000");
+  }
+  return milliseconds;
+}
+
 /** Parse and validate the explicit browser origins allowed to use credentials. */
 export function allowedOrigins(env: RuntimeEnvironment = process.env): Set<string> {
   const raw = valueOf(env, "ALLOWED_ORIGINS");
@@ -366,6 +384,8 @@ export interface RuntimeConfig {
   captureEncryptionSecret: string;
   mfaEncryptionSecret: string;
   paynowEncryptionSecret: string;
+  mailEncryptionSecret: string;
+  mailSyncIntervalMs: number;
   allowedOrigins: Set<string>;
   publicAppUrl: string;
   emailDelivery: EmailDeliveryConfig;
@@ -396,6 +416,8 @@ export function runtimeConfig(env: RuntimeEnvironment = process.env): RuntimeCon
     captureEncryptionSecret: read(() => captureEncryptionSecret(env)),
     mfaEncryptionSecret: read(() => mfaEncryptionSecret(env)),
     paynowEncryptionSecret: read(() => paynowEncryptionSecret(env)),
+    mailEncryptionSecret: read(() => mailEncryptionSecret(env)),
+    mailSyncIntervalMs: read(() => mailSyncIntervalMs(env)),
     allowedOrigins: read(() => allowedOrigins(env)),
     publicAppUrl: read(() => publicAppUrl(env)),
     emailDelivery: read(() => emailDeliveryConfig(env)),
