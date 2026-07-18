@@ -78,6 +78,22 @@ const alwaysRequired = [
   ["accounting_periods", "tenant_id"],
   ["accounting_periods", "period_month"],
   ["accounting_periods", "status"],
+  ["workflow_definitions", "steps_json"],
+  ["workflow_instances", "current_step"],
+  ["workflow_actions", "action"],
+  ["notifications", "user_id"],
+  ["notifications", "priority"],
+  ["notifications", "read_at"],
+  ["notification_preferences", "user_id"],
+  ["notification_preferences", "enabled"],
+  ["platform_events", "event_type"],
+  ["platform_events", "payload_json"],
+  ["platform_events", "status"],
+  ["platform_events", "retry_count"],
+  ["processed_events", "handler_name"],
+  ["processed_events", "event_id"],
+  ["migration_jobs", "duplicate_policy"],
+  ["migration_rows", "errors_json"],
 ];
 const gatedRequirements = {
   "migration.hub": [

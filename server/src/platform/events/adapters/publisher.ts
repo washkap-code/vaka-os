@@ -1,10 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { EVENT_BUS, platformKernel } from "../../../platform-runtime.js";
-import type { DomainEventInput, DomainEventType } from "../registry.js";
+import type {
+  DomainEventInput, DomainEventPayloads, DomainEventType, EventType,
+} from "../registry.js";
+import type { PlatformEvent } from "../types.js";
 import { logEvent } from "../../../observability.js";
 
 export type QueueDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => void;
 export type PublishDomainEvent = <K extends DomainEventType>(event: DomainEventInput<K>) => Promise<void>;
+export type QueuePlatformEvent = <K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+) => void;
+export type PublishPlatformEvent = <K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+) => Promise<void>;
 
 export async function emitDomainEvent<K extends DomainEventType>(event: DomainEventInput<K>): Promise<void> {
   await platformKernel().container.get(EVENT_BUS).publish({
@@ -14,22 +23,36 @@ export async function emitDomainEvent<K extends DomainEventType>(event: DomainEv
   });
 }
 
+export async function emitPlatformEvent<K extends EventType>(
+  event: PlatformEvent<DomainEventPayloads[K]> & { type: K },
+): Promise<void> {
+  await platformKernel().container.get(EVENT_BUS).publish(event);
+}
+
 /** Publishes queued facts only after `work` resolves (i.e. after its DB commit). */
 export async function runWithPostCommitEvents<T>(
-  work: (queue: QueueDomainEvent) => Promise<T>,
+  work: (queue: QueueDomainEvent, queuePlatform: QueuePlatformEvent) => Promise<T>,
   publish: PublishDomainEvent = emitDomainEvent,
+  publishPlatform: PublishPlatformEvent = emitPlatformEvent,
 ): Promise<T> {
-  const pending: DomainEventInput[] = [];
-  const result = await work((event) => { pending.push(event as DomainEventInput); });
-  for (const event of pending) {
+  const pending: Array<
+    { kind: "domain"; event: DomainEventInput }
+    | { kind: "platform"; event: PlatformEvent }
+  > = [];
+  const result = await work(
+    (event) => { pending.push({ kind: "domain", event: event as DomainEventInput }); },
+    (event) => { pending.push({ kind: "platform", event: event as PlatformEvent }); },
+  );
+  for (const pendingEvent of pending) {
     try {
-      await publish(event);
+      if (pendingEvent.kind === "domain") await publish(pendingEvent.event);
+      else await publishPlatform(pendingEvent.event);
     } catch (error) {
       // The database work has already committed. Report projection/delivery failure
       // without returning a false failure that encourages a duplicate business write.
       logEvent("event.post_commit_publish_failed", {
-        eventType: event.type,
-        eventId: event.id ?? null,
+        eventType: pendingEvent.event.type,
+        eventId: pendingEvent.event.id ?? null,
         errorType: error instanceof Error ? error.name : "UnknownError",
       }, "error");
     }

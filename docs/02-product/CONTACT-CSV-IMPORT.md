@@ -1,8 +1,27 @@
 # Self-Service CSV Imports
 
-**Status:** Contact, product, opening-stock and generic bank CSV slices implemented
+**Status:** Contact, product, opening-stock and generic bank CSV slices implemented; registry-driven Migration Hub Core added
 **Owner:** Product, Engineering, Security, and Data
-**Last reviewed:** 2026-07-06
+**Last reviewed:** 2026-07-18
+
+## Registry-driven Migration Hub Core
+
+The API-only Migration Hub Core adds resumable upload, field mapping,
+validation, import, and rollback jobs for Customers, Suppliers, and Products.
+It accepts UTF-8, UTF-16, and Windows-1252 CSV content, detects common
+delimiters, and supports up to 10,000 data rows per job. Mapping targets and
+row values are governed by the canonical MetadataRegistry.
+
+Duplicate handling is explicit per job: skip, update an existing natural-key
+match, or create anyway where the canonical schema permits it. Rollback deletes
+only records created by that job and restores records updated by that job. The
+whole rollback is blocked if a created record is now referenced or an imported
+record has changed, with reasons retained on the affected staged rows.
+
+This path requires `migration:run`, derives tenant ownership from the signed-in
+server context, records lifecycle and per-object audit evidence, and publishes
+only a minimal `migration.completed` event. It does not import financial
+transactions, opening balances, opening stock, or ledger entries.
 
 ## Available workflow
 

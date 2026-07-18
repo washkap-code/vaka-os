@@ -270,9 +270,10 @@ beforeAll(async () => {
 
 describe("endpoint inventory contract", () => {
   it("enumerates every Express endpoint and requires an isolation vector", async () => {
-    const [appSource, source] = await Promise.all([
+    const [appSource, source, migrationSource] = await Promise.all([
       readFile(new URL("../src/app.ts", import.meta.url), "utf8"),
       readFile(new URL("../src/routes.ts", import.meta.url), "utf8"),
+      readFile(new URL("../src/modules/migration/routes.ts", import.meta.url), "utf8"),
     ]);
     const appRegistration = /\bapp\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
     const registration = /\bapi\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
@@ -282,6 +283,10 @@ describe("endpoint inventory contract", () => {
     }
     for (const match of source.matchAll(registration)) {
       discovered.push(`${match[1].toUpperCase()} /api/v1${match[2]}`);
+    }
+    const migrationRegistration = /\bmigrationRouter\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
+    for (const match of migrationSource.matchAll(migrationRegistration)) {
+      discovered.push(`${match[1].toUpperCase()} /api/v1/migration${match[2]}`);
     }
     const manifested = endpointCoverageManifest.map(({ method, path }) => `${method} ${path}`);
     expect([...new Set(manifested)].sort()).toEqual([...new Set(discovered)].sort());
@@ -374,7 +379,7 @@ describe("tenant lists, search, filters and shared projections", () => {
       "/api/v1/invoices", "/api/v1/expenses", "/api/v1/accounting/periods", "/api/v1/tasks?status=ALL",
       "/api/v1/documents/folders", "/api/v1/documents?status=ACTIVE",
       "/api/v1/documents/approvals/list", "/api/v1/network/profile", "/api/v1/network/enquiries",
-      "/api/v1/migration/projects", "/api/v1/payroll/employees", "/api/v1/payroll/runs",
+      "/api/v1/migration/projects", "/api/v1/migration/jobs", "/api/v1/payroll/employees", "/api/v1/payroll/runs",
       "/api/v1/journal", "/api/v1/reports/snapshots?limit=1", "/api/v1/billing/invoices",
       "/api/v1/billing/payment-attempts",
     ];

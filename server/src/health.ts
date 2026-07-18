@@ -1,7 +1,7 @@
 import { emailDeliveryConfig, type EmailDeliveryConfig } from "./config.js";
 import { pool } from "./lib.js";
 
-export const EXPECTED_MIGRATION = "0045_schema_runtime_alignment";
+export const EXPECTED_MIGRATION = "0054_migration_core";
 
 export interface ReadinessCheck {
   status: "pass" | "fail" | "not_required";
@@ -30,6 +30,21 @@ const migrationStatusSql = `
     to_regclass('public.migration_projects') IS NOT NULL
     AND to_regclass('public.directory_enquiries') IS NOT NULL
     AND to_regclass('public.document_approvals') IS NOT NULL
+    AND to_regclass('public.workflow_definitions') IS NOT NULL
+    AND to_regclass('public.workflow_instances') IS NOT NULL
+    AND to_regclass('public.workflow_actions') IS NOT NULL
+    AND to_regclass('public.notification_preferences') IS NOT NULL
+    AND to_regclass('public.platform_events') IS NOT NULL
+    AND to_regclass('public.processed_events') IS NOT NULL
+    AND to_regclass('public.migration_jobs') IS NOT NULL
+    AND to_regclass('public.migration_rows') IS NOT NULL
+    AND to_regprocedure('public.vaka_append_migration_audit_batch(uuid,uuid,text,jsonb)') IS NOT NULL
+    AND to_regprocedure('public.vaka_migration_record_dependencies(regclass,uuid)') IS NOT NULL
+    AND EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'notifications'
+        AND column_name = 'read_at'
+    )
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'customer_timeline_events'

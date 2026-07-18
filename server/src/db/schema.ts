@@ -9,6 +9,8 @@ import {
   pgEnum, unique, uniqueIndex, index, check, foreignKey, bigint as pgBigint,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { WorkflowStepDefinition } from "../platform/workflow/types.js";
+import type { DomainEventPayloads, EventType } from "../platform/events/registry.js";
 
 // ---------- enums ----------
 export const tenantStatus = pgEnum("tenant_status", ["TRIAL", "ACTIVE", "PAST_DUE", "SUSPENDED", "CLOSED"]);
@@ -388,26 +390,129 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
 
+// P1-006 — append-only universal object evidence. Inserts must go through
+// vaka_append_audit_log(), which serializes each tenant chain and computes the
+// SHA-256 hash. The migration also blocks UPDATE/DELETE at database level.
+export const auditLog = pgTable("audit_log", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  actorId: uuid("actor_id"),
+  actorType: text("actor_type").$type<"user" | "system" | "ai">().notNull(),
+  action: text("action").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id"),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown>>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown>>(),
+  source: text("source").notNull(),
+  ip: text("ip"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
+  hash: text("hash").notNull(),
+  prevHash: text("prev_hash"),
+}, (t) => [
+  index("audit_log_tenant_time").on(t.tenantId, t.occurredAt, t.id),
+  index("audit_log_tenant_object_time").on(t.tenantId, t.objectType, t.objectId, t.occurredAt),
+  uniqueIndex("audit_log_tenant_hash_unique").on(t.tenantId, t.hash),
+  uniqueIndex("audit_log_tenant_prev_hash_unique").on(t.tenantId, t.prevHash)
+    .where(sql`${t.prevHash} IS NOT NULL`),
+  check("audit_log_actor_type_check", sql`${t.actorType} IN ('user', 'system', 'ai')`),
+  check("audit_log_user_actor_check", sql`${t.actorType} <> 'user' OR ${t.actorId} IS NOT NULL`),
+  check("audit_log_action_check", sql`length(trim(${t.action})) > 0`),
+  check("audit_log_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("audit_log_source_check", sql`length(trim(${t.source})) > 0`),
+  check("audit_log_hash_check", sql`${t.hash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_prev_hash_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_hash_not_self_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} <> ${t.hash}`),
+]);
+
+// P1-005 — persist-first event facts and per-handler idempotency evidence.
+// Payloads contain closed-catalogue identifiers/minimal data only.
+export const platformEvents = pgTable("platform_events", {
+  id: text("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "restrict" }),
+  eventType: text("event_type").$type<EventType>().notNull(),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
+  actorId: uuid("actor_id"),
+  payloadJson: jsonb("payload_json").$type<DomainEventPayloads[EventType]>().notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  status: text("status").default("pending").notNull(),
+  retryCount: integer("retry_count").default(0).notNull(),
+}, (t) => [
+  index("platform_events_tenant_time").on(t.tenantId, t.occurredAt),
+  index("platform_events_tenant_status").on(t.tenantId, t.status, t.occurredAt),
+  check("platform_events_event_type_check", sql`length(trim(${t.eventType})) > 0`),
+  check("platform_events_status_check", sql`${t.status} IN ('pending', 'processing', 'retrying', 'processed', 'failed')`),
+  check("platform_events_retry_count_check", sql`${t.retryCount} BETWEEN 0 AND 3`),
+]);
+
+export const processedEvents = pgTable("processed_events", {
+  id: id(),
+  handlerName: text("handler_name").notNull(),
+  eventId: text("event_id").notNull().references(() => platformEvents.id, { onDelete: "restrict" }),
+  processedAt: timestamp("processed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("processed_events_handler_event_unique").on(t.handlerName, t.eventId),
+  index("processed_events_event").on(t.eventId),
+  check("processed_events_handler_name_check", sql`length(trim(${t.handlerName})) > 0`),
+]);
+
 // Tenant-scoped notification intent and delivery evidence. Records are never
 // deleted through the notification service; only delivery status may advance.
 export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id"),
   recipient: text("recipient").notNull(),
   channel: text("channel").notNull(),
   template: text("template").notNull(),
   locale: text("locale").notNull(),
   variables: jsonb("variables").notNull(),
+  priority: text("priority").default("normal").notNull(),
+  title: text("title"),
+  body: text("body"),
+  link: text("link"),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
   status: text("status").notNull(),
   transmitted: boolean("transmitted").default(false).notNull(),
   providerMessageId: text("provider_message_id"),
   dedupeKey: text("dedupe_key"),
   createdAt: createdAt(),
+  readAt: timestamp("read_at", { withTimezone: true }),
 }, (t) => [
   index("notifications_tenant_time").on(t.tenantId, t.createdAt),
+  index("notifications_user_inbox").on(t.tenantId, t.userId, t.readAt, t.createdAt),
   uniqueIndex("notifications_tenant_dedupe").on(t.tenantId, t.dedupeKey),
-  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'WHATSAPP')`),
+  foreignKey({
+    name: "notifications_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
+  check("notifications_priority_check", sql`${t.priority} IN ('low', 'normal', 'high', 'urgent')`),
   check("notifications_status_check", sql`${t.status} IN ('accepted', 'sent', 'failed')`),
+]);
+
+// Missing preference rows mean enabled. Explicit rows are tenant/user/channel
+// scoped and cannot reference a user from another workspace.
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id").notNull(),
+  category: text("category").notNull(),
+  channel: text("channel").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+}, (t) => [
+  unique("notification_preferences_scope_unique").on(t.tenantId, t.userId, t.category, t.channel),
+  foreignKey({
+    name: "notification_preferences_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("notification_preferences_user").on(t.tenantId, t.userId),
+  check("notification_preferences_category_check", sql`length(trim(${t.category})) > 0`),
+  check("notification_preferences_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
 ]);
 
 // Platform-level acquisition records. Referral attribution never grants access
@@ -1415,6 +1520,82 @@ export const approvalPolicies = pgTable("approval_policies", {
 ]);
 
 // ---------------------------------------------------------------------------
+// P1-003 — Durable, tenant-scoped workflow definitions and execution history.
+// Financial effects remain domain-owned; these tables record orchestration,
+// decisions and actor evidence only.
+// ---------------------------------------------------------------------------
+export const workflowDefinitions = pgTable("workflow_definitions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  version: integer("version").notNull(),
+  objectType: text("object_type").notNull(),
+  stepsJson: jsonb("steps_json").$type<WorkflowStepDefinition[]>().notNull(),
+  active: boolean("active").default(true).notNull(),
+}, (t) => [
+  unique("workflow_definitions_id_tenant_unique").on(t.id, t.tenantId),
+  unique("workflow_definitions_tenant_name_version_unique").on(t.tenantId, t.name, t.version),
+  index("workflow_definitions_tenant_object_active").on(t.tenantId, t.objectType, t.active),
+  check("workflow_definitions_name_check", sql`length(trim(${t.name})) > 0`),
+  check("workflow_definitions_version_check", sql`${t.version} >= 1`),
+  check("workflow_definitions_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_definitions_steps_check", sql`jsonb_typeof(${t.stepsJson}) = 'array'`),
+]);
+
+export const workflowInstances = pgTable("workflow_instances", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  definitionId: uuid("definition_id").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  status: text("status").default("ACTIVE").notNull(),
+  currentStep: integer("current_step").default(0).notNull(),
+  startedBy: uuid("started_by").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => [
+  unique("workflow_instances_id_tenant_unique").on(t.id, t.tenantId),
+  foreignKey({
+    name: "workflow_instances_definition_tenant_fk",
+    columns: [t.definitionId, t.tenantId],
+    foreignColumns: [workflowDefinitions.id, workflowDefinitions.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "workflow_instances_actor_tenant_fk",
+    columns: [t.startedBy, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("workflow_instances_tenant_object").on(t.tenantId, t.objectType, t.objectId),
+  uniqueIndex("workflow_instances_one_active_object")
+    .on(t.tenantId, t.definitionId, t.objectType, t.objectId)
+    .where(sql`${t.status} = 'ACTIVE'`),
+  check("workflow_instances_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_instances_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+  check("workflow_instances_status_check", sql`${t.status} IN ('ACTIVE', 'COMPLETED', 'REJECTED')`),
+  check("workflow_instances_current_step_check", sql`${t.currentStep} >= 0`),
+  check("workflow_instances_completion_check", sql`
+    (${t.status} = 'ACTIVE' AND ${t.completedAt} IS NULL)
+    OR (${t.status} IN ('COMPLETED', 'REJECTED') AND ${t.completedAt} IS NOT NULL)
+  `),
+]);
+
+export const workflowActions = pgTable("workflow_actions", {
+  id: id(),
+  instanceId: uuid("instance_id").notNull().references(() => workflowInstances.id, { onDelete: "restrict" }),
+  step: integer("step").notNull(),
+  actorId: uuid("actor_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  action: text("action").notNull(),
+  comment: text("comment"),
+  actedAt: timestamp("acted_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("workflow_actions_instance_step_unique").on(t.instanceId, t.step),
+  index("workflow_actions_instance_time").on(t.instanceId, t.actedAt),
+  check("workflow_actions_step_check", sql`${t.step} >= 0`),
+  check("workflow_actions_action_check", sql`${t.action} IN ('APPROVE', 'REJECT')`),
+  check("workflow_actions_comment_check", sql`${t.comment} IS NULL OR length(${t.comment}) <= 1000`),
+]);
+
+// ---------------------------------------------------------------------------
 // FLAG-001 — Tenant feature flags (build-dark model, Master Build Plan §15).
 // A missing row means OFF. Keys are validated against the closed
 // FEATURE_CATALOGUE in code; toggles are platform-admin actions and audited.
@@ -1948,6 +2129,68 @@ export const migrationOpenItems = pgTable("migration_open_items", {
   index("migration_open_items_tenant").on(t.tenantId),
   check("migration_open_items_side_check", sql`${t.side} IN ('AR', 'AP')`),
   check("migration_open_items_amount_check", sql`${t.amount} >= 0 AND ${t.balance} >= 0 AND ${t.balance} <= ${t.amount}`),
+]);
+
+// ---------------------------------------------------------------------------
+// P15-001 — registry-driven, staged CSV migration jobs. These deliberately
+// coexist with PM-001 projects/import batches: P15 owns the resumable
+// upload→map→validate→import→rollback pipeline for canonical master data.
+// ---------------------------------------------------------------------------
+export const migrationJobs = pgTable("migration_jobs", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  objectType: text("object_type").$type<"Customer" | "Supplier" | "Product">().notNull(),
+  sourceFilename: text("source_filename").notNull(),
+  status: text("status").$type<
+    "uploaded" | "mapped" | "validated" | "importing" | "completed" | "failed" | "rolled_back"
+  >().default("uploaded").notNull(),
+  duplicatePolicy: text("duplicate_policy").$type<"skip" | "update-existing" | "create-anyway">()
+    .default("skip").notNull(),
+  totalRows: integer("total_rows").default(0).notNull(),
+  validRows: integer("valid_rows").default(0).notNull(),
+  errorRows: integer("error_rows").default(0).notNull(),
+  importedRows: integer("imported_rows").default(0).notNull(),
+  mappingJson: jsonb("mapping_json").$type<Record<string, unknown>>(),
+  createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => [
+  index("migration_jobs_tenant_time").on(t.tenantId, t.createdAt),
+  index("migration_jobs_tenant_status").on(t.tenantId, t.status, t.createdAt),
+  check("migration_jobs_object_type_check", sql`${t.objectType} IN ('Customer', 'Supplier', 'Product')`),
+  check("migration_jobs_status_check", sql`${t.status} IN
+    ('uploaded', 'mapped', 'validated', 'importing', 'completed', 'failed', 'rolled_back')`),
+  check("migration_jobs_duplicate_policy_check", sql`${t.duplicatePolicy} IN ('skip', 'update-existing', 'create-anyway')`),
+  check("migration_jobs_filename_check", sql`length(trim(${t.sourceFilename})) BETWEEN 1 AND 255`),
+  check("migration_jobs_counts_check", sql`
+    ${t.totalRows} >= 0 AND ${t.validRows} >= 0 AND ${t.errorRows} >= 0 AND ${t.importedRows} >= 0
+    AND ${t.validRows} <= ${t.totalRows} AND ${t.errorRows} <= ${t.totalRows}
+    AND ${t.importedRows} <= ${t.totalRows}`),
+]);
+
+export const migrationRows = pgTable("migration_rows", {
+  id: id(),
+  jobId: uuid("job_id").notNull().references(() => migrationJobs.id, { onDelete: "cascade" }),
+  rowNumber: integer("row_number").notNull(),
+  rawJson: jsonb("raw_json").$type<Record<string, string>>().notNull(),
+  mappedJson: jsonb("mapped_json").$type<Record<string, unknown>>(),
+  status: text("status").$type<"pending" | "valid" | "error" | "imported" | "skipped">()
+    .default("pending").notNull(),
+  errorsJson: jsonb("errors_json").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  createdRecordId: uuid("created_record_id"),
+  matchedRecordId: uuid("matched_record_id"),
+  importOperation: text("import_operation").$type<"created" | "updated">(),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown>>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown>>(),
+}, (t) => [
+  unique("migration_rows_job_row_unique").on(t.jobId, t.rowNumber),
+  index("migration_rows_job_status").on(t.jobId, t.status, t.rowNumber),
+  check("migration_rows_row_number_check", sql`${t.rowNumber} >= 2`),
+  check("migration_rows_status_check", sql`${t.status} IN ('pending', 'valid', 'error', 'imported', 'skipped')`),
+  check("migration_rows_operation_check", sql`${t.importOperation} IS NULL OR ${t.importOperation} IN ('created', 'updated')`),
+  check("migration_rows_import_evidence_check", sql`
+    (${t.status} <> 'imported') OR
+    (${t.createdRecordId} IS NOT NULL AND ${t.importOperation} IS NOT NULL AND ${t.afterJson} IS NOT NULL)`),
 ]);
 
 // ---------------------------------------------------------------------------

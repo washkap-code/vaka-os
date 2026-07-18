@@ -22,6 +22,15 @@ Typed DI composes services without global service-location in business code. Con
 
 Records append-only evidence for a governed catalogue of material/sensitive actions. It supports tenant/platform partitions, correlation, actor and reason, minimized metadata, access controls, search/export, retention/legal hold and forensic integrity. Audit failure behavior is specified per action; high-risk writes fail safely when required evidence cannot be recorded.
 
+P1-006 implements the tenant universal-audit slice: existing finance audit
+remains authoritative and is mirrored transactionally into an append-only
+`audit_log`; canonical Company, Customer, Supplier, Product and Employee CRUD
+paths add changed-field evidence derived from the metadata registry; and each
+tenant ledger is a serialized SHA-256 chain. The object timeline API merges
+this evidence with persisted platform events, workflow actions and bounded
+notification facts under object permissions. Retention/legal hold, export and
+cross-service correlation remain later governed work.
+
 ## 5. Event Service
 
 Uses a transactional outbox for durable domain events, versioned envelopes, idempotent consumers, bounded retries, DLQ, observability and controlled replay. Events never replace transactions required for finance/stock/billing/numbering/audit atomicity.
