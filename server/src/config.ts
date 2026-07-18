@@ -282,6 +282,11 @@ function booleanValue(env: RuntimeEnvironment, name: string): boolean | undefine
   throw new Error(`${name} must be true or false`);
 }
 
+/** Temporary moderation switch. Disable once a staffed review queue is live. */
+export function networkProfileAutoApprove(env: RuntimeEnvironment = process.env): boolean {
+  return booleanValue(env, "NETWORK_PROFILE_AUTO_APPROVE") ?? true;
+}
+
 function emailAddress(env: RuntimeEnvironment, name: string): string | undefined {
   const configured = valueOf(env, name);
   if (configured && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {

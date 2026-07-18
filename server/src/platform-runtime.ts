@@ -65,6 +65,8 @@ import {
   subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
   type WorkflowNotificationCoordinatorContract,
 } from "./workflow-notifications.js";
+import { networkProfileAutoApprove } from "./config.js";
+import { NetworkService, PostgresNetworkStore } from "./modules/network/index.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -107,6 +109,9 @@ export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
 export const WORKFLOW_SERVICE: ServiceToken<WorkflowService> =
   createServiceToken("platform.workflow.service");
 
+export const NETWORK_SERVICE: ServiceToken<NetworkService> =
+  createServiceToken("modules.network.service");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -140,6 +145,8 @@ export interface PlatformKernelOptions {
   /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
   workflowStore?: WorkflowStoreContract;
   workflowNotificationCoordinator?: WorkflowNotificationCoordinatorContract;
+  networkStore?: PostgresNetworkStore;
+  networkAutoApprove?: boolean;
 }
 
 /**
@@ -252,6 +259,15 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     METADATA_REGISTRY,
     options.metadataRegistry ?? new MetadataRegistry(),
   );
+
+  kernel.container.registerFactory(NETWORK_SERVICE, () => new NetworkService({
+    store: options.networkStore ?? new PostgresNetworkStore(),
+    metadata: kernel.container.get(METADATA_REGISTRY),
+    workflow: kernel.container.get(WORKFLOW_SERVICE),
+    audit: kernel.container.get(AUDIT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
+    autoApprove: options.networkAutoApprove ?? networkProfileAutoApprove(),
+  }));
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
   kernel.container.registerValue(METADATA_SERVICE, metadataService);

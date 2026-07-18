@@ -23,6 +23,8 @@ export const DOMAIN_EVENTS = {
   WORKFLOW_APPROVED: "workflow.approved",
   WORKFLOW_REJECTED: "workflow.rejected",
   WORKFLOW_COMPLETED: "workflow.completed",
+  PROFILE_PUBLISHED: "profile.published",
+  PROFILE_VIEWED: "profile.viewed",
 } as const;
 
 export type DomainEventPayloads = {
@@ -98,6 +100,8 @@ export type DomainEventPayloads = {
     currentStep: number;
     status: "COMPLETED";
   };
+  "profile.published": { profileId: string; companyId: string; slug: string };
+  "profile.viewed": { profileId: string; viewerTenantId: string | null };
 };
 
 export type DomainEventType = keyof DomainEventPayloads;
@@ -139,5 +143,6 @@ export function eventObjectReference<K extends EventType>(
   if (type.startsWith("workflow.")) {
     return { objectType: typeof value.objectType === "string" ? value.objectType : "Workflow", objectId: id("objectId") };
   }
+  if (type.startsWith("profile.")) return { objectType: "BusinessProfile", objectId: id("profileId") };
   return { objectType: null, objectId: null };
 }

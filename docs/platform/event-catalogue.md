@@ -32,6 +32,8 @@ sensitive field values.
 | `workflow.approved` | `{ instanceId; definitionId; workflowName; objectType; objectId; step; stepName; currentStep; status: "ACTIVE" \| "COMPLETED" }` | `WorkflowService.approve` | Workflow notification coordinator |
 | `workflow.rejected` | `{ instanceId; definitionId; workflowName; objectType; objectId; step; stepName; currentStep; status: "REJECTED" }` | `WorkflowService.reject` | Workflow notification coordinator (terminal no-op) |
 | `workflow.completed` | `{ instanceId; definitionId; workflowName; objectType; objectId; currentStep; status: "COMPLETED" }` | `WorkflowService.start/approve` | Workflow notification coordinator (terminal no-op) |
+| `profile.published` | `{ profileId: string; companyId: string; slug: string }` | Business Network profile review completion | None |
+| `profile.viewed` | `{ profileId: string; viewerTenantId: string \| null }` | Business Network public-profile detail read | None |
 
 ## Delivery contract
 

@@ -74,10 +74,11 @@ import {
   verificationDecisionSchema, verificationQueueStatusSchema, verificationRevocationSchema,
 } from "./verification-workflow.js";
 import {
-  directoryQuerySchema, enquirySchema, getDirectoryProfile, getMyProfile,
-  listEnquiries, profileInputSchema, publishProfile, resolveEnquiry, saveProfile,
-  searchDirectory, sendEnquiry, unpublishProfile,
+  enquirySchema, listEnquiries, resolveEnquiry, sendEnquiry,
 } from "./business-profile.js";
+import {
+  directoryQuerySchema, profileInputSchema, profileSlugSchema,
+} from "./modules/network/index.js";
 import {
   closeProject as closeMigrationProject, commitStep as commitMigrationStep,
   commitStepSchema as migrationCommitSchema, createProject as createMigrationProject,
@@ -129,7 +130,10 @@ import {
 } from "./finance-report-snapshots.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import {
+  DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, NETWORK_SERVICE,
+  SEARCH_SERVICE, platformKernel,
+} from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
@@ -2233,23 +2237,34 @@ api.post("/verification/requests/:id/submit", requireFeature("verify.centre"),
     submitVerificationRequest(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"))));
 
 // ---------------------------------------------------------------------------
-// PN-001: opt-in public business profile. Nothing public by default; edits
-// stay private; only the tenant OWNER can publish (freezes the snapshot the
-// PN-002 directory will read) or unpublish (removes it immediately). Ships
-// dark behind `network.directory` and fails closed.
+// P10-001: canonical Company-backed Business Network profile. Publication
+// passes through the platform workflow engine; the public snapshot is the only
+// editable profile content visible to the cross-tenant directory.
 // ---------------------------------------------------------------------------
 api.get("/network/profile", requireFeature("network.directory"),
   requirePermission("settings.manage"), wrap(async (req) =>
-    getMyProfile(tenantId(req))));
+    platformKernel().container.get(NETWORK_SERVICE).getOwnProfile(tenantId(req))));
 api.put("/network/profile", requireFeature("network.directory"),
   requirePermission("settings.manage"), wrap(async (req) =>
-    saveProfile(tenantId(req), req.auth!.userId, profileInputSchema.parse(req.body))));
+    platformKernel().container.get(NETWORK_SERVICE).saveOwnProfile({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      identity: platformKernel().container.get(IDENTITY_FACTORY).for(req.auth),
+    }, profileInputSchema.parse(req.body))));
 api.post("/network/profile/publish", requireFeature("network.directory"),
   requireTenantOwner as any, wrap(async (req) =>
-    publishProfile(tenantId(req), req.auth!.userId)));
+    platformKernel().container.get(NETWORK_SERVICE).publishOwnProfile({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      identity: platformKernel().container.get(IDENTITY_FACTORY).for(req.auth),
+    })));
 api.post("/network/profile/unpublish", requireFeature("network.directory"),
   requireTenantOwner as any, wrap(async (req) =>
-    unpublishProfile(tenantId(req), req.auth!.userId)));
+    platformKernel().container.get(NETWORK_SERVICE).unpublishOwnProfile({
+      tenantId: tenantId(req),
+      actorUserId: req.auth!.userId,
+      identity: platformKernel().container.get(IDENTITY_FACTORY).for(req.auth),
+    })));
 
 // ---------------------------------------------------------------------------
 // PN-002: business directory. Serves ONLY published snapshots (never drafts,
@@ -2258,14 +2273,20 @@ api.post("/network/profile/unpublish", requireFeature("network.directory"),
 // per-tenant flag enablement.
 // ---------------------------------------------------------------------------
 api.get("/network/directory", requireFeature("network.directory"), wrap(async (req) =>
-  searchDirectory(directoryQuerySchema.parse({
-    category: req.query.category as string | undefined,
-    city: req.query.city as string | undefined,
-    q: req.query.q as string | undefined,
-    country: (req.query.country as string | undefined) ?? "ZW",
-  }))));
+  platformKernel().container.get(NETWORK_SERVICE).searchDirectory(
+    directoryQuerySchema.parse(req.query),
+    { tenantId: tenantId(req), actorUserId: req.auth!.userId },
+  )));
+api.get("/network/profiles/:slug", requireFeature("network.directory"), wrap(async (req) =>
+  platformKernel().container.get(NETWORK_SERVICE).getDirectoryProfileBySlug(
+    profileSlugSchema.parse(routeParam(req, "slug")),
+    { tenantId: tenantId(req), actorUserId: req.auth!.userId },
+  )));
 api.get("/network/directory/:id", requireFeature("network.directory"), wrap(async (req) =>
-  getDirectoryProfile(uuidRouteParam(req, "id"))));
+  platformKernel().container.get(NETWORK_SERVICE).getDirectoryProfileById(
+    uuidRouteParam(req, "id"),
+    { tenantId: tenantId(req), actorUserId: req.auth!.userId },
+  )));
 
 // PN-003: consent-first enquiries; conversion to CRM is explicit + audited.
 api.post("/network/directory/:id/enquire", requireFeature("network.directory"),

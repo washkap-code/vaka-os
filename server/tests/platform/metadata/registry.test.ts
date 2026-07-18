@@ -11,10 +11,11 @@ import { MetadataRegistry } from "../../../src/platform/metadata/registry.js";
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 
 describe("MetadataRegistry registration and retrieval", () => {
-  it("registers all eight canonical business objects with real Drizzle field names", () => {
+  it("registers the canonical business objects with real Drizzle field names", () => {
     const registry = new MetadataRegistry();
     expect(registry.listObjects().map((definition) => definition.name)).toEqual([
       "Company", "Customer", "Supplier", "Invoice", "Payment", "Product", "Employee", "User",
+      "BusinessProfile",
     ]);
     expect(registry.getFields("Company").map((field) => field.name))
       .toEqual(Object.keys(getTableColumns(schema.tenants)));
@@ -32,6 +33,8 @@ describe("MetadataRegistry registration and retrieval", () => {
       .toEqual(Object.keys(getTableColumns(schema.employees)));
     expect(registry.getFields("User").map((field) => field.name))
       .toEqual(Object.keys(getTableColumns(schema.users)));
+    expect(registry.getFields("BusinessProfile").map((field) => field.name))
+      .toEqual(Object.keys(getTableColumns(schema.businessProfiles)));
   });
 
   it("retrieves immutable objects, fields, relationships and domain lists", () => {

@@ -62,6 +62,7 @@ export type MetadataFieldType =
   | "boolean"
   | "date"
   | "datetime"
+  | "json"
   | "string[]";
 
 export interface FieldValidation {
@@ -113,6 +114,10 @@ export interface ObjectDefinition {
   searchable: boolean;
   aiVisible: boolean;
   auditEnabled: boolean;
+  /** Pure cross-field rules evaluated without persistence or external calls. */
+  validation?: {
+    atLeastOneOf?: readonly (readonly string[])[];
+  };
 }
 
 export type MetadataValidationCode =

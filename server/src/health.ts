@@ -1,7 +1,7 @@
 import { emailDeliveryConfig, type EmailDeliveryConfig } from "./config.js";
 import { pool } from "./lib.js";
 
-export const EXPECTED_MIGRATION = "0051_platform_universal_audit";
+export const EXPECTED_MIGRATION = "0052_business_network_directory";
 
 export interface ReadinessCheck {
   status: "pass" | "fail" | "not_required";
@@ -36,6 +36,8 @@ const migrationStatusSql = `
     AND to_regclass('public.notification_preferences') IS NOT NULL
     AND to_regclass('public.platform_events') IS NOT NULL
     AND to_regclass('public.processed_events') IS NOT NULL
+    AND to_regclass('public.profile_capabilities') IS NOT NULL
+    AND to_regclass('public.profile_views') IS NOT NULL
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'notifications'

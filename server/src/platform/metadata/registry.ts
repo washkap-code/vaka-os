@@ -107,6 +107,11 @@ function validateDefinitions(definitions: readonly ObjectDefinition[]): void {
         invalidRegistry(`${definition.name}.${relationship.name} targets unknown object ${relationship.target}`);
       }
     }
+    for (const group of definition.validation?.atLeastOneOf ?? []) {
+      if (group.length < 2 || group.some((name) => !definition.fields.some((field) => field.name === name))) {
+        invalidRegistry(`${definition.name} has an invalid atLeastOneOf validation group`);
+      }
+    }
   }
 }
 
@@ -134,6 +139,13 @@ function freezeObject(definition: ObjectDefinition): ObjectDefinition {
     fields: Object.freeze(definition.fields.map(freezeField)),
     relationships: Object.freeze(definition.relationships.map(freezeRelationship)),
     lifecycle: Object.freeze([...definition.lifecycle]),
+    validation: definition.validation
+      ? Object.freeze({
+          atLeastOneOf: definition.validation.atLeastOneOf
+            ? Object.freeze(definition.validation.atLeastOneOf.map((group) => Object.freeze([...group])))
+            : undefined,
+        })
+      : undefined,
   });
 }
 
@@ -158,6 +170,7 @@ function matchesType(type: MetadataFieldType, value: unknown): boolean {
     case "boolean": return typeof value === "boolean";
     case "date": return typeof value === "string" && isValidDate(value);
     case "datetime": return isValidDateTime(value);
+    case "json": return value !== undefined && typeof value === "object";
     case "string[]": return Array.isArray(value) && value.every((item) => typeof item === "string");
   }
 }
@@ -285,6 +298,16 @@ export class MetadataRegistry implements MetadataRegistryContract {
     }
     for (const name of Object.keys(values).sort()) {
       if (!fieldMap.has(name)) errors.push(issue(name, "unknown_field", `${name} is not defined for ${definition.name}`));
+    }
+    for (const group of definition.validation?.atLeastOneOf ?? []) {
+      const populated = group.some((name) => {
+        const value = values[name];
+        return value !== undefined && value !== null
+          && (typeof value !== "string" || value.trim().length > 0);
+      });
+      if (!populated) {
+        errors.push(issue(group.join("|"), "required", `At least one of ${group.join(", ")} is required`));
+      }
     }
 
     const frozenErrors = Object.freeze(errors.map((error) => Object.freeze(error)));

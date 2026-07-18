@@ -2132,25 +2132,40 @@ export const migrationOpenItems = pgTable("migration_open_items", {
 ]);
 
 // ---------------------------------------------------------------------------
-// PN-001 — Opt-in public business profile from the canonical Company (tenant).
+// P10-001 — Business Network profile over the canonical Company (tenant).
 // Owner-controlled; nothing public by default. Publishing freezes an explicit
-// snapshot; the directory (PN-002) reads ONLY published snapshots.
+// snapshot and the directory reads only public/published snapshots.
 // ---------------------------------------------------------------------------
 export const businessProfiles = pgTable("business_profiles", {
   id: id(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  companyId: uuid("company_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  slug: text("slug").notNull(),
+  name: text("name").notNull(),
   displayName: text("display_name").notNull(),
   tagline: text("tagline"),
   description: text("description"),
+  industryPrimary: text("industry_primary"),
+  industrySecondaryJson: jsonb("industry_secondary_json").$type<string[]>().default([]).notNull(),
   categories: jsonb("categories").default([]).notNull(),
+  country: text("country").default("ZW").notNull(),
+  region: text("region"),
   city: text("city"),
+  addressJson: jsonb("address_json").$type<Record<string, unknown>>(),
+  phone: text("phone"),
+  emailPublic: text("email_public"),
   countryCode: text("country_code").default("ZW").notNull(),
   website: text("website"),
+  logoDocumentId: uuid("logo_document_id"),
+  coverDocumentId: uuid("cover_document_id"),
+  foundedYear: integer("founded_year"),
+  employeeBand: text("employee_band"),
+  visibility: text("visibility").default("public").notNull(),
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   showContact: boolean("show_contact").default(false).notNull(),
   acceptEnquiries: boolean("accept_enquiries").default(false).notNull(),
-  status: text("status").default("DRAFT").notNull(),
+  status: text("status").$type<"draft" | "pending_review" | "published" | "suspended">().default("draft").notNull(),
   publishedSnapshot: jsonb("published_snapshot"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   publishedBy: uuid("published_by").references(() => users.id),
@@ -2159,12 +2174,54 @@ export const businessProfiles = pgTable("business_profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
   uniqueIndex("business_profiles_tenant").on(t.tenantId),
+  uniqueIndex("business_profiles_slug_unique").on(t.slug),
+  uniqueIndex("business_profiles_tenant_company_unique").on(t.tenantId, t.companyId),
+  foreignKey({
+    name: "business_profiles_logo_document_tenant_fk",
+    columns: [t.logoDocumentId, t.tenantId],
+    foreignColumns: [workspaceDocuments.id, workspaceDocuments.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "business_profiles_cover_document_tenant_fk",
+    columns: [t.coverDocumentId, t.tenantId],
+    foreignColumns: [workspaceDocuments.id, workspaceDocuments.tenantId],
+  }).onDelete("restrict"),
+  index("business_profiles_status_visibility_country").on(t.status, t.visibility, t.country),
   index("business_profiles_status_country").on(t.status, t.countryCode),
-  check("business_profiles_status_check", sql`${t.status} IN ('DRAFT', 'PUBLISHED', 'UNPUBLISHED')`),
+  check("business_profiles_company_tenant_check", sql`${t.companyId} = ${t.tenantId}`),
+  check("business_profiles_status_check", sql`${t.status} IN ('draft', 'pending_review', 'published', 'suspended')`),
+  check("business_profiles_visibility_check", sql`${t.visibility} IN ('public', 'network', 'hidden')`),
+  check("business_profiles_slug_check", sql`${t.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$' AND length(${t.slug}) BETWEEN 3 AND 120`),
+  check("business_profiles_canonical_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 120`),
   check("business_profiles_name_check", sql`length(trim(${t.displayName})) BETWEEN 1 AND 120`),
   check("business_profiles_tagline_check", sql`${t.tagline} IS NULL OR length(${t.tagline}) <= 140`),
-  check("business_profiles_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 2000`),
-  check("business_profiles_snapshot_check", sql`(${t.status} = 'PUBLISHED' AND ${t.publishedSnapshot} IS NOT NULL AND ${t.publishedAt} IS NOT NULL) OR (${t.status} <> 'PUBLISHED' AND ${t.publishedSnapshot} IS NULL)`),
+  check("business_profiles_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 5000`),
+  check("business_profiles_country_check", sql`${t.country} ~ '^[A-Z]{2}$'`),
+  check("business_profiles_founded_year_check", sql`${t.foundedYear} IS NULL OR ${t.foundedYear} BETWEEN 1000 AND 9999`),
+  check("business_profiles_employee_band_check", sql`${t.employeeBand} IS NULL OR ${t.employeeBand} IN ('1-9', '10-49', '50-249', '250-999', '1000+')`),
+  check("business_profiles_snapshot_check", sql`(${t.status} = 'published' AND ${t.publishedSnapshot} IS NOT NULL AND ${t.publishedAt} IS NOT NULL) OR (${t.status} <> 'published' AND ${t.publishedSnapshot} IS NULL)`),
+]);
+
+export const profileCapabilities = pgTable("profile_capabilities", {
+  id: id(),
+  profileId: uuid("profile_id").notNull().references(() => businessProfiles.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  name: text("name").notNull(),
+}, (t) => [
+  unique("profile_capabilities_profile_category_name_unique").on(t.profileId, t.category, t.name),
+  index("profile_capabilities_profile").on(t.profileId),
+  check("profile_capabilities_category_check", sql`length(trim(${t.category})) BETWEEN 1 AND 80`),
+  check("profile_capabilities_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 120`),
+]);
+
+export const profileViews = pgTable("profile_views", {
+  id: id(),
+  profileId: uuid("profile_id").notNull().references(() => businessProfiles.id, { onDelete: "cascade" }),
+  viewerTenantId: uuid("viewer_tenant_id").references(() => tenants.id, { onDelete: "set null" }),
+  viewedAt: timestamp("viewed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("profile_views_profile_time").on(t.profileId, t.viewedAt),
+  index("profile_views_viewer_tenant_time").on(t.viewerTenantId, t.viewedAt),
 ]);
 
 // PN-003 — consent-first directory enquiries (explicit conversion to CRM).
