@@ -19,6 +19,7 @@ import { captureReferralAttribution } from "./referrals.js";
 import { STANDARD_TRIAL_DAYS } from "./commercial.js";
 import { createMfaLoginChallenge, hasVerifiedMfa } from "./auth-security.js";
 import type { PlatformPermission } from "./platform-staff.js";
+import { autoAuditMutation } from "./universal-audit.js";
 
 const JWT_SECRET = jwtSecret();
 const ACCESS_TTL = "1h";
@@ -105,6 +106,11 @@ export async function signupTenant(opts: {
 
     await audit(tx, tenant.id, owner.id, "tenant.created", "tenant", tenant.id,
       { plan: planName, baseCurrency: opts.baseCurrency });
+    await autoAuditMutation(tx, {
+      tenantId: tenant.id, actorId: owner.id, actorType: "user",
+      action: "company.created", objectType: "Company", objectId: tenant.id,
+      before: null, after: tenant,
+    });
     return { tenant, owner };
   });
 }

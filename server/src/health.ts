@@ -1,7 +1,7 @@
 import { emailDeliveryConfig, type EmailDeliveryConfig } from "./config.js";
 import { pool } from "./lib.js";
 
-export const EXPECTED_MIGRATION = "0050_platform_event_bus";
+export const EXPECTED_MIGRATION = "0051_platform_universal_audit";
 
 export interface ReadinessCheck {
   status: "pass" | "fail" | "not_required";

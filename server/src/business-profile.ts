@@ -17,6 +17,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { audit, badRequest, conflict, db, notFound, schema } from "./lib.js";
+import { autoAuditContactRoles } from "./universal-audit.js";
 
 export const BUSINESS_CATEGORIES = [
   "agriculture", "construction", "education", "energy", "finance-and-insurance",
@@ -283,8 +284,12 @@ export async function resolveEnquiry(opts: {
         name: enquiry.senderBusiness, email: enquiry.replyEmail,
         isCustomer: true, isVendor: false,
         tags: ["directory-lead"],
-      }).returning({ id: schema.contacts.id });
+      }).returning();
       contactId = contact.id;
+      await autoAuditContactRoles(tx, {
+        tenantId: opts.tenantId, actorId: opts.userId, action: "created",
+        objectId: contact.id, before: null, after: contact,
+      });
     }
     const [updated] = await tx.update(schema.directoryEnquiries).set({
       status: opts.action === "convert" ? "CONVERTED" : "DISMISSED",

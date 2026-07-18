@@ -176,6 +176,12 @@ import {
 } from "./warehouse-settings.js";
 import { getSupplierAnalytics, supplierAnalyticsQuerySchema } from "./supplier-analytics.js";
 import { logEvent } from "./observability.js";
+import {
+  assertUniversalTimelinePermission, getUniversalTimeline, resolveUniversalObjectType,
+} from "./universal-timeline.js";
+import {
+  autoAuditContactRoles, autoAuditMutation, verifyAuditChain,
+} from "./universal-audit.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -476,6 +482,21 @@ api.get("/metadata/objects", wrap(async (req, res) => {
     && (!definition.readPermission || req.auth!.permissions.includes(definition.readPermission)));
   res.setHeader("Cache-Control", "private, no-store");
   return { registryVersion: METADATA_REGISTRY_VERSION, objects: permitted };
+}));
+
+const universalTimelineQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(100).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+}).strict();
+api.get("/objects/:type/:id/timeline", wrap(async (req, res) => {
+  const objectType = resolveUniversalObjectType(routeParam(req, "type"));
+  assertUniversalTimelinePermission(objectType, req.auth!.permissions);
+  const objectId = z.string().uuid().parse(routeParam(req, "id"));
+  const result = await getUniversalTimeline(
+    tenantId(req), objectType, objectId, universalTimelineQuerySchema.parse(req.query),
+  );
+  res.setHeader("Cache-Control", "private, no-store");
+  return result;
 }));
 
 api.post("/auth/change-password", wrap(async (req) => {
@@ -791,13 +812,22 @@ api.patch("/settings/branding", requirePermission("settings.manage"), wrap(async
     showVatNumberOnInvoices: z.boolean().optional(),
   }).parse(req.body);
   const tid = tenantId(req);
-  const [updated] = await db.update(schema.tenants).set(body).where(eq(schema.tenants.id, tid)).returning();
-  const changedFields = Object.keys(body);
-  await audit(db, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, {
-    changedFields,
-    documentPaymentDetailsChanged: changedFields.some((field) => field.startsWith("invoiceBank") || field === "invoicePaymentTerms"),
+  return db.transaction(async (tx) => {
+    const [before] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tid)).for("update");
+    if (!before) throw notFound("Tenant not found");
+    const [updated] = await tx.update(schema.tenants).set(body).where(eq(schema.tenants.id, tid)).returning();
+    const changedFields = Object.keys(body);
+    await audit(tx, tid, req.auth!.userId, "settings.branding_updated", "tenant", tid, {
+      changedFields,
+      documentPaymentDetailsChanged: changedFields.some((field) => field.startsWith("invoiceBank") || field === "invoicePaymentTerms"),
+    });
+    await autoAuditMutation(tx, {
+      tenantId: tid, actorId: req.auth!.userId, actorType: "user",
+      action: "company.updated", objectType: "Company", objectId: tid,
+      before, after: updated, ip: req.ip,
+    });
+    return updated;
   });
-  return updated;
 }));
 api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(async (req) => {
   const nullableText = (max: number) => z.string().trim().max(max)
@@ -824,17 +854,26 @@ api.patch("/settings/holding-page", requirePermission("settings.manage"), wrap(a
     }
   }).parse(req.body);
   const tid = tenantId(req);
-  const [updated] = await db.update(schema.tenants).set(body)
-    .where(eq(schema.tenants.id, tid)).returning();
-  await audit(db, tid, req.auth!.userId, "settings.holding_page_updated", "tenant", tid, {
-    signOutDestination: body.signOutDestination,
-    idleSignOutEnabled: body.idleSignOutEnabled,
-    idleSignOutMinutes: body.idleSignOutMinutes,
-    customHeading: Boolean(body.holdingPageHeading),
-    offerConfigured: Boolean(body.holdingOfferTitle || body.holdingOfferBody),
-    offerLinkConfigured: Boolean(body.holdingOfferCtaUrl),
+  return db.transaction(async (tx) => {
+    const [before] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tid)).for("update");
+    if (!before) throw notFound("Tenant not found");
+    const [updated] = await tx.update(schema.tenants).set(body)
+      .where(eq(schema.tenants.id, tid)).returning();
+    await audit(tx, tid, req.auth!.userId, "settings.holding_page_updated", "tenant", tid, {
+      signOutDestination: body.signOutDestination,
+      idleSignOutEnabled: body.idleSignOutEnabled,
+      idleSignOutMinutes: body.idleSignOutMinutes,
+      customHeading: Boolean(body.holdingPageHeading),
+      offerConfigured: Boolean(body.holdingOfferTitle || body.holdingOfferBody),
+      offerLinkConfigured: Boolean(body.holdingOfferCtaUrl),
+    });
+    await autoAuditMutation(tx, {
+      tenantId: tid, actorId: req.auth!.userId, actorType: "user",
+      action: "company.updated", objectType: "Company", objectId: tid,
+      before, after: updated, ip: req.ip,
+    });
+    return updated;
   });
-  return updated;
 }));
 api.post("/settings/logo", requirePermission("settings.manage"), wrap(async (req) => {
   const { dataUrl } = z.object({
@@ -859,10 +898,17 @@ api.post("/settings/logo", requirePermission("settings.manage"), wrap(async (req
   }
   const tid = tenantId(req);
   return db.transaction(async (tx) => {
+    const [before] = await tx.select().from(schema.tenants).where(eq(schema.tenants.id, tid)).for("update");
+    if (!before) throw notFound("Tenant not found");
     const [updated] = await tx.update(schema.tenants).set({ logoUrl: dataUrl })
       .where(eq(schema.tenants.id, tid)).returning();
     await audit(tx, tid, req.auth!.userId, "settings.logo_uploaded", "tenant", tid, {
       mediaType, bytes: bytes.length, width: width ?? null, height: height ?? null,
+    });
+    await autoAuditMutation(tx, {
+      tenantId: tid, actorId: req.auth!.userId, actorType: "user",
+      action: "company.updated", objectType: "Company", objectId: tid,
+      before, after: updated, ip: req.ip,
     });
     return { logoUrl: updated.logoUrl, mediaType, bytes: bytes.length };
   });
@@ -986,6 +1032,7 @@ api.post("/imports/contacts/:id/commit", requirePermission("imports.approve"), w
     tenantId: tenantId(req),
     actorUserId: req.auth!.userId,
     batchId: routeParam(req, "id"),
+    ip: req.ip,
   })));
 api.post("/imports/products/preview", requirePermission("imports.create"), wrap(async (req) => {
   const body = z.object({ csvText: z.string().min(1).max(1_000_000) }).parse(req.body);
@@ -1002,6 +1049,7 @@ api.post("/imports/products/:id/commit",
     tenantId: tenantId(req),
     actorUserId: req.auth!.userId,
     batchId: routeParam(req, "id"),
+    ip: req.ip,
   })));
 api.post("/imports/opening-stock/preview",
   requirePermission("imports.create"),
@@ -1256,6 +1304,10 @@ api.post("/contacts", requirePermission("crm.write"), wrap(async (req) => {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [c] = await tx.insert(schema.contacts).values({ ...body, tenantId: tid }).returning();
     await audit(tx, tid, req.auth!.userId, "contact.created", "contact", c.id);
+    await autoAuditContactRoles(tx, {
+      tenantId: tid, actorId: req.auth!.userId, action: "created", objectId: c.id,
+      before: null, after: c, ip: req.ip,
+    });
     queuePartyRoleEvents(queue, {
       tenantId: tid, actorUserId: req.auth!.userId, contactId: c.id, change: "created", after: c,
     });
@@ -1276,6 +1328,10 @@ api.patch("/contacts/:id", requirePermission("crm.write"), wrap(async (req) => {
         isNull(schema.contacts.deletedAt))).returning();
     if (!c) throw notFound("Contact not found");
     await audit(tx, tid, req.auth!.userId, "contact.updated", "contact", c.id);
+    await autoAuditContactRoles(tx, {
+      tenantId: tid, actorId: req.auth!.userId, action: "updated", objectId: c.id,
+      before, after: c, ip: req.ip,
+    });
     queuePartyRoleEvents(queue, {
       tenantId: tid, actorUserId: req.auth!.userId, contactId: c.id, change: "updated", before, after: c,
     });
@@ -1295,6 +1351,7 @@ api.post("/contacts/bulk", requirePermission("crm.write"), wrap(async (req) => {
   }).strict().parse(req.body);
   return bulkUpdateContacts({
     tenantId: tenantId(req), actorUserId: req.auth!.userId, ids: body.ids, operation: body.operation,
+    ip: req.ip,
   });
 }));
 api.post("/contacts/deletions", requirePermission("crm.write"), wrap(async (req) => {
@@ -1304,7 +1361,7 @@ api.post("/contacts/deletions", requirePermission("crm.write"), wrap(async (req)
   if (req.auth!.isTenantOwner) assertStepUpProof(req);
   return deleteOrRequestContacts({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
-    isTenantOwner: req.auth!.isTenantOwner, ids: body.ids, reason: body.reason,
+    isTenantOwner: req.auth!.isTenantOwner, ids: body.ids, reason: body.reason, ip: req.ip,
   });
 }));
 api.get("/contacts/deletion-requests", requirePermission("crm.read"), wrap(async (req) =>
@@ -1322,7 +1379,7 @@ api.post("/contacts/deletion-requests/:requestId/decision",
     if (body.decision === "APPROVE") assertStepUpProof(req);
     return decideContactDeletionRequest({
       tenantId: tenantId(req), actorUserId: req.auth!.userId, isTenantOwner: req.auth!.isTenantOwner,
-      requestId: routeParam(req, "requestId"), ...body,
+      requestId: routeParam(req, "requestId"), ...body, ip: req.ip,
     });
   }));
 api.get("/contacts/:id/communication-preferences/email", requirePermission("crm.read"), wrap(async (req) => {
@@ -1398,6 +1455,7 @@ api.post("/suppliers", requirePermission("inventory.write"), wrap(async (req) =>
   createSupplier({
     tenantId: tenantId(req), actorUserId: req.auth!.userId,
     input: supplierCreateSchema.parse(req.body),
+    ip: req.ip,
   })));
 api.get("/suppliers/:id", requirePermission("inventory.read"), wrap(async (req) =>
   getSupplier(tenantId(req), routeParam(req, "id"))));
@@ -1405,6 +1463,7 @@ api.patch("/suppliers/:id", requirePermission("inventory.write"), wrap(async (re
   updateSupplier({
     tenantId: tenantId(req), actorUserId: req.auth!.userId, supplierId: routeParam(req, "id"),
     input: supplierUpdateSchema.parse(req.body),
+    ip: req.ip,
   })));
 
 const dealSchema = z.object({
@@ -1532,6 +1591,11 @@ api.post("/products", requirePermission("inventory.write"), wrap(async (req) => 
       taxRate: p.taxRate,
       taxJurisdiction: tenant.countryCode,
     });
+    await autoAuditMutation(tx, {
+      tenantId: tid, actorId: req.auth!.userId, actorType: "user",
+      action: "product.created", objectType: "Product", objectId: p.id,
+      before: null, after: p, ip: req.ip,
+    });
     queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${p.id}:created`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
       tenantId: tid, actorUserId: req.auth!.userId, payload: { productId: p.id, change: "created" } });
     queue({ id: `${DOMAIN_EVENTS.PRODUCT_CREATED}:${p.id}`, type: DOMAIN_EVENTS.PRODUCT_CREATED,
@@ -1582,6 +1646,11 @@ api.patch("/products/:id/reorder-rule", requirePermission("inventory.write"), wr
       previousReorderLevel: existing.reorderLevel,
       reorderLevel: product.reorderLevel,
       alertsEnabled: product.reorderLevel > 0 && product.trackStock && product.isActive,
+    });
+    await autoAuditMutation(tx, {
+      tenantId: tid, actorId: req.auth!.userId, actorType: "user",
+      action: "product.updated", objectType: "Product", objectId: product.id,
+      before: existing, after: product, ip: req.ip,
     });
     queue({
       id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${product.id}:updated:${product.reorderLevel}`,
@@ -2318,11 +2387,11 @@ api.get("/payroll/employees", requirePermission("payroll.read"), wrap(async (req
   listEmployees(tenantId(req))));
 api.post("/payroll/employees", requirePermission("payroll.manage"), wrap(async (req) => {
   const input = employeeInputSchema.parse(req.body);
-  return createEmployee(tenantId(req), req.auth!.userId, input);
+  return createEmployee(tenantId(req), req.auth!.userId, input, req.ip);
 }));
 api.patch("/payroll/employees/:id", requirePermission("payroll.manage"), wrap(async (req) => {
   const input = employeeUpdateSchema.parse(req.body);
-  return updateEmployee(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), input);
+  return updateEmployee(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"), input, req.ip);
 }));
 
 api.get("/payroll/runs", requirePermission("payroll.read"), wrap(async (req) =>
@@ -2745,6 +2814,23 @@ const platformEventQuerySchema = z.object({
 api.get("/platform/events", requirePlatformPermission("platform.operations.read"), wrap(async (req) => {
   const query = platformEventQuerySchema.parse(req.query);
   return listPlatformEvents(query.tenantId, query);
+}));
+api.get("/platform/audit/verify", requirePlatformPermission("platform.tenant_audit.read"), wrap(async (req, res) => {
+  const { tenantId: verifiedTenantId } = z.object({ tenantId: z.string().uuid() }).strict().parse(req.query);
+  const result = await verifyAuditChain(verifiedTenantId);
+  await db.insert(schema.platformAuditLogs).values({
+    userId: req.auth!.userId,
+    action: "platform.tenant_audit_chain_verified",
+    metadata: {
+      verifiedTenantId,
+      valid: result.valid,
+      checked: result.checked,
+      brokenAt: result.brokenAt,
+      reason: result.reason,
+    },
+  });
+  res.setHeader("Cache-Control", "private, no-store");
+  return result;
 }));
 api.get("/platform/operations/email-failures/today",
   requirePlatformPermission("platform.operations.read"),

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { audit, conflict, db, notFound, schema, type DB } from "./lib.js";
 import { queuePartyRoleEvents } from "./party-events.js";
 import { runWithPostCommitEvents } from "./platform/events/index.js";
+import { autoAuditContactRoles } from "./universal-audit.js";
 
 const nullableText = (max: number) => z.string().trim().max(max).optional().nullable();
 const supplierCode = z.string().trim().min(1).max(50)
@@ -102,6 +103,7 @@ export async function createSupplier(opts: {
   tenantId: string;
   actorUserId: string;
   input: SupplierCreate;
+  ip?: string | null;
 }) {
   try {
     return await runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
@@ -115,6 +117,10 @@ export async function createSupplier(opts: {
       await audit(tx, opts.tenantId, opts.actorUserId, "supplier.created", "contact", supplier.id, {
         isCustomer: supplier.isCustomer,
         supplierCodeConfigured: Boolean(supplier.supplierCode),
+      });
+      await autoAuditContactRoles(tx, {
+        tenantId: opts.tenantId, actorId: opts.actorUserId, action: "created",
+        objectId: supplier.id, before: null, after: supplier, ip: opts.ip,
       });
       queuePartyRoleEvents(queue, {
         tenantId: opts.tenantId,
@@ -136,6 +142,7 @@ export async function updateSupplier(opts: {
   actorUserId: string;
   supplierId: string;
   input: SupplierUpdate;
+  ip?: string | null;
 }) {
   try {
     return await runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
@@ -151,6 +158,10 @@ export async function updateSupplier(opts: {
       await audit(tx, opts.tenantId, opts.actorUserId, "supplier.updated", "contact", supplier.id, {
         isCustomer: supplier.isCustomer,
         supplierCodeConfigured: Boolean(supplier.supplierCode),
+      });
+      await autoAuditContactRoles(tx, {
+        tenantId: opts.tenantId, actorId: opts.actorUserId, action: "updated",
+        objectId: supplier.id, before, after: supplier, ip: opts.ip,
       });
       queuePartyRoleEvents(queue, {
         tenantId: opts.tenantId,

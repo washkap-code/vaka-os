@@ -26,6 +26,7 @@ import type {
   PayeTable, PayrollConfig, SocialSecurityRule,
 } from "./platform/localisation/types.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import { autoAuditMutation } from "./universal-audit.js";
 
 // ---------------------------------------------------------------------------
 // Input validation
@@ -279,7 +280,7 @@ export async function listEmployees(tenantId: string) {
 }
 
 export async function createEmployee(
-  tenantId: string, userId: string, input: z.infer<typeof employeeInputSchema>,
+  tenantId: string, userId: string, input: z.infer<typeof employeeInputSchema>, ip?: string | null,
 ) {
   const tenant = await tenantBaseCurrency(tenantId);
   if (input.currency !== tenant.baseCurrency) {
@@ -311,6 +312,11 @@ export async function createEmployee(
     await audit(tx, tenantId, userId, "payroll.employee.created", "employee", employee.id, {
       employeeNumber: employee.employeeNumber,
     });
+    await autoAuditMutation(tx, {
+      tenantId, actorId: userId, actorType: "user",
+      action: "employee.created", objectType: "Employee", objectId: employee.id,
+      before: null, after: employee, ip,
+    });
     queue({
       id: `${DOMAIN_EVENTS.EMPLOYEE_CREATED}:${employee.id}`,
       type: DOMAIN_EVENTS.EMPLOYEE_CREATED,
@@ -324,7 +330,7 @@ export async function createEmployee(
 
 export async function updateEmployee(
   tenantId: string, userId: string, employeeId: string,
-  input: z.infer<typeof employeeUpdateSchema>,
+  input: z.infer<typeof employeeUpdateSchema>, ip?: string | null,
 ) {
   const tenant = await tenantBaseCurrency(tenantId);
   if (input.currency && input.currency !== tenant.baseCurrency) {
@@ -364,6 +370,11 @@ export async function updateEmployee(
     )).returning();
     await audit(tx, tenantId, userId, "payroll.employee.updated", "employee", employeeId, {
       changedFields: Object.keys(input),
+    });
+    await autoAuditMutation(tx, {
+      tenantId, actorId: userId, actorType: "user",
+      action: "employee.updated", objectType: "Employee", objectId: employeeId,
+      before: current, after: updated, ip,
     });
     return updated;
   });

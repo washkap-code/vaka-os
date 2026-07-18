@@ -390,6 +390,40 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
 
+// P1-006 — append-only universal object evidence. Inserts must go through
+// vaka_append_audit_log(), which serializes each tenant chain and computes the
+// SHA-256 hash. The migration also blocks UPDATE/DELETE at database level.
+export const auditLog = pgTable("audit_log", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  actorId: uuid("actor_id"),
+  actorType: text("actor_type").$type<"user" | "system" | "ai">().notNull(),
+  action: text("action").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id"),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown>>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown>>(),
+  source: text("source").notNull(),
+  ip: text("ip"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
+  hash: text("hash").notNull(),
+  prevHash: text("prev_hash"),
+}, (t) => [
+  index("audit_log_tenant_time").on(t.tenantId, t.occurredAt, t.id),
+  index("audit_log_tenant_object_time").on(t.tenantId, t.objectType, t.objectId, t.occurredAt),
+  uniqueIndex("audit_log_tenant_hash_unique").on(t.tenantId, t.hash),
+  uniqueIndex("audit_log_tenant_prev_hash_unique").on(t.tenantId, t.prevHash)
+    .where(sql`${t.prevHash} IS NOT NULL`),
+  check("audit_log_actor_type_check", sql`${t.actorType} IN ('user', 'system', 'ai')`),
+  check("audit_log_user_actor_check", sql`${t.actorType} <> 'user' OR ${t.actorId} IS NOT NULL`),
+  check("audit_log_action_check", sql`length(trim(${t.action})) > 0`),
+  check("audit_log_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("audit_log_source_check", sql`length(trim(${t.source})) > 0`),
+  check("audit_log_hash_check", sql`${t.hash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_prev_hash_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_hash_not_self_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} <> ${t.hash}`),
+]);
+
 // P1-005 — persist-first event facts and per-handler idempotency evidence.
 // Payloads contain closed-catalogue identifiers/minimal data only.
 export const platformEvents = pgTable("platform_events", {
