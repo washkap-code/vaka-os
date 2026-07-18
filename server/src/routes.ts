@@ -126,7 +126,7 @@ import {
 } from "./finance-report-snapshots.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { DOCUMENT_SERVICE, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
@@ -1815,6 +1815,7 @@ api.patch("/invoices/:id", requirePermission("accounting.post"), wrap(async (req
 api.post("/invoices/:id/issue", requirePermission("accounting.post"), wrap(async (req) => {
   const issued = await issueInvoice({
     tenantId: tenantId(req), invoiceId: routeParam(req, "id"), createdBy: req.auth!.userId,
+    approvalIdentity: platformKernel().container.get(IDENTITY_FACTORY).for(req.auth),
   });
   logEvent("invoice.posted", {
     requestId: req.requestId ?? null,

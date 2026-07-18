@@ -49,4 +49,24 @@ describe("post-commit domain event publisher", () => {
       errorType: "Error",
     }));
   });
+
+  it("releases transaction-scoped platform events only after work commits", async () => {
+    const order: string[] = [];
+    const result = await runWithPostCommitEvents(async (_queueDomain, queuePlatform) => {
+      queuePlatform({
+        id: "workflow.started:instance-1",
+        type: "workflow.started",
+        tenantId: "tenant-1",
+        actorUserId: "user-1",
+        occurredAt: new Date("2026-07-18T00:00:00Z"),
+        payload: { instanceId: "instance-1" },
+      });
+      order.push("transaction-committed");
+      return "committed";
+    }, async () => { throw new Error("unexpected domain event"); }, async (event) => {
+      order.push(event.type);
+    });
+    expect(result).toBe("committed");
+    expect(order).toEqual(["transaction-committed", "workflow.started"]);
+  });
 });

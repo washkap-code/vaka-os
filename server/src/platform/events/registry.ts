@@ -13,6 +13,10 @@ export const DOMAIN_EVENTS = {
   ACTIVITY_RECORDED: "activity.recorded",
   PROCUREMENT_APPROVAL_REQUESTED: "procurement.approval_requested",
   SUPPLIER_BILL_POSTED: "supplier_bill.posted",
+  WORKFLOW_STARTED: "workflow.started",
+  WORKFLOW_APPROVED: "workflow.approved",
+  WORKFLOW_REJECTED: "workflow.rejected",
+  WORKFLOW_COMPLETED: "workflow.completed",
 } as const;
 
 export type DomainEventPayloads = {
@@ -41,6 +45,46 @@ export type DomainEventPayloads = {
     number: string;
     currency: string;
     totalCents: string;
+  };
+  "workflow.started": {
+    instanceId: string;
+    definitionId: string;
+    workflowName: string;
+    objectType: string;
+    objectId: string;
+    currentStep: number;
+    status: "ACTIVE" | "COMPLETED";
+  };
+  "workflow.approved": {
+    instanceId: string;
+    definitionId: string;
+    workflowName: string;
+    objectType: string;
+    objectId: string;
+    step: number;
+    stepName: string;
+    currentStep: number;
+    status: "ACTIVE" | "COMPLETED";
+  };
+  "workflow.rejected": {
+    instanceId: string;
+    definitionId: string;
+    workflowName: string;
+    objectType: string;
+    objectId: string;
+    step: number;
+    stepName: string;
+    currentStep: number;
+    status: "REJECTED";
+  };
+  "workflow.completed": {
+    instanceId: string;
+    definitionId: string;
+    workflowName: string;
+    objectType: string;
+    objectId: string;
+    currentStep: number;
+    status: "COMPLETED";
   };
 };
 
