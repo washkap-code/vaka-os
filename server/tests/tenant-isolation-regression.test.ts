@@ -565,17 +565,24 @@ describe("tenant-only aggregates and persistence", () => {
       expect(orphaned.rows[0].count, `${table} contains an unknown tenant_id`).toBe("0");
     }
 
+    // Column pairs are zipped positionally from pg_constraint's conkey/confkey
+    // arrays. The information_schema equivalent cross-joins the child and
+    // parent column lists, which fabricates mismatched pairs (and type errors)
+    // for composite foreign keys such as PV-002's tenant-consistent FKs.
     const foreignKeys = await pool.query<{
       child_table: string; child_column: string; parent_table: string; parent_column: string;
     }>(`
-      SELECT tc.table_name AS child_table, kcu.column_name AS child_column,
-             ccu.table_name AS parent_table, ccu.column_name AS parent_column
-      FROM information_schema.table_constraints tc
-      JOIN information_schema.key_column_usage kcu
-        ON tc.constraint_name = kcu.constraint_name AND tc.constraint_schema = kcu.constraint_schema
-      JOIN information_schema.constraint_column_usage ccu
-        ON tc.constraint_name = ccu.constraint_name AND tc.constraint_schema = ccu.constraint_schema
-      WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.constraint_schema = 'public'
+      SELECT con.conrelid::regclass::text AS child_table,
+             child_att.attname AS child_column,
+             con.confrelid::regclass::text AS parent_table,
+             parent_att.attname AS parent_column
+      FROM pg_constraint con
+      JOIN LATERAL unnest(con.conkey, con.confkey) AS cols(child_num, parent_num) ON true
+      JOIN pg_attribute child_att
+        ON child_att.attrelid = con.conrelid AND child_att.attnum = cols.child_num
+      JOIN pg_attribute parent_att
+        ON parent_att.attrelid = con.confrelid AND parent_att.attnum = cols.parent_num
+      WHERE con.contype = 'f' AND con.connamespace = 'public'::regnamespace
     `);
     for (const key of foreignKeys.rows.filter(({ child_table, parent_table }) =>
       tenantTableNames.has(child_table) && tenantTableNames.has(parent_table))) {
