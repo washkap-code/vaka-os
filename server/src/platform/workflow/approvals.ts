@@ -36,6 +36,19 @@ export interface ApprovalDecisionOutcome {
   auditAction: string;
 }
 
+export interface ApprovalRevocationRequest {
+  /** Canonical subject type, e.g. "verification_badge". */
+  subjectType: string;
+  actorUserId: string;
+  segregation: readonly SegregationRule[];
+}
+
+export interface ApprovalRevocationOutcome {
+  status: "REVOKED";
+  decidedAt: Date;
+  auditAction: string;
+}
+
 /** Raised when a segregation-of-duties rule blocks the actor. Maps to 409 at the API boundary. */
 export class ApprovalPolicyViolationError extends Error {
   constructor(message: string) {
@@ -72,22 +85,40 @@ export interface PolicyEvaluationRequest {
 }
 
 export class ApprovalService {
+  private enforceSegregation(actorUserId: string, rules: readonly SegregationRule[]): void {
+    for (const rule of rules) {
+      if (rule.excludedUserId && rule.excludedUserId === actorUserId) {
+        throw new ApprovalPolicyViolationError(rule.message);
+      }
+    }
+  }
+
   /**
    * Validate segregation-of-duties and produce the canonical outcome.
    * Throws ApprovalPolicyViolationError with the first violated rule's
    * domain message; performs no I/O.
    */
   decide(request: ApprovalDecisionRequest): ApprovalDecisionOutcome {
-    for (const rule of request.segregation) {
-      if (rule.excludedUserId && rule.excludedUserId === request.actorUserId) {
-        throw new ApprovalPolicyViolationError(rule.message);
-      }
-    }
+    this.enforceSegregation(request.actorUserId, request.segregation);
     const status = request.decision === "APPROVE" ? "APPROVED" : "REJECTED";
     return {
       status,
       decidedAt: new Date(),
       auditAction: `${request.subjectType}.${status === "APPROVED" ? "approved" : "rejected"}`,
+    };
+  }
+
+  /**
+   * Record the deterministic outcome for a revocation while preserving the
+   * same segregation engine used by APPROVE/REJECT. Persistence and the
+   * mandatory reason remain domain-owned and append-only.
+   */
+  revoke(request: ApprovalRevocationRequest): ApprovalRevocationOutcome {
+    this.enforceSegregation(request.actorUserId, request.segregation);
+    return {
+      status: "REVOKED",
+      decidedAt: new Date(),
+      auditAction: `${request.subjectType}.revoked`,
     };
   }
 

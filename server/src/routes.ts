@@ -68,6 +68,12 @@ import {
   withdrawEvidenceSchema,
 } from "./verification-vault.js";
 import {
+  createVerificationDraft, decideVerificationRequest, getPlatformVerificationEvidenceContent,
+  getPlatformVerificationRequest, getVerificationStatus, listVerificationQueue,
+  revokeVerificationBadge, startVerificationReview, submitVerificationRequest,
+  verificationDecisionSchema, verificationQueueStatusSchema, verificationRevocationSchema,
+} from "./verification-workflow.js";
+import {
   directoryQuerySchema, enquirySchema, getDirectoryProfile, getMyProfile,
   listEnquiries, profileInputSchema, publishProfile, resolveEnquiry, saveProfile,
   searchDirectory, sendEnquiry, unpublishProfile,
@@ -2100,6 +2106,18 @@ api.post("/verification/evidence/:id/withdraw", requireFeature("verify.centre"),
     withdrawEvidence(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"),
       withdrawEvidenceSchema.parse(req.body).reason)));
 
+// PV-002: one tenant request at a time. Submission atomically freezes the
+// complete ACTIVE evidence set; status never exposes platform reviewer ids.
+api.get("/verification/status", requireFeature("verify.centre"),
+  requirePermission("verify.read"), wrap(async (req) =>
+    getVerificationStatus(tenantId(req))));
+api.post("/verification/requests", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    createVerificationDraft(tenantId(req), req.auth!.userId)));
+api.post("/verification/requests/:id/submit", requireFeature("verify.centre"),
+  requirePermission("verify.manage"), wrap(async (req) =>
+    submitVerificationRequest(tenantId(req), req.auth!.userId, uuidRouteParam(req, "id"))));
+
 // ---------------------------------------------------------------------------
 // PN-001: opt-in public business profile. Nothing public by default; edits
 // stay private; only the tenant OWNER can publish (freezes the snapshot the
@@ -2564,6 +2582,42 @@ api.post("/platform/staff/:id/temporary-password", requirePlatformPermission("pl
   const body = z.object({ temporaryPassword: z.string().min(12).max(256).optional() }).parse(req.body);
   return issuePlatformStaffTemporaryPassword(req.auth!.userId, routeParam(req, "id"), body.temporaryPassword);
 }));
+
+// ---------------------------------------------------------------------------
+// PV-002: platform verification review queue. Reads require the closed
+// catalogue permission; every state-changing action additionally requires a
+// fresh step-up proof. ApprovalService owns decision and SoD semantics.
+// ---------------------------------------------------------------------------
+api.get("/platform/verification/requests",
+  requirePlatformPermission("platform.verification.review"), wrap(async (req) =>
+    listVerificationQueue(
+      req.auth!.userId,
+      verificationQueueStatusSchema.optional()
+        .parse(req.query.status as string | undefined) ?? "OPEN",
+    )));
+api.get("/platform/verification/requests/:id",
+  requirePlatformPermission("platform.verification.review"), wrap(async (req) =>
+    getPlatformVerificationRequest(uuidRouteParam(req, "id"), req.auth!.userId)));
+api.get("/platform/verification/requests/:id/evidence/:snapshotId/content",
+  requirePlatformPermission("platform.verification.review"), wrap(async (req) =>
+    getPlatformVerificationEvidenceContent(
+      uuidRouteParam(req, "id"), uuidRouteParam(req, "snapshotId"),
+    )));
+api.post("/platform/verification/requests/:id/start-review",
+  requirePlatformPermission("platform.verification.review"), requireStepUp as any, wrap(async (req) =>
+    startVerificationReview(uuidRouteParam(req, "id"), req.auth!.userId)));
+api.post("/platform/verification/requests/:id/decisions",
+  requirePlatformPermission("platform.verification.review"), requireStepUp as any, wrap(async (req) =>
+    decideVerificationRequest(
+      uuidRouteParam(req, "id"), req.auth!.userId,
+      verificationDecisionSchema.parse(req.body),
+    )));
+api.post("/platform/verification/badges/:id/revoke",
+  requirePlatformPermission("platform.verification.review"), requireStepUp as any, wrap(async (req) =>
+    revokeVerificationBadge(
+      uuidRouteParam(req, "id"), req.auth!.userId,
+      verificationRevocationSchema.parse(req.body).reason,
+    )));
 
 api.get("/platform/analytics", requirePlatformPermission("platform.overview.read"), wrap(async () => {
   const [summary] = (await db.execute(sql`
