@@ -61,6 +61,25 @@ must not be imported into any registry until this gate closes; note that
 `compliance_guide`-style registry import would additionally require a
 deliberate importer extension (schema.md check 10 precedent).
 
+## IND-000B extension (same session, same branch)
+
+Commits `f0681b2` (data) and the register-update commit that follows add the
+next three industries from the Blueprint's initial list: **mining** (41
+records), **healthcare** (40) and **manufacturing** (42), under the identical
+contract and evidence discipline. Totals across all six packs: **256 records —
+78 verified external facts, 149 declared product-design records, 27 declared
+research gaps, 2 unverified external facts**; all Black Book cross-references
+resolve; validation PASS. Notable evidence anchors: the EMA effluent records
+expressly name industrial and mining operations; MCAZ premises licensing
+covers medicines retail, wholesale and manufacture; CZI anchors the
+manufacturing association link. New declared gaps include mining titles and
+mineral marketing, explosives and mine-safety regimes, health-facility
+licensing and practitioner councils, medical-aid regulation, factory
+registration/occupational safety, national standards certification, food-safety
+registration and excise duties. The content-review register was regenerated
+against data commit `f0681b2` with every human decision PENDING; the P-gate
+(content review) remains OPEN and now covers all six packs.
+
 ## Known limitations / follow-ups
 
 - Local-authority licensing is evidenced for Harare and Bulawayo only; other

@@ -1,7 +1,8 @@
 # Zimbabwe industry packs
 
-Seed knowledge for the first three Zimbabwe industry packs: **retail**,
-**construction**, and **agriculture** (IND-000).
+Seed knowledge for the first six Zimbabwe industry packs: **retail**,
+**construction** and **agriculture** (IND-000), plus **mining**,
+**healthcare** and **manufacturing** (IND-000B).
 
 Each pack contains an industry profile, a regulatory/licensing map that
 cross-references the Zimbabwe Black Book by record ID (never duplicating it),
