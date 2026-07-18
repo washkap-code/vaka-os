@@ -1,48 +1,44 @@
 # Session handoff — current state and next-session kickoff
 
-**Updated:** 2026-07-18 (session 19, Codex notification lane, branch
-`feature/platform-notification-service` at externally pushed implementation
-commit `dd9e220` and local test-hardening commit `f94470f`: **owner-issued
-MISSION P1-004 Notification Service implemented and fully verified.** NOTE the
-mission ID collides with the repository's historical P1-004 notification
-adapter mission; this block and branch identify the newer owner-issued work.
-The existing 0014 delivery-evidence table is extended additively by
-`0049_platform_notification_service.sql` with tenant-bound user, priority,
-title/body, link, object reference and read state; new
-`notification_preferences` rows are user/category/channel scoped and missing
-rows mean enabled. `NotificationService.send` now accepts the normalised
-channel/template/to/data/priority/object-reference command while retaining
-legacy input compatibility. Every existing product email call site uses this
-service; the Nodemailer provider call exists only inside the injected transport.
-The SMTP provider, sender configuration and template renderer are unchanged,
-and a parity test proves legacy/normalised requests render identically. Internal
-notifications persist; SMS and Push are non-transmitting stubs. Authenticated
-inbox APIs provide paginated/unread current-user reads, idempotent single read
-and read-all with tenant/user predicates. A workflow subscriber resolves the
-stored active-step permission and sends preference-aware, deduplicated internal
-notifications to active users whose tenant role carries it; terminal events
-have no pending recipient. Verification is green: server typecheck; focused
-unit/API/email/workflow tests; authenticated and cross-tenant proofs; runtime
-schema readiness; migration 0000–0049 replay with zero structural drift; 0049
-down/reapply with workflow tables preserved; direct-mailer and direct-table-write
-grep invariants; and exact `npm run test:full` at 102/102 files and 506/506
-tests. **DEPENDENCY TRUTH:** despite the kickoff saying P1-003 was merged, a
-fresh `git fetch origin --prune` showed `origin/main` still at PR #98 without
-P1-003. This branch was therefore created from the verified local P1-003 tip
-`ab98a30`; it intentionally contains 0048 and must merge only after P1-003 is
-pushed and merged, then be reconciled with current main. Production remains at
-0047; apply 0048 then 0049 before deploying this branch because readiness now
-requires both. **PROCESS INCIDENT:** GitHub Desktop externally committed and
-pushed most P1-004 work as `dd9e220` while verification was running; history
-was preserved. `f94470f` and this mandatory handoff still require owner push.
-**RISKS/NEXT:** workflow/event delivery is best-effort and process-local, so a
-process crash can miss an inbox notification; invoice issue currently starts
-and completes its one-step workflow in one request, so its notification proves
-the started transition rather than a long-lived waiting state; preference
-management endpoints/UI are not part of this mission. Recommended next mission:
-a transactional event outbox with idempotent notification consumption, followed
-by preference-management API/UI. No implementation blocker remains beyond
-dependency merge order, the owner push and normal hosted gates.)
+**Updated:** 2026-07-18 (session 20, Codex event-platform lane, branch
+`feature/platform-event-bus`, implementation commit `ca467bf`: **owner-issued
+MISSION P1-005 Event Bus Hardening implemented and verified.** Migration
+`0050_platform_event_bus.sql` adds tenant-scoped `platform_events` facts and
+`processed_events` handler evidence; the guarded down migration was exercised
+successfully on a disposable database clone. The composition root now uses a
+PostgreSQL-backed, persist-first bus. Named handlers check durable idempotency
+evidence, successful handlers preserve existing synchronous projections, and a
+failed handler is isolated, recorded through status/retry count and structured
+logging, retried three times with bounded in-process backoff, then marked
+`failed` without failing the originating request. All domain/workflow events
+remain queued until their owning transaction commits. `EventType` is a closed
+typed union; `docs/platform/event-catalogue.md` lists the exact 24-event union,
+payloads, publishers and subscribers and is enforced by test. Canonical minimal
+facts now cover invoice/customer/product/employee creation, invoice approval,
+and payment receipt; free-text invoice void reasons remain in audit evidence
+and are deliberately excluded from persisted event payloads. Operations staff
+with `platform.operations.read` can query a required tenant scope through
+`GET /api/v1/platform/events` with bounded pagination/status/type filters.
+Verification: migration replay `0000`–`0050` with zero structural drift;
+runtime-schema readiness; down migration; focused event/workflow/notification/
+tenant-boundary tests; root server+web typecheck; and complete server suite
+105/105 files, 515/515 tests. Local database verification used the installed
+PostgreSQL 18 runtime; hosted PostgreSQL 17 gates remain required because 17 is
+the production major. **DEPENDENCY TRUTH:** `origin/main` remained at `d473650`
+(P1-002) after a fresh fetch despite the kickoff saying P1-004 was merged. This
+branch is correctly stacked on verified local P1-004 tip `8196582`, containing
+P1-003 then P1-004. Merge/push in strict order: P1-003, P1-004, then P1-005,
+reconciling each with current main. Production remains applied through 0047;
+apply 0048, 0049 and 0050 in order before deploying this branch. **RISKS/NEXT:**
+retries are process-local; a crash can leave `pending`/`retrying` events for a
+future recovery worker, and synchronous persistence/delivery adds request-path
+latency (the definitive local full suite took 249.88s). Recommended next mission: a leased
+event recovery/replay worker and operator retry controls, without introducing
+an external broker. No implementation blocker remains beyond dependency merge
+order, owner push and hosted gates. Stale/dependency branches to reconcile:
+local `feature/platform-workflow-engine` is ahead of its remote, local
+`feature/platform-notification-service` is ahead of its remote, and this new
+P1-005 branch has no remote commit yet.)
 
 **Updated:** 2026-07-18 (session 16d, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `904cacb`: **PI18N-002 and PI18N-003 gates CLOSED by owner self-certification — ChiShona and isiNdebele are now certified, not draft.** Owner decision (Dr. Washington Kapapiro, 2026-07-18): given dialect variation across ChiShona varieties and regional isiNdebele, VAKA standardises on widely understood standard varieties and the owner certifies the four dictionary files himself, superseding the external-translator gate. Certification records: `docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md` and `.../PI18N-003/CERTIFICATION.md` — both records state honestly that the dictionaries were machine-drafted in-session and that this is owner-level product acceptance, NOT an independent professional translation review. Changes: four dictionary headers DRAFT→CERTIFIED; `languageDraftNotice` replaced by `languageReferenceNotice` ("English remains the authoritative reference version" in each language) in the account menu; landing language labels lose their draft suffixes; landing languageNotice, 'Local languages' capability and the Shona/Ndebele FAQ answer updated to certified phrasing; the pinned homepage-regression contract string updated to match. English remains the authoritative reference and runtime fallback (unchanged framework). Web-only; no server, schema or migration change; next free migration remains 0048. Verification: scoped typecheck over every file touched this round clean (full-project tsc and vite build could not complete inside the sandbox call limit this round — hosted CI remains the authoritative gate and must be green before merge); homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; runtime locale checks + override-key validation 10/10. SANDBOX NOTE: the main-checkout was switched to `test/full-suite-green` by a parallel lane mid-session, so this round was done in a dedicated worktree (`wt-pi18n`); stale unlink-blocked lock files now exist at `.git/worktrees/wt-pi18n/{HEAD.lock,index.lock}` in addition to any earlier tmp objects — the owner should delete all `.git/**/*.lock` and `.git/objects/**/tmp_obj_*` files from the host, plus the Jul-15 Finder artifacts `.git/{AUTO_MERGE 3,CHERRY_PICK_HEAD 3,MERGE_MSG 3}`. OWNER ACTIONS: (1) clean the stale git files above, (2) push `feature/pi18n-001-locale-framework` and open its PR — merge on green hosted gates, (3) prior queue unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS. RECONCILIATION: this branch was merged with origin/main (`fb91f6f`, LP-007 + PR #95) — the only conflict was this handoff file; main's session-16c LP-007 block is preserved below.)
 
@@ -119,8 +115,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the active notification branch:
-`0049_platform_notification_service.sql`. Production is currently applied through
+Highest migration in the active event-platform branch:
+`0050_platform_event_bus.sql`. Production is currently applied through
 `0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
@@ -148,14 +144,15 @@ again to the dedicated project.
 | 0047_verification_workflow | PV-002 | ✅ 2026-07-18 merged and applied to `vaka-os-prod` |
 | 0048_platform_workflow_engine | P1-003 Workflow Engine | ⚠️ TAKEN on `feature/platform-workflow-engine`; NOT applied to production; apply before deploying this branch |
 | 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
+| 0050_platform_event_bus | P1-005 Event Bus Hardening | ⚠️ TAKEN on `feature/platform-event-bus`; NOT applied to production; apply after 0049 and before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
-Migrations **0046 and 0047 are applied to production**. Migration **0048 is
-taken by the owner-issued P1-003 Workflow Engine** and migration **0049 is
-taken by the owner-issued P1-004 Notification Service**; neither is applied to
-production. Apply them in numeric order before deploying P1-004. New
-reservations continue from **0050**; coordinate them in this ledger before
+Migrations **0046 and 0047 are applied to production**. Migrations **0048**,
+**0049** and **0050** are taken by the owner-issued P1-003 Workflow Engine,
+P1-004 Notification Service and P1-005 Event Bus Hardening respectively; none
+is applied to production. Apply them in numeric order before deploying P1-005.
+New reservations continue from **0051**; coordinate them in this ledger before
 creating another migration.
 
 ## Part II verification lane
@@ -621,33 +618,29 @@ the admin password hash between reruns on the same scratch db.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 13): micro-fix and LP-006 close-out, then LP-007
+## NEXT MISSION (session 20): merge the platform stack, then recover persisted events
 
-Push the three micro-fix branches independently and merge each only after all
-hosted gates are green. LP-FIX-003 specifically needs a clean hosted
-full-server gate to replace its load-degraded local aggregate evidence. After
-deployment, externally verify the step-up flow, the two root health URLs and
-the holding-page 200/400 URL matrix. Then push/review/merge LP-006, run its
-controlled encrypted backup/non-production restore drill, and start LP-007
-only when LP-001 through LP-006 are contained in current `main`. Migration
-0046 belongs to PV-001 and 0047 is taken by PV-002; the next free number is
-0048.
+Push and merge the platform branches in strict dependency order: P1-003
+workflow, P1-004 notifications, then P1-005 events. Rebase or merge current
+`origin/main` at each review boundary and require the hosted PostgreSQL 17
+quality gates. Apply migrations 0048, 0049 and 0050 in order only after their
+corresponding branches merge. The next free migration is 0051. After P1-005 is
+contained, implement a leased recovery/replay worker for persisted
+`pending`/`retrying`/`failed` events plus permission-gated operator retry
+controls; preserve the closed catalogue, minimal payloads and broker-free
+architecture.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
-> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. The LP-FIX lane
-> is closed: all three fixes are on `origin/main` and deployed;
-> `/healthz`+`/readyz` verified in production. Migration 0046 is applied and
-> verified on `vaka-os-prod`; 0047 belongs to PV-002 and is applied only after
-> that PR merges — the next free migration number is 0048 (reserve it in the
-> ledger first). If the owner has merged the LP-006 (`ops/backup-restore`,
-> force-pushed rebase) and PV-002 (`feature/pv-002-verification-workflow`)
-> PRs: apply 0047 to `vaka-os-prod`, run the authenticated smoke checks
-> (holding-page 200/400 matrix, step-up flow), run the LP-006 operator backup
-> and restore drill, then proceed to LP-007, then the PB-003 Black Book UI
-> review (`codex/pb-003-blackbook-ui`), then Wave 2 modules per
-> `knowledge-system/13-roadmaps/MASTER-BUILD-PLAN.md` §17. Production is the
-> dedicated `vaka-os-prod` project (`ewljdjvqngxweacgwedu`). Preserve the old
-> `vaka-platform` VAKA tables through the hold ending 2026-07-23 unless the
-> owner explicitly extends it.
+> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. P1-005 Event Bus
+> Hardening is complete on `feature/platform-event-bus` above local P1-004 and
+> P1-003. Fetch and verify remote truth, then push/review/merge P1-003, P1-004
+> and P1-005 in that order with hosted PostgreSQL 17 gates green. Production is
+> applied only through 0047; apply 0048, 0049 and 0050 in order after the
+> corresponding merges. The next free migration is 0051. Then build a leased,
+> broker-free event recovery/replay worker and admin retry controls for
+> persisted pending/retrying/failed events. Preserve minimal typed payloads,
+> tenant scope, handler idempotency and post-commit dispatch. The old
+> `vaka-platform` rollback hold still ends 2026-07-23 unless the owner extends
+> it.
