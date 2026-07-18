@@ -9,6 +9,8 @@ import {
   jwtSecret,
   mfaEnrollmentAvailable,
   mfaEncryptionSecret,
+  mailEncryptionSecret,
+  mailSyncIntervalMs,
   paynowEncryptionSecret,
   paynowProviderConfig,
   platformAdminPassword,
@@ -24,6 +26,7 @@ const validProductionEnv = (overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEn
   CAPTURE_ENCRYPTION_KEY: "c".repeat(32),
   MFA_ENCRYPTION_KEY: "m".repeat(32),
   PAYNOW_ENCRYPTION_KEY: "e".repeat(32),
+  MAIL_ENCRYPTION_KEY: "l".repeat(32),
   ALLOWED_ORIGINS: "https://app.example.com",
   PUBLIC_APP_URL: "https://app.example.com",
   PAYNOW_ENABLED: "false",
@@ -154,6 +157,7 @@ describe("runtime configuration", () => {
     expect(output).toContain("CAPTURE_ENCRYPTION_KEY");
     expect(output).toContain("MFA_ENCRYPTION_KEY");
     expect(output).toContain("PAYNOW_ENCRYPTION_KEY");
+    expect(output).toContain("MAIL_ENCRYPTION_KEY");
     expect(output).toContain("SMTP configuration is incomplete");
     expect(output).not.toContain("VAKA OS API on");
   });
@@ -172,6 +176,7 @@ describe("runtime configuration", () => {
       paynowProvider: null,
       errorTracking: null,
       appVersion: "1.0.0",
+      mailSyncIntervalMs: 300000,
     });
   });
 
@@ -243,5 +248,15 @@ describe("runtime configuration", () => {
     })).toMatchObject({ integrationId: "1234", currency: "USD" });
     expect(() => paynowEncryptionSecret({ NODE_ENV: "test", JWT_SECRET: "j".repeat(64) }))
       .toThrow("PAYNOW_ENCRYPTION_KEY is required");
+  });
+
+  it("requires dedicated mail encryption and validates the sync cadence", () => {
+    expect(() => mailEncryptionSecret({ NODE_ENV: "test" }))
+      .toThrow("MAIL_ENCRYPTION_KEY is required");
+    expect(mailEncryptionSecret({ NODE_ENV: "production", MAIL_ENCRYPTION_KEY: "l".repeat(32) }))
+      .toBe("l".repeat(32));
+    expect(mailSyncIntervalMs({ NODE_ENV: "test" })).toBe(300000);
+    expect(() => mailSyncIntervalMs({ NODE_ENV: "test", MAIL_SYNC_INTERVAL_MS: "29999" }))
+      .toThrow("between 30000 and 86400000");
   });
 });

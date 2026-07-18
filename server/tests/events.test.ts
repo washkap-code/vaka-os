@@ -37,5 +37,16 @@ describe("P1-005 domain event integration", () => {
       `invoice:${tenant.tenantId}:${tenant.userId}`,
       `payment:${tenant.tenantId}:${tenant.userId}`,
     ]);
+    const persisted = await db.select({
+      eventType: schema.platformEvents.eventType,
+      objectId: schema.platformEvents.objectId,
+      status: schema.platformEvents.status,
+    }).from(schema.platformEvents).where(eq(schema.platformEvents.tenantId, tenant.tenantId));
+    expect(persisted).toEqual(expect.arrayContaining([
+      expect.objectContaining({ eventType: DOMAIN_EVENTS.INVOICE_CREATED, objectId: draft.id, status: "processed" }),
+      expect.objectContaining({ eventType: DOMAIN_EVENTS.INVOICE_ISSUED, objectId: draft.id, status: "processed" }),
+      expect.objectContaining({ eventType: DOMAIN_EVENTS.PAYMENT_RECEIVED, objectId: expect.any(String), status: "processed" }),
+      expect.objectContaining({ eventType: DOMAIN_EVENTS.PAYMENT_RECORDED, objectId: expect.any(String), status: "processed" }),
+    ]));
   });
 });

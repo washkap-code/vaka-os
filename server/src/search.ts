@@ -493,21 +493,21 @@ export function subscribeSearchIndex(bus: EventBusContract, adapter: SearchAppli
     if (event.tenantId && UUID.test(event.tenantId) && UUID.test(entityId)) return handler(event.tenantId, entityId);
   };
   bus.subscribe<DomainEventPayloads["customer.changed"]>(DOMAIN_EVENTS.CUSTOMER_CHANGED, (event) =>
-    reindex(event, event.payload.customerId, adapter.reindexCustomer.bind(adapter)));
+    reindex(event, event.payload.customerId, adapter.reindexCustomer.bind(adapter)), { handlerName: "search.customer" });
   bus.subscribe<DomainEventPayloads["supplier.changed"]>(DOMAIN_EVENTS.SUPPLIER_CHANGED, (event) =>
-    reindex(event, event.payload.supplierId, adapter.reindexSupplier.bind(adapter)));
+    reindex(event, event.payload.supplierId, adapter.reindexSupplier.bind(adapter)), { handlerName: "search.supplier" });
   bus.subscribe<DomainEventPayloads["product.changed"]>(DOMAIN_EVENTS.PRODUCT_CHANGED, (event) =>
-    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)));
+    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)), { handlerName: "search.product.changed" });
   bus.subscribe<DomainEventPayloads["invoice.changed"]>(DOMAIN_EVENTS.INVOICE_CHANGED, (event) =>
-    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)));
+    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)), { handlerName: "search.invoice.changed" });
   bus.subscribe<DomainEventPayloads["invoice.issued"]>(DOMAIN_EVENTS.INVOICE_ISSUED, (event) =>
-    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)));
+    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)), { handlerName: "search.invoice.issued" });
   bus.subscribe<DomainEventPayloads["payment.recorded"]>(DOMAIN_EVENTS.PAYMENT_RECORDED, (event) =>
-    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)));
+    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)), { handlerName: "search.payment.recorded" });
   bus.subscribe<DomainEventPayloads["invoice.voided"]>(DOMAIN_EVENTS.INVOICE_VOIDED, (event) =>
-    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)));
+    reindex(event, event.payload.invoiceId, adapter.reindexInvoice.bind(adapter)), { handlerName: "search.invoice.voided" });
   bus.subscribe<DomainEventPayloads["stock.moved"]>(DOMAIN_EVENTS.STOCK_MOVED, (event) =>
-    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)));
+    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)), { handlerName: "search.stock.moved" });
   bus.subscribe<DomainEventPayloads["stock.adjusted"]>(DOMAIN_EVENTS.STOCK_ADJUSTED, (event) =>
-    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)));
+    reindex(event, event.payload.productId, adapter.reindexProduct.bind(adapter)), { handlerName: "search.stock.adjusted" });
 }

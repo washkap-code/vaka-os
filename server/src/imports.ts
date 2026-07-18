@@ -5,6 +5,7 @@ import { audit, badRequest, conflict, db, fromCents, mulRate, schema, toCents } 
 import { postJournal, systemAccount } from "./accounting.js";
 import { recordStockMovement } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import { autoAuditContactRoles, autoAuditMutation } from "./universal-audit.js";
 import { queuePartyRoleEvents } from "./party-events.js";
 import type { TaxTreatment } from "./platform/localisation/types.js";
 import { assertCompatibleTaxRate, resolveTax, taxRateString, todayIsoDate } from "./tax.js";
@@ -503,6 +504,7 @@ export async function commitContactImport(opts: {
   tenantId: string;
   actorUserId: string;
   batchId: string;
+  ip?: string | null;
 }) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
@@ -523,11 +525,7 @@ export async function commitContactImport(opts: {
       ownerUserId: opts.actorUserId,
     }));
     const created = values.length
-      ? await tx.insert(schema.contacts).values(values).returning({
-        id: schema.contacts.id,
-        isCustomer: schema.contacts.isCustomer,
-        isVendor: schema.contacts.isVendor,
-      })
+      ? await tx.insert(schema.contacts).values(values).returning()
       : [];
     for (let index = 0; index < rows.length; index++) {
       await tx.update(schema.importRows).set({
@@ -545,6 +543,10 @@ export async function commitContactImport(opts: {
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
     for (const contact of created) {
+      await autoAuditContactRoles(tx, {
+        tenantId: opts.tenantId, actorId: opts.actorUserId, action: "created",
+        objectId: contact.id, before: null, after: contact, ip: opts.ip,
+      });
       queuePartyRoleEvents(queue, {
         tenantId: opts.tenantId, actorUserId: opts.actorUserId, contactId: contact.id,
         change: "imported", after: contact,
@@ -621,6 +623,7 @@ export async function commitProductImport(opts: {
   tenantId: string;
   actorUserId: string;
   batchId: string;
+  ip?: string | null;
 }) {
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const [claimed] = await tx.update(schema.importBatches).set({ status: "PROCESSING" }).where(and(
@@ -639,7 +642,7 @@ export async function commitProductImport(opts: {
       tenantId: opts.tenantId,
     }));
     const created = values.length
-      ? await tx.insert(schema.products).values(values).returning({ id: schema.products.id })
+      ? await tx.insert(schema.products).values(values).returning()
       : [];
     for (let index = 0; index < rows.length; index++) {
       await tx.update(schema.importRows).set({
@@ -657,9 +660,17 @@ export async function commitProductImport(opts: {
         skippedRows: claimed.invalidRows + claimed.duplicateRows,
       });
     for (const product of created) {
+      await autoAuditMutation(tx, {
+        tenantId: opts.tenantId, actorId: opts.actorUserId, actorType: "user",
+        action: "product.created", objectType: "Product", objectId: product.id,
+        before: null, after: product, ip: opts.ip,
+      });
       queue({ id: `${DOMAIN_EVENTS.PRODUCT_CHANGED}:${product.id}:imported`, type: DOMAIN_EVENTS.PRODUCT_CHANGED,
         tenantId: opts.tenantId, actorUserId: opts.actorUserId,
         payload: { productId: product.id, change: "imported" } });
+      queue({ id: `${DOMAIN_EVENTS.PRODUCT_CREATED}:${product.id}`, type: DOMAIN_EVENTS.PRODUCT_CREATED,
+        tenantId: opts.tenantId, actorUserId: opts.actorUserId,
+        payload: { productId: product.id } });
     }
     return { batch: completed, importedRows: created.length };
   }));

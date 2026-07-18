@@ -1,5 +1,141 @@
 # Session handoff — current state and next-session kickoff
 
+**Updated:** 2026-07-18 (session 22, Codex Mail lane, branch
+`feature/mail-core`, implementation commit `9e26568`: **owner-issued MISSION
+P9-001 VAKA Mail Core implemented and verified.** Migration
+`0052_mail_core.sql` adds tenant/account-scoped mailbox accounts, folders and
+UID cursors, threads, messages, DocumentService-backed attachments and
+message/thread business-object links. IMAP and SMTP configuration uses a
+dedicated, versioned AES-256-GCM envelope backed only by
+`MAIL_ENCRYPTION_KEY`; account APIs return configured flags and never return
+plaintext or ciphertext configuration. The dependency-free IMAP adapter
+supports implicit TLS/STARTTLS, folder discovery, UIDVALIDITY and incremental
+UID fetch; the single-flight interval scheduler contains account/provider
+failures and marks degraded accounts `ERROR`. MIME ingestion bounds message
+and attachment size, strips active HTML, threads by References/In-Reply-To
+before normalized-subject fallback, and auto-links Customer/Supplier email
+matches inside the tenant. SMTP send/reply sets Message-ID, In-Reply-To and
+References, then stores the accepted message in Sent. Identifier-only
+`mail.sent`/`mail.received` facts extend the closed EventType catalogue.
+Authenticated APIs provide account CRUD, thread search/read, send/reply and
+manual object links behind default-off `mail.hub`, the three Mail permissions,
+tenant scope and private/shared mailbox checks. Six Mail objects extend the
+MetadataRegistry; account create/update and message send are transactionally
+audited; linked messages appear in the Universal Timeline only when the caller
+also has mailbox visibility, and never expose bodies/addresses/attachments in
+timeline entries. Verification on isolated PostgreSQL 18: clean migration
+replay `0000`–`0052` with zero Drizzle drift; guarded `0052` down migration;
+runtime-schema readiness; focused Mail/platform contracts 50/50; endpoint
+isolation and document-adapter regressions 15/15; exact final server suite 110
+passed files plus one environment-gated skipped file, 534 passed tests plus
+three environment-gated skips (537 total); root server+web typecheck; and web
+Vite production build. The first full pass exposed and resolved nested-router
+endpoint discovery and a legacy document-error contract; the second pass is
+the definitive green result. **DEPENDENCY TRUTH:** a fresh fetch at kickoff
+showed `origin/main` still at `d473650` (P1-002), while this branch is correctly
+stacked on the verified local P1-006 handoff `1c4a182`. Push/merge/reconcile in
+strict order: P1-003, P1-004, P1-005, P1-006, then P9-001. Production is
+applied through 0047; apply 0048–0052 in order and provision
+`MAIL_ENCRYPTION_KEY` before deploying P9-001. Keep `mail.hub` off until a
+controlled pilot. **RISKS/NEXT:** no Gmail/Microsoft OAuth, webhook recovery,
+UI, malware/DLP quarantine, retention/legal hold/export, or distributed sync
+lease exists; the raw IMAP adapter needs provider-interoperability evidence;
+and SMTP acceptance can precede a rare local persistence failure because no
+queue infrastructure was authorised. Recommended next mission: P9-002 Gmail
+and Microsoft OAuth connectors with revocation, webhook authenticity, cursor
+reconciliation and provider recovery tests, after the dependency stack is
+merged. No implementation blocker remains beyond owner push, strict merge and
+migration order, production secret provisioning and hosted PostgreSQL 17
+gates. Active dependency branches to preserve are
+`feature/platform-workflow-engine`, `feature/platform-notification-service`,
+`feature/platform-event-bus`, `feature/platform-universal-audit` and this
+`feature/mail-core`; several do not yet have current remote tips.)
+
+**Previous:** 2026-07-18 (session 21, Codex universal-audit lane, branch
+`feature/platform-universal-audit`, implementation commit `ba0e12b`:
+**owner-issued MISSION P1-006 Universal Audit & Timeline implemented and
+verified.** Migration `0051_platform_universal_audit.sql` adds the singular,
+tenant-scoped `audit_log` ledger without modifying the existing plural
+`audit_logs` finance evidence table. A same-transaction database trigger
+mirrors every authoritative legacy/finance append into the universal ledger;
+canonical Company, Customer, Supplier, Product and Employee create/update/
+delete paths additionally record metadata-registry-derived changed-field
+snapshots through a transaction-scoped helper. Per-tenant writers serialize on
+an advisory lock and SHA-256-chain `prev_hash + canonical record content`.
+UPDATE and DELETE are blocked by revoked public grants plus a database trigger.
+`GET /api/v1/objects/:type/:id/timeline` supports all eight canonical objects
+and merges universal audit entries, `platform_events`, `workflow_actions` and
+bounded notification facts in reverse chronology with pagination, tenant
+scope, object permissions and API-exposed-field filtering; Invoice/Payment
+history requires `accounting.read`. Platform staff with
+`platform.tenant_audit.read` can run
+`GET /api/v1/platform/audit/verify?tenantId=<uuid>`; the endpoint reports chain
+integrity without exposing hashes or record content. The guarded down migration
+was exercised on a disposable database and removed only `audit_log`, preserving
+legacy `audit_logs`; it correctly refuses to discard non-derived auto-audit
+evidence. Verification on isolated PostgreSQL 18: clean replay `0000`–`0051`
+with zero Drizzle drift; runtime-schema readiness; idempotent test-control
+installer; append-only/tamper, five-object CRUD diff, finance mirror, timeline
+merge/order/pagination/permission/cross-tenant tests; focused supplier/audit
+11/11; root server+web typecheck; web Vite production build; and exact final
+server suite 107/107 files, 523/523 tests (290.15s). Hosted PostgreSQL 17 remains
+the production-major gate. **DEPENDENCY TRUTH:** after a fresh fetch,
+`origin/main` remains `d473650` (P1-002); P1-003, P1-004 and P1-005 are verified
+local dependency commits but are not all present remotely. This branch is
+correctly stacked on local P1-005 handoff `da46507`. Push/merge/reconcile in
+strict order: P1-003, P1-004, P1-005, then P1-006. Production is applied through
+0047; apply 0048, 0049, 0050 and 0051 in order before deploying P1-006.
+**RISKS/NEXT:** tenant audit appends are intentionally serialized and can add
+latency for unusually high write volume; retention/legal hold/export,
+correlation IDs and integrity-failure alerting/recovery remain later work.
+Recommended next mission: audit operations hardening (scheduled verification,
+incident alerting, retention/legal-hold policy and governed export), after the
+P1 dependency stack is merged. No implementation blocker remains beyond owner
+push, strict dependency order and hosted gates. Stale/dependency branches to
+reconcile: local `feature/platform-workflow-engine` and
+`feature/platform-notification-service` are ahead of their remotes; local
+`feature/platform-event-bus` and this P1-006 branch have no remote branch tip.)
+
+**Previous:** 2026-07-18 (session 20, Codex event-platform lane, branch
+`feature/platform-event-bus`, implementation commit `ca467bf`: **owner-issued
+MISSION P1-005 Event Bus Hardening implemented and verified.** Migration
+`0050_platform_event_bus.sql` adds tenant-scoped `platform_events` facts and
+`processed_events` handler evidence; the guarded down migration was exercised
+successfully on a disposable database clone. The composition root now uses a
+PostgreSQL-backed, persist-first bus. Named handlers check durable idempotency
+evidence, successful handlers preserve existing synchronous projections, and a
+failed handler is isolated, recorded through status/retry count and structured
+logging, retried three times with bounded in-process backoff, then marked
+`failed` without failing the originating request. All domain/workflow events
+remain queued until their owning transaction commits. `EventType` is a closed
+typed union; `docs/platform/event-catalogue.md` lists the exact 24-event union,
+payloads, publishers and subscribers and is enforced by test. Canonical minimal
+facts now cover invoice/customer/product/employee creation, invoice approval,
+and payment receipt; free-text invoice void reasons remain in audit evidence
+and are deliberately excluded from persisted event payloads. Operations staff
+with `platform.operations.read` can query a required tenant scope through
+`GET /api/v1/platform/events` with bounded pagination/status/type filters.
+Verification: migration replay `0000`–`0050` with zero structural drift;
+runtime-schema readiness; down migration; focused event/workflow/notification/
+tenant-boundary tests; root server+web typecheck; and complete server suite
+105/105 files, 515/515 tests. Local database verification used the installed
+PostgreSQL 18 runtime; hosted PostgreSQL 17 gates remain required because 17 is
+the production major. **DEPENDENCY TRUTH:** `origin/main` remained at `d473650`
+(P1-002) after a fresh fetch despite the kickoff saying P1-004 was merged. This
+branch is correctly stacked on verified local P1-004 tip `8196582`, containing
+P1-003 then P1-004. Merge/push in strict order: P1-003, P1-004, then P1-005,
+reconciling each with current main. Production remains applied through 0047;
+apply 0048, 0049 and 0050 in order before deploying this branch. **RISKS/NEXT:**
+retries are process-local; a crash can leave `pending`/`retrying` events for a
+future recovery worker, and synchronous persistence/delivery adds request-path
+latency (the definitive local full suite took 249.88s). Recommended next mission: a leased
+event recovery/replay worker and operator retry controls, without introducing
+an external broker. No implementation blocker remains beyond dependency merge
+order, owner push and hosted gates. Stale/dependency branches to reconcile:
+local `feature/platform-workflow-engine` is ahead of its remote, local
+`feature/platform-notification-service` is ahead of its remote, and this new
+P1-005 branch has no remote commit yet.)
+
 **Updated:** 2026-07-18 (session 16d, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `904cacb`: **PI18N-002 and PI18N-003 gates CLOSED by owner self-certification — ChiShona and isiNdebele are now certified, not draft.** Owner decision (Dr. Washington Kapapiro, 2026-07-18): given dialect variation across ChiShona varieties and regional isiNdebele, VAKA standardises on widely understood standard varieties and the owner certifies the four dictionary files himself, superseding the external-translator gate. Certification records: `docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md` and `.../PI18N-003/CERTIFICATION.md` — both records state honestly that the dictionaries were machine-drafted in-session and that this is owner-level product acceptance, NOT an independent professional translation review. Changes: four dictionary headers DRAFT→CERTIFIED; `languageDraftNotice` replaced by `languageReferenceNotice` ("English remains the authoritative reference version" in each language) in the account menu; landing language labels lose their draft suffixes; landing languageNotice, 'Local languages' capability and the Shona/Ndebele FAQ answer updated to certified phrasing; the pinned homepage-regression contract string updated to match. English remains the authoritative reference and runtime fallback (unchanged framework). Web-only; no server, schema or migration change; next free migration remains 0048. Verification: scoped typecheck over every file touched this round clean (full-project tsc and vite build could not complete inside the sandbox call limit this round — hosted CI remains the authoritative gate and must be green before merge); homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; runtime locale checks + override-key validation 10/10. SANDBOX NOTE: the main-checkout was switched to `test/full-suite-green` by a parallel lane mid-session, so this round was done in a dedicated worktree (`wt-pi18n`); stale unlink-blocked lock files now exist at `.git/worktrees/wt-pi18n/{HEAD.lock,index.lock}` in addition to any earlier tmp objects — the owner should delete all `.git/**/*.lock` and `.git/objects/**/tmp_obj_*` files from the host, plus the Jul-15 Finder artifacts `.git/{AUTO_MERGE 3,CHERRY_PICK_HEAD 3,MERGE_MSG 3}`. OWNER ACTIONS: (1) clean the stale git files above, (2) push `feature/pi18n-001-locale-framework` and open its PR — merge on green hosted gates, (3) prior queue unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS. RECONCILIATION: this branch was merged with origin/main (`fb91f6f`, LP-007 + PR #95) — the only conflict was this handoff file; main's session-16c LP-007 block is preserved below.)
 
 **Previous:** 2026-07-18 (session 16b, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `1d73033`: **PI18N-001 locale framework BUILT — draft ChiShona (sn) and isiNdebele (nd) now render across the workspace and the public site.** Web-only; no server, schema or migration change (next free migration remains 0048). New `web/src/locales/index.ts`: English (`app.en.ts`/`home.en.ts`) stays the authoritative baseline; sn/nd are partial override dictionaries deep-merged over English at runtime with per-key English fallback, so untranslated keys never break the UI. The active dictionary is updated IN PLACE (object identity preserved at every level) because several modules capture subtrees at module scope (`const copy = appEnglish.stepUp` etc.); `App.tsx`'s module-scope `AGEING_BUCKET_LABELS` became a lazy `ageingBucketLabels()` for the same reason. All 12 `appEnglish` import sites now alias the live dictionary (`import { appStrings as appEnglish } from "../locales"`) — zero call-site churn. Language preference persists in the existing shared `vaka_home_language` key; the landing selector (previously stored the choice but always rendered English) now renders the selected language via `homeCopyFor(locale)` and syncs the shared store; a new switcher in the workspace account menu (EN/ChiShona/isiNdebele + draft notice) triggers `<App key={locale}/>` remount from `main.tsx`. HONESTY CONTRACT UPDATED WITH BEHAVIOUR: `home.en.ts` languageNotice/labels/FAQ/'Local languages' copy now state that drafts are AVAILABLE pending native-speaker review, and the pinned contract string in `scripts/homepage-regression.test.mjs` was updated to match. Coverage: app sn 842 and nd 842 of 1,592 keys (all core flows — shell/nav/search/notifications, auth/step-up/holding, dashboard, contacts, suppliers, deals, products, invoices, tasks, documents, blackbook, payroll, billing, settings core, activity, imports core, reports core); the VAKA-staff `platformAdmin` console is DELIBERATELY English-only; home 93/148. **PI18N-002/PI18N-003 gate P remains OPEN: both dictionaries are machine-assisted DRAFTS and must be certified by qualified native-speaker translators before leaving draft labelling.** CORRECTION to the parallel session-16 note below: the untracked `web/src/locales/*` files it attributed to the PN-UI lane were THIS lane's PI18N-001 work in progress, now committed on this branch — no PN-UI relocation is needed for them. Verification: web typecheck clean; homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; `vite build` green in a Linux clean-room copy (the sandbox mount's macOS `node_modules` cannot run rolldown — not a regression); 13 runtime locale checks (translation, fallback, captured-subtree liveness, placeholder preservation, key-structure parity) plus override-key validation all pass. SANDBOX INCIDENTS: (1) mid-session, all tracked-file edits in the main worktree were externally reverted once while untracked files survived (consistent with a GitHub Desktop discard during the parallel lane's merge work) — changes were re-applied and re-verified; (2) a stale `.git/index.lock` (09:35) plus git tmp objects could not be unlinked from the sandbox (host-mount restriction) — commits were made with a detached `GIT_INDEX_FILE`; the owner should delete `.git/index.lock` and any `.git/objects/**/tmp_obj_*` files from the host, after which `git status` will read clean. OWNER ACTIONS: (1) delete the stale lock/tmp files above, (2) push `feature/pi18n-001-locale-framework` via GitHub Desktop and open its PR — merge on green hosted gates (routes untouched; no manifest impact expected), (3) engage qualified ChiShona and isiNdebele translators to certify the four dictionary files (PI18N-002/003), (4) prior queue below unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
@@ -75,9 +211,9 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the reconciled committed baseline:
-`0046_verification_vault.sql`. Production is currently applied through the
-effective `0045_schema_runtime_alignment.sql` baseline.
+Highest migration in the active Mail branch:
+`0052_mail_core.sql`. Production is currently applied through
+`0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
 0042–0045 production debt; those migrations do not need to be hand-applied
@@ -101,25 +237,32 @@ again to the dedicated project.
 | 0044_document_approvals | PD-002 | ✅ 2026-07-16 dedicated-project baseline |
 | 0045_schema_runtime_alignment | LP-001 | ✅ 2026-07-16 dedicated-project baseline verified |
 | 0046_verification_vault | PV-001 | ✅ 2026-07-17 applied + verified on `vaka-os-prod` (table empty, 4 indexes, roles backfilled) |
-| 0047_verification_workflow | PV-002 | ⚠️ TAKEN on `feature/pv-002-verification-workflow` (`b3e26f4`) — NOT on `main`, NOT applied; apply to `vaka-os-prod` after 0046 and before enabling `verify.centre` |
+| 0047_verification_workflow | PV-002 | ✅ 2026-07-18 merged and applied to `vaka-os-prod` |
+| 0048_platform_workflow_engine | P1-003 Workflow Engine | ⚠️ TAKEN on `feature/platform-workflow-engine`; NOT applied to production; apply before deploying this branch |
+| 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
+| 0050_platform_event_bus | P1-005 Event Bus Hardening | ⚠️ TAKEN on `feature/platform-event-bus`; NOT applied to production; apply after 0049 and before deploying this branch |
+| 0051_platform_universal_audit | P1-006 Universal Audit & Timeline | ⚠️ TAKEN on `feature/platform-universal-audit`; NOT applied to production; apply after 0050 and before deploying this branch |
+| 0052_mail_core | P9-001 VAKA Mail Core | ⚠️ TAKEN on `feature/mail-core`; NOT applied to production; apply after 0051 and provision `MAIL_ENCRYPTION_KEY` before deploying this branch |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
-Migration **0046 belongs to PV-001** and is not yet applied to production.
-Migration **0047 is taken by PV-002** (committed on
-`feature/pv-002-verification-workflow` at `b3e26f4`; not yet on `main` or
-production). New reservations continue from **0048**; coordinate them in this
-ledger before creating another migration.
+Migrations **0046 and 0047 are applied to production**. Migrations **0048**,
+**0049**, **0050**, **0051** and **0052** are taken by the owner-issued P1-003
+Workflow Engine, P1-004 Notification Service, P1-005 Event Bus Hardening,
+P1-006 Universal Audit & Timeline and P9-001 Mail Core respectively; none is
+applied to production. Apply them in numeric order before deploying P9-001.
+New reservations continue from **0053**; coordinate them in this ledger before
+creating another migration.
 
 ## Part II verification lane
 
-- **PV-001 implemented and verified:** the verification evidence vault ships
+- **PV-001 implemented, merged and production-applied:** the verification evidence vault ships
   dark behind `verify.centre`; flag-off APIs fail closed and its table ships
   empty. Implementation commit `be455d4`, merged-baseline handoff `9a3b4ce`.
-  Migration `0046_verification_vault.sql` is taken and must be applied to
-  `vaka-os-prod` before enablement. Completion report:
+  Migration `0046_verification_vault.sql` is applied to `vaka-os-prod`.
+  Completion report:
   `docs/engineering/mission-packs/PV-001/COMPLETION.md`.
-- **PV-002 implemented and pushed (2026-07-17, session 14) — awaiting PR/CI:**
+- **PV-002 implemented, merged and production-applied:**
   business verification workflow on `feature/pv-002-verification-workflow`,
   implementation `b3e26f4` (sits on top of the two marketing-site commits now
   on `main`). Tenant request state machine DRAFT→SUBMITTED→IN_REVIEW→
@@ -130,11 +273,8 @@ ledger before creating another migration.
   enforced in service code and by a DB transition trigger. Reviewer-anonymous
   tenant status; tenant-isolated read model for later PV-003. Ships dark
   behind `verify.centre`; VERIFIED policy meaning stays behind the P-gate.
-  Migration `0047_verification_workflow.sql` is TAKEN on the branch, NOT on
-  `main` and NOT applied to production. Server+web typecheck clean; run the
-  DB-backed server suite under CI or a local test env before merge (the local
-  raw `npm run test` aborts without `DATABASE_URL`/encryption keys — not a
-  regression). Mission pack: `docs/engineering/mission-packs/PV-002/README.md`.
+  Migration `0047_verification_workflow.sql` is merged and applied to
+  production. Mission pack: `docs/engineering/mission-packs/PV-002/README.md`.
 - **Coordination:** PV-001 removed the tracked, unreferenced Finder artifact
   `server/src/platform/workflow/approvals 4.ts`. PB-003 Black Book UI was
   issued to the Codex lane with an explicit no-migration constraint. LP-007
@@ -354,6 +494,12 @@ their independent reviews and merges are complete. The
 baseline; preserve its branch until the owner push is confirmed, then it is
 safe to delete after review.
 
+`feature/platform-metadata-registry` is contained in `origin/main` through PR
+#98 and is safe to delete after owner review. `feature/platform-workflow-engine`
+is not yet contained in `origin/main` and must be pushed/merged first.
+`feature/platform-notification-service` is the active stacked branch; preserve
+it, push its two local commits, and merge it only after P1-003.
+
 ## Verification pattern that works (Linux sandbox, 45s bash cap)
 
 Copy `server/` to `/tmp` (exclude node_modules), `npm install`, install
@@ -571,34 +717,32 @@ the admin password hash between reruns on the same scratch db.
 5. P7-003 secure report email delivery (mission pack exists, unbuilt).
 6. Accountant evidence pack + legal pages; pilot; P10 launch checklist.
 
-## NEXT MISSION (session 13): micro-fix and LP-006 close-out, then LP-007
+## NEXT MISSION (session 22): merge the platform stack, then P9-002 OAuth
 
-Push the three micro-fix branches independently and merge each only after all
-hosted gates are green. LP-FIX-003 specifically needs a clean hosted
-full-server gate to replace its load-degraded local aggregate evidence. After
-deployment, externally verify the step-up flow, the two root health URLs and
-the holding-page 200/400 URL matrix. Then push/review/merge LP-006, run its
-controlled encrypted backup/non-production restore drill, and start LP-007
-only when LP-001 through LP-006 are contained in current `main`. Migration
-0046 belongs to PV-001 and 0047 is taken by PV-002; the next free number is
-0048.
+Push and merge the platform branches in strict dependency order: P1-003
+workflow, P1-004 notifications, P1-005 events, P1-006 audit/timeline, then
+P9-001 Mail Core. Reconcile current `origin/main` at each review boundary and
+require hosted PostgreSQL 17 gates. Apply migrations 0048–0052 in order only
+after their corresponding branches merge; provision `MAIL_ENCRYPTION_KEY`
+before the Mail deploy and leave `mail.hub` off pending a controlled pilot.
+The next free migration is 0053. Then execute P9-002: Gmail and Microsoft OAuth
+connectors with least-privilege scopes, encrypted/revocable tokens, webhook
+authenticity, cursor reconciliation, provider recovery evidence and no change
+to the P9-001 mailbox/API contracts.
 
 ## Kickoff prompt for the next session (copy-paste)
 
 > You are my technical lead for VAKA OS. Read
-> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. The LP-FIX lane
-> is closed: all three fixes are on `origin/main` and deployed;
-> `/healthz`+`/readyz` verified in production. Migration 0046 is applied and
-> verified on `vaka-os-prod`; 0047 belongs to PV-002 and is applied only after
-> that PR merges — the next free migration number is 0048 (reserve it in the
-> ledger first). If the owner has merged the LP-006 (`ops/backup-restore`,
-> force-pushed rebase) and PV-002 (`feature/pv-002-verification-workflow`)
-> PRs: apply 0047 to `vaka-os-prod`, run the authenticated smoke checks
-> (holding-page 200/400 matrix, step-up flow), run the LP-006 operator backup
-> and restore drill, then proceed to LP-007, then the PB-003 Black Book UI
-> review (`codex/pb-003-blackbook-ui`), then Wave 2 modules per
-> `knowledge-system/13-roadmaps/MASTER-BUILD-PLAN.md` §17. Production is the
-> dedicated `vaka-os-prod` project (`ewljdjvqngxweacgwedu`). Preserve the old
-> `vaka-platform` VAKA tables through the hold ending 2026-07-23 unless the
-> owner explicitly extends it.
-
+> `docs/engineering/SESSION-HANDOFF.md` and `AGENTS.md` first. P9-001 VAKA Mail
+> Core is complete on `feature/mail-core`, stacked on the verified local
+> P1-003→P1-006 dependency chain. Fetch and verify remote truth, then
+> push/review/merge P1-003, P1-004, P1-005, P1-006 and P9-001 in that order
+> with hosted PostgreSQL 17 gates green. Production is applied only through
+> 0047; apply 0048–0052 in order after the corresponding merges, provision
+> `MAIL_ENCRYPTION_KEY`, and keep `mail.hub` off pending pilot approval. The
+> next free migration is 0053. Then implement P9-002 Gmail/Microsoft OAuth with
+> least-privilege scopes, revocation, authenticated webhooks, cursor
+> reconciliation and provider recovery tests. Preserve tenant/mailbox scope,
+> encrypted secrets, minimal typed events and the existing API contract. The old
+> `vaka-platform` rollback hold still ends 2026-07-23 unless the owner extends
+> it.

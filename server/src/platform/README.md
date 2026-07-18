@@ -2,8 +2,8 @@
 
 The Platform Kernel is an additive boundary for reusable VAKA infrastructure.
 It provides contracts and small, dependency-injected service adapters for
-identity, audit, events, workflows, notifications, documents, search, and
-metadata.
+identity, audit, events, workflows, notifications, documents, search,
+metadata, and the composition boundary used by VAKA Mail.
 
 P1-001 deliberately does not wire these services into the existing Express
 routes or business modules. Existing authentication, audit, finance,
@@ -19,6 +19,9 @@ not hidden inside service implementations.
 
 ## Status
 
-This is a foundation, not a claim that every Platform capability is live in
-production. The in-memory event, workflow, and metadata adapters are testable
-reference implementations only.
+This remains a foundation, not a claim that every Platform capability is live
+in production. Events, workflows, notifications, audit/timeline and metadata
+have PostgreSQL-backed application adapters in their respective completed P1
+missions. VAKA Mail is an internal, default-off consumer of those services;
+its provider, operations and release gates are recorded in
+`docs/platform/mail-core.md`.

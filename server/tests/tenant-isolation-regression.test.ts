@@ -270,9 +270,10 @@ beforeAll(async () => {
 
 describe("endpoint inventory contract", () => {
   it("enumerates every Express endpoint and requires an isolation vector", async () => {
-    const [appSource, source] = await Promise.all([
+    const [appSource, source, mailSource] = await Promise.all([
       readFile(new URL("../src/app.ts", import.meta.url), "utf8"),
       readFile(new URL("../src/routes.ts", import.meta.url), "utf8"),
+      readFile(new URL("../src/modules/mail/routes.ts", import.meta.url), "utf8"),
     ]);
     const appRegistration = /\bapp\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
     const registration = /\bapi\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
@@ -282,6 +283,10 @@ describe("endpoint inventory contract", () => {
     }
     for (const match of source.matchAll(registration)) {
       discovered.push(`${match[1].toUpperCase()} /api/v1${match[2]}`);
+    }
+    const mailRegistration = /\brouter\.(get|post|put|patch|delete)\(\s*[`"]([^`"]+)[`"]\s*,/g;
+    for (const match of mailSource.matchAll(mailRegistration)) {
+      discovered.push(`${match[1].toUpperCase()} /api/v1/mail${match[2]}`);
     }
     const manifested = endpointCoverageManifest.map(({ method, path }) => `${method} ${path}`);
     expect([...new Set(manifested)].sort()).toEqual([...new Set(discovered)].sort());

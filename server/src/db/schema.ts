@@ -9,6 +9,8 @@ import {
   pgEnum, unique, uniqueIndex, index, check, foreignKey, bigint as pgBigint,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { WorkflowStepDefinition } from "../platform/workflow/types.js";
+import type { DomainEventPayloads, EventType } from "../platform/events/registry.js";
 
 // ---------- enums ----------
 export const tenantStatus = pgEnum("tenant_status", ["TRIAL", "ACTIVE", "PAST_DUE", "SUSPENDED", "CLOSED"]);
@@ -388,26 +390,323 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: createdAt(),
 }, (t) => [index("audit_tenant_time").on(t.tenantId, t.createdAt)]);
 
+// P1-006 — append-only universal object evidence. Inserts must go through
+// vaka_append_audit_log(), which serializes each tenant chain and computes the
+// SHA-256 hash. The migration also blocks UPDATE/DELETE at database level.
+export const auditLog = pgTable("audit_log", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  actorId: uuid("actor_id"),
+  actorType: text("actor_type").$type<"user" | "system" | "ai">().notNull(),
+  action: text("action").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id"),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown>>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown>>(),
+  source: text("source").notNull(),
+  ip: text("ip"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
+  hash: text("hash").notNull(),
+  prevHash: text("prev_hash"),
+}, (t) => [
+  index("audit_log_tenant_time").on(t.tenantId, t.occurredAt, t.id),
+  index("audit_log_tenant_object_time").on(t.tenantId, t.objectType, t.objectId, t.occurredAt),
+  uniqueIndex("audit_log_tenant_hash_unique").on(t.tenantId, t.hash),
+  uniqueIndex("audit_log_tenant_prev_hash_unique").on(t.tenantId, t.prevHash)
+    .where(sql`${t.prevHash} IS NOT NULL`),
+  check("audit_log_actor_type_check", sql`${t.actorType} IN ('user', 'system', 'ai')`),
+  check("audit_log_user_actor_check", sql`${t.actorType} <> 'user' OR ${t.actorId} IS NOT NULL`),
+  check("audit_log_action_check", sql`length(trim(${t.action})) > 0`),
+  check("audit_log_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("audit_log_source_check", sql`length(trim(${t.source})) > 0`),
+  check("audit_log_hash_check", sql`${t.hash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_prev_hash_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} ~ '^[0-9a-f]{64}$'`),
+  check("audit_log_hash_not_self_check", sql`${t.prevHash} IS NULL OR ${t.prevHash} <> ${t.hash}`),
+]);
+
+// P1-005 — persist-first event facts and per-handler idempotency evidence.
+// Payloads contain closed-catalogue identifiers/minimal data only.
+export const platformEvents = pgTable("platform_events", {
+  id: text("id").primaryKey(),
+  tenantId: uuid("tenant_id").references(() => tenants.id, { onDelete: "restrict" }),
+  eventType: text("event_type").$type<EventType>().notNull(),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
+  actorId: uuid("actor_id"),
+  payloadJson: jsonb("payload_json").$type<DomainEventPayloads[EventType]>().notNull(),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
+  status: text("status").default("pending").notNull(),
+  retryCount: integer("retry_count").default(0).notNull(),
+}, (t) => [
+  index("platform_events_tenant_time").on(t.tenantId, t.occurredAt),
+  index("platform_events_tenant_status").on(t.tenantId, t.status, t.occurredAt),
+  check("platform_events_event_type_check", sql`length(trim(${t.eventType})) > 0`),
+  check("platform_events_status_check", sql`${t.status} IN ('pending', 'processing', 'retrying', 'processed', 'failed')`),
+  check("platform_events_retry_count_check", sql`${t.retryCount} BETWEEN 0 AND 3`),
+]);
+
+export const processedEvents = pgTable("processed_events", {
+  id: id(),
+  handlerName: text("handler_name").notNull(),
+  eventId: text("event_id").notNull().references(() => platformEvents.id, { onDelete: "restrict" }),
+  processedAt: timestamp("processed_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("processed_events_handler_event_unique").on(t.handlerName, t.eventId),
+  index("processed_events_event").on(t.eventId),
+  check("processed_events_handler_name_check", sql`length(trim(${t.handlerName})) > 0`),
+]);
+
 // Tenant-scoped notification intent and delivery evidence. Records are never
 // deleted through the notification service; only delivery status may advance.
 export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id"),
   recipient: text("recipient").notNull(),
   channel: text("channel").notNull(),
   template: text("template").notNull(),
   locale: text("locale").notNull(),
   variables: jsonb("variables").notNull(),
+  priority: text("priority").default("normal").notNull(),
+  title: text("title"),
+  body: text("body"),
+  link: text("link"),
+  objectType: text("object_type"),
+  objectId: text("object_id"),
   status: text("status").notNull(),
   transmitted: boolean("transmitted").default(false).notNull(),
   providerMessageId: text("provider_message_id"),
   dedupeKey: text("dedupe_key"),
   createdAt: createdAt(),
+  readAt: timestamp("read_at", { withTimezone: true }),
 }, (t) => [
   index("notifications_tenant_time").on(t.tenantId, t.createdAt),
+  index("notifications_user_inbox").on(t.tenantId, t.userId, t.readAt, t.createdAt),
   uniqueIndex("notifications_tenant_dedupe").on(t.tenantId, t.dedupeKey),
-  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'WHATSAPP')`),
+  foreignKey({
+    name: "notifications_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  check("notifications_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
+  check("notifications_priority_check", sql`${t.priority} IN ('low', 'normal', 'high', 'urgent')`),
   check("notifications_status_check", sql`${t.status} IN ('accepted', 'sent', 'failed')`),
+]);
+
+// Missing preference rows mean enabled. Explicit rows are tenant/user/channel
+// scoped and cannot reference a user from another workspace.
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id").notNull(),
+  category: text("category").notNull(),
+  channel: text("channel").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+}, (t) => [
+  unique("notification_preferences_scope_unique").on(t.tenantId, t.userId, t.category, t.channel),
+  foreignKey({
+    name: "notification_preferences_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("notification_preferences_user").on(t.tenantId, t.userId),
+  check("notification_preferences_category_check", sql`length(trim(${t.category})) > 0`),
+  check("notification_preferences_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
+]);
+
+// ---------------------------------------------------------------------------
+// P9-001 — VAKA Mail Core. Provider identifiers are adapter metadata; every
+// child row repeats tenant/account scope so the database can reject cross-
+// tenant or cross-mailbox references independently of application checks.
+// ---------------------------------------------------------------------------
+export const mailAccounts = pgTable("mail_accounts", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  ownerUserId: uuid("owner_user_id").notNull(),
+  type: text("type").$type<"imap" | "shared">().notNull(),
+  emailAddress: text("email_address").notNull(),
+  displayName: text("display_name").notNull(),
+  imapConfigEncrypted: text("imap_config_encrypted").notNull(),
+  smtpConfigEncrypted: text("smtp_config_encrypted").notNull(),
+  syncStatus: text("sync_status").default("IDLE").notNull(),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  unique("mail_accounts_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_accounts_id_tenant_owner_unique").on(t.id, t.tenantId, t.ownerUserId),
+  uniqueIndex("mail_accounts_tenant_address_unique").on(t.tenantId, sql`lower(${t.emailAddress})`),
+  foreignKey({
+    name: "mail_accounts_owner_tenant_fk",
+    columns: [t.ownerUserId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("mail_accounts_tenant_owner").on(t.tenantId, t.ownerUserId),
+  index("mail_accounts_tenant_sync").on(t.tenantId, t.syncStatus, t.lastSyncAt),
+  check("mail_accounts_type_check", sql`${t.type} IN ('imap', 'shared')`),
+  check("mail_accounts_address_check", sql`length(trim(${t.emailAddress})) BETWEEN 3 AND 254`),
+  check("mail_accounts_display_name_check", sql`length(trim(${t.displayName})) BETWEEN 1 AND 160`),
+  check("mail_accounts_sync_status_check", sql`${t.syncStatus} IN ('IDLE', 'SYNCING', 'ERROR', 'DISABLED')`),
+]);
+
+export const mailFolders = pgTable("mail_folders", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  name: text("name").notNull(),
+  remoteRef: text("remote_ref").notNull(),
+  type: text("type").notNull(),
+  uidValidity: text("uid_validity"),
+  lastUid: pgBigint("last_uid", { mode: "number" }).default(0).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_folders_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_folders_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  unique("mail_folders_account_remote_unique").on(t.accountId, t.remoteRef),
+  foreignKey({
+    name: "mail_folders_account_tenant_fk",
+    columns: [t.accountId, t.tenantId],
+    foreignColumns: [mailAccounts.id, mailAccounts.tenantId],
+  }).onDelete("restrict"),
+  index("mail_folders_tenant_account_type").on(t.tenantId, t.accountId, t.type),
+  check("mail_folders_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 255`),
+  check("mail_folders_remote_ref_check", sql`length(trim(${t.remoteRef})) BETWEEN 1 AND 1000`),
+  check("mail_folders_type_check", sql`${t.type} IN ('INBOX', 'SENT', 'DRAFTS', 'TRASH', 'ARCHIVE', 'CUSTOM')`),
+  check("mail_folders_last_uid_check", sql`${t.lastUid} >= 0`),
+]);
+
+export const mailThreads = pgTable("mail_threads", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  subjectNormalized: text("subject_normalized").notNull(),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull(),
+  messageCount: integer("message_count").default(0).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_threads_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_threads_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  foreignKey({
+    name: "mail_threads_account_tenant_fk",
+    columns: [t.accountId, t.tenantId],
+    foreignColumns: [mailAccounts.id, mailAccounts.tenantId],
+  }).onDelete("restrict"),
+  index("mail_threads_tenant_account_time").on(t.tenantId, t.accountId, t.lastMessageAt),
+  index("mail_threads_tenant_subject").on(t.tenantId, t.accountId, t.subjectNormalized),
+  check("mail_threads_subject_check", sql`length(${t.subjectNormalized}) <= 998`),
+  check("mail_threads_message_count_check", sql`${t.messageCount} >= 0`),
+]);
+
+export const mailMessages = pgTable("mail_messages", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  threadId: uuid("thread_id").notNull(),
+  folderId: uuid("folder_id").notNull(),
+  remoteUid: pgBigint("remote_uid", { mode: "number" }),
+  remoteUidValidity: text("remote_uid_validity"),
+  messageIdHdr: text("message_id_hdr").notNull(),
+  inReplyTo: text("in_reply_to"),
+  referencesJson: jsonb("references_json").$type<string[]>().default([]).notNull(),
+  fromJson: jsonb("from_json").$type<Array<{ address: string; name?: string }>>().notNull(),
+  toJson: jsonb("to_json").$type<Array<{ address: string; name?: string }>>().notNull(),
+  ccJson: jsonb("cc_json").$type<Array<{ address: string; name?: string }>>().default([]).notNull(),
+  subject: text("subject").notNull(),
+  bodyText: text("body_text"),
+  bodyHtmlSanitized: text("body_html_sanitized"),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  receivedAt: timestamp("received_at", { withTimezone: true }),
+  isRead: boolean("is_read").default(false).notNull(),
+  isDraft: boolean("is_draft").default(false).notNull(),
+  direction: text("direction").$type<"inbound" | "outbound">().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique("mail_messages_id_tenant_unique").on(t.id, t.tenantId),
+  unique("mail_messages_id_account_tenant_unique").on(t.id, t.accountId, t.tenantId),
+  foreignKey({
+    name: "mail_messages_thread_account_tenant_fk",
+    columns: [t.threadId, t.accountId, t.tenantId],
+    foreignColumns: [mailThreads.id, mailThreads.accountId, mailThreads.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_messages_folder_account_tenant_fk",
+    columns: [t.folderId, t.accountId, t.tenantId],
+    foreignColumns: [mailFolders.id, mailFolders.accountId, mailFolders.tenantId],
+  }).onDelete("restrict"),
+  uniqueIndex("mail_messages_account_message_id_unique").on(t.accountId, t.messageIdHdr),
+  uniqueIndex("mail_messages_remote_uid_unique")
+    .on(t.folderId, t.remoteUidValidity, t.remoteUid)
+    .where(sql`${t.remoteUid} IS NOT NULL`),
+  index("mail_messages_tenant_thread_time").on(t.tenantId, t.threadId, t.receivedAt, t.sentAt),
+  index("mail_messages_tenant_account_folder").on(t.tenantId, t.accountId, t.folderId),
+  check("mail_messages_message_id_check", sql`length(trim(${t.messageIdHdr})) BETWEEN 3 AND 998`),
+  check("mail_messages_subject_check", sql`length(${t.subject}) <= 998`),
+  check("mail_messages_direction_check", sql`${t.direction} IN ('inbound', 'outbound')`),
+  check("mail_messages_timestamp_check", sql`${t.sentAt} IS NOT NULL OR ${t.receivedAt} IS NOT NULL`),
+]);
+
+export const mailAttachments = pgTable("mail_attachments", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  messageId: uuid("message_id").notNull(),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  documentId: text("document_id").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({
+    name: "mail_attachments_message_account_tenant_fk",
+    columns: [t.messageId, t.accountId, t.tenantId],
+    foreignColumns: [mailMessages.id, mailMessages.accountId, mailMessages.tenantId],
+  }).onDelete("restrict"),
+  index("mail_attachments_tenant_message").on(t.tenantId, t.messageId),
+  check("mail_attachments_filename_check", sql`length(trim(${t.filename})) BETWEEN 1 AND 255`),
+  check("mail_attachments_mime_type_check", sql`length(trim(${t.mimeType})) BETWEEN 1 AND 255`),
+  check("mail_attachments_size_check", sql`${t.size} > 0 AND ${t.size} <= 1500000`),
+  check("mail_attachments_document_id_check", sql`length(trim(${t.documentId})) > 0`),
+]);
+
+export const mailObjectLinks = pgTable("mail_object_links", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  accountId: uuid("account_id").notNull(),
+  messageId: uuid("message_id"),
+  threadId: uuid("thread_id"),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  linkedBy: uuid("linked_by").notNull(),
+  method: text("method").$type<"manual" | "auto">().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  foreignKey({
+    name: "mail_object_links_message_account_tenant_fk",
+    columns: [t.messageId, t.accountId, t.tenantId],
+    foreignColumns: [mailMessages.id, mailMessages.accountId, mailMessages.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_object_links_thread_account_tenant_fk",
+    columns: [t.threadId, t.accountId, t.tenantId],
+    foreignColumns: [mailThreads.id, mailThreads.accountId, mailThreads.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "mail_object_links_actor_tenant_fk",
+    columns: [t.linkedBy, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  uniqueIndex("mail_object_links_message_object_unique")
+    .on(t.tenantId, t.messageId, t.objectType, t.objectId)
+    .where(sql`${t.messageId} IS NOT NULL`),
+  uniqueIndex("mail_object_links_thread_object_unique")
+    .on(t.tenantId, t.threadId, t.objectType, t.objectId)
+    .where(sql`${t.threadId} IS NOT NULL`),
+  index("mail_object_links_tenant_object").on(t.tenantId, t.objectType, t.objectId, t.createdAt),
+  check("mail_object_links_subject_check", sql`(${t.messageId} IS NOT NULL) <> (${t.threadId} IS NOT NULL)`),
+  check("mail_object_links_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("mail_object_links_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+  check("mail_object_links_method_check", sql`${t.method} IN ('manual', 'auto')`),
 ]);
 
 // Platform-level acquisition records. Referral attribution never grants access
@@ -1412,6 +1711,82 @@ export const approvalPolicies = pgTable("approval_policies", {
   uniqueIndex("approval_policies_tenant_subject").on(t.tenantId, t.subjectType),
   check("approval_policies_subject_check", sql`${t.subjectType} IN ('purchase_order', 'payroll_run')`),
   check("approval_policies_threshold_check", sql`${t.thresholdAmount} >= 0`),
+]);
+
+// ---------------------------------------------------------------------------
+// P1-003 — Durable, tenant-scoped workflow definitions and execution history.
+// Financial effects remain domain-owned; these tables record orchestration,
+// decisions and actor evidence only.
+// ---------------------------------------------------------------------------
+export const workflowDefinitions = pgTable("workflow_definitions", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  version: integer("version").notNull(),
+  objectType: text("object_type").notNull(),
+  stepsJson: jsonb("steps_json").$type<WorkflowStepDefinition[]>().notNull(),
+  active: boolean("active").default(true).notNull(),
+}, (t) => [
+  unique("workflow_definitions_id_tenant_unique").on(t.id, t.tenantId),
+  unique("workflow_definitions_tenant_name_version_unique").on(t.tenantId, t.name, t.version),
+  index("workflow_definitions_tenant_object_active").on(t.tenantId, t.objectType, t.active),
+  check("workflow_definitions_name_check", sql`length(trim(${t.name})) > 0`),
+  check("workflow_definitions_version_check", sql`${t.version} >= 1`),
+  check("workflow_definitions_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_definitions_steps_check", sql`jsonb_typeof(${t.stepsJson}) = 'array'`),
+]);
+
+export const workflowInstances = pgTable("workflow_instances", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  definitionId: uuid("definition_id").notNull(),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  status: text("status").default("ACTIVE").notNull(),
+  currentStep: integer("current_step").default(0).notNull(),
+  startedBy: uuid("started_by").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => [
+  unique("workflow_instances_id_tenant_unique").on(t.id, t.tenantId),
+  foreignKey({
+    name: "workflow_instances_definition_tenant_fk",
+    columns: [t.definitionId, t.tenantId],
+    foreignColumns: [workflowDefinitions.id, workflowDefinitions.tenantId],
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "workflow_instances_actor_tenant_fk",
+    columns: [t.startedBy, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("workflow_instances_tenant_object").on(t.tenantId, t.objectType, t.objectId),
+  uniqueIndex("workflow_instances_one_active_object")
+    .on(t.tenantId, t.definitionId, t.objectType, t.objectId)
+    .where(sql`${t.status} = 'ACTIVE'`),
+  check("workflow_instances_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("workflow_instances_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+  check("workflow_instances_status_check", sql`${t.status} IN ('ACTIVE', 'COMPLETED', 'REJECTED')`),
+  check("workflow_instances_current_step_check", sql`${t.currentStep} >= 0`),
+  check("workflow_instances_completion_check", sql`
+    (${t.status} = 'ACTIVE' AND ${t.completedAt} IS NULL)
+    OR (${t.status} IN ('COMPLETED', 'REJECTED') AND ${t.completedAt} IS NOT NULL)
+  `),
+]);
+
+export const workflowActions = pgTable("workflow_actions", {
+  id: id(),
+  instanceId: uuid("instance_id").notNull().references(() => workflowInstances.id, { onDelete: "restrict" }),
+  step: integer("step").notNull(),
+  actorId: uuid("actor_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  action: text("action").notNull(),
+  comment: text("comment"),
+  actedAt: timestamp("acted_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("workflow_actions_instance_step_unique").on(t.instanceId, t.step),
+  index("workflow_actions_instance_time").on(t.instanceId, t.actedAt),
+  check("workflow_actions_step_check", sql`${t.step} >= 0`),
+  check("workflow_actions_action_check", sql`${t.action} IN ('APPROVE', 'REJECT')`),
+  check("workflow_actions_comment_check", sql`${t.comment} IS NULL OR length(${t.comment}) <= 1000`),
 ]);
 
 // ---------------------------------------------------------------------------

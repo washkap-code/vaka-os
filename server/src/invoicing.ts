@@ -20,6 +20,8 @@ import { ensureBankLedgerAccount, postJournal, systemAccount } from "./accountin
 import type { JournalLineInput } from "./accounting.js";
 import { quantityToUnits, recordStockMovement, unitsToQuantity } from "./inventory.js";
 import { DOMAIN_EVENTS, runWithPostCommitEvents } from "./platform/events/index.js";
+import type { IdentityServiceContract } from "./platform/identity/interfaces.js";
+import { approveInvoiceForIssue } from "./invoice-approval-workflow.js";
 import type { TaxTreatment } from "./platform/localisation/types.js";
 import {
   assertCompatibleTaxRate, documentTaxTreatment, resolveTax, taxRateString, todayIsoDate,
@@ -155,6 +157,9 @@ export async function createDraftInvoice(opts: {
     queue({ id: `${DOMAIN_EVENTS.INVOICE_CHANGED}:${inv.id}:drafted`, type: DOMAIN_EVENTS.INVOICE_CHANGED,
       tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
       payload: { invoiceId: inv.id, change: "drafted" } });
+    queue({ id: `${DOMAIN_EVENTS.INVOICE_CREATED}:${inv.id}`, type: DOMAIN_EVENTS.INVOICE_CREATED,
+      tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
+      payload: { invoiceId: inv.id, customerId: inv.contactId } });
     return inv;
   }));
 }
@@ -234,8 +239,14 @@ export async function updateDraftInvoice(opts: {
   }));
 }
 
-export async function issueInvoice(opts: { tenantId: string; invoiceId: string; createdBy?: string | null }) {
-  return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
+export async function issueInvoice(opts: {
+  tenantId: string;
+  invoiceId: string;
+  createdBy?: string | null;
+  /** Present only at the authenticated API boundary; internal fixtures retain their existing call shape. */
+  approvalIdentity?: IdentityServiceContract;
+}) {
+  return runWithPostCommitEvents((queue, queuePlatformEvent) => db.transaction(async (tx) => {
     // Serialize lifecycle, numbering and all downstream financial effects.
     await tx.execute(sql`
       SELECT id FROM invoices
@@ -258,6 +269,19 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
       isNull(schema.contacts.deletedAt),
     ));
     if (!issuer || !customer) throw notFound("Invoice document party not found");
+
+    if (opts.approvalIdentity) {
+      if (!opts.createdBy) throw badRequest("Invoice issue requires an authenticated actor");
+      await approveInvoiceForIssue({
+        tx,
+        queuePlatformEvent,
+        identity: opts.approvalIdentity,
+        tenantId: opts.tenantId,
+        actorUserId: opts.createdBy,
+        invoiceId: inv.id,
+        amount: inv.total,
+      });
+    }
 
     // 1. immutable sequential number
     const number = await nextDocNumber(tx, opts.tenantId, "invoice", "INV");
@@ -465,6 +489,15 @@ export async function issueInvoice(opts: { tenantId: string; invoiceId: string; 
       type: DOMAIN_EVENTS.INVOICE_ISSUED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
       payload: { invoiceId: inv.id, customerId: inv.contactId, currency: inv.currency, totalCents: toCents(inv.total).toString(), issuedAt: issueDate.toISOString() },
     });
+    if (opts.approvalIdentity) {
+      queue({
+        id: `${DOMAIN_EVENTS.INVOICE_APPROVED}:${inv.id}`,
+        type: DOMAIN_EVENTS.INVOICE_APPROVED,
+        tenantId: opts.tenantId,
+        actorUserId: opts.createdBy ?? null,
+        payload: { invoiceId: inv.id },
+      });
+    }
     return updated;
   }));
 }
@@ -554,6 +587,13 @@ export async function recordPayment(opts: {
       type: DOMAIN_EVENTS.PAYMENT_RECORDED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
       payload: { paymentId: payment.id, invoiceId: inv.id, customerId: inv.contactId, currency: inv.currency, amountCents: amountC.toString() },
     });
+    queue({
+      id: `${DOMAIN_EVENTS.PAYMENT_RECEIVED}:${payment.id}`,
+      type: DOMAIN_EVENTS.PAYMENT_RECEIVED,
+      tenantId: opts.tenantId,
+      actorUserId: opts.createdBy ?? null,
+      payload: { paymentId: payment.id, invoiceId: inv.id, customerId: inv.contactId, currency: inv.currency, amountCents: amountC.toString() },
+    });
     return updated;
   }));
 }
@@ -633,7 +673,7 @@ export async function voidInvoice(opts: { tenantId: string; invoiceId: string; r
     queue({
       id: `${DOMAIN_EVENTS.INVOICE_VOIDED}:${inv.id}`,
       type: DOMAIN_EVENTS.INVOICE_VOIDED, tenantId: opts.tenantId, actorUserId: opts.createdBy ?? null,
-      payload: { invoiceId: inv.id, reason: opts.reason },
+      payload: { invoiceId: inv.id },
     });
     return updated;
   }));

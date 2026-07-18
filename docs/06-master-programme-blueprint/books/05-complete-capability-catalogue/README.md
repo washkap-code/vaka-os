@@ -56,7 +56,7 @@ Each financial or stock-producing module must declare its accounting event, bala
 
 | ID | Product | Capability families | Baseline posture |
 |---|---|---|---|
-| PRD-MAIL | VAKA Mail | mailboxes, calendar, tasks, messaging, meetings, templates, campaigns, object timelines, AI Mail | planned beyond notification/document foundations |
+| PRD-MAIL | VAKA Mail | mailboxes, calendar, tasks, messaging, meetings, templates, campaigns, object timelines, AI Mail | default-off IMAP/SMTP Mail Core implemented; OAuth, UI and GA controls planned |
 | PRD-NET | VAKA Network | directory, marketplace, discovery, communities, groups, events, referrals, testimonials, tenders, matching | referral foundation; broader Network planned |
 | PRD-BB | VAKA Black Book | curated regulator/public-service knowledge, deadlines, forms, tenders, guided navigation | planned |
 | PRD-VER | VAKA Verify | business/supplier/director/document checks, evidence, expiry, consent, trust presentation | planned |

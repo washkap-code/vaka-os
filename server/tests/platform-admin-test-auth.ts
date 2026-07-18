@@ -4,6 +4,9 @@ const PLATFORM_ADMIN_EMAIL = "washington@africaprocure.com";
 const ROTATED_TEST_PASSWORDS = [
   "CI-Only-Replacement-Password-2026",
   "CI-Only-Replacement-Password-2026-Next",
+  // restore-drill-evidence binds the shared principal to this test-only
+  // credential; include it so fixture authentication is truly file-order safe.
+  "Restore-Principal-Test-2026!",
 ] as const;
 
 type TestApp = Parameters<typeof request>[0];

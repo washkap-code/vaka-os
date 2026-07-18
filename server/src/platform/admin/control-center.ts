@@ -133,7 +133,16 @@ export const CONTROL_CENTER_CATALOGUE: readonly PlatformCapabilityStatus[] = [
   product("product.vaka-network", "VAKA Network", "not-implemented", "planned", "Target architecture and mission catalogue only.", "Approve and execute Network foundation missions."),
   product("product.vaka-verify", "VAKA Verify", "not-implemented", "planned", "Target architecture and mission catalogue only.", "Complete identity, consent, source-quality and professional review design before implementation."),
   product("product.vaka-capital", "VAKA Capital", "not-implemented", "planned", "Target architecture and mission catalogue only.", "Approve regulated-introduction boundaries and market-specific professional review."),
-  product("product.vaka-mail", "VAKA Mail", "not-implemented", "planned", "Communication and delivery specifications exist; a mailbox product is not implemented.", "Complete notification providers, consent, deliverability and mailbox mission packs."),
+  product(
+    "product.vaka-mail",
+    "VAKA Mail",
+    "partial",
+    "internal",
+    "A default-off IMAP/SMTP Mail Core stores, threads, sends and object-links tenant mail with encrypted credentials; no UI or OAuth connector exists.",
+    "Complete OAuth/webhook providers, malware/DLP, retention/export, distributed recovery, UI and pilot deliverability gates.",
+    "passed",
+    "P9-001 focused unit/integration, migration replay, tenant/permission and secret-boundary checks passed locally.",
+  ),
   product("product.vaka-black-book", "VAKA Black Book", "not-implemented", "planned", "Target architecture and mission catalogue only.", "Approve source governance, correction, trust and safety missions."),
   product("product.vaka-studio", "VAKA Studio", "not-implemented", "planned", "Frozen product boundary and target catalogue only.", "Complete metadata, workflow, rules, policy and extension safety foundations."),
   product(

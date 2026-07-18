@@ -62,7 +62,8 @@ export type MetadataFieldType =
   | "boolean"
   | "date"
   | "datetime"
-  | "string[]";
+  | "string[]"
+  | "json";
 
 export interface FieldValidation {
   allowedValues?: readonly (string | number | boolean)[];

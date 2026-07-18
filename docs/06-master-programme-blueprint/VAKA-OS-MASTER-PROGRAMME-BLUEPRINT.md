@@ -513,7 +513,7 @@ Each financial or stock-producing module must declare its accounting event, bala
 
 | ID | Product | Capability families | Baseline posture |
 |---|---|---|---|
-| PRD-MAIL | VAKA Mail | mailboxes, calendar, tasks, messaging, meetings, templates, campaigns, object timelines, AI Mail | planned beyond notification/document foundations |
+| PRD-MAIL | VAKA Mail | mailboxes, calendar, tasks, messaging, meetings, templates, campaigns, object timelines, AI Mail | default-off IMAP/SMTP Mail Core implemented; OAuth, UI and GA controls planned |
 | PRD-NET | VAKA Network | directory, marketplace, discovery, communities, groups, events, referrals, testimonials, tenders, matching | referral foundation; broader Network planned |
 | PRD-BB | VAKA Black Book | curated regulator/public-service knowledge, deadlines, forms, tenders, guided navigation | planned |
 | PRD-VER | VAKA Verify | business/supplier/director/document checks, evidence, expiry, consent, trust presentation | planned |
@@ -899,7 +899,7 @@ Each module needs complete happy, denial, failure, reversal/return/cancel, retry
 
 **Version:** 1.0  
 **Definition:** Accepted target  
-**Implementation:** Notification and invoice-delivery foundations; full VAKA Mail planned
+**Implementation:** Notification/invoice delivery plus a default-off IMAP/SMTP Mail Core; OAuth, UI and GA controls planned
 
 ## 1. Outcome
 
@@ -930,6 +930,13 @@ Each message belongs to one tenant, policy context and retention class. Cross-te
 ## 4. Provider architecture
 
 Gmail, Microsoft 365, IMAP/SMTP and other providers require separate approved adapters. Credentials/tokens are encrypted, least-privileged, revocable and never exposed to AI. Synchronization uses cursors, webhook verification, idempotent ingestion, backoff, reconciliation and user-visible degraded state.
+
+The implemented Mail Core provides encrypted IMAP/SMTP accounts, incremental
+UID synchronization, stored messages/attachments, threading, send/reply and
+permission-aware business-object links behind `mail.hub`. It is a technical
+foundation, not a GA claim: Gmail/Microsoft OAuth, webhook reconciliation,
+provider onboarding, mailbox UI, malware/DLP controls, retention/export and
+distributed scheduler recovery remain gated work.
 
 SMS, WhatsApp and push use the Notification Service. WhatsApp requires verified opt-in, approved templates where applicable, channel rules, audit and safe document links. Provider availability never changes the authoritative invoice/payment/order state.
 

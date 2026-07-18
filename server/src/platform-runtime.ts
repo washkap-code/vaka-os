@@ -26,14 +26,18 @@ import { emailGateway } from "./platform/notifications/adapters/email-gateway.js
 import { inAppGateway } from "./platform/notifications/adapters/in-app-gateway.js";
 import { noopGateway } from "./platform/notifications/adapters/noop-gateway.js";
 import type {
-  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup, NotificationWriter,
+  EmailTransport, NotificationAuditRecorder, NotificationDedupeLookup,
+  NotificationPreferenceLookup, NotificationWriter,
 } from "./platform/notifications/index.js";
 import {
-  findNotificationDuplicate, persistNotification, PLATFORM_NOTIFICATION_SCOPE,
+  findNotificationDuplicate, notificationPreferenceEnabled, persistNotification,
+  PLATFORM_NOTIFICATION_SCOPE,
 } from "./notifications.js";
 import { createConfiguredEmailTransport } from "./email-transport.js";
 import { applicationLogger, logEvent } from "./observability.js";
-import { InMemoryEventBus } from "./platform/events/service.js";
+import { ReliableEventBus } from "./platform/events/service.js";
+import type { EventStoreContract } from "./platform/events/interfaces.js";
+import { PostgresEventStore } from "./platform-events.js";
 import { SearchService } from "./platform/search/service.js";
 import { PostgresSearchProvider, subscribeSearchIndex, type SearchApplicationAdapter } from "./search.js";
 import { MetadataService } from "./platform/metadata/service.js";
@@ -50,10 +54,23 @@ import {
   type ProcurementApprovalNotifierContract,
 } from "./procurement-notifications.js";
 import { ApprovalService } from "./platform/workflow/approvals.js";
+import { WorkflowService } from "./platform/workflow/service.js";
+import type { WorkflowStoreContract } from "./platform/workflow/interfaces.js";
+import { PostgresWorkflowStore } from "./workflow-store.js";
 import { FeatureFlagService } from "./platform/features/service.js";
 import type { FeatureFlagAuditRecorder, FeatureFlagStore } from "./platform/features/types.js";
 import { postgresFeatureFlagStore, recordFeatureFlagAudit } from "./feature-flags-store.js";
 import { subscribeTaskAutomation } from "./tasks.js";
+import {
+  subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
+  type WorkflowNotificationCoordinatorContract,
+} from "./workflow-notifications.js";
+import { mailSyncIntervalMs } from "./config.js";
+import { MailService } from "./modules/mail/service.js";
+import { NodeImapConnector, NodemailerMailSender } from "./modules/mail/providers.js";
+import type { MailImapConnector, MailSmtpSender } from "./modules/mail/types.js";
+import { MailSyncScheduler } from "./modules/mail/scheduler.js";
+import { MailCredentialCipher } from "./modules/mail/secrets.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
@@ -72,7 +89,7 @@ export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
 export const NOTIFICATION_SERVICE: ServiceToken<NotificationService> =
   createServiceToken("platform.notifications.service");
 
-export const EVENT_BUS: ServiceToken<InMemoryEventBus> =
+export const EVENT_BUS: ServiceToken<ReliableEventBus> =
   createServiceToken("platform.events.bus");
 
 export const SEARCH_SERVICE: ServiceToken<SearchService> =
@@ -93,6 +110,15 @@ export const FEATURE_FLAG_SERVICE: ServiceToken<FeatureFlagService> =
 export const APPROVAL_SERVICE: ServiceToken<ApprovalService> =
   createServiceToken("platform.workflow.approvals");
 
+export const WORKFLOW_SERVICE: ServiceToken<WorkflowService> =
+  createServiceToken("platform.workflow.service");
+
+export const MAIL_SERVICE: ServiceToken<MailService> =
+  createServiceToken("modules.mail.service");
+
+export const MAIL_SYNC_SCHEDULER: ServiceToken<MailSyncScheduler> =
+  createServiceToken("modules.mail.scheduler");
+
 /** Country packs registered by default. Zimbabwe is the launch market. */
 export const DEFAULT_COUNTRY_PACKS: readonly CountryPack[] = [ZIMBABWE];
 
@@ -106,7 +132,12 @@ export interface PlatformKernelOptions {
   notificationWriter?: NotificationWriter;
   notificationDedupeLookup?: NotificationDedupeLookup;
   notificationAuditRecorder?: NotificationAuditRecorder;
+  notificationPreferenceLookup?: NotificationPreferenceLookup;
   eventSubscriberError?: (error: unknown, eventType: string) => void;
+  /** Override durable event persistence (tests). Defaults to PostgreSQL. */
+  eventStore?: EventStoreContract;
+  eventRetryBackoffMs?: readonly [number, number, number];
+  eventRetrySleep?: (milliseconds: number) => Promise<void>;
   searchAdapter?: SearchApplicationAdapter;
   metadataProvider?: MetadataProvider;
   /** Override the canonical schema registry (tests or a future composition root). */
@@ -118,6 +149,13 @@ export interface PlatformKernelOptions {
   /** Override the feature-flag store/audit (tests). Defaults to Postgres + audit_logs. */
   featureFlagStore?: FeatureFlagStore;
   featureFlagAuditRecorder?: FeatureFlagAuditRecorder;
+  /** Override durable workflow persistence (tests). Defaults to PostgreSQL. */
+  workflowStore?: WorkflowStoreContract;
+  workflowNotificationCoordinator?: WorkflowNotificationCoordinatorContract;
+  mailImapConnector?: MailImapConnector;
+  mailSmtpSender?: MailSmtpSender;
+  mailCredentialCipher?: MailCredentialCipher;
+  mailSyncIntervalMs?: number;
 }
 
 /**
@@ -158,7 +196,9 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     const persist = options.notificationWriter ?? persistNotification;
     const recordAudit: NotificationAuditRecorder = options.notificationAuditRecorder
       ?? (async (request, delivery) => {
-        const action = delivery.status === "failed"
+        const action = delivery.suppressed
+          ? "notification.suppressed"
+          : delivery.status === "failed"
           ? "notification.failed"
           : delivery.transmitted ? "notification.sent" : "notification.accepted";
         const metadata = {
@@ -190,19 +230,38 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
       EMAIL: emailGateway(options.emailTransport ?? createConfiguredEmailTransport(), persist),
       IN_APP: inAppGateway(persist),
       SMS: noopGateway("SMS", persist),
+      PUSH: noopGateway("PUSH", persist),
       WHATSAPP: noopGateway("WHATSAPP", persist),
-    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit);
+    }, options.notificationDedupeLookup ?? findNotificationDuplicate, recordAudit,
+    options.notificationPreferenceLookup
+      ?? (options.notificationWriter ? async () => true : notificationPreferenceEnabled));
   });
 
-  kernel.container.registerFactory(EVENT_BUS, () => new InMemoryEventBus((error, event) => {
-    if (options.eventSubscriberError) {
-      options.eventSubscriberError(error, event.type);
-      return;
-    }
-    logEvent("event.subscriber_failed", {
-      eventType: event.type,
-      errorType: error instanceof Error ? error.name : "UnknownError",
-    }, "error", applicationLogger);
+  kernel.container.registerFactory(EVENT_BUS, () => new ReliableEventBus(
+    options.eventStore ?? new PostgresEventStore(),
+    {
+      retryBackoffMs: options.eventRetryBackoffMs,
+      sleep: options.eventRetrySleep,
+      onSubscriberError: (error, event, handlerName, retryCount) => {
+        if (options.eventSubscriberError) {
+          options.eventSubscriberError(error, event.type);
+          return;
+        }
+        logEvent("event.subscriber_failed", {
+          eventType: event.type,
+          eventId: event.id,
+          handlerName,
+          retryCount,
+          errorType: error instanceof Error ? error.name : "UnknownError",
+        }, "error", applicationLogger);
+      },
+    },
+  ));
+
+  kernel.container.registerFactory(WORKFLOW_SERVICE, () => new WorkflowService({
+    store: options.workflowStore ?? new PostgresWorkflowStore(),
+    audit: kernel.container.get(AUDIT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
   }));
 
   kernel.container.registerValue(
@@ -217,6 +276,23 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     new DocumentService(options.documentStore ?? new PostgresDocumentStore()),
   );
 
+  kernel.container.registerFactory(MAIL_SERVICE, () => new MailService({
+    imap: options.mailImapConnector ?? new NodeImapConnector(),
+    smtp: options.mailSmtpSender ?? new NodemailerMailSender(),
+    documents: kernel.container.get(DOCUMENT_SERVICE),
+    events: kernel.container.get(EVENT_BUS),
+    cipher: options.mailCredentialCipher,
+    recordAuditInTransaction: async (tx, event) => {
+      const service = new AuditService(createAuditSink(async (row) => {
+        await tx.insert(schema.auditLogs).values(row);
+      }));
+      await service.record(event);
+    },
+  }));
+  kernel.container.registerFactory(MAIL_SYNC_SCHEDULER, () => new MailSyncScheduler(
+    kernel.container.get(MAIL_SERVICE), options.mailSyncIntervalMs ?? mailSyncIntervalMs(),
+  ));
+
   const searchAdapter = options.searchAdapter ?? new PostgresSearchProvider(metadataService, featureFlagService);
   kernel.container.registerValue(SEARCH_SERVICE, new SearchService(searchAdapter));
   subscribeSearchIndex(kernel.container.get(EVENT_BUS), searchAdapter);
@@ -228,6 +304,11 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
   subscribeProcurementApprovalNotifications(
     kernel.container.get(EVENT_BUS),
     options.procurementApprovalNotifier ?? new ProcurementApprovalNotifier(kernel.container.get(NOTIFICATION_SERVICE)),
+  );
+  subscribeWorkflowNotifications(
+    kernel.container.get(EVENT_BUS),
+    options.workflowNotificationCoordinator
+      ?? new WorkflowNotificationCoordinator(kernel.container.get(NOTIFICATION_SERVICE)),
   );
   // PW-003: opt-in task automation (no rule row = disabled; never financial).
   subscribeTaskAutomation(kernel.container.get(EVENT_BUS));

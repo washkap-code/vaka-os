@@ -159,7 +159,15 @@ function matchesType(type: MetadataFieldType, value: unknown): boolean {
     case "date": return typeof value === "string" && isValidDate(value);
     case "datetime": return isValidDateTime(value);
     case "string[]": return Array.isArray(value) && value.every((item) => typeof item === "string");
+    case "json": return isJsonValue(value);
   }
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || ["string", "number", "boolean"].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(isJsonValue);
+  if (typeof value !== "object") return false;
+  return Object.values(value as Record<string, unknown>).every(isJsonValue);
 }
 
 function comparableNumber(type: MetadataFieldType, value: unknown): number | null {
