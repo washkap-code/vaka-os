@@ -1,5 +1,45 @@
 # Session handoff — current state and next-session kickoff
 
+**Updated:** 2026-07-18 (session 17, Codex metadata lane, branch
+`feature/platform-metadata-registry` at implementation commit `62a7deb`:
+**owner-issued MISSION P1-002 Metadata Registry implemented.** NOTE the mission
+ID collides with the repository's historical P1-002 Identity/Audit mission;
+this block and branch name are the authoritative identifiers for this newer
+owner-issued work. Added an immutable, schema-backed internal
+`METADATA_REGISTRY` for Company, Customer, Supplier, Invoice, Payment, Product,
+Employee and User. The registry exposes `getObject`, `getFields`,
+`getRelationships`, `listObjects` and pure `validate`; field names are pinned
+to the real Drizzle definitions, exact decimals stay strings, restricted
+fields are AI-unreadable, all AI writes remain closed, and metadata construction
+rejects duplicate/invalid shape. `validate` enforces required, type,
+max-length, format/range, unique-item and strict known-field rules without DB
+calls; persisted cross-record uniqueness remains enforced by existing
+services/indexes. `buildPlatformKernel` now registers the new typed container
+token. **Compatibility preserved:** the existing P1-008 `METADATA_SERVICE`,
+five-object authenticated `/metadata/objects` response, search adoption,
+database schema, migrations, API behaviour and UI are unchanged. Verification:
+server typecheck clean; focused metadata/runtime 3 files / 20 tests green;
+new registry suite 11/11 green; migrations 0000–0047 replayed transactionally
+with zero structural drift; aggregate `npm run test:full` completed migration
+and seed then passed 96/98 files and 475/482 tests, with seven unrelated
+15-second host timeouts confined to
+`finance/inventory-valuation.test.ts` and
+`finance/invoice-document-snapshots.test.ts`; isolated unchanged-limit rerun
+cleared five inventory timeouts (6/8 tests passed) while two tests still ended
+at 15.6s/15.2s; a 30-second diagnostic rerun passed both files 8/8. Hosted CI
+must therefore clear the unchanged 15-second aggregate gate before merge. No
+migration taken; production remains applied through 0047 and next free remains
+0048. **PROCESS INCIDENT:** GitHub Desktop externally committed and pushed the
+implementation mid-verification as `62a7deb` with message `push`; history was
+not rewritten. This handoff is the final local commit and still needs the owner
+to push. **RISK/NEXT:** two descriptive metadata contracts now coexist by
+design for API compatibility (P1-008 provider vs the richer internal schema
+registry); the recommended next mission is a versioned compatibility-adapter
+plan that converges their source definitions without broadening API output,
+permissions, search or write authority. Open the PR only after hosted CI is
+green. Migration ledger, blockers and stale-branch rules below are otherwise
+unchanged.)
+
 **Updated:** 2026-07-18 (session 16d, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `904cacb`: **PI18N-002 and PI18N-003 gates CLOSED by owner self-certification — ChiShona and isiNdebele are now certified, not draft.** Owner decision (Dr. Washington Kapapiro, 2026-07-18): given dialect variation across ChiShona varieties and regional isiNdebele, VAKA standardises on widely understood standard varieties and the owner certifies the four dictionary files himself, superseding the external-translator gate. Certification records: `docs/engineering/mission-packs/PI18N-002/CERTIFICATION.md` and `.../PI18N-003/CERTIFICATION.md` — both records state honestly that the dictionaries were machine-drafted in-session and that this is owner-level product acceptance, NOT an independent professional translation review. Changes: four dictionary headers DRAFT→CERTIFIED; `languageDraftNotice` replaced by `languageReferenceNotice` ("English remains the authoritative reference version" in each language) in the account menu; landing language labels lose their draft suffixes; landing languageNotice, 'Local languages' capability and the Shona/Ndebele FAQ answer updated to certified phrasing; the pinned homepage-regression contract string updated to match. English remains the authoritative reference and runtime fallback (unchanged framework). Web-only; no server, schema or migration change; next free migration remains 0048. Verification: scoped typecheck over every file touched this round clean (full-project tsc and vite build could not complete inside the sandbox call limit this round — hosted CI remains the authoritative gate and must be green before merge); homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; runtime locale checks + override-key validation 10/10. SANDBOX NOTE: the main-checkout was switched to `test/full-suite-green` by a parallel lane mid-session, so this round was done in a dedicated worktree (`wt-pi18n`); stale unlink-blocked lock files now exist at `.git/worktrees/wt-pi18n/{HEAD.lock,index.lock}` in addition to any earlier tmp objects — the owner should delete all `.git/**/*.lock` and `.git/objects/**/tmp_obj_*` files from the host, plus the Jul-15 Finder artifacts `.git/{AUTO_MERGE 3,CHERRY_PICK_HEAD 3,MERGE_MSG 3}`. OWNER ACTIONS: (1) clean the stale git files above, (2) push `feature/pi18n-001-locale-framework` and open its PR — merge on green hosted gates, (3) prior queue unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS. RECONCILIATION: this branch was merged with origin/main (`fb91f6f`, LP-007 + PR #95) — the only conflict was this handoff file; main's session-16c LP-007 block is preserved below.)
 
 **Previous:** 2026-07-18 (session 16b, Cowork i18n lane, branch `feature/pi18n-001-locale-framework` at `1d73033`: **PI18N-001 locale framework BUILT — draft ChiShona (sn) and isiNdebele (nd) now render across the workspace and the public site.** Web-only; no server, schema or migration change (next free migration remains 0048). New `web/src/locales/index.ts`: English (`app.en.ts`/`home.en.ts`) stays the authoritative baseline; sn/nd are partial override dictionaries deep-merged over English at runtime with per-key English fallback, so untranslated keys never break the UI. The active dictionary is updated IN PLACE (object identity preserved at every level) because several modules capture subtrees at module scope (`const copy = appEnglish.stepUp` etc.); `App.tsx`'s module-scope `AGEING_BUCKET_LABELS` became a lazy `ageingBucketLabels()` for the same reason. All 12 `appEnglish` import sites now alias the live dictionary (`import { appStrings as appEnglish } from "../locales"`) — zero call-site churn. Language preference persists in the existing shared `vaka_home_language` key; the landing selector (previously stored the choice but always rendered English) now renders the selected language via `homeCopyFor(locale)` and syncs the shared store; a new switcher in the workspace account menu (EN/ChiShona/isiNdebele + draft notice) triggers `<App key={locale}/>` remount from `main.tsx`. HONESTY CONTRACT UPDATED WITH BEHAVIOUR: `home.en.ts` languageNotice/labels/FAQ/'Local languages' copy now state that drafts are AVAILABLE pending native-speaker review, and the pinned contract string in `scripts/homepage-regression.test.mjs` was updated to match. Coverage: app sn 842 and nd 842 of 1,592 keys (all core flows — shell/nav/search/notifications, auth/step-up/holding, dashboard, contacts, suppliers, deals, products, invoices, tasks, documents, blackbook, payroll, billing, settings core, activity, imports core, reports core); the VAKA-staff `platformAdmin` console is DELIBERATELY English-only; home 93/148. **PI18N-002/PI18N-003 gate P remains OPEN: both dictionaries are machine-assisted DRAFTS and must be certified by qualified native-speaker translators before leaving draft labelling.** CORRECTION to the parallel session-16 note below: the untracked `web/src/locales/*` files it attributed to the PN-UI lane were THIS lane's PI18N-001 work in progress, now committed on this branch — no PN-UI relocation is needed for them. Verification: web typecheck clean; homepage regression 4/4 (updated contract); navigation-model 19/19; design-token + accessibility conformance green; `vite build` green in a Linux clean-room copy (the sandbox mount's macOS `node_modules` cannot run rolldown — not a regression); 13 runtime locale checks (translation, fallback, captured-subtree liveness, placeholder preservation, key-structure parity) plus override-key validation all pass. SANDBOX INCIDENTS: (1) mid-session, all tracked-file edits in the main worktree were externally reverted once while untracked files survived (consistent with a GitHub Desktop discard during the parallel lane's merge work) — changes were re-applied and re-verified; (2) a stale `.git/index.lock` (09:35) plus git tmp objects could not be unlinked from the sandbox (host-mount restriction) — commits were made with a detached `GIT_INDEX_FILE`; the owner should delete `.git/index.lock` and any `.git/objects/**/tmp_obj_*` files from the host, after which `git status` will read clean. OWNER ACTIONS: (1) delete the stale lock/tmp files above, (2) push `feature/pi18n-001-locale-framework` via GitHub Desktop and open its PR — merge on green hosted gates (routes untouched; no manifest impact expected), (3) engage qualified ChiShona and isiNdebele translators to certify the four dictionary files (PI18N-002/003), (4) prior queue below unchanged. Owner identity: Dr. Washington Kapapiro, Owner of VAKA OS.)
@@ -601,4 +641,3 @@ only when LP-001 through LP-006 are contained in current `main`. Migration
 > dedicated `vaka-os-prod` project (`ewljdjvqngxweacgwedu`). Preserve the old
 > `vaka-platform` VAKA tables through the hold ending 2026-07-23 unless the
 > owner explicitly extends it.
-
