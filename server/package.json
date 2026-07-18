@@ -10,6 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "seed": "tsx src/seed.ts",
+    "seed:blackbook": "tsx scripts/seed-blackbook.ts",
     "check:runtime-schema": "node scripts/check-runtime-schema.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --fileParallelism=false --testTimeout=15000",

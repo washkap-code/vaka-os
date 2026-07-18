@@ -18,6 +18,7 @@ export const PLATFORM_PERMISSIONS = [
   "platform.security.manage",
   "platform.settings.manage",
   "platform.verification.review",
+  "blackbook:editor",
 ] as const;
 
 export type PlatformPermission = (typeof PLATFORM_PERMISSIONS)[number];
@@ -29,7 +30,7 @@ export const PLATFORM_ROLE_DEFINITIONS: ReadonlyArray<{
   { key: "OPERATIONS_ADMIN", name: "Operations Administrator", permissions: [
     "platform.overview.read", "platform.tenants.read", "platform.tenant_audit.read",
     "platform.operations.read", "platform.backups.read", "platform.backups.write", "platform.staff.read",
-    "platform.verification.review",
+    "platform.verification.review", "blackbook:editor",
   ] },
   { key: "FINANCE_OPERATIONS", name: "Finance Operations", permissions: [
     "platform.overview.read", "platform.tenants.read", "platform.billing.run",

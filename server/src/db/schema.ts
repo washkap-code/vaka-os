@@ -2023,3 +2023,113 @@ export const blackbookEntryVersions = pgTable("blackbook_entry_versions", {
   index("blackbook_entry_versions_run").on(t.importRunId),
   check("blackbook_entry_versions_version_check", sql`${t.version} >= 1`),
 ]);
+
+// ---------------------------------------------------------------------------
+// P11-001 — structured Black Book directory.
+// GLOBAL platform content: deliberately no tenant_id. Tenant workspaces may
+// read the curated projection, while platform editors own every mutation.
+// The generic PB-001 registry above remains intact and authoritative for its
+// versioned country-pack imports; these tables add the structured organisation
+// and service model requested by P11-001.
+// ---------------------------------------------------------------------------
+export const govOrganisations = pgTable("gov_organisations", {
+  id: id(),
+  orgType: text("org_type").$type<
+    "ministry" | "department" | "regulator" | "local_authority" | "utility"
+    | "court" | "police" | "hospital" | "association" | "tender_portal" | "embassy"
+  >().notNull(),
+  name: text("name").notNull(),
+  acronym: text("acronym"),
+  parentOrgId: uuid("parent_org_id"),
+  country: text("country").default("ZW").notNull(),
+  description: text("description"),
+  website: text("website"),
+  status: text("status").$type<"active" | "merged" | "dissolved">().default("active").notNull(),
+  version: integer("version").default(1).notNull(),
+  verifiedAt: date("verified_at"),
+  updatedBy: uuid("updated_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({
+    name: "gov_organisations_parent_fk",
+    columns: [t.parentOrgId],
+    foreignColumns: [t.id],
+  }).onDelete("restrict"),
+  uniqueIndex("gov_organisations_country_name_unique").on(t.country, t.name),
+  index("gov_organisations_country_type").on(t.country, t.orgType, t.status, t.name),
+  index("gov_organisations_parent").on(t.parentOrgId, t.name),
+  check("gov_organisations_type_check", sql`${t.orgType} IN
+    ('ministry', 'department', 'regulator', 'local_authority', 'utility',
+     'court', 'police', 'hospital', 'association', 'tender_portal', 'embassy')`),
+  check("gov_organisations_status_check", sql`${t.status} IN ('active', 'merged', 'dissolved')`),
+  check("gov_organisations_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 200`),
+  check("gov_organisations_acronym_check", sql`${t.acronym} IS NULL OR length(trim(${t.acronym})) BETWEEN 1 AND 30`),
+  check("gov_organisations_country_check", sql`${t.country} ~ '^[A-Z]{2}$'`),
+  check("gov_organisations_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 5000`),
+  check("gov_organisations_website_check", sql`${t.website} IS NULL OR ${t.website} ~ '^https://'`),
+  check("gov_organisations_version_check", sql`${t.version} >= 1`),
+  check("gov_organisations_parent_check", sql`${t.parentOrgId} IS NULL OR ${t.parentOrgId} <> ${t.id}`),
+]);
+
+export const govContactPoints = pgTable("gov_contact_points", {
+  id: id(),
+  orgId: uuid("org_id").notNull().references(() => govOrganisations.id, { onDelete: "restrict" }),
+  type: text("type").$type<"phone" | "email" | "address" | "office_location">().notNull(),
+  label: text("label").notNull(),
+  // Nullable by design: the engineering seed creates explicit editorial
+  // placeholders without fabricating phone numbers, addresses, or emails.
+  value: text("value"),
+  region: text("region"),
+  verifiedAt: date("verified_at"),
+}, (t) => [
+  index("gov_contact_points_org").on(t.orgId, t.type),
+  check("gov_contact_points_type_check", sql`${t.type} IN ('phone', 'email', 'address', 'office_location')`),
+  check("gov_contact_points_label_check", sql`length(trim(${t.label})) BETWEEN 1 AND 120`),
+  check("gov_contact_points_value_check", sql`${t.value} IS NULL OR length(${t.value}) <= 1000`),
+  check("gov_contact_points_region_check", sql`${t.region} IS NULL OR length(${t.region}) <= 120`),
+]);
+
+export const govServices = pgTable("gov_services", {
+  id: id(),
+  orgId: uuid("org_id").notNull().references(() => govOrganisations.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category").$type<
+    "licensing" | "registration" | "tax" | "permits" | "tenders" | "utilities" | "other"
+  >().notNull(),
+  requirementsJson: jsonb("requirements_json").$type<unknown[] | null>(),
+  feesJson: jsonb("fees_json").$type<unknown[] | null>(),
+  processingTime: text("processing_time"),
+  officialFormUrl: text("official_form_url"),
+  onlineServiceUrl: text("online_service_url"),
+  verifiedAt: date("verified_at"),
+}, (t) => [
+  uniqueIndex("gov_services_org_name_unique").on(t.orgId, t.name),
+  index("gov_services_org_category").on(t.orgId, t.category, t.name),
+  check("gov_services_category_check", sql`${t.category} IN
+    ('licensing', 'registration', 'tax', 'permits', 'tenders', 'utilities', 'other')`),
+  check("gov_services_name_check", sql`length(trim(${t.name})) BETWEEN 1 AND 200`),
+  check("gov_services_description_check", sql`${t.description} IS NULL OR length(${t.description}) <= 5000`),
+  check("gov_services_requirements_check", sql`${t.requirementsJson} IS NULL OR jsonb_typeof(${t.requirementsJson}) = 'array'`),
+  check("gov_services_fees_check", sql`${t.feesJson} IS NULL OR jsonb_typeof(${t.feesJson}) = 'array'`),
+  check("gov_services_processing_time_check", sql`${t.processingTime} IS NULL OR length(${t.processingTime}) <= 500`),
+  check("gov_services_form_url_check", sql`${t.officialFormUrl} IS NULL OR ${t.officialFormUrl} ~ '^https://'`),
+  check("gov_services_online_url_check", sql`${t.onlineServiceUrl} IS NULL OR ${t.onlineServiceUrl} ~ '^https://'`),
+]);
+
+export const blackbookRevisions = pgTable("blackbook_revisions", {
+  id: id(),
+  entityType: text("entity_type").$type<"organisation" | "contact_point" | "service">().notNull(),
+  entityId: uuid("entity_id").notNull(),
+  beforeJson: jsonb("before_json").$type<Record<string, unknown> | null>(),
+  afterJson: jsonb("after_json").$type<Record<string, unknown> | null>(),
+  editorId: uuid("editor_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  reason: text("reason").notNull(),
+  revisedAt: timestamp("revised_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index("blackbook_revisions_entity_time").on(t.entityType, t.entityId, t.revisedAt),
+  index("blackbook_revisions_editor_time").on(t.editorId, t.revisedAt),
+  check("blackbook_revisions_entity_type_check", sql`${t.entityType} IN ('organisation', 'contact_point', 'service')`),
+  check("blackbook_revisions_reason_check", sql`length(trim(${t.reason})) BETWEEN 3 AND 1000`),
+  check("blackbook_revisions_change_check", sql`${t.beforeJson} IS NOT NULL OR ${t.afterJson} IS NOT NULL`),
+]);

@@ -9,10 +9,18 @@ import type { EventBusContract } from "./platform/events/interfaces.js";
 import { DOMAIN_EVENTS, type DomainEventPayloads } from "./platform/events/registry.js";
 import type { MetadataServiceContract } from "./platform/metadata/interfaces.js";
 import type { MetadataObjectDefinition } from "./platform/metadata/types.js";
+import {
+  searchStructuredBlackBook, STRUCTURED_BLACKBOOK_SEARCH_TYPES,
+  type StructuredBlackBookSearchDocument, type StructuredBlackBookSearchType,
+} from "./modules/blackbook/search.js";
 
 const INDEXED_SEARCH_ENTITY_TYPES = ["customer", "supplier", "invoice", "product"] as const;
 type IndexedSearchEntityType = typeof INDEXED_SEARCH_ENTITY_TYPES[number];
-export const SEARCH_ENTITY_TYPES = [...INDEXED_SEARCH_ENTITY_TYPES, "blackbook"] as const;
+export const SEARCH_ENTITY_TYPES = [
+  ...INDEXED_SEARCH_ENTITY_TYPES,
+  "blackbook",
+  ...STRUCTURED_BLACKBOOK_SEARCH_TYPES,
+] as const;
 export type SearchEntityType = typeof SEARCH_ENTITY_TYPES[number];
 type SearchPermission = "crm.read" | "accounting.read" | "inventory.read";
 
@@ -35,7 +43,8 @@ export type SearchResultDocument =
   | { id: string; entityType: "supplier"; name: string; contactType: "INDIVIDUAL" | "COMPANY"; supplierCode: string | null; supplierCurrency: "USD" | "ZWG" | null }
   | { id: string; entityType: "invoice"; number: string | null; status: string; currency: "USD" | "ZWG"; total: string; customerName: string }
   | { id: string; entityType: "product"; sku: string; name: string; currency: "USD" | "ZWG"; salePrice: string; isActive: boolean; trackStock: boolean }
-  | { id: string; entityType: "blackbook"; key: string; name: string; category: string; verified: boolean; lastReviewed: string };
+  | { id: string; entityType: "blackbook"; key: string; name: string; category: string; verified: boolean; lastReviewed: string }
+  | StructuredBlackBookSearchDocument;
 
 type IndexedDocument = {
   tenantId: string;
@@ -361,9 +370,12 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       permissions.has(searchPermission(definitions.get(type)!)));
     const blackbookAllowed = requestedTypes.includes("blackbook")
       && await this.features.isEnabled(scope.tenantId, "blackbook.directory");
+    const structuredBlackBookTypes = requestedTypes.filter((type): type is StructuredBlackBookSearchType =>
+      (STRUCTURED_BLACKBOOK_SEARCH_TYPES as readonly string[]).includes(type));
     const allowedTypes: SearchEntityType[] = [
       ...allowedIndexedTypes,
       ...(blackbookAllowed ? ["blackbook" as const] : []),
+      ...structuredBlackBookTypes,
     ];
     if (!allowedTypes.length) return { results: [] };
 
@@ -381,6 +393,10 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       score: number;
       object: NonNullable<SearchResponse<TDocument>["results"][number]["object"]>;
     }> = [];
+    const [tenant] = blackbookAllowed || structuredBlackBookTypes.length
+      ? await db.select({ countryCode: schema.tenants.countryCode })
+        .from(schema.tenants).where(eq(schema.tenants.id, scope.tenantId)).limit(1)
+      : [];
 
     if (allowedIndexedTypes.length) {
       const indexedScore = sql<number>`CASE
@@ -421,10 +437,7 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
       }
     }
 
-    if (blackbookAllowed) {
-      const [tenant] = await db.select({ countryCode: schema.tenants.countryCode })
-        .from(schema.tenants).where(eq(schema.tenants.id, scope.tenantId)).limit(1);
-      if (tenant) {
+    if (blackbookAllowed && tenant) {
         const blackbookScore = sql<number>`CASE
           WHEN lower(${schema.blackbookEntries.name}) = ${normalizedQuery} THEN 100
           WHEN position(${normalizedQuery} in lower(${schema.blackbookEntries.name})) = 1 THEN 80
@@ -471,6 +484,21 @@ export class PostgresSearchProvider implements SearchApplicationAdapter {
             },
           });
         }
+    }
+
+    if (structuredBlackBookTypes.length && tenant) {
+      const hits = await searchStructuredBlackBook({
+        types: structuredBlackBookTypes,
+        country: tenant.countryCode,
+        normalizedQuery,
+        terms,
+        limit: fetchLimit,
+      });
+      for (const hit of hits) {
+        ranked.push({
+          ...hit,
+          document: hit.document as TDocument,
+        });
       }
     }
 

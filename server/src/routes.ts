@@ -170,6 +170,7 @@ import {
 } from "./warehouse-settings.js";
 import { getSupplierAnalytics, supplierAnalyticsQuerySchema } from "./supplier-analytics.js";
 import { logEvent } from "./observability.js";
+import { blackBookRouter } from "./modules/blackbook/routes.js";
 
 export const api = Router();
 const wrap = (fn: (req: AuthedRequest, res: Response) => Promise<unknown>) =>
@@ -510,6 +511,11 @@ api.post("/auth/logout", wrap(async (req, res) => {
 }));
 
 api.use(requireCompletedPasswordChange as any);
+
+// P11-001: structured Black Book reads are shared authenticated platform
+// reference data. Mutations remain separately guarded by blackbook:editor in
+// the module router; no tenant identity is accepted from request data.
+api.use("/blackbook", blackBookRouter);
 
 api.patch("/me/profile", wrap(async (req) => {
   const body = z.object({

@@ -1,0 +1,29 @@
+{
+  "reserved": [
+    {
+      "prefix": 48,
+      "filename": "0048_platform_workflow_engine.sql",
+      "mission": "P1-003 Workflow Engine"
+    },
+    {
+      "prefix": 49,
+      "filename": "0049_platform_notification_service.sql",
+      "mission": "P1-004 Notification Service"
+    },
+    {
+      "prefix": 50,
+      "filename": "0050_platform_event_bus.sql",
+      "mission": "P1-005 Event Bus Hardening"
+    },
+    {
+      "prefix": 51,
+      "filename": "0051_platform_universal_audit.sql",
+      "mission": "P1-006 Universal Audit & Timeline"
+    },
+    {
+      "prefix": 52,
+      "filename": "0052_business_network_directory.sql",
+      "mission": "P10-001 Business Directory Core"
+    }
+  ]
+}
