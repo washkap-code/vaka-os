@@ -11,6 +11,12 @@ assertSafeFinanceTestDatabase();
 const app = createApp();
 
 describe("P1-004 workflow notification integration", () => {
+  it("requires authentication for every inbox endpoint", async () => {
+    expect((await request(app).get("/api/v1/notifications")).status).toBe(401);
+    expect((await request(app).post("/api/v1/notifications/read-all").send({})).status).toBe(401);
+    expect((await request(app).post("/api/v1/notifications/example/read").send({})).status).toBe(401);
+  });
+
   it("creates an unread, tenant-scoped notification for the invoice approver", async () => {
     const tenant = await signupFinanceTenant("workflow-notification");
     const otherTenant = await signupFinanceTenant("workflow-notification-other");
@@ -132,6 +138,18 @@ describe("P1-004 workflow notification integration", () => {
         status: "accepted",
       },
       {
+        id: `read-all-b-${tenant.userId}`,
+        tenantId: tenant.tenantId,
+        userId: tenant.userId,
+        recipient: tenant.userId,
+        channel: "IN_APP",
+        template: "system.notice.v1",
+        locale: "en-ZW",
+        variables: {},
+        priority: "high",
+        status: "accepted",
+      },
+      {
         id: `read-all-unaddressed-${tenant.userId}`,
         tenantId: tenant.tenantId,
         recipient: "unaddressed",
@@ -144,15 +162,22 @@ describe("P1-004 workflow notification integration", () => {
       },
     ]);
 
+    const page = await request(app).get("/api/v1/notifications")
+      .query({ page: 1, pageSize: 1 }).set(tenant.auth);
+    expect(page.status).toBe(200);
+    expect(page.body).toMatchObject({ page: 1, pageSize: 1, total: 2, hasMore: true });
+    expect(page.body.notifications).toHaveLength(1);
+
     const response = await request(app)
       .post("/api/v1/notifications/read-all")
       .set(tenant.auth)
       .send({});
     expect(response.status).toBe(200);
-    expect(response.body.updated).toBe(1);
+    expect(response.body.updated).toBe(2);
     const rows = await db.select({ id: schema.notifications.id, readAt: schema.notifications.readAt })
       .from(schema.notifications).where(eq(schema.notifications.tenantId, tenant.tenantId));
-    expect(rows.find((row) => row.id.startsWith("read-all-a-"))?.readAt).toBeInstanceOf(Date);
+    expect(rows.filter((row) => row.id.startsWith("read-all-a-") || row.id.startsWith("read-all-b-"))
+      .every((row) => row.readAt instanceof Date)).toBe(true);
     expect(rows.find((row) => row.id.startsWith("read-all-unaddressed-"))?.readAt).toBeNull();
   });
 });
