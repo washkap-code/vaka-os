@@ -8,6 +8,7 @@ const { Client } = pg;
 const serverDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoDir = resolve(serverDir, "..");
 const drizzleDir = resolve(serverDir, "drizzle");
+const migrationReservationsPath = resolve(drizzleDir, "migration-reservations.json");
 const scratchDir = resolve(serverDir, ".migration-verification");
 const baselineSchemaPath = resolve(scratchDir, "baseline-schema.ts");
 const baselineCommit = "0c0472f7591725ad758fdc0f6dbabdca98d03c21";
@@ -116,10 +117,39 @@ async function numberedMigrations() {
   const names = (await readdir(drizzleDir))
     .filter((name) => /^\d{4}_.+\.sql$/.test(name))
     .sort();
-  const prefixes = names.map((name) => Number(name.slice(0, 4)));
-  for (let position = 0; position < prefixes.length; position += 1) {
-    if (prefixes[position] !== position) {
-      throw new Error(`Migration sequence is not contiguous at ${names[position] ?? "end of list"}.`);
+  const actualByPrefix = new Map();
+  for (const name of names) {
+    const prefix = Number(name.slice(0, 4));
+    if (actualByPrefix.has(prefix)) throw new Error(`Migration prefix ${name.slice(0, 4)} is duplicated.`);
+    actualByPrefix.set(prefix, name);
+  }
+  const parsed = JSON.parse(await readFile(migrationReservationsPath, "utf8"));
+  if (!parsed || !Array.isArray(parsed.reserved)) {
+    throw new Error("Migration reservations must contain a reserved array.");
+  }
+  const reservedByPrefix = new Map();
+  for (const reservation of parsed.reserved) {
+    if (!Number.isInteger(reservation?.prefix) || reservation.prefix < 0
+      || typeof reservation.filename !== "string"
+      || !/^\d{4}_.+\.sql$/.test(reservation.filename)
+      || Number(reservation.filename.slice(0, 4)) !== reservation.prefix
+      || typeof reservation.mission !== "string" || !reservation.mission.trim()) {
+      throw new Error("Migration reservation is malformed.");
+    }
+    if (reservedByPrefix.has(reservation.prefix)) {
+      throw new Error(`Migration reservation prefix ${reservation.prefix} is duplicated.`);
+    }
+    reservedByPrefix.set(reservation.prefix, reservation);
+  }
+  const lastPrefix = Math.max(...actualByPrefix.keys());
+  for (let position = 0; position <= lastPrefix; position += 1) {
+    const actual = actualByPrefix.get(position);
+    const reservation = reservedByPrefix.get(position);
+    if (!actual && !reservation) {
+      throw new Error(`Migration sequence is not contiguous at ${String(position).padStart(4, "0")}.`);
+    }
+    if (actual && reservation && actual !== reservation.filename) {
+      throw new Error(`Migration ${actual} conflicts with reserved filename ${reservation.filename}.`);
     }
   }
   return names;

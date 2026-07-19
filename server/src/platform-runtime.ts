@@ -65,10 +65,23 @@ import {
   subscribeWorkflowNotifications, WorkflowNotificationCoordinator,
   type WorkflowNotificationCoordinatorContract,
 } from "./workflow-notifications.js";
+import {
+  AIService, ContextAssemblyService, createConfiguredModelClient,
+  type AIContextReader, type AIServiceContract, type AIStore,
+  type AITimelineReader, type ModelClient,
+} from "./platform/ai/index.js";
+import {
+  PostgresAIContextReader, PostgresAIStore, PostgresAITimelineReader,
+} from "./ai-foundation.js";
 
 /** Produces a request-scoped IdentityService from an auth middleware snapshot. */
 export interface RequestIdentityFactory {
   for(auth: AuthSnapshot | null | undefined): IdentityService;
+}
+
+/** Produces an AI service bound to one immutable request identity snapshot. */
+export interface RequestAIServiceFactory {
+  for(auth: AuthSnapshot | null | undefined): AIServiceContract;
 }
 
 export const AUDIT_SERVICE: ServiceToken<AuditService> =
@@ -76,6 +89,9 @@ export const AUDIT_SERVICE: ServiceToken<AuditService> =
 
 export const IDENTITY_FACTORY: ServiceToken<RequestIdentityFactory> =
   createServiceToken("platform.identity.request-factory");
+
+export const AI_SERVICE_FACTORY: ServiceToken<RequestAIServiceFactory> =
+  createServiceToken("platform.ai.request-factory");
 
 export const LOCALISATION_SERVICE: ServiceToken<LocalisationService> =
   createServiceToken("platform.localisation.service");
@@ -130,6 +146,11 @@ export interface PlatformKernelOptions {
   metadataProvider?: MetadataProvider;
   /** Override the canonical schema registry (tests or a future composition root). */
   metadataRegistry?: MetadataRegistryContract;
+  /** Governed AI adapters are injectable so tests never use a live model. */
+  aiContextReader?: AIContextReader;
+  aiTimelineReader?: AITimelineReader;
+  aiStore?: AIStore;
+  modelClient?: ModelClient;
   customerTimelineProjector?: CustomerTimelineProjectorContract;
   lowStockAlertCoordinator?: LowStockAlertCoordinatorContract;
   documentStore?: DocumentStore;
@@ -252,6 +273,26 @@ export function buildPlatformKernel(options: PlatformKernelOptions = {}): Platfo
     METADATA_REGISTRY,
     options.metadataRegistry ?? new MetadataRegistry(),
   );
+
+  kernel.container.registerFactory(AI_SERVICE_FACTORY, () => {
+    const registry = kernel.container.get(METADATA_REGISTRY);
+    const reader = options.aiContextReader ?? new PostgresAIContextReader();
+    const timeline = options.aiTimelineReader ?? new PostgresAITimelineReader();
+    const store = options.aiStore ?? new PostgresAIStore();
+    const model = options.modelClient ?? createConfiguredModelClient();
+    return {
+      for: (auth) => {
+        const identity = identityServiceForAuth(auth);
+        return new AIService(
+          new ContextAssemblyService(identity, registry, reader),
+          registry,
+          timeline,
+          model,
+          store,
+        );
+      },
+    };
+  });
 
   const metadataService = new MetadataService(options.metadataProvider ?? new CanonicalMetadataProvider());
   kernel.container.registerValue(METADATA_SERVICE, metadataService);

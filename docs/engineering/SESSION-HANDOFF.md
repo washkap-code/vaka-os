@@ -1,5 +1,57 @@
 # Session handoff — current state and next-session kickoff
 
+**Updated:** 2026-07-18 (session 22, Codex AI-foundation lane, branch
+`feature/ai-foundation`: **owner-issued MISSION P12-001 AI Foundation
+implemented and verified, but local commits are BLOCKED by the Codex approval
+service usage limit.** The working tree contains the complete implementation
+and must not be discarded. Migration `0056_ai_foundation.sql` adds governed
+`ai_agents`, tenant/user-scoped conversations/messages/evidence and call facts
+in `ai_audit`; its seed defines a read-only `object-summariser` with
+zero tools and scopes limited to the six MetadataRegistry objects currently
+marked AI-visible. A request-bound ContextAssemblyService requires exact
+authenticated user+tenant identity, enforces the canonical object read
+permission before any query/model call, binds every read to tenant_id, and
+projects only `aiReadable` fields. Employee/User and unknown objects fail
+closed. Timeline before/after values are re-filtered through the same field set;
+workflow comments, notification bodies and unrestricted event payloads never
+enter model context. Every canonical record and timeline fact becomes evidence
+on the resulting assistant message. The provider-neutral ModelClient has one
+dependency-free Anthropic HTTP adapter with lazy env-secret configuration;
+non-AI startup remains available when AI config is absent. Every attempted
+model call records only a SHA-256 prompt hash, model/token counts and evidence
+count in `ai_audit`; no business-table mutation exists, enforced by an
+architecture test. `POST /api/v1/ai/summarise` is authenticated, tenant scoped,
+permission bounded and returns the summary plus persisted evidence. Store
+P16-001 is a sibling branch, not merged into this P1-006 base, so the
+conditional `requireFeature('ai')` guard is intentionally deferred to branch
+integration. Migration reservations 0052–0055 preserve the already-issued
+Network, Black Book, Migration and Store filenames; 0056 is the AI migration.
+Verification on isolated PostgreSQL 18: final clean replay `0000`–`0051`, then
+`0056`, with zero Drizzle drift; AI context/provider/write-boundary unit tests
+12/12; endpoint/container/tenant-isolation tests 25/25; final server typecheck
+clean; full server suite 112/112 files and 539/539 tests (258.87s). The guarded
+down migration is present and statically reviewed, but its disposable execution
+was not completed because the approval service rejected the final database
+command after reporting its usage quota exhausted. The same quota then rejected
+`git add`, so neither the implementation commit nor the mandatory final handoff
+commit could be created. **NEXT SESSION FIRST ACTIONS:** preserve the current
+working tree; once approvals are available, execute the 0056 down migration on
+a disposable database, stage all implementation files except this handoff and
+commit `feat(platform): add governed AI foundation`, then stage only this file
+and create the mandatory final commit `chore(handoff): session handoff
+2026-07-18`. Configure the requested branch upstream before its first GitHub
+Desktop push. **DEPENDENCY TRUTH:** fresh fetch still showed `origin/main` does
+not contain local P1-006; this branch is correctly based on P1-006 handoff
+`1c4a182`. Reconcile/merge P1-003→P1-006 and the migration-0052→0055 module
+branches before P12, then apply migrations in numeric order. Production remains
+through 0047. Recommended next mission after integration: provider operations
+hardening (secret provisioning, budgets/rate limits, redacted telemetry and
+evaluation gates) plus the Store `ai` entitlement guard. No code/test blocker
+remains; only the approval-quota commit/rollback proof and owner push/hosted
+gates remain. Stale/dependency branches requiring reconciliation include the
+local P1-003 through P1-006 stack plus Mail, Network, Black Book, Migration and
+Store sibling branches.)
+
 **Updated:** 2026-07-18 (session 21, Codex universal-audit lane, branch
 `feature/platform-universal-audit`, implementation commit `ba0e12b`:
 **owner-issued MISSION P1-006 Universal Audit & Timeline implemented and
@@ -160,8 +212,8 @@ this repository.
 
 ## Migration ledger (production truth)
 
-Highest migration in the active universal-audit branch:
-`0051_platform_universal_audit.sql`. Production is currently applied through
+Highest reserved/implemented migration in the active AI-foundation branch:
+`0056_ai_foundation.sql`. Production is currently applied through
 `0047_verification_workflow.sql`.
 **The dedicated `vaka-os-prod` project was verified at an effective
 0045-equivalent baseline on 2026-07-16.** This cutover satisfies the former
@@ -191,16 +243,20 @@ again to the dedicated project.
 | 0049_platform_notification_service | P1-004 Notification Service | ⚠️ TAKEN on `feature/platform-notification-service`; NOT applied to production; apply after 0048 and before deploying this branch |
 | 0050_platform_event_bus | P1-005 Event Bus Hardening | ⚠️ TAKEN on `feature/platform-event-bus`; NOT applied to production; apply after 0049 and before deploying this branch |
 | 0051_platform_universal_audit | P1-006 Universal Audit & Timeline | ⚠️ TAKEN on `feature/platform-universal-audit`; NOT applied to production; apply after 0050 and before deploying this branch |
+| 0052_business_network_directory | P10-001 Business Directory Core | ⚠️ TAKEN on `feature/network-directory`; NOT applied to production |
+| 0053_blackbook_core | P11-001 Black Book Core | ⚠️ TAKEN on `feature/blackbook-core`; NOT applied to production |
+| 0054_migration_core | P15-001 Migration Hub Core | ⚠️ TAKEN on `feature/migration-core`; NOT applied to production |
+| 0055_store_core | P16-001 Store Core | ⚠️ TAKEN on `feature/store-core`; NOT applied to production |
+| 0056_ai_foundation | P12-001 AI Foundation | ⚠️ TAKEN in the uncommitted working tree on `feature/ai-foundation`; NOT applied to production |
 
 The 2026-07-16 cutover includes 0042–0045 and eliminated the former production
 debt; old `vaka-platform` application rows are historical rollback evidence.
-Migrations **0046 and 0047 are applied to production**. Migrations **0048**,
-**0049**, **0050** and **0051** are taken by the owner-issued P1-003 Workflow
-Engine, P1-004 Notification Service, P1-005 Event Bus Hardening and P1-006
-Universal Audit & Timeline respectively; none is applied to production. Apply
-them in numeric order before deploying P1-006. New reservations continue from
-**0052**; coordinate them in this ledger before
-creating another migration.
+Migrations **0046 and 0047 are applied to production**. Migrations **0048**
+through **0056** are allocated across the owner-issued platform and module
+missions above; none is applied to production. Reconcile and merge their
+branches, then apply the migrations in numeric order before deploying P12-001.
+The next free migration is **0057**; reserve it in this ledger before creating
+another migration.
 
 ## Part II verification lane
 

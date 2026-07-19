@@ -242,6 +242,7 @@ export const endpointCoverageManifest: readonly EndpointCoverage[] = [
   { method: "GET", path: "/api/v1/reports/statutory-pack.csv", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "GET", path: "/api/v1/reports/statutory-pack.pdf", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "GET", path: "/api/v1/ai/read-models/business-summary", access: "tenant", vector: "tenant-list-or-aggregate" },
+  { method: "POST", path: "/api/v1/ai/summarise", access: "tenant", vector: "tenant-object" },
   { method: "GET", path: "/api/v1/export/:entity", access: "tenant", vector: "tenant-object" },
   { method: "GET", path: "/api/v1/billing/subscription", access: "tenant", vector: "tenant-list-or-aggregate" },
   { method: "GET", path: "/api/v1/billing/invoices", access: "tenant", vector: "tenant-list-or-aggregate" },

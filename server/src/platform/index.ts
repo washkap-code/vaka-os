@@ -4,6 +4,7 @@ export * from "./platform-types.js";
 export * from "./service.js";
 export * from "./kernel-types.js";
 export * as audit from "./audit/index.js";
+export * as ai from "./ai/index.js";
 export * as container from "./container/index.js";
 export * as documents from "./documents/index.js";
 export * as events from "./events/index.js";

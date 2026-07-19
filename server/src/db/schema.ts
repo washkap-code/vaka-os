@@ -515,6 +515,97 @@ export const notificationPreferences = pgTable("notification_preferences", {
   check("notification_preferences_channel_check", sql`${t.channel} IN ('IN_APP', 'EMAIL', 'SMS', 'PUSH', 'WHATSAPP')`),
 ]);
 
+// P12-001 — governed AI runtime state. Agent definitions are platform policy;
+// conversations, evidence and call audit remain tenant/user scoped. The AI
+// application service has no write path to any business table.
+export const aiAgents = pgTable("ai_agents", {
+  id: id(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  purpose: text("purpose").notNull(),
+  allowedToolsJson: jsonb("allowed_tools_json").$type<string[]>().default([]).notNull(),
+  dataScopesJson: jsonb("data_scopes_json").$type<string[]>().default([]).notNull(),
+  requiresApprovalForJson: jsonb("requires_approval_for_json").$type<string[]>().default([]).notNull(),
+  active: boolean("active").default(true).notNull(),
+}, (t) => [
+  check("ai_agents_code_check", sql`${t.code} ~ '^[a-z][a-z0-9-]{2,63}$'`),
+  check("ai_agents_name_check", sql`length(trim(${t.name})) > 0`),
+  check("ai_agents_purpose_check", sql`length(trim(${t.purpose})) > 0`),
+]);
+
+export const aiConversations = pgTable("ai_conversations", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  userId: uuid("user_id").notNull(),
+  agentCode: text("agent_code").notNull().references(() => aiAgents.code, { onDelete: "restrict" }),
+  title: text("title").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({
+    name: "ai_conversations_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("ai_conversations_tenant_user_time").on(t.tenantId, t.userId, t.lastMessageAt),
+  check("ai_conversations_title_check", sql`length(trim(${t.title})) > 0`),
+]);
+
+export const aiMessages = pgTable("ai_messages", {
+  id: id(),
+  conversationId: uuid("conversation_id").notNull()
+    .references(() => aiConversations.id, { onDelete: "cascade" }),
+  role: text("role").$type<"user" | "assistant" | "system">().notNull(),
+  content: text("content").notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  index("ai_messages_conversation_time").on(t.conversationId, t.createdAt),
+  check("ai_messages_role_check", sql`${t.role} IN ('user', 'assistant', 'system')`),
+  check("ai_messages_content_check", sql`length(trim(${t.content})) > 0`),
+]);
+
+export const aiEvidence = pgTable("ai_evidence", {
+  id: id(),
+  messageId: uuid("message_id").notNull()
+    .references(() => aiMessages.id, { onDelete: "cascade" }),
+  objectType: text("object_type").notNull(),
+  objectId: text("object_id").notNull(),
+  fieldNamesJson: jsonb("field_names_json").$type<string[]>().default([]).notNull(),
+  snippet: text("snippet").notNull(),
+}, (t) => [
+  index("ai_evidence_message").on(t.messageId),
+  index("ai_evidence_object").on(t.objectType, t.objectId),
+  check("ai_evidence_object_type_check", sql`length(trim(${t.objectType})) > 0`),
+  check("ai_evidence_object_id_check", sql`length(trim(${t.objectId})) > 0`),
+]);
+
+export const aiAudit = pgTable("ai_audit", {
+  id: id(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "restrict" }),
+  userId: uuid("user_id").notNull(),
+  agentCode: text("agent_code").notNull().references(() => aiAgents.code, { onDelete: "restrict" }),
+  action: text("action").notNull(),
+  promptHash: text("prompt_hash").notNull(),
+  model: text("model").notNull(),
+  tokensIn: integer("tokens_in").default(0).notNull(),
+  tokensOut: integer("tokens_out").default(0).notNull(),
+  evidenceCount: integer("evidence_count").default(0).notNull(),
+  at: timestamp("at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  foreignKey({
+    name: "ai_audit_user_tenant_fk",
+    columns: [t.userId, t.tenantId],
+    foreignColumns: [users.id, users.tenantId],
+  }).onDelete("restrict"),
+  index("ai_audit_tenant_time").on(t.tenantId, t.at),
+  index("ai_audit_user_time").on(t.tenantId, t.userId, t.at),
+  check("ai_audit_action_check", sql`length(trim(${t.action})) > 0`),
+  check("ai_audit_prompt_hash_check", sql`${t.promptHash} ~ '^[0-9a-f]{64}$'`),
+  check("ai_audit_model_check", sql`length(trim(${t.model})) > 0`),
+  check("ai_audit_token_counts_check", sql`${t.tokensIn} >= 0 AND ${t.tokensOut} >= 0`),
+  check("ai_audit_evidence_count_check", sql`${t.evidenceCount} >= 0`),
+]);
+
 // Platform-level acquisition records. Referral attribution never grants access
 // to the referred tenant and is intentionally separate from client permissions.
 export const referralCodes = pgTable("referral_codes", {

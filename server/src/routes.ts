@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { and, eq, desc, isNull, sql } from "drizzle-orm";
 import {
-  db, schema, badRequest, notFound, conflict, forbidden, audit, nextDocNumber,
+  db, schema, AppError, badRequest, notFound, conflict, forbidden, audit, nextDocNumber,
   assertIdempotencyFingerprint, payloadFingerprint, requireIdempotencyKey,
 } from "./lib.js";
 import {
@@ -129,7 +129,12 @@ import {
 } from "./finance-report-snapshots.js";
 import { recordAudit } from "./platform/audit-facade.js";
 import { searchQuerySchema, type SearchResultDocument } from "./search.js";
-import { DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import { AI_SERVICE_FACTORY, DOCUMENT_SERVICE, IDENTITY_FACTORY, METADATA_SERVICE, SEARCH_SERVICE, platformKernel } from "./platform-runtime.js";
+import {
+  AIAgentUnavailableError, AIContextBoundaryError, AIObjectNotFoundError,
+  AIObjectUnavailableError, AIPermissionDeniedError, AIProviderResponseError,
+  AIProviderUnavailableError,
+} from "./platform/ai/errors.js";
 import { InvalidSearchQueryError } from "./platform/search/errors.js";
 import { METADATA_REGISTRY_VERSION, metadataQuerySchema } from "./metadata.js";
 import { CustomerTimelineProjector, getCustomerTimeline, timelineQuerySchema } from "./customer-timeline.js";
@@ -2561,8 +2566,37 @@ api.get("/reports/statutory-pack.pdf", requirePermission("reports.read"), (req, 
 });
 
 // ---------------------------------------------------------------------------
-// AI-ready read models — deterministic context only; no model/provider call.
+// Governed AI foundation plus the legacy deterministic business read model.
 // ---------------------------------------------------------------------------
+const aiSummariseSchema = z.object({
+  objectType: z.string().trim().min(1).max(100),
+  objectId: z.string().uuid(),
+}).strict();
+api.post("/ai/summarise", wrap(async (req, res) => {
+  const body = aiSummariseSchema.parse(req.body);
+  try {
+    const result = await platformKernel().container.get(AI_SERVICE_FACTORY)
+      .for(req.auth)
+      .summarise(req.auth!.userId, tenantId(req), body);
+    res.setHeader("Cache-Control", "private, no-store");
+    return result;
+  } catch (error) {
+    if (error instanceof AIPermissionDeniedError || error instanceof AIContextBoundaryError) {
+      throw forbidden(error.message);
+    }
+    if (error instanceof AIObjectNotFoundError) throw notFound(error.message);
+    if (error instanceof AIObjectUnavailableError) throw badRequest(error.message);
+    if (error instanceof AIAgentUnavailableError || error instanceof AIProviderUnavailableError) {
+      throw new AppError(503, error.message, "AI_UNAVAILABLE");
+    }
+    if (error instanceof AIProviderResponseError) {
+      throw new AppError(502, error.message, "AI_PROVIDER_RESPONSE_INVALID");
+    }
+    throw error;
+  }
+}));
+
+// Deterministic context only; no model/provider call.
 api.get("/ai/read-models/business-summary", requirePermission("reports.read"), wrap(async (req) => {
   const query = businessSummaryQuerySchema.parse(req.query);
   const tenant = (req as any).tenant as { baseCurrency: "USD" | "ZWG" };
