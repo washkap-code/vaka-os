@@ -1,0 +1,34 @@
+{
+  "reserved": [
+    {
+      "prefix": 51,
+      "filename": "0051_platform_universal_audit.sql",
+      "mission": "P1-006 Universal Audit & Timeline"
+    },
+    {
+      "prefix": 52,
+      "filename": "0052_business_network_directory.sql",
+      "mission": "P10-001 Business Directory Core"
+    },
+    {
+      "prefix": 53,
+      "filename": "0053_blackbook_core.sql",
+      "mission": "P11-001 Black Book Core"
+    },
+    {
+      "prefix": 54,
+      "filename": "0054_migration_core.sql",
+      "mission": "P15-001 Migration Hub Core"
+    },
+    {
+      "prefix": 55,
+      "filename": "0055_store_core.sql",
+      "mission": "P16-001 Store Core"
+    },
+    {
+      "prefix": 56,
+      "filename": "0056_ai_foundation.sql",
+      "mission": "P12-001 AI Foundation"
+    }
+  ]
+}

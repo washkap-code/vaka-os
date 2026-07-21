@@ -25,6 +25,26 @@ async function main() {
       },
     });
   }
+  await db.insert(schema.aiAgents).values({
+    id: "12000000-0000-4000-8000-000000000001",
+    code: "object-summariser",
+    name: "Object timeline summariser",
+    purpose: "Produce evidence-backed, read-only summaries of canonical object timelines.",
+    allowedToolsJson: [],
+    dataScopesJson: ["Company", "Customer", "Supplier", "Invoice", "Payment", "Product"],
+    requiresApprovalForJson: [],
+    active: true,
+  }).onConflictDoUpdate({
+    target: schema.aiAgents.code,
+    set: {
+      name: "Object timeline summariser",
+      purpose: "Produce evidence-backed, read-only summaries of canonical object timelines.",
+      allowedToolsJson: [],
+      dataScopesJson: ["Company", "Customer", "Supplier", "Invoice", "Payment", "Product"],
+      requiresApprovalForJson: [],
+      active: true,
+    },
+  });
   const [existingAdmin] = await db.select().from(schema.users).where(and(
     isNull(schema.users.tenantId),
     eq(schema.users.isPlatformAdmin, true),

@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { audit, badRequest, conflict, db, forbidden, notFound, schema } from "./lib.js";
 import { queuePartyRoleEvents } from "./party-events.js";
 import { runWithPostCommitEvents } from "./platform/events/index.js";
+import { autoAuditContactRoles } from "./universal-audit.js";
 
 const MAX_BULK_RECORDS = 100;
 
@@ -44,33 +45,41 @@ export async function bulkUpdateContacts(opts: {
   actorUserId: string;
   ids: string[];
   operation: ContactBulkAction;
+  ip?: string | null;
 }) {
   const ids = exactIds(opts.ids);
   return runWithPostCommitEvents((queue) => db.transaction(async (tx) => {
     const contacts = await activeContactsForUpdate(tx, opts.tenantId, ids);
     const tag = "tag" in opts.operation ? normalizedTag(opts.operation.tag) : null;
     for (const contact of contacts) {
+      let after = { ...contact };
       if (opts.operation.action === "ADD_TAG") {
         const tags = [...new Set([...contact.tags, tag!])];
         await tx.update(schema.contacts).set({ tags }).where(eq(schema.contacts.id, contact.id));
+        after = { ...contact, tags };
       } else if (opts.operation.action === "REMOVE_TAG") {
-        await tx.update(schema.contacts).set({ tags: contact.tags.filter((value) => value !== tag) })
+        const tags = contact.tags.filter((value) => value !== tag);
+        await tx.update(schema.contacts).set({ tags })
           .where(eq(schema.contacts.id, contact.id));
+        after = { ...contact, tags };
       } else if (opts.operation.action === "MARK_CUSTOMER") {
         await tx.update(schema.contacts).set({ isCustomer: true }).where(eq(schema.contacts.id, contact.id));
+        after = { ...contact, isCustomer: true };
       } else {
         await tx.update(schema.contacts).set({ isVendor: true }).where(eq(schema.contacts.id, contact.id));
+        after = { ...contact, isVendor: true };
       }
+      await autoAuditContactRoles(tx, {
+        tenantId: opts.tenantId, actorId: opts.actorUserId, action: "updated",
+        objectId: contact.id, before: contact, after, ip: opts.ip,
+      });
       queuePartyRoleEvents(queue, {
         tenantId: opts.tenantId,
         actorUserId: opts.actorUserId,
         contactId: contact.id,
         change: "bulk-updated",
         before: contact,
-        after: {
-          isCustomer: contact.isCustomer || opts.operation.action === "MARK_CUSTOMER",
-          isVendor: contact.isVendor || opts.operation.action === "MARK_VENDOR",
-        },
+        after,
       });
     }
     await audit(tx, opts.tenantId, opts.actorUserId, "contact.bulk_updated", "contact_batch", undefined, {
@@ -84,7 +93,10 @@ export async function bulkUpdateContacts(opts: {
 
 async function softRemoveContacts(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  opts: { tenantId: string; actorUserId: string; ids: string[]; reason: string; requestId?: string },
+  opts: {
+    tenantId: string; actorUserId: string; ids: string[]; reason: string;
+    requestId?: string; ip?: string | null;
+  },
 ) {
   const contacts = await activeContactsForUpdate(tx, opts.tenantId, opts.ids);
   const removedAt = new Date();
@@ -98,6 +110,10 @@ async function softRemoveContacts(
       reason: opts.reason,
       ...(opts.requestId ? { deletionRequestId: opts.requestId } : {}),
     });
+    await autoAuditContactRoles(tx, {
+      tenantId: opts.tenantId, actorId: opts.actorUserId, action: "deleted",
+      objectId: contact.id, before: contact, after: null, ip: opts.ip,
+    });
   }
   return contacts;
 }
@@ -108,6 +124,7 @@ export async function deleteOrRequestContacts(opts: {
   isTenantOwner: boolean;
   ids: string[];
   reason: string;
+  ip?: string | null;
 }) {
   const ids = exactIds(opts.ids);
   const reason = opts.reason.trim();
@@ -205,6 +222,7 @@ export async function decideContactDeletionRequest(opts: {
   requestId: string;
   decision: "APPROVE" | "REJECT";
   reason: string;
+  ip?: string | null;
 }) {
   if (!opts.isTenantOwner) throw forbidden("Principal account owner approval required");
   const reason = opts.reason.trim();
@@ -225,6 +243,7 @@ export async function decideContactDeletionRequest(opts: {
         ids: [request.entityId],
         reason,
         requestId: request.id,
+        ip: opts.ip,
       });
       const [removed] = await tx.select().from(schema.contacts).where(and(
         eq(schema.contacts.id, request.entityId), eq(schema.contacts.tenantId, opts.tenantId),

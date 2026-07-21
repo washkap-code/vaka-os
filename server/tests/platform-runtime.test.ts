@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_REGISTRY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
+import { AI_SERVICE_FACTORY, AUDIT_SERVICE, DOCUMENT_SERVICE, EVENT_BUS, IDENTITY_FACTORY, METADATA_REGISTRY, METADATA_SERVICE, NOTIFICATION_SERVICE, SEARCH_SERVICE, WORKFLOW_SERVICE, buildPlatformKernel } from "../src/platform-runtime.js";
 import { DuplicateServiceError } from "../src/platform/container/errors.js";
 import type { AuditLogRow } from "../src/platform/audit/adapters/audit-sink.js";
 import type { SearchApplicationAdapter } from "../src/search.js";
+import { InMemoryEventStore } from "../src/platform/events/store.js";
 
 describe("platform runtime composition (P1-002)", () => {
   it("resolves the audit service and records through the bound writer", async () => {
@@ -38,25 +39,33 @@ describe("platform runtime composition (P1-002)", () => {
     expect(one).not.toBe(two);
     expect(() => one.container.registerValue(AUDIT_SERVICE, {} as never))
       .toThrow(DuplicateServiceError);
+    expect(one.container.has(WORKFLOW_SERVICE)).toBe(true);
+    expect(one.container.get(WORKFLOW_SERVICE)).not.toBe(two.container.get(WORKFLOW_SERVICE));
   });
 
   it("composes isolated event buses and reports subscriber failures", async () => {
     const failures: string[] = [];
     const one = buildPlatformKernel({
       auditWriter: () => {},
+      eventStore: new InMemoryEventStore(),
       eventSubscriberError: (error, type) => failures.push(`${type}:${(error as Error).message}`),
       customerTimelineProjector: {
         projectActivity: async () => {}, projectInvoice: async () => {}, projectPayment: async () => {}, reconcileCustomer: async () => {},
       },
     }).container.get(EVENT_BUS);
-    const two = buildPlatformKernel({ auditWriter: () => {} }).container.get(EVENT_BUS);
+    const two = buildPlatformKernel({
+      auditWriter: () => {}, eventStore: new InMemoryEventStore(),
+    }).container.get(EVENT_BUS);
     const siblingDeliveries: string[] = [];
     one.subscribe("invoice.issued", () => { throw new Error("consumer unavailable"); });
     one.subscribe("invoice.issued", () => { siblingDeliveries.push("delivered"); });
     two.subscribe("invoice.issued", () => { siblingDeliveries.push("wrong bus"); });
     await one.publish({
       id: "invoice.issued:inv-1", type: "invoice.issued", occurredAt: new Date(),
-      tenantId: "tenant-1", actorUserId: "user-1", payload: { invoiceId: "inv-1" },
+      tenantId: "tenant-1", actorUserId: "user-1", payload: {
+        invoiceId: "inv-1", customerId: "customer-1", currency: "USD",
+        totalCents: "100", issuedAt: new Date().toISOString(),
+      },
     });
     expect(failures).toEqual(["invoice.issued:consumer unavailable"]);
     expect(siblingDeliveries).toEqual(["delivered"]);
@@ -130,6 +139,51 @@ describe("platform runtime composition (P1-002)", () => {
     });
     expect(kernel.container.has(METADATA_REGISTRY)).toBe(true);
     expect(kernel.container.get(METADATA_REGISTRY).getObject("Company").name).toBe("Company");
+  });
+
+  it("composes a request-bound AI service with injectable, network-free adapters", async () => {
+    const kernel = buildPlatformKernel({
+      auditWriter: () => {},
+      aiContextReader: {
+        readObject: async () => ({ sku: "PLATFORM-1", name: "Platform product" }),
+      },
+      aiTimelineReader: { readTimeline: async () => [] },
+      modelClient: {
+        model: "mock-model",
+        complete: async () => ({
+          content: "Platform context summary. [E1]",
+          model: "mock-model",
+          tokensIn: 10,
+          tokensOut: 4,
+        }),
+      },
+      aiStore: {
+        agent: async () => ({
+          code: "object-summariser", name: "Summariser", purpose: "Read-only",
+          allowedTools: [], dataScopes: ["Product"], requiresApprovalFor: [], active: true,
+        }),
+        persistSummary: async (input) => ({
+          conversationId: "conversation-1",
+          messageId: "message-1",
+          evidence: input.evidence.map((entry, index) => ({
+            ...entry, id: `evidence-${index}`, messageId: "message-1",
+          })),
+        }),
+        recordAudit: async () => {},
+      },
+    });
+    const service = kernel.container.get(AI_SERVICE_FACTORY).for({
+      userId: "11111111-1111-4111-8111-111111111111",
+      tenantId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      isPlatformAdmin: false,
+      sessionId: "session-1",
+      permissions: ["inventory.read"],
+    });
+    await expect(service.summarise(
+      "11111111-1111-4111-8111-111111111111",
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      { objectType: "Product", objectId: "22222222-2222-4222-8222-222222222222" },
+    )).resolves.toMatchObject({ summary: "Platform context summary. [E1]" });
   });
 
   it("resolves documents through an injected tenant-aware store", async () => {
